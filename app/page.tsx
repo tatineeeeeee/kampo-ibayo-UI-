@@ -221,7 +221,7 @@ export default function Home() {
             Your Peaceful Escape in Gentri Cavite
           </p>
           <Link
-            href="/booking"
+            href="/book"
             className="mt-6 px-6 py-3 bg-red-600 rounded-full font-semibold hover:bg-red-700 transition inline-block text-center"
           >
             Book Now
