@@ -96,7 +96,7 @@ export default function BookingPage() {
         .insert({
           user_id: user.id, // Use auth user ID directly
           guest_name: formData.name,
-          guest_email: formData.email || user.email, // Use form email or auth email as fallback
+          guest_email: formData.email || user.email || '', // Ensure fallback to empty string
           guest_phone: formData.phone,
           check_in_date: formData.checkIn,
           check_out_date: formData.checkOut,

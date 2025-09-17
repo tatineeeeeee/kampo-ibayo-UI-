@@ -5,17 +5,19 @@ import { supabase } from "../../supabaseClient";
 
 interface Booking {
   id: number;
+  user_id: string;
   guest_name: string;
   guest_email: string;
-  guest_phone: string;
+  guest_phone: string | null;
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
   total_amount: number;
-  status: string;
-  special_requests: string;
-  brings_pet: boolean;
-  created_at: string;
+  status: string | null;
+  special_requests: string | null;
+  brings_pet: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export default function BookingsPage() {
@@ -36,7 +38,7 @@ export default function BookingsPage() {
       if (error) {
         console.error('Error fetching bookings:', error);
       } else {
-        setBookings(data || []);
+        setBookings(data as Booking[] || []);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -153,13 +155,13 @@ export default function BookingsPage() {
                     <td className="p-3 text-black">{booking.number_of_guests}</td>
                     <td className="p-3 text-black font-medium">₱{booking.total_amount.toLocaleString()}</td>
                     <td className="p-3">
-                      <span className={`px-2 py-1 rounded-md text-xs ${getStatusColor(booking.status)}`}>
-                        {booking.status}
+                      <span className={`px-2 py-1 rounded-md text-xs ${getStatusColor(booking.status || 'pending')}`}>
+                        {booking.status || 'pending'}
                       </span>
                     </td>
                     <td className="p-3">
                       <div className="flex gap-1">
-                        {booking.status === 'pending' && (
+                        {(booking.status || 'pending') === 'pending' && (
                           <>
                             <button 
                               onClick={() => updateBookingStatus(booking.id, 'confirmed')}

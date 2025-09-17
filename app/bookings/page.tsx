@@ -11,16 +11,16 @@ interface Booking {
   user_id: string;
   guest_name: string;
   guest_email: string;
-  guest_phone: string;
+  guest_phone: string | null;
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
   total_amount: number;
-  special_requests: string;
-  brings_pet: boolean;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  special_requests: string | null;
+  brings_pet: boolean | null;
+  status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export default function BookingsPage() {
@@ -70,7 +70,7 @@ export default function BookingsPage() {
         console.error("Error loading bookings:", error);
       } else {
         console.log("Found bookings:", data?.length || 0);
-        setBookings(data || []);
+        setBookings(data as Booking[] || []);
       }
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function BookingsPage() {
       console.error("Error loading bookings:", error);
     } else {
       console.log("Refreshed bookings:", data?.length || 0);
-      setBookings(data || []);
+      setBookings(data as Booking[] || []);
     }
     setLoading(false);
   };
@@ -232,9 +232,9 @@ export default function BookingsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getStatusIcon(booking.status)}
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(booking.status)}`}>
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        {getStatusIcon(booking.status || 'pending')}
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(booking.status || 'pending')}`}>
+                          {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
                         </span>
                       </div>
                     </div>
@@ -299,13 +299,13 @@ export default function BookingsPage() {
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-600">
                       <p className="text-gray-400 text-sm">
-                        Booking Date: {new Date(booking.created_at).toLocaleDateString()}
+                        Booking Date: {booking.created_at ? new Date(booking.created_at).toLocaleDateString() : "N/A"}
                       </p>
                       <div className="flex gap-2">
                         <button className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition">
                           View Details
                         </button>
-                        {booking.status.toLowerCase() === "pending" && (
+                        {(booking.status || 'pending').toLowerCase() === "pending" && (
                           <button className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition">
                             Cancel
                           </button>
