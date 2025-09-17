@@ -145,12 +145,19 @@ export default function BookingsPage() {
     }
 
     try {
+      // Store Philippines time (UTC+8) correctly
+      // Get current UTC time and add 8 hours to get Philippines time
+      const now = new Date();
+      const utcTime = now.getTime();
+      const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+      const philippinesTime = new Date(utcTime + philippinesOffset);
+      
       const { error } = await supabase
         .from('bookings')
         .update({ 
           status: 'cancelled',
           cancelled_by: 'user',
-          cancelled_at: new Date().toISOString(),
+          cancelled_at: philippinesTime.toISOString(),
           cancellation_reason: cancellationReason.trim()
         })
         .eq('id', bookingId);
@@ -538,7 +545,7 @@ export default function BookingsPage() {
                         </p>
                         {selectedBooking.cancelled_at && (
                           <p className="text-gray-400 text-xs">
-                            Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString('en-PH', {timeZone: 'Asia/Manila'})} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString('en-PH', {timeZone: 'Asia/Manila', hour: '2-digit', minute:'2-digit', hour12: true})}
+                            Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString()} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
                           </p>
                         )}
                         {selectedBooking.cancellation_reason && (

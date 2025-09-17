@@ -86,8 +86,14 @@ export default function BookingsPage() {
       
       // If cancelling, add cancellation tracking
       if (newStatus === 'cancelled') {
+        // Store Philippines time (UTC+8) correctly
+        const now = new Date();
+        const utcTime = now.getTime();
+        const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+        const philippinesTime = new Date(utcTime + philippinesOffset);
+        
         updateData.cancelled_by = 'admin';
-        updateData.cancelled_at = new Date().toISOString();
+        updateData.cancelled_at = philippinesTime.toISOString();
         updateData.cancellation_reason = 'Cancelled by administrator';
       }
 
@@ -120,12 +126,18 @@ export default function BookingsPage() {
     }
 
     try {
+      // Store Philippines time (UTC+8) correctly
+      const now = new Date();
+      const utcTime = now.getTime();
+      const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+      const philippinesTime = new Date(utcTime + philippinesOffset);
+      
       const { error } = await supabase
         .from('bookings')
         .update({ 
           status: 'cancelled',
           cancelled_by: 'admin',
-          cancelled_at: new Date().toISOString(),
+          cancelled_at: philippinesTime.toISOString(),
           cancellation_reason: adminCancellationReason.trim()
         })
         .eq('id', bookingId);
@@ -383,7 +395,7 @@ export default function BookingsPage() {
                       </p>
                       {selectedBooking.cancelled_at && (
                         <p className="text-gray-600 text-xs">
-                          Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString('en-PH', {timeZone: 'Asia/Manila'})} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString('en-PH', {timeZone: 'Asia/Manila', hour: '2-digit', minute:'2-digit', hour12: true})}
+                          Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString()} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
                         </p>
                       )}
                       {selectedBooking.cancellation_reason && (
