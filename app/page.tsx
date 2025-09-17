@@ -3,11 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Menu, X, User as UserIcon, LogOut, BookOpen } from "lucide-react";
+import { supabase } from "./supabaseClient";
+import type { User } from "@supabase/supabase-js";
+
 // ----------------- Navbar -----------------
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const [user, setUser] = useState<User | null>(null);
+  const [profileMenu, setProfileMenu] = useState(false);
 
   const menuItems = useMemo(
     () => ["Home", "About", "Amenities", "Gallery", "Contact"],
@@ -36,6 +41,23 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [menuItems]);
 
+  // Track Supabase session
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <nav className="bg-gray-900/90 backdrop-blur text-white shadow-md w-full fixed top-0 left-0 z-50 transition">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
@@ -59,10 +81,50 @@ const Navbar = () => {
             </a>
           ))}
 
-          {/* Login Button */}
-          <button className="px-4 py-1 bg-red-500 rounded hover:bg-red-600">
-            Login
-          </button>
+          {/* Auth Buttons */}
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setProfileMenu(!profileMenu)}
+                className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
+              >
+                ☰
+              </button>
+
+              {profileMenu && (
+                <div className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg overflow-hidden">
+                  <Link
+                    href="/profile"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100"
+                  >
+                    <UserIcon className="w-4 h-4 mr-2" /> Profile
+                  </Link>
+                  <Link
+                    href="/bookings"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100"
+                  >
+                    <BookOpen className="w-4 h-4 mr-2" /> My Bookings
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setUser(null);
+                      setProfileMenu(false);
+                    }}
+                    className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/auth">
+              <button className="px-4 py-1 bg-red-500 rounded hover:bg-red-600">
+                Login
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -71,7 +133,7 @@ const Navbar = () => {
             onClick={() => setIsOpen(!isOpen)}
             className="text-white text-2xl focus:outline-none"
           >
-            {isOpen ? "✖" : "☰"}
+            {isOpen ? <X /> : <Menu />}
           </button>
         </div>
       </div>
@@ -92,9 +154,40 @@ const Navbar = () => {
             </a>
           ))}
 
-          <button className="block w-full text-left px-2 py-1 bg-red-500 rounded hover:bg-red-600">
-            Login
-          </button>
+          {user ? (
+            <div className="space-y-2">
+              <Link
+                href="/profile"
+                className="block px-2 py-1 hover:text-red-500"
+                onClick={() => setIsOpen(false)}
+              >
+                Profile
+              </Link>
+              <Link
+                href="/bookings"
+                className="block px-2 py-1 hover:text-red-500"
+                onClick={() => setIsOpen(false)}
+              >
+                My Bookings
+              </Link>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  setUser(null);
+                  setIsOpen(false);
+                }}
+                className="block w-full text-left px-2 py-1 bg-gray-700 rounded hover:bg-gray-600"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link href="/auth" onClick={() => setIsOpen(false)}>
+              <button className="block w-full text-left px-2 py-1 bg-red-500 rounded hover:bg-red-600">
+                Login
+              </button>
+            </Link>
+          )}
         </div>
       )}
     </nav>
@@ -127,12 +220,12 @@ export default function Home() {
           <p className="mt-4 text-lg md:text-xl font-bold">
             Your Peaceful Escape in Gentri Cavite
           </p>
-<Link
-  href="/booking"
-  className="mt-6 px-6 py-3 bg-red-600 rounded-full font-semibold hover:bg-red-700 transition inline-block text-center"
->
-  Book Now
-</Link>
+          <Link
+            href="/booking"
+            className="mt-6 px-6 py-3 bg-red-600 rounded-full font-semibold hover:bg-red-700 transition inline-block text-center"
+          >
+            Book Now
+          </Link>
         </div>
       </section>
 
@@ -323,15 +416,14 @@ export default function Home() {
         </footer>
       </section>
 
-{/* Back to Top Button */}
-<button
-  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-  className="fixed bottom-6 right-6 bg-red-600 text-white h-10 w-10 flex items-center justify-center rounded-full shadow-lg hover:bg-red-700 transition"
-  aria-label="Back to top"
->
-  <ArrowUp className="h-6 w-6" /> {/* ✅ clean scalable icon */}
-</button>
-
+      {/* Back to Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="fixed bottom-6 right-6 bg-red-600 text-white h-10 w-10 flex items-center justify-center rounded-full shadow-lg hover:bg-red-700 transition"
+        aria-label="Back to top"
+      >
+        <ArrowUp className="h-6 w-6" />
+      </button>
     </div>
   );
 }

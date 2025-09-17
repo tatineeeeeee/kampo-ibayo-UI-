@@ -1,64 +1,77 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaGoogle, FaFacebook, FaLock, FaEnvelope, FaUser } from "react-icons/fa";
+import { supabase } from "../supabaseClient"; // adjust path if needed
+import {FaLock, FaEnvelope, FaUser } from "react-icons/fa";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
 
-  // 🔹 Handle login form submit
+  // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    const data = await res.json();
-    if (res.ok) {
+    if (error) {
+      alert(error.message);
+    } else {
       alert("Login successful!");
       console.log("User:", data.user);
-      router.push("/"); // 🚀 redirect to /
-    } else {
-      alert(data.error || "Login failed");
+      router.push("/"); // 🚀 redirect after login
     }
   }
 
-  // 🔹 Handle register form submit
-  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const firstName = formData.get("firstName");
-    const lastName = formData.get("lastName");
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const confirmPassword = formData.get("confirmPassword");
+  // 🔹 Handle register with Supabase Auth
+// 🔹 Handle register with Supabase Auth
+async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  const firstName = formData.get("firstName") as string;
+  const lastName = formData.get("lastName") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
+  if (password !== confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName, lastName, email, password }),
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name: `${firstName} ${lastName}` },
+    },
+  });
+
+  if (error) {
+    alert(error.message);
+  } else if (data.user) {
+    // Optional: store extra user info in your "users" table
+    await supabase.from("users").insert({
+      id: data.user.id,
+      name: `${firstName} ${lastName}`,
+      email: email,
+      role: "user",
+      created_at: new Date(),
     });
 
-    const data = await res.json();
-    if (res.ok) {
-      alert("Account created! Please sign in.");
-      setIsLogin(true); // switch to login tab
-    } else {
-      alert(data.error || "Registration failed");
-    }
+    alert("✅ Registration successful! Please log in.");
+    // 🚀 Force logout so they must sign in manually
+    await supabase.auth.signOut();
+    // Switch UI to login form instead of redirecting home
+    setIsLogin(true);
   }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c]">
@@ -66,7 +79,6 @@ export default function AuthPage() {
         {/* Left Side */}
         <div className="w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-12 flex flex-col justify-between">
           <div>
-            {/* Logo */}
             <div className="flex items-center gap-3 mb-10">
               <div className="bg-red-600 p-3 rounded-full shadow-lg">
                 <span className="text-3xl">⛺</span>
@@ -122,7 +134,6 @@ export default function AuthPage() {
 
         {/* Right Side */}
         <div className="w-1/2 bg-white p-12 flex flex-col justify-center">
-          {/* Tabs */}
           <div className="flex mb-8 rounded-lg overflow-hidden border border-gray-200">
             <button
               onClick={() => setIsLogin(true)}
@@ -167,45 +178,15 @@ export default function AuthPage() {
                 />
               </div>
 
-              <div className="flex justify-between items-center text-sm">
-                <label className="flex items-center gap-2 text-gray-700 font-medium">
-                  <input type="checkbox" className="accent-red-500 w-4 h-4" /> 
-                  <span>Remember me</span>
-                </label>
-                <a href="#" className="text-red-500 hover:underline font-semibold">
-                  Forgot password?
-                </a>
-              </div>
-
               <button
                 type="submit"
                 className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition"
               >
                 Sign In
               </button>
-
-              <div className="flex items-center gap-2 my-6">
-                <hr className="flex-1 border-gray-200" />
-                <span className="text-sm text-gray-400">Or continue with</span>
-                <hr className="flex-1 border-gray-200" />
-              </div>
-              <div className="flex gap-4">
-                <button type="button" className="flex items-center justify-center gap-2 border border-gray-300 py-3 w-1/2 rounded-lg hover:bg-gray-50 transition">
-                  <FaGoogle className="text-[#4285F4]" /> 
-                  <span className="text-gray-700 font-semibold">Google</span>
-                </button>
-                <button type="button" className="flex items-center justify-center gap-2 border border-gray-300 py-3 w-1/2 rounded-lg hover:bg-gray-50 transition">
-                  <FaFacebook className="text-[#1877F2]" /> 
-                  <span className="text-gray-700 font-semibold">Facebook</span>
-                </button>
-              </div>
-
-              <p className="text-xs text-center text-gray-400 mt-6">
-                © 2025 Kampo Ibayo. All rights reserved.
-              </p>
             </form>
           ) : (
-            /* Register Form */
+            // Register Form
             <form onSubmit={handleRegister} className="space-y-5">
               <div className="flex gap-3">
                 <div className="flex items-center border border-gray-300 p-3 rounded-lg w-1/2">
@@ -263,31 +244,12 @@ export default function AuthPage() {
                 />
               </div>
 
-              <label className="flex items-center text-sm text-gray-700 font-medium mt-2 mb-2">
-                <input type="checkbox" className="mr-2 accent-red-500 w-4 h-4" required /> 
-                I agree to the
-                <a href="#" className="text-red-500 ml-2 mr-2 hover:underline font-semibold">
-                  Terms
-                </a>
-                and
-                <a href="#" className="text-red-500 ml-2 hover:underline font-semibold">
-                  Privacy Policy
-                </a>
-              </label>
-
-              <button type="submit" className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition">
+              <button
+                type="submit"
+                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition"
+              >
                 Create Account →
               </button>
-              <p className="text-sm text-center mt-8 text-gray-400">
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(true)}
-                  className="text-red-500 hover:underline font-semibold"
-                >
-                  Sign In
-                </button>
-              </p>
             </form>
           )}
         </div>

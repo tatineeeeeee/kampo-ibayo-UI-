@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.57.4",
     "chart.js": "^4.5.0",
     "lucide-react": "^0.543.0",
     "next": "15.5.2",
