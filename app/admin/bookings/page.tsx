@@ -285,7 +285,8 @@ export default function BookingsPage() {
 
       {/* Modal Overlay - Perfect Light Theme */}
       {showModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200">
             {/* Modal Header - Clean Light */}
             <div className="bg-gray-50 p-6 rounded-t-lg border-b border-gray-200">
@@ -351,7 +352,7 @@ export default function BookingsPage() {
                 </div>
 
                 {/* Contact Information */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-3">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">Contact Information</h4>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
@@ -371,7 +372,7 @@ export default function BookingsPage() {
 
                 {/* Special Requests */}
                 {selectedBooking.special_requests && (
-                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-4">
+                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-3">
                     <h4 className="text-sm font-semibold text-orange-700 mb-2">Special Requests</h4>
                     <p className="text-gray-700 text-sm">{selectedBooking.special_requests}</p>
                   </div>
@@ -379,7 +380,7 @@ export default function BookingsPage() {
 
                 {/* Pet Information */}
                 {selectedBooking.brings_pet !== null && (
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-3">
                     <h4 className="text-sm font-semibold text-purple-700 mb-2">Pet Policy</h4>
                     <p className="text-gray-700 text-sm">
                       {selectedBooking.brings_pet ? (
