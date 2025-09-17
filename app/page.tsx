@@ -115,7 +115,7 @@ const Navbar = () => {
                     <UserIcon className="w-4 h-4 mr-2" /> Profile
                   </Link>
                   <Link
-                    href="/book"
+                    href="/bookings"
                     className="flex items-center px-4 py-2 hover:bg-gray-100"
                   >
                     <BookOpen className="w-4 h-4 mr-2" /> My Bookings
@@ -354,7 +354,36 @@ export default function Home() {
 
       {/* Enhanced Gallery Section */}
       <EnhancedGallery />
-
+      {/* Testimonials Section */}
+      <section id="reviews" className="bg-gray-900 text-white py-16 px-6">
+        <h2 className="text-3xl font-bold text-center mb-10">
+          What Our Guests Say
+        </h2>
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
+          {[
+            {
+              name: "Maria",
+              text: "Peaceful and relaxing stay. Perfect for family bonding!",
+            },
+            {
+              name: "John",
+              text: "Loved the bonfire nights. Will definitely come back.",
+            },
+            {
+              name: "Anna",
+              text: "The staff was very friendly and helpful.",
+            },
+          ].map((r, i) => (
+            <div
+              key={i}
+              className="bg-gray-800 p-6 rounded-xl shadow hover:bg-gray-700 transition"
+            >
+              <p className="text-gray-300 italic">“{r.text}”</p>
+              <p className="mt-4 font-bold text-red-500">- {r.name}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Contact Section */}
       <section id="contact" className="bg-gray-900 text-white py-16 px-6">
@@ -420,36 +449,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-      {/* Testimonials Section */}
-      <section id="reviews" className="bg-gray-900 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">
-          What Our Guests Say
-        </h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            {
-              name: "Maria",
-              text: "Peaceful and relaxing stay. Perfect for family bonding!",
-            },
-            {
-              name: "John",
-              text: "Loved the bonfire nights. Will definitely come back.",
-            },
-            {
-              name: "Anna",
-              text: "The staff was very friendly and helpful.",
-            },
-          ].map((r, i) => (
-            <div
-              key={i}
-              className="bg-gray-800 p-6 rounded-xl shadow hover:bg-gray-700 transition"
-            >
-              <p className="text-gray-300 italic">“{r.text}”</p>
-              <p className="mt-4 font-bold text-red-500">- {r.name}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
         {/* Footer */}
         <footer className="mt-12 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">

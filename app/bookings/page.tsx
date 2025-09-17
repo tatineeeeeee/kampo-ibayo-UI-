@@ -4,19 +4,23 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import type { User } from "@supabase/supabase-js";
-import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus } from "react-icons/fa";
+import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaPhone } from "react-icons/fa";
 
 interface Booking {
   id: number;
-  date: string;
+  user_id: string;
+  guest_name: string;
+  guest_email: string;
+  guest_phone: string;
+  check_in_date: string;
+  check_out_date: string;
+  number_of_guests: number;
+  total_amount: number;
+  special_requests: string;
+  brings_pet: boolean;
   status: string;
-  guests?: number;
-  check_in?: string;
-  check_out?: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  special_request?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function BookingsPage() {
@@ -52,15 +56,20 @@ export default function BookingsPage() {
     async function loadBookings() {
       if (!user) return;
       
+      console.log("Loading bookings for user:", user.id);
+      
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       
+      console.log("Bookings query result:", { data, error });
+      
       if (error) {
         console.error("Error loading bookings:", error);
       } else {
+        console.log("Found bookings:", data?.length || 0);
         setBookings(data || []);
       }
       setLoading(false);
@@ -70,6 +79,29 @@ export default function BookingsPage() {
       loadBookings();
     }
   }, [user]);
+
+  const refreshBookings = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    console.log("Refreshing bookings for user:", user.id);
+    
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    
+    console.log("Refresh query result:", { data, error });
+    
+    if (error) {
+      console.error("Error loading bookings:", error);
+    } else {
+      console.log("Refreshed bookings:", data?.length || 0);
+      setBookings(data || []);
+    }
+    setLoading(false);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -123,12 +155,21 @@ export default function BookingsPage() {
               <p className="text-gray-400">Manage your reservations</p>
             </div>
           </div>
-          <Link href="/book">
-            <button className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
-              <FaPlus className="w-4 h-4" />
-              New Booking
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={refreshBookings}
+              className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
+            >
+              <FaClock className="w-4 h-4" />
+              Refresh
             </button>
-          </Link>
+            <Link href="/book">
+              <button className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
+                <FaPlus className="w-4 h-4" />
+                New Booking
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -186,7 +227,7 @@ export default function BookingsPage() {
                             Booking #{booking.id}
                           </h3>
                           <p className="text-gray-400 text-sm">
-                            {booking.name || "Guest"} • {booking.email}
+                            {booking.guest_name} • {booking.guest_email}
                           </p>
                         </div>
                       </div>
@@ -198,13 +239,13 @@ export default function BookingsPage() {
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       <div className="flex items-center gap-3 text-gray-300">
                         <FaCalendarAlt className="w-4 h-4 text-red-500" />
                         <div>
                           <p className="text-xs text-gray-400">Check-in</p>
                           <p className="font-semibold">
-                            {booking.check_in ? new Date(booking.check_in).toLocaleDateString() : "N/A"}
+                            {booking.check_in_date ? new Date(booking.check_in_date).toLocaleDateString() : "N/A"}
                           </p>
                         </div>
                       </div>
@@ -213,7 +254,7 @@ export default function BookingsPage() {
                         <div>
                           <p className="text-xs text-gray-400">Check-out</p>
                           <p className="font-semibold">
-                            {booking.check_out ? new Date(booking.check_out).toLocaleDateString() : "N/A"}
+                            {booking.check_out_date ? new Date(booking.check_out_date).toLocaleDateString() : "N/A"}
                           </p>
                         </div>
                       </div>
@@ -221,27 +262,44 @@ export default function BookingsPage() {
                         <FaUsers className="w-4 h-4 text-red-500" />
                         <div>
                           <p className="text-xs text-gray-400">Guests</p>
-                          <p className="font-semibold">{booking.guests || 1} guest(s)</p>
+                          <p className="font-semibold">{booking.number_of_guests} guest(s)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <FaClock className="w-4 h-4 text-red-500" />
+                        <div>
+                          <p className="text-xs text-gray-400">Total Amount</p>
+                          <p className="font-semibold">₱{booking.total_amount.toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <FaPhone className="w-4 h-4 text-red-500" />
+                        <div>
+                          <p className="text-xs text-gray-400">Contact</p>
+                          {booking.guest_phone ? (
+                            <a 
+                              href={`tel:${booking.guest_phone}`}
+                              className="font-semibold text-blue-400 hover:text-blue-300 hover:underline"
+                            >
+                              {booking.guest_phone}
+                            </a>
+                          ) : (
+                            <p className="font-semibold text-gray-500">No phone</p>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {booking.phone && (
-                      <div className="mb-4">
-                        <p className="text-gray-400 text-sm">Contact: {booking.phone}</p>
-                      </div>
-                    )}
-
-                    {booking.special_request && (
+                    {booking.special_requests && (
                       <div className="bg-gray-600 p-3 rounded-lg mb-4">
                         <p className="text-xs text-gray-400 mb-1">Special Request:</p>
-                        <p className="text-gray-200 text-sm">{booking.special_request}</p>
+                        <p className="text-gray-200 text-sm">{booking.special_requests}</p>
                       </div>
                     )}
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-600">
                       <p className="text-gray-400 text-sm">
-                        Booking Date: {new Date(booking.date).toLocaleDateString()}
+                        Booking Date: {new Date(booking.created_at).toLocaleDateString()}
                       </p>
                       <div className="flex gap-2">
                         <button className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition">

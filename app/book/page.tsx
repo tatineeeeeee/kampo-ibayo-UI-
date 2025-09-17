@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FaChevronDown } from "react-icons/fa";
+import { supabase } from "../supabaseClient";
+import type { User } from "@supabase/supabase-js";
 
 export default function BookingPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +17,33 @@ export default function BookingPage() {
     pet: false,
     request: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check authentication and get pre-selected date
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Get date from URL params (from calendar click)
+    const selectedDate = searchParams.get('date');
+    if (selectedDate) {
+      setFormData(prev => ({ ...prev, checkIn: selectedDate }));
+    }
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [searchParams]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -28,10 +58,76 @@ export default function BookingPage() {
     setFormData({ ...formData, [name]: fieldValue });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    alert("Reservation submitted!");
+    
+    if (!user) {
+      alert("Please login to make a booking");
+      router.push("/auth");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log("Auth user:", user);
+      console.log("Auth user ID:", user.id);
+      
+      // We'll create the booking directly with the auth user ID
+      // No need to check/create in users table for booking functionality
+      
+      // Calculate total amount
+      const nights = new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime();
+      const numberOfNights = Math.ceil(nights / (1000 * 3600 * 24));
+      const pricePerNight = 1500; // ₱1,500 per night
+      const totalAmount = numberOfNights * pricePerNight;
+
+      console.log("Booking details:", {
+        user_id: user.id,
+        guest_name: formData.name,
+        guest_email: formData.email || user.email,
+        numberOfNights,
+        totalAmount
+      });
+
+      // Insert booking directly
+      const { data: bookingData, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          user_id: user.id, // Use auth user ID directly
+          guest_name: formData.name,
+          guest_email: formData.email || user.email, // Use form email or auth email as fallback
+          guest_phone: formData.phone,
+          check_in_date: formData.checkIn,
+          check_out_date: formData.checkOut,
+          number_of_guests: parseInt(formData.guests),
+          total_amount: totalAmount,
+          special_requests: formData.request,
+          brings_pet: formData.pet,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (bookingError) {
+        console.error("Booking error:", bookingError);
+        throw bookingError;
+      }
+
+      console.log("Booking created:", bookingData);
+
+      console.log("Booking created:", bookingData);
+
+      alert(`Booking successful! Total: ₱${totalAmount.toLocaleString()} for ${numberOfNights} night(s)`);
+      router.push("/bookings");
+      
+    } catch (error: unknown) {
+      console.error('Detailed booking error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Booking failed: ${errorMessage}. Please check console for details.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -189,9 +285,10 @@ export default function BookingPage() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-red-600 text-white font-semibold py-3 rounded-md hover:bg-red-700 transition"
+            disabled={loading}
+            className="w-full bg-red-600 text-white font-semibold py-3 rounded-md hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Reserve Now
+            {loading ? "Processing..." : "Reserve Now"}
           </button>
         </form>
       </div>
