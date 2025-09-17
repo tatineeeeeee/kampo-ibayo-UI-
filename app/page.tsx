@@ -3,9 +3,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
-import { ArrowUp, Menu, X, User as UserIcon, LogOut, BookOpen } from "lucide-react";
+import { 
+  ArrowUp, 
+  Menu, 
+  X, 
+  User as UserIcon, 
+  LogOut, 
+  BookOpen,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  MessageCircle,
+  ArrowRight
+} from "lucide-react";
 import { supabase } from "./supabaseClient";
 import type { User } from "@supabase/supabase-js";
+import { TrustBadges, EnhancedGallery } from "./components/EnhancedComponents";
 
 // ----------------- Navbar -----------------
 const Navbar = () => {
@@ -100,7 +115,7 @@ const Navbar = () => {
                     <UserIcon className="w-4 h-4 mr-2" /> Profile
                   </Link>
                   <Link
-                    href="/bookings"
+                    href="/book"
                     className="flex items-center px-4 py-2 hover:bg-gray-100"
                   >
                     <BookOpen className="w-4 h-4 mr-2" /> My Bookings
@@ -200,10 +215,10 @@ export default function Home() {
     <div>
       <Navbar />
 
-      {/* Hero Section */}
+      {/* Enhanced Hero Section */}
       <section
         id="home"
-        className="relative h-[100vh] w-full flex items-center justify-center"
+        className="relative h-[100vh] w-full flex items-center justify-center overflow-hidden"
       >
         <Image
           src="/pool.jpg"
@@ -212,20 +227,36 @@ export default function Home() {
           priority
           className="object-cover object-top"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/10"></div>
-        <div className="relative z-10 text-center text-white px-6">
-          <h1 className="text-4xl md:text-6xl font-extrabold">
-            Welcome to Kampo Ibayo
-          </h1>
-          <p className="mt-4 text-lg md:text-xl font-bold">
-            Your Peaceful Escape in Gentri Cavite
-          </p>
-          <Link
-            href="/book"
-            className="mt-6 px-6 py-3 bg-red-600 rounded-full font-semibold hover:bg-red-700 transition inline-block text-center"
-          >
-            Book Now
-          </Link>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/10"></div>
+        
+        <div className="relative z-10 text-center text-white px-6 max-w-4xl mx-auto">
+          <div className="space-y-6 animate-fadeInUp">
+            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
+              Welcome to{" "}
+              <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
+                Kampo Ibayo
+              </span>
+            </h1>
+            <p className="text-xl md:text-2xl font-semibold text-gray-200">
+              Your Peaceful Escape in{" "}
+              <span className="text-red-400">General Trias, Cavite</span>
+            </p>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Experience nature&apos;s tranquility at our eco-friendly camping resort. 
+              Perfect for families, couples, and adventure seekers.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
+              <Link
+                href="/book"
+                className="group px-8 py-4 bg-red-600 rounded-full font-bold text-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center gap-2"
+              >
+                <Calendar className="w-5 h-5" />
+                Book Your Stay
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -318,30 +349,77 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section id="gallery" className="bg-gray-800 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">Galleries</h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            "/gallery1.jpg",
-            "/gallery2.jpg",
-            "/gallery3.jpg",
-            "/gallery4.jpg",
-            "/gallery5.jpg",
-            "/gallery6.jpg",
-          ].map((src, i) => (
-            <Image
-              key={i}
-              src={src}
-              alt={`Gallery ${i + 1}`}
-              width={400}
-              height={250}
-              className="rounded-xl shadow-lg object-cover h-60 w-full"
-            />
-          ))}
-        </div>
-      </section>
+      {/* Trust Badges Section */}
+      <TrustBadges />
 
+      {/* Enhanced Gallery Section */}
+      <EnhancedGallery />
+
+
+      {/* Contact Section */}
+      <section id="contact" className="bg-gray-900 text-white py-16 px-6">
+        <h2 className="text-3xl font-bold text-center mb-10">Contact Us</h2>
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3865.1028711673293!2d120.87771827498175!3d14.363458286095279!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33962b004deb807d%3A0xeca498f7c0532508!2sKampo%20Ibayo!5e0!3m2!1sen!2sph!4v1757564277392!5m2!1sen!2sph"
+            width="100%"
+            height="400"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="rounded-xl shadow-lg"
+          ></iframe>
+
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-red-400" />
+                Location
+              </h3>
+              <p className="text-gray-300">
+                132 Ibayo Brgy Tapia 4107 General Trias, Philippines
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Phone className="w-5 h-5 text-red-400" />
+                Contact Details
+              </h3>
+              <div className="space-y-2">
+                <p className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-green-400" />
+                  +63945 277 9541
+                </p>
+                <p className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-blue-400" />
+                  kampoibayo@gmail.com
+                </p>
+                <p className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-blue-500" />
+                  Kampo Ibayo
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-red-400" />
+                Operating Hours
+              </h3>
+              <div className="space-y-1 text-gray-300">
+                <p>Open daily from 8:00 AM to 8:00 PM</p>
+                <p>Check-in: 2:00 PM | Check-out: 12:00 NN</p>
+              </div>
+            </div>
+
+            <button className="w-full mt-6 px-6 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              Message us on Facebook
+            </button>
+          </div>
+        </div>
       {/* Testimonials Section */}
       <section id="reviews" className="bg-gray-900 text-white py-16 px-6">
         <h2 className="text-3xl font-bold text-center mb-10">
@@ -373,42 +451,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className=" bg-gray-900 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">Contact Us</h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3865.1028711673293!2d120.87771827498175!3d14.363458286095279!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33962b004deb807d%3A0xeca498f7c0532508!2sKampo%20Ibayo!5e0!3m2!1sen!2sph!4v1757564277392!5m2!1sen!2sph"
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className="rounded-xl shadow-lg"
-          ></iframe>
-
-          <div>
-            <h3 className="text-xl font-bold mb-4">Location</h3>
-            <p className="mb-4">
-              132 Ibayo Brgy Tapia 4107 General Trias, Philippines
-            </p>
-
-            <h3 className="text-xl font-bold mb-2">Contact Details</h3>
-            <p>📞 +63945 277 9541</p>
-            <p>📧 kampoibayo@gmail.com</p>
-            <p>🌐 Kampo Ibayo</p>
-
-            <h3 className="text-xl font-bold mt-4 mb-2">Operating Hours</h3>
-            <p>Open daily from 8:00 AM to 8:00 PM</p>
-            <p>Check-in: 2:00 PM | Check-out: 12:00 NN</p>
-
-            <button className="mt-6 px-6 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-700 transition">
-              Message us on Facebook
-            </button>
-          </div>
-        </div>
-
         {/* Footer */}
         <footer className="mt-12 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
           <p>© 2025 Kampo Ibayo. All rights reserved.</p>
@@ -419,7 +461,7 @@ export default function Home() {
       {/* Back to Top Button */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed bottom-6 right-6 bg-red-600 text-white h-10 w-10 flex items-center justify-center rounded-full shadow-lg hover:bg-red-700 transition"
+        className="fixed bottom-6 right-6 bg-red-600 text-white h-10 w-10 flex items-center justify-center rounded-full shadow-lg hover:bg-red-700 transition z-40"
         aria-label="Back to top"
       >
         <ArrowUp className="h-6 w-6" />
