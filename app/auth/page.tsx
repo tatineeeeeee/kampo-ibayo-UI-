@@ -23,9 +23,70 @@ export default function AuthPage() {
     if (error) {
       alert(error.message);
     } else {
-      alert("Login successful!");
-      console.log("User:", data.user);
-      router.push("/"); // 🚀 redirect after login
+      console.log("✅ Login successful, checking user role...");
+      console.log("User ID:", data.user.id);
+      console.log("User Email:", data.user.email);
+      
+      // Check user role from database
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role, name, email")
+        .eq("auth_id", data.user.id)
+        .single();
+
+      console.log("User query result:", { userData, userError });
+      console.log("UserError details:", JSON.stringify(userError));
+
+      if (userError) {
+        console.error("Error fetching user role:", userError);
+        
+        // Direct check for admin email as fallback
+        if (data.user.email === 'admin@kampoibayow.com') {
+          console.log("🔑 Admin email detected, redirecting to admin dashboard");
+          alert("Welcome Admin!");
+          router.push("/admin");
+          return;
+        }
+        
+        // If user doesn't exist in users table, treat as regular user
+        if (userError.code === 'PGRST116') {
+          console.log("⚠️ User not found in users table - treating as regular user");
+          
+          // Create user entry in database for future logins
+          try {
+            const { error: insertError } = await supabase.from("users").insert({
+              auth_id: data.user.id,
+              name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+              email: data.user.email || '',
+              role: "user",
+              created_at: new Date().toISOString(),
+            });
+            
+            if (insertError) {
+              console.error("Error creating user profile:", insertError);
+            } else {
+              console.log("✅ Created user profile in database");
+            }
+          } catch (error) {
+            console.error("Failed to create user profile:", error);
+          }
+        }
+        
+        // Redirect regular user to homepage
+        alert("Login successful!");
+        router.push("/");
+      } else {
+        const userRole = userData?.role || "user";
+        console.log("User role detected:", userRole);
+        
+        if (userRole === "admin") {
+          alert("Welcome Admin!");
+          router.push("/admin"); // 🚀 redirect to admin dashboard
+        } else {
+          alert("Login successful!");
+          router.push("/"); // 🚀 redirect to regular home page
+        }
+      }
     }
   }
 
@@ -56,14 +117,24 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   if (error) {
     alert(error.message);
   } else if (data.user) {
-    // Optional: store extra user info in your "users" table
-    await supabase.from("users").insert({
-      id: data.user.id,
-      name: `${firstName} ${lastName}`,
-      email: email,
-      role: "user",
-      created_at: new Date(),
-    });
+    try {
+      // Store extra user info in your "users" table
+      const { error: insertError } = await supabase.from("users").insert({
+        auth_id: data.user.id,
+        name: `${firstName} ${lastName}`,
+        email: email,
+        role: "user", // Regular users are always "user" role
+        created_at: new Date().toISOString(), // Convert to ISO string
+      });
+
+      if (insertError) {
+        console.error("Error creating user profile:", insertError);
+        // Continue anyway - auth account was created successfully
+      }
+    } catch (insertError) {
+      console.error("Failed to create user profile:", insertError);
+      // Continue anyway - auth account was created successfully
+    }
 
     alert("✅ Registration successful! Please log in.");
     // 🚀 Force logout so they must sign in manually

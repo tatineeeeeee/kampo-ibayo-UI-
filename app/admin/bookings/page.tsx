@@ -37,18 +37,24 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
+      console.log('🔍 Fetching bookings...');
+      
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('📊 Database response:', { data, error });
+      console.log('📈 Number of bookings found:', data?.length || 0);
+
       if (error) {
-        console.error('Error fetching bookings:', error);
+        console.error('❌ Error fetching bookings:', error);
       } else {
+        console.log('✅ Successfully fetched bookings');
         setBookings(data as Booking[] || []);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('💥 Unexpected error:', error);
     } finally {
       setLoading(false);
     }
@@ -395,7 +401,7 @@ export default function BookingsPage() {
                       </p>
                       {selectedBooking.cancelled_at && (
                         <p className="text-gray-600 text-xs">
-                          Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString()} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
+                          Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString('en-PH', {timeZone: 'Asia/Manila'})} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString('en-PH', {timeZone: 'Asia/Manila', hour: '2-digit', minute:'2-digit', hour12: true})}
                         </p>
                       )}
                       {selectedBooking.cancellation_reason && (

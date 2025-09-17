@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { 
   ArrowUp, 
   Menu, 
@@ -27,6 +28,8 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [profileMenu, setProfileMenu] = useState(false);
 
   const menuItems = useMemo(
@@ -56,15 +59,49 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [menuItems]);
 
-  // Track Supabase session
+  // Track Supabase session and user role
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-    });
+    const checkUserAndRole = async () => {
+      setIsLoadingAuth(true);
+      const { data } = await supabase.auth.getSession();
+      const currentUser = data.session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        // Check user role
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role")
+          .eq("auth_id", currentUser.id)
+          .single();
+        
+        setUserRole(userData?.role || "user");
+      } else {
+        setUserRole(null);
+      }
+      setIsLoadingAuth(false);
+    };
+
+    checkUserAndRole();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
+      async (_event, session) => {
+        setIsLoadingAuth(true);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        
+        if (currentUser) {
+          // Check role when auth state changes
+          const { data: userData } = await supabase
+            .from("users")
+            .select("role")
+            .eq("auth_id", currentUser.id)
+            .single();
+          setUserRole(userData?.role || "user");
+        } else {
+          setUserRole(null);
+        }
+        setIsLoadingAuth(false);
       }
     );
 
@@ -97,33 +134,49 @@ const Navbar = () => {
           ))}
 
           {/* Auth Buttons */}
-          {user ? (
+          {isLoadingAuth ? (
+            <div className="px-3 py-1 bg-gray-700 rounded animate-pulse">
+              <div className="w-12 h-4 bg-gray-600 rounded"></div>
+            </div>
+          ) : user ? (
             <div className="relative">
               <button
                 onClick={() => setProfileMenu(!profileMenu)}
                 className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
               >
-                ☰
+                {userRole === "admin" ? "👑 Admin" : "☰"}
               </button>
 
               {profileMenu && (
                 <div className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg overflow-hidden">
-                  <Link
-                    href="/profile"
-                    className="flex items-center px-4 py-2 hover:bg-gray-100"
-                  >
-                    <UserIcon className="w-4 h-4 mr-2" /> Profile
-                  </Link>
-                  <Link
-                    href="/bookings"
-                    className="flex items-center px-4 py-2 hover:bg-gray-100"
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" /> My Bookings
-                  </Link>
+                  {userRole === "admin" ? (
+                    <Link
+                      href="/admin"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100"
+                    >
+                      👑 Admin Panel
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        href="/profile"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100"
+                      >
+                        <UserIcon className="w-4 h-4 mr-2" /> Profile
+                      </Link>
+                      <Link
+                        href="/bookings"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100"
+                      >
+                        <BookOpen className="w-4 h-4 mr-2" /> My Bookings
+                      </Link>
+                    </>
+                  )}
                   <button
                     onClick={async () => {
                       await supabase.auth.signOut();
                       setUser(null);
+                      setUserRole(null);
                       setProfileMenu(false);
                     }}
                     className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -169,26 +222,45 @@ const Navbar = () => {
             </a>
           ))}
 
-          {user ? (
+          {isLoadingAuth ? (
             <div className="space-y-2">
-              <Link
-                href="/profile"
-                className="block px-2 py-1 hover:text-red-500"
-                onClick={() => setIsOpen(false)}
-              >
-                Profile
-              </Link>
-              <Link
-                href="/bookings"
-                className="block px-2 py-1 hover:text-red-500"
-                onClick={() => setIsOpen(false)}
-              >
-                My Bookings
-              </Link>
+              <div className="px-2 py-1 bg-gray-700 rounded animate-pulse">
+                <div className="w-20 h-4 bg-gray-600 rounded"></div>
+              </div>
+            </div>
+          ) : user ? (
+            <div className="space-y-2">
+              {userRole === "admin" ? (
+                <Link
+                  href="/admin"
+                  className="block px-2 py-1 hover:text-red-500"
+                  onClick={() => setIsOpen(false)}
+                >
+                  👑 Admin Panel
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/profile"
+                    className="block px-2 py-1 hover:text-red-500"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/bookings"
+                    className="block px-2 py-1 hover:text-red-500"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Bookings
+                  </Link>
+                </>
+              )}
               <button
                 onClick={async () => {
                   await supabase.auth.signOut();
                   setUser(null);
+                  setUserRole(null);
                   setIsOpen(false);
                 }}
                 className="block w-full text-left px-2 py-1 bg-gray-700 rounded hover:bg-gray-600"
@@ -211,6 +283,31 @@ const Navbar = () => {
 
 // ----------------- Home Page -----------------
 export default function Home() {
+  const router = useRouter();
+
+  // Check for admin role and redirect
+  useEffect(() => {
+    const checkAdminAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Check if user is admin
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role")
+          .eq("auth_id", session.user.id)
+          .single();
+
+        if (userData?.role === "admin") {
+          console.log("Admin detected, redirecting to admin dashboard...");
+          router.push("/admin");
+          return;
+        }
+      }
+    };
+
+    checkAdminAndRedirect();
+  }, [router]);
   return (
     <div>
       <Navbar />
