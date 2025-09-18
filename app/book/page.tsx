@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { FaChevronDown, FaCalendarAlt } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
+import { withAuthGuard } from "../hooks/useAuthGuard";
+import { validateUserAction } from "../utils/userValidation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -13,7 +15,7 @@ interface Booking {
   status: string | null;
 }
 
-export default function BookingPage() {
+function BookingPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -123,6 +125,12 @@ export default function BookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // First, validate that the user account still exists
+    const validation = await validateUserAction();
+    if (!validation.isValid) {
+      return; // User will be redirected automatically
+    }
     
     // Validate all required fields
     if (!formData.name.trim()) {
@@ -491,3 +499,6 @@ export default function BookingPage() {
     </>
   );
 }
+
+// Wrap the component with auth guard
+export default withAuthGuard(BookingPage);

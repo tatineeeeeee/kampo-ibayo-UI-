@@ -282,7 +282,7 @@ const Navbar = () => {
 };
 
 // ----------------- Home Page -----------------
-export default function Home() {
+function Home() {
   const router = useRouter();
 
   // Check for admin role and redirect
@@ -566,3 +566,6 @@ export default function Home() {
     </div>
   );
 }
+
+// Export without auth guard - home page should be public
+export default Home;

@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
+import { withAuthGuard } from "../hooks/useAuthGuard";
 import type { User } from "@supabase/supabase-js";
 import { FaUser, FaEnvelope, FaUserTag, FaEdit, FaSignOutAlt, FaHome } from "react-icons/fa";
 
-export default function ProfilePage() {
+function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -229,3 +230,6 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+// Wrap with auth guard
+export default withAuthGuard(ProfilePage);

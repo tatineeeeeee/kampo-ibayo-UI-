@@ -21,38 +21,68 @@ interface Booking {
   cancelled_by: string | null; // 'user' or 'admin'
   cancelled_at: string | null;
   cancellation_reason: string | null;
+  // Add user info to track if user still exists
+  user_exists?: boolean;
 }
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [adminCancellationReason, setAdminCancellationReason] = useState("");
+  const [showDeletedUsers, setShowDeletedUsers] = useState(true);
 
   useEffect(() => {
     fetchBookings();
   }, []);
 
+  // Filter bookings based on user preference
+  useEffect(() => {
+    if (showDeletedUsers) {
+      setFilteredBookings(bookings);
+    } else {
+      setFilteredBookings(bookings.filter(booking => booking.user_exists));
+    }
+  }, [bookings, showDeletedUsers]);
+
   const fetchBookings = async () => {
     try {
       console.log('🔍 Fetching bookings...');
       
-      const { data, error } = await supabase
+      const { data: bookingsData, error } = await supabase
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('📊 Database response:', { data, error });
-      console.log('📈 Number of bookings found:', data?.length || 0);
-
       if (error) {
         console.error('❌ Error fetching bookings:', error);
-      } else {
-        console.log('✅ Successfully fetched bookings');
-        setBookings(data as Booking[] || []);
+        return;
       }
+
+      console.log('📊 Database response:', { data: bookingsData, error });
+      console.log('📈 Number of bookings found:', bookingsData?.length || 0);
+
+      // Check which users still exist
+      const bookingsWithUserStatus = await Promise.all(
+        (bookingsData || []).map(async (booking) => {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_id', booking.user_id)
+            .single();
+          
+          return {
+            ...booking,
+            user_exists: !userError && userData !== null
+          };
+        })
+      );
+
+      console.log('✅ Successfully fetched bookings with user status');
+      setBookings(bookingsWithUserStatus as Booking[]);
     } catch (error) {
       console.error('💥 Unexpected error:', error);
     } finally {
@@ -187,19 +217,40 @@ export default function BookingsPage() {
       <div className="bg-white rounded-xl shadow-md p-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-700">
-            All Bookings ({bookings.length})
+            All Bookings ({filteredBookings.length})
+            {!showDeletedUsers && bookings.length > filteredBookings.length && (
+              <span className="text-sm text-gray-500 ml-2">
+                ({bookings.length - filteredBookings.length} hidden from deleted users)
+              </span>
+            )}
           </h3>
-          <button 
-            onClick={fetchBookings}
-            className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <label className="flex items-center text-sm">
+              <input
+                type="checkbox"
+                checked={showDeletedUsers}
+                onChange={(e) => setShowDeletedUsers(e.target.checked)}
+                className="mr-2"
+              />
+              Show deleted user bookings
+            </label>
+            <button 
+              onClick={fetchBookings}
+              className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
         
-        {bookings.length === 0 ? (
+        {filteredBookings.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>No bookings found</p>
+            {!showDeletedUsers && bookings.length > 0 && (
+              <p className="text-sm mt-2">
+                All bookings are from deleted users. Check &quot;Show deleted user bookings&quot; to see them.
+              </p>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -218,10 +269,17 @@ export default function BookingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id} className="border-t hover:bg-gray-50">
+                {filteredBookings.map((booking) => (
+                  <tr key={booking.id} className={`border-t hover:bg-gray-50 ${!booking.user_exists ? 'bg-red-50' : ''}`}>
                     <td className="p-3 text-black">
-                      <div className="font-medium">{booking.guest_name}</div>
+                      <div className="font-medium">
+                        {booking.guest_name}
+                        {!booking.user_exists && (
+                          <span className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded">
+                            User Deleted
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-black text-sm">{booking.guest_email}</td>
                     <td className="p-3 text-black text-sm">
