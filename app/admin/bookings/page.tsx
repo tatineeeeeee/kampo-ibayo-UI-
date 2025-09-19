@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 interface Booking {
   id: number;
@@ -34,6 +35,11 @@ export default function BookingsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [adminCancellationReason, setAdminCancellationReason] = useState("");
   const [showDeletedUsers, setShowDeletedUsers] = useState(true);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // You can make this configurable
+  const [paginatedBookings, setPaginatedBookings] = useState<Booking[]>([]);
 
   useEffect(() => {
     fetchBookings();
@@ -47,6 +53,18 @@ export default function BookingsPage() {
       setFilteredBookings(bookings.filter(booking => booking.user_exists));
     }
   }, [bookings, showDeletedUsers]);
+
+  // Pagination logic
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedBookings(filteredBookings.slice(startIndex, endIndex));
+  }, [filteredBookings, currentPage, itemsPerPage]);
+
+  // Reset to first page when filtered bookings change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredBookings]);
 
   const fetchBookings = async () => {
     try {
@@ -204,6 +222,20 @@ export default function BookingsPage() {
     setAdminCancellationReason("");
   };
 
+  // Pagination helpers
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredBookings.length);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => setCurrentPage(Math.max(1, currentPage - 1));
+  const goToNextPage = () => setCurrentPage(Math.min(totalPages, currentPage + 1));
+
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -225,7 +257,7 @@ export default function BookingsPage() {
             )}
           </h3>
           <div className="flex gap-2">
-            <label className="flex items-center text-sm">
+            <label className="flex items-center text-sm text-black">
               <input
                 type="checkbox"
                 checked={showDeletedUsers}
@@ -242,6 +274,18 @@ export default function BookingsPage() {
             </button>
           </div>
         </div>
+
+        {/* Pagination Info */}
+        {filteredBookings.length > 0 && (
+          <div className="flex justify-between items-center mb-4 text-sm text-gray-600">
+            <div>
+              Showing {startIndex + 1} to {endIndex} of {filteredBookings.length} bookings
+            </div>
+            <div>
+              Page {currentPage} of {totalPages}
+            </div>
+          </div>
+        )}
         
         {filteredBookings.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
@@ -269,7 +313,7 @@ export default function BookingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBookings.map((booking) => (
+                {paginatedBookings.map((booking) => (
                   <tr key={booking.id} className={`border-t hover:bg-gray-50 ${!booking.user_exists ? 'bg-red-50' : ''}`}>
                     <td className="p-3 text-black">
                       <div className="font-medium">
@@ -337,6 +381,79 @@ export default function BookingsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {filteredBookings.length > itemsPerPage && (
+          <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="First page"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNumber = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + i;
+                } else {
+                  pageNumber = currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => goToPage(pageNumber)}
+                    className={`px-3 py-2 text-sm rounded-md border ${
+                      currentPage === pageNumber
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Next page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Last page"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>

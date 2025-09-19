@@ -83,22 +83,41 @@ export default function SettingsPage() {
   useEffect(() => {
     const handleScroll = () => {
       const sections = ["profile", "security", "notifications", "privacy"];
-      const scrollPos = window.scrollY + 200;
+      const scrollPos = window.scrollY + 300; // Increased offset for better detection
       
-      for (const section of sections) {
+      // Check sections from bottom to top to ensure proper priority
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
         const element = document.getElementById(section);
         if (element) {
-          if (
-            scrollPos >= element.offsetTop &&
-            scrollPos < element.offsetTop + element.offsetHeight
-          ) {
+          const elementTop = element.offsetTop;
+          const elementBottom = elementTop + element.offsetHeight;
+          
+          if (scrollPos >= elementTop && scrollPos <= elementBottom) {
             setActiveSection(section);
+            break;
           }
+        }
+      }
+      
+      // Special handling for the last section (privacy)
+      const privacyElement = document.getElementById("privacy");
+      if (privacyElement) {
+        const privacyTop = privacyElement.offsetTop;
+        const windowBottom = window.scrollY + window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        
+        // If we're near the bottom of the page, activate privacy section
+        if (windowBottom >= documentHeight - 100 || scrollPos >= privacyTop - 100) {
+          setActiveSection("privacy");
         }
       }
     };
 
     window.addEventListener("scroll", handleScroll);
+    // Call once to set initial state
+    handleScroll();
+    
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -158,6 +177,21 @@ export default function SettingsPage() {
       alert("Error updating password. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 100; // Offset for sticky header
+      const elementPosition = element.offsetTop;
+      const offsetPosition = elementPosition - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+      setActiveSection(sectionId);
     }
   };
 
@@ -227,9 +261,9 @@ export default function SettingsPage() {
           <div className="bg-gray-800 rounded-xl shadow-2xl p-6 sticky top-6">
             <h3 className="text-lg font-bold text-white mb-4">Settings</h3>
             <nav className="space-y-2">
-              <a 
-                href="#profile" 
-                className={`flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
+              <button 
+                onClick={() => scrollToSection("profile")}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "profile" 
                     ? "bg-red-600 text-white" 
                     : "text-gray-300 hover:bg-red-600 hover:text-white"
@@ -237,10 +271,10 @@ export default function SettingsPage() {
               >
                 <FaUser className="w-4 h-4" />
                 Profile Information
-              </a>
-              <a 
-                href="#security" 
-                className={`flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
+              </button>
+              <button 
+                onClick={() => scrollToSection("security")}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "security" 
                     ? "bg-red-600 text-white" 
                     : "text-gray-300 hover:bg-red-600 hover:text-white"
@@ -248,10 +282,10 @@ export default function SettingsPage() {
               >
                 <FaLock className="w-4 h-4" />
                 Security & Password
-              </a>
-              <a 
-                href="#notifications" 
-                className={`flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
+              </button>
+              <button 
+                onClick={() => scrollToSection("notifications")}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "notifications" 
                     ? "bg-red-600 text-white" 
                     : "text-gray-300 hover:bg-red-600 hover:text-white"
@@ -259,10 +293,10 @@ export default function SettingsPage() {
               >
                 <FaBell className="w-4 h-4" />
                 Notifications
-              </a>
-              <a 
-                href="#privacy" 
-                className={`flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
+              </button>
+              <button 
+                onClick={() => scrollToSection("privacy")}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "privacy" 
                     ? "bg-red-600 text-white" 
                     : "text-gray-300 hover:bg-red-600 hover:text-white"
@@ -270,7 +304,7 @@ export default function SettingsPage() {
               >
                 <FaShieldAlt className="w-4 h-4" />
                 Privacy & Data
-              </a>
+              </button>
             </nav>
           </div>
         </div>

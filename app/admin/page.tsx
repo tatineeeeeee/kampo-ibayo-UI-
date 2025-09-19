@@ -11,7 +11,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Line  } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
+import { useAdminNotifications } from "../hooks/useAdminNotifications";
 
 ChartJS.register(
   CategoryScale,
@@ -25,6 +26,8 @@ ChartJS.register(
 );
 
 export default function DashboardPage() {
+  const { notifications, loading } = useAdminNotifications();
+  
   // Line Chart Data (Bookings vs Cancellations)
   const bookingData = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
@@ -53,27 +56,33 @@ export default function DashboardPage() {
     },
   };
 
-
-
   return (
     <div className="space-y-6">
-      {/* Top Metrics */}
+      {/* Top Metrics - Now with Real Data */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-gray-500 text-sm">Today’s Bookings</h3>
-          <p className="text-3xl font-bold text-blue-600">5</p>
+          <h3 className="text-gray-500 text-sm">Pending Bookings</h3>
+          <p className="text-3xl font-bold text-blue-600">
+            {loading ? "..." : notifications.pendingBookings}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-gray-500 text-sm">Upcoming Reservations</h3>
-          <p className="text-3xl font-bold text-green-600">10</p>
+          <h3 className="text-gray-500 text-sm">New Users (24h)</h3>
+          <p className="text-3xl font-bold text-green-600">
+            {loading ? "..." : notifications.newUsers}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-gray-500 text-sm">Total Revenue</h3>
-          <p className="text-3xl font-bold text-purple-600">₱20,000</p>
+          <h3 className="text-gray-500 text-sm">Total Notifications</h3>
+          <p className="text-3xl font-bold text-purple-600">
+            {loading ? "..." : notifications.totalNotifications}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-gray-500 text-sm">Cancellations</h3>
-          <p className="text-3xl font-bold text-red-600">2</p>
+          <h3 className="text-gray-500 text-sm">Recent Cancellations</h3>
+          <p className="text-3xl font-bold text-red-600">
+            {loading ? "..." : notifications.recentCancellations}
+          </p>
         </div>
       </div>
 
@@ -84,8 +93,6 @@ export default function DashboardPage() {
         </h3>
         <Line data={bookingData} options={bookingOptions} />
       </div>
-
-
 
       {/* Recent Bookings */}
       <div className="bg-white rounded-xl shadow-md p-4">

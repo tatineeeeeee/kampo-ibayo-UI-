@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { FaChevronDown, FaCalendarAlt } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { withAuthGuard } from "../hooks/useAuthGuard";
-import { validateUserAction } from "../utils/userValidation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -126,10 +125,12 @@ function BookingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // First, validate that the user account still exists
-    const validation = await validateUserAction();
-    if (!validation.isValid) {
-      return; // User will be redirected automatically
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Please log in to make a booking');
+      window.location.href = '/auth';
+      return;
     }
     
     // Validate all required fields
@@ -173,12 +174,8 @@ function BookingPage() {
     const checkInDateTime = `${formData.checkIn!.toISOString().split('T')[0]}T14:00:00`; // 2 PM
     const checkOutDateTime = `${formData.checkOut!.toISOString().split('T')[0]}T12:00:00`; // 12 PM
     
-    // Get current user or use a default guest UUID
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || '00000000-0000-0000-0000-000000000000'; // Default guest UUID
-    
     const bookingData = {
-      user_id: userId,
+      user_id: user.id,
       guest_name: formData.name.trim(),
       guest_email: formData.email.trim(),
       guest_phone: formData.phone.trim() || null,
@@ -208,19 +205,8 @@ function BookingPage() {
         alert(`Error creating booking: ${error.message || 'Unknown error'}. Please try again.`);
       } else {
         alert('Reservation submitted successfully! Check-in: 2 PM, Check-out: 12 PM');
-        // Reset form
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          guests: "",
-          checkIn: null,
-          checkOut: null,
-          pet: false,
-          request: "",
-        });
-        // Refresh availability - reload the page or refetch
-        window.location.reload();
+        // Redirect to bookings page
+        window.location.href = '/bookings';
       }
     } catch (error) {
       console.error('Unexpected error:', error);
