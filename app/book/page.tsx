@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FaChevronDown, FaCalendarAlt } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
-import { withAuthGuard } from "../hooks/useAuthGuard";
+import { useAuth } from "../contexts/AuthContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -15,6 +16,10 @@ interface Booking {
 }
 
 function BookingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // All useState hooks must come before any early returns
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,34 +31,60 @@ function BookingPage() {
     request: "",
   });
 
-  // Get today's date in YYYY-MM-DD format (Philippines timezone)
   const [minDate, setMinDate] = useState<Date>(new Date());
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
-  
-  // Calculate unavailable dates for the date picker
-  const getUnavailableDates = () => {
-    const unavailable: Date[] = [];
-    
-    existingBookings.forEach(booking => {
-      const checkIn = new Date(booking.check_in_date);
-      const checkOut = new Date(booking.check_out_date);
-      
-      // Add all dates between check-in and check-out (inclusive of check-in, exclusive of check-out)
-      const currentDate = new Date(checkIn);
-      while (currentDate < checkOut) {
-        unavailable.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-    });
-    
-    return unavailable;
-  };
-  
+
+  // Auth check useEffect
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth");
+    }
+  }, [user, loading, router]);
+
+  // Data loading useEffect  
   useEffect(() => {
     const today = new Date();
     // Convert to Philippines timezone (UTC+8)
     const philippinesTime = new Date(today.getTime() + (8 * 60 * 60 * 1000));
     setMinDate(philippinesTime);
+    
+    // Auto-fill user information
+    const loadUserData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log('📱 User data for auto-fill:', {
+            user_metadata: user.user_metadata,
+            email: user.email,
+            phone: user.phone,
+            user_metadata_phone: user.user_metadata?.phone,
+            user_metadata_mobile: user.user_metadata?.mobile,
+            user_metadata_phone_number: user.user_metadata?.phone_number,
+          });
+          
+          // Try multiple possible field names for phone
+          const phoneNumber = user.user_metadata?.phone || 
+                             user.user_metadata?.mobile || 
+                             user.user_metadata?.phone_number || 
+                             user.phone || 
+                             "";
+          
+          const userName = user.user_metadata?.name || "";
+          const userEmail = user.email || "";
+          
+          console.log('📱 Final phone number found:', phoneNumber);
+          
+          setFormData(prevData => ({
+            ...prevData,
+            name: userName || prevData.name,
+            email: userEmail || prevData.email,
+            phone: phoneNumber || prevData.phone,
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
     
     // Fetch existing bookings
     const fetchExistingBookings = async () => {
@@ -78,9 +109,46 @@ function BookingPage() {
       }
     };
     
+    loadUserData();
     fetchExistingBookings();
   }, []);
 
+  // Show loading if auth is still loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="text-lg text-gray-300">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null;
+  }
+  
+  // Calculate unavailable dates for the date picker
+  const getUnavailableDates = () => {
+    const unavailable: Date[] = [];
+    
+    existingBookings.forEach(booking => {
+      const checkIn = new Date(booking.check_in_date);
+      const checkOut = new Date(booking.check_out_date);
+      
+      // Add all dates between check-in and check-out (inclusive of check-in, exclusive of check-out)
+      const currentDate = new Date(checkIn);
+      while (currentDate < checkOut) {
+        unavailable.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    });
+    
+    return unavailable;
+  };
+  
   const checkBookingConflict = (checkInDate: Date | null, checkOutDate: Date | null) => {
     if (!checkInDate || !checkOutDate) return false;
     
@@ -119,6 +187,7 @@ function BookingPage() {
     if (type === "checkbox" && e.target instanceof HTMLInputElement) {
       fieldValue = e.target.checked;
     }
+    
     setFormData({ ...formData, [name]: fieldValue });
   };
 
@@ -302,6 +371,24 @@ function BookingPage() {
         .react-datepicker__input-container input::placeholder {
           color: #9ca3af !important;
         }
+
+        /* Fix browser autofill styling - consistent dark theme */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important;
+          -webkit-text-fill-color: white !important;
+          background-color: #1f2937 !important;
+          border: 1px solid #374151 !important;
+          transition: background-color 5000s ease-in-out 0s !important;
+        }
+
+        /* Force DatePicker input to be transparent */
+        .react-datepicker__input-container input {
+          background-color: transparent !important;
+          background: transparent !important;
+        }
       `}</style>
       <main
       className="min-h-screen bg-cover bg-center flex items-center justify-center p-6"
@@ -311,20 +398,26 @@ function BookingPage() {
       }}
     >
       <div className="bg-gray-900 bg-opacity-90 text-white rounded-lg shadow-2xl w-full max-w-2xl p-8">
-        {/* Title */}
+        {/* Title - clean and simple */}
         <h1 className="text-2xl font-bold text-center mb-6">Book your Stay</h1>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Full Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">Full Name</label>
+            <label className="block text-sm font-medium mb-1">
+              Full Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full rounded-md bg-gray-800 border border-gray-700 px-4 py-2"
+              className={`w-full rounded-md border px-4 py-2 transition-colors ${
+                formData.name 
+                  ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
+                  : 'bg-gray-800 border-gray-700 focus:border-gray-600'
+              }`}
               required
                placeholder="e.g. John Doe"
             />
@@ -334,14 +427,18 @@ function BookingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Email Address
+                Email Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full rounded-md bg-gray-800 border border-gray-700 px-4 py-2"
+                className={`w-full rounded-md border px-4 py-2 transition-colors ${
+                  formData.email 
+                    ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
+                    : 'bg-gray-800 border-gray-700 focus:border-gray-600'
+                }`}
                 required
                 placeholder="your@email.com"
               />
@@ -355,7 +452,11 @@ function BookingPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full rounded-md bg-gray-800 border border-gray-700 px-4 py-2"
+                className={`w-full rounded-md border px-4 py-2 transition-colors ${
+                  formData.phone 
+                    ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
+                    : 'bg-gray-800 border-gray-700 focus:border-gray-600'
+                }`}
                 placeholder="e.g. +63 912 345 6789"              
               />
             </div>
@@ -365,14 +466,18 @@ function BookingPage() {
 {/* Guests */}
 <div>
   <label className="block text-sm font-medium mb-1">
-    Number of Guest
+    Number of Guest <span className="text-red-500">*</span>
   </label>
   <div className="relative">
     <select
       name="guests"
       value={formData.guests}
       onChange={handleChange}
-      className="w-full appearance-none rounded-md bg-gray-800 border border-gray-700 px-4 py-2 text-white"
+      className={`w-full appearance-none rounded-md border px-4 py-2 text-white transition-colors ${
+        formData.guests 
+          ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
+          : 'bg-gray-800 border-gray-700 focus:border-gray-600'
+      }`}
     >
       <option value="">Select number of Guest</option>
       {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
@@ -394,42 +499,54 @@ function BookingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Check-in Date
+                Check-in Date <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <DatePicker
-                  selected={formData.checkIn}
-                  onChange={(date: Date | null) => setFormData({ ...formData, checkIn: date })}
-                  minDate={minDate}
-                  excludeDates={getUnavailableDates()}
-                  placeholderText="Select check-in date"
-                  className="w-full rounded-md bg-gray-800 border border-gray-700 px-4 py-2 pr-10 text-white placeholder-gray-400 h-[42px]"
-                  wrapperClassName="w-full"
-                  required
-                  dateFormat="MMM dd, yyyy"
-                  showPopperArrow={false}
-                />
+                <div className={`rounded-md border transition-colors ${
+                  formData.checkIn 
+                    ? 'bg-green-900/30 border-green-600' 
+                    : 'bg-gray-800 border-gray-700'
+                }`}>
+                  <DatePicker
+                    selected={formData.checkIn}
+                    onChange={(date: Date | null) => setFormData({ ...formData, checkIn: date })}
+                    minDate={minDate}
+                    excludeDates={getUnavailableDates()}
+                    placeholderText="Select check-in date"
+                    className="w-full rounded-md border-none px-4 py-2 pr-10 text-white placeholder-gray-400 h-[42px] focus:outline-none [&>input]:!bg-transparent"
+                    wrapperClassName="w-full"
+                    required
+                    dateFormat="MMM dd, yyyy"
+                    showPopperArrow={false}
+                  />
+                </div>
                 <FaCalendarAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
               <p className="text-xs text-gray-400 mt-1">Check-in time: 2:00 PM</p>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">
-                Check-out Date
+                Check-out Date <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <DatePicker
-                  selected={formData.checkOut}
-                  onChange={(date: Date | null) => setFormData({ ...formData, checkOut: date })}
-                  minDate={formData.checkIn ? new Date(formData.checkIn.getTime() + 24 * 60 * 60 * 1000) : minDate}
-                  excludeDates={getUnavailableDates()}
-                  placeholderText="Select check-out date"
-                  className="w-full rounded-md bg-gray-800 border border-gray-700 px-4 py-2 pr-10 text-white placeholder-gray-400 h-[42px]"
-                  wrapperClassName="w-full"
-                  required
-                  dateFormat="MMM dd, yyyy"
-                  showPopperArrow={false}
-                />
+                <div className={`rounded-md border transition-colors ${
+                  formData.checkOut 
+                    ? 'bg-green-900/30 border-green-600' 
+                    : 'bg-gray-800 border-gray-700'
+                }`}>
+                  <DatePicker
+                    selected={formData.checkOut}
+                    onChange={(date: Date | null) => setFormData({ ...formData, checkOut: date })}
+                    minDate={formData.checkIn ? new Date(formData.checkIn.getTime() + 24 * 60 * 60 * 1000) : minDate}
+                    excludeDates={getUnavailableDates()}
+                    placeholderText="Select check-out date"
+                    className="w-full rounded-md border-none px-4 py-2 pr-10 text-white placeholder-gray-400 h-[42px] focus:outline-none [&>input]:!bg-transparent"
+                    wrapperClassName="w-full"
+                    required
+                    dateFormat="MMM dd, yyyy"
+                    showPopperArrow={false}
+                  />
+                </div>
                 <FaCalendarAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
               <p className="text-xs text-gray-400 mt-1">Check-out time: 12:00 PM</p>
@@ -467,7 +584,11 @@ function BookingPage() {
               onChange={handleChange}
               rows={3}
               placeholder="Any special accommodations or request..."
-              className="w-full rounded-md bg-gray-800 border border-gray-700 px-4 py-2"
+              className={`w-full rounded-md border px-4 py-2 transition-colors ${
+                formData.request 
+                  ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
+                  : 'bg-gray-800 border-gray-700 focus:border-gray-600'
+              }`}
               
             />
           </div>
@@ -486,5 +607,5 @@ function BookingPage() {
   );
 }
 
-// Wrap the component with auth guard
-export default withAuthGuard(BookingPage);
+// Export the component directly - auth is handled inside
+export default BookingPage;

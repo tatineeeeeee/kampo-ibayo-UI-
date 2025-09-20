@@ -127,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Admin Profile */}
             <div className="flex items-center gap-2 text-gray-700 font-semibold bg-blue-50 px-3 py-1 rounded-full">
               <ShieldCheck className="w-5 h-5 text-blue-600" />
-              {adminName || user?.user_metadata?.displayName || user?.user_metadata?.name || user?.email || "Admin User"}
+              {adminName || user?.email || "Admin User"}
             </div>
           </div>
         </header>

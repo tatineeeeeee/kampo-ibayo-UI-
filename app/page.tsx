@@ -20,22 +20,33 @@ import {
   ArrowRight
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "./contexts/AuthContext";
 import { TrustBadges, EnhancedGallery } from "./components/EnhancedComponents";
 
 // ----------------- Navbar -----------------
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [profileMenu, setProfileMenu] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Use global auth context instead of local state
+  const { user, userRole, loading: isLoadingAuth } = useAuth();
 
   const menuItems = useMemo(
     () => ["Home", "About", "Amenities", "Gallery", "Contact"],
     []
   );
+
+  // Ensure component is mounted before showing auth-dependent UI
+  useEffect(() => {
+    // Small delay to ensure proper hydration
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Track active section on scroll
   useEffect(() => {
@@ -58,57 +69,6 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [menuItems]);
-
-  // Track Supabase session and user role
-  useEffect(() => {
-    const checkUserAndRole = async () => {
-      setIsLoadingAuth(true);
-      const { data } = await supabase.auth.getSession();
-      const currentUser = data.session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        // Check user role
-        const { data: userData } = await supabase
-          .from("users")
-          .select("role")
-          .eq("auth_id", currentUser.id)
-          .single();
-        
-        setUserRole(userData?.role || "user");
-      } else {
-        setUserRole(null);
-      }
-      setIsLoadingAuth(false);
-    };
-
-    checkUserAndRole();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setIsLoadingAuth(true);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        
-        if (currentUser) {
-          // Check role when auth state changes
-          const { data: userData } = await supabase
-            .from("users")
-            .select("role")
-            .eq("auth_id", currentUser.id)
-            .single();
-          setUserRole(userData?.role || "user");
-        } else {
-          setUserRole(null);
-        }
-        setIsLoadingAuth(false);
-      }
-    );
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
 
   return (
     <nav className="bg-gray-900/90 backdrop-blur text-white shadow-md w-full fixed top-0 left-0 z-50 transition">
@@ -134,7 +94,11 @@ const Navbar = () => {
           ))}
 
           {/* Auth Buttons */}
-          {isLoadingAuth ? (
+          {!isMounted ? (
+            <div className="px-4 py-1 bg-red-500 rounded opacity-50">
+              Login
+            </div>
+          ) : isLoadingAuth ? (
             <div className="px-3 py-1 bg-gray-700 rounded animate-pulse">
               <div className="w-12 h-4 bg-gray-600 rounded"></div>
             </div>
@@ -175,8 +139,6 @@ const Navbar = () => {
                   <button
                     onClick={async () => {
                       await supabase.auth.signOut();
-                      setUser(null);
-                      setUserRole(null);
                       setProfileMenu(false);
                     }}
                     className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -222,7 +184,13 @@ const Navbar = () => {
             </a>
           ))}
 
-          {isLoadingAuth ? (
+          {!isMounted ? (
+            <Link href="/auth" onClick={() => setIsOpen(false)}>
+              <button className="block w-full text-left px-2 py-1 bg-red-500 rounded opacity-50">
+                Login
+              </button>
+            </Link>
+          ) : isLoadingAuth ? (
             <div className="space-y-2">
               <div className="px-2 py-1 bg-gray-700 rounded animate-pulse">
                 <div className="w-20 h-4 bg-gray-600 rounded"></div>
@@ -259,8 +227,6 @@ const Navbar = () => {
               <button
                 onClick={async () => {
                   await supabase.auth.signOut();
-                  setUser(null);
-                  setUserRole(null);
                   setIsOpen(false);
                 }}
                 className="block w-full text-left px-2 py-1 bg-gray-700 rounded hover:bg-gray-600"
