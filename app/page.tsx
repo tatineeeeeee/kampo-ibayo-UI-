@@ -34,7 +34,14 @@ const Navbar = () => {
   const { user, userRole, loading: isLoadingAuth } = useAuth();
 
   const menuItems = useMemo(
-    () => ["Home", "About", "Amenities", "Gallery", "Contact"],
+    () => [
+      { name: "Home", href: "#home" },
+      { name: "About", href: "#about" },
+      { name: "Amenities", href: "#amenities" },
+      { name: "Gallery", href: "#gallery" },
+      { name: "Reviews", href: "#reviews" },
+      { name: "Contact", href: "#contact" }
+    ],
     []
   );
 
@@ -52,7 +59,7 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       const sections = menuItems.map((item) =>
-        document.getElementById(item.toLowerCase())
+        document.getElementById(item.href.substring(1))
       );
       const scrollPos = window.scrollY + 200;
       for (const section of sections) {
@@ -72,30 +79,30 @@ const Navbar = () => {
 
   return (
     <nav className="bg-gray-900/90 backdrop-blur text-white shadow-md w-full fixed top-0 left-0 z-50 transition">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-14 sm:h-16 items-center">
         {/* Logo */}
         <Link href="#home" className="flex items-center space-x-1">
-          <span className="text-xl font-bold text-red-500">Kampo</span>
-          <span className="text-xl font-bold text-white">Ibayo</span>
+          <span className="text-lg sm:text-xl font-bold text-red-500">Kampo</span>
+          <span className="text-lg sm:text-xl font-bold text-white">Ibayo</span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-8">
+        <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
           {menuItems.map((item) => (
             <a
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className={`hover:text-red-500 ${
-                activeSection === item.toLowerCase() ? "text-red-500" : ""
+              key={item.name}
+              href={item.href}
+              className={`hover:text-red-500 transition-colors text-sm lg:text-base ${
+                activeSection === item.href.substring(1) ? "text-red-500" : ""
               }`}
             >
-              {item}
+              {item.name}
             </a>
           ))}
 
           {/* Auth Buttons */}
           {!isMounted ? (
-            <div className="px-4 py-1 bg-red-500 rounded opacity-50">
+            <div className="px-3 lg:px-4 py-1 bg-red-500 rounded opacity-50 text-sm lg:text-base">
               Login
             </div>
           ) : isLoadingAuth ? (
@@ -106,7 +113,7 @@ const Navbar = () => {
             <div className="relative">
               <button
                 onClick={() => setProfileMenu(!profileMenu)}
-                className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
+                className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 text-sm lg:text-base transition-colors"
               >
                 {userRole === "admin" ? "👑 Admin" : "☰"}
               </button>
@@ -116,7 +123,7 @@ const Navbar = () => {
                   {userRole === "admin" ? (
                     <Link
                       href="/admin"
-                      className="flex items-center px-4 py-2 hover:bg-gray-100"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
                     >
                       👑 Admin Panel
                     </Link>
@@ -124,13 +131,13 @@ const Navbar = () => {
                     <>
                       <Link
                         href="/profile"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
                       >
                         <UserIcon className="w-4 h-4 mr-2" /> Profile
                       </Link>
                       <Link
                         href="/bookings"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
                       >
                         <BookOpen className="w-4 h-4 mr-2" /> My Bookings
                       </Link>
@@ -141,7 +148,7 @@ const Navbar = () => {
                       await supabase.auth.signOut();
                       setProfileMenu(false);
                     }}
-                    className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
                   >
                     <LogOut className="w-4 h-4 mr-2" /> Logout
                   </button>
@@ -150,7 +157,7 @@ const Navbar = () => {
             </div>
           ) : (
             <Link href="/auth">
-              <button className="px-4 py-1 bg-red-500 rounded hover:bg-red-600">
+              <button className="px-3 lg:px-4 py-1 bg-red-500 rounded hover:bg-red-600 text-sm lg:text-base transition-colors">
                 Login
               </button>
             </Link>
@@ -161,85 +168,99 @@ const Navbar = () => {
         <div className="md:hidden">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="text-white text-2xl focus:outline-none"
+            className="text-white text-xl focus:outline-none p-1"
           >
-            {isOpen ? <X /> : <Menu />}
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-gray-900 px-4 pb-3 space-y-2">
-          {menuItems.map((item) => (
-            <a
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className={`block hover:text-red-500 ${
-                activeSection === item.toLowerCase() ? "text-red-500" : ""
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              {item}
-            </a>
-          ))}
+        <div className="md:hidden bg-gray-900 px-4 pb-3 space-y-1 border-t border-gray-700">
+          {/* Main Navigation */}
+          <div className="py-2">
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-2">Navigation</p>
+            {menuItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className={`block py-2 px-2 hover:text-red-500 transition-colors text-sm rounded ${
+                  activeSection === item.href.substring(1) ? "text-red-500 bg-gray-800" : ""
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                {item.name}
+              </a>
+            ))}
+          </div>
 
+          {/* User Account Section */}
           {!isMounted ? (
-            <Link href="/auth" onClick={() => setIsOpen(false)}>
-              <button className="block w-full text-left px-2 py-1 bg-red-500 rounded opacity-50">
-                Login
-              </button>
-            </Link>
+            <div className="border-t border-gray-700 pt-2">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-2">Account</p>
+              <Link href="/auth" onClick={() => setIsOpen(false)}>
+                <button className="w-full text-left px-2 py-2 bg-red-500 rounded hover:bg-red-600 text-sm opacity-50">
+                  Sign In / Register
+                </button>
+              </Link>
+            </div>
           ) : isLoadingAuth ? (
-            <div className="space-y-2">
-              <div className="px-2 py-1 bg-gray-700 rounded animate-pulse">
+            <div className="border-t border-gray-700 pt-2">
+              <div className="px-2 py-2 bg-gray-700 rounded animate-pulse">
                 <div className="w-20 h-4 bg-gray-600 rounded"></div>
               </div>
             </div>
           ) : user ? (
-            <div className="space-y-2">
-              {userRole === "admin" ? (
-                <Link
-                  href="/admin"
-                  className="block px-2 py-1 hover:text-red-500"
-                  onClick={() => setIsOpen(false)}
+            <div className="border-t border-gray-700 pt-2">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-2">Account</p>
+              <div className="space-y-1">
+                {userRole === "admin" ? (
+                  <Link
+                    href="/admin"
+                    className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span className="mr-2">👑</span> Admin Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/profile"
+                      className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <UserIcon className="w-4 h-4 mr-2" /> My Profile
+                    </Link>
+                    <Link
+                      href="/bookings"
+                      className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" /> My Bookings
+                    </Link>
+                  </>
+                )}
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center w-full text-left px-2 py-2 bg-gray-700 rounded hover:bg-gray-600 text-sm transition-colors"
                 >
-                  👑 Admin Panel
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    href="/profile"
-                    className="block px-2 py-1 hover:text-red-500"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/bookings"
-                    className="block px-2 py-1 hover:text-red-500"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Bookings
-                  </Link>
-                </>
-              )}
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  setIsOpen(false);
-                }}
-                className="block w-full text-left px-2 py-1 bg-gray-700 rounded hover:bg-gray-600"
-              >
-                Logout
-              </button>
+                  <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                </button>
+              </div>
             </div>
           ) : (
-            <Link href="/auth" onClick={() => setIsOpen(false)}>
-              <button className="block w-full text-left px-2 py-1 bg-red-500 rounded hover:bg-red-600">
-                Login
-              </button>
-            </Link>
+            <div className="border-t border-gray-700 pt-2">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-2">Account</p>
+              <Link href="/auth" onClick={() => setIsOpen(false)}>
+                <button className="w-full text-left px-2 py-2 bg-red-500 rounded hover:bg-red-600 text-sm transition-colors">
+                  Sign In / Register
+                </button>
+              </Link>
+            </div>
           )}
         </div>
       )}
@@ -281,42 +302,42 @@ function Home() {
       {/* Enhanced Hero Section */}
       <section
         id="home"
-        className="relative h-[100vh] w-full flex items-center justify-center overflow-hidden"
+        className="relative h-screen w-full flex items-center justify-center overflow-hidden"
       >
         <Image
           src="/pool.jpg"
           alt="Kampo Ibayo"
           fill
           priority
-          className="object-cover object-top"
+          className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/20"></div>
         
-        <div className="relative z-10 text-center text-white px-6 max-w-4xl mx-auto">
-          <div className="space-y-6 animate-fadeInUp">
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
+        <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+          <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-fadeInUp">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight">
               Welcome to{" "}
-              <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent block sm:inline">
                 Kampo Ibayo
               </span>
             </h1>
-            <p className="text-xl md:text-2xl font-semibold text-gray-200">
+            <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-200 max-w-3xl mx-auto">
               Your Peaceful Escape in{" "}
-              <span className="text-red-400">General Trias, Cavite</span>
+              <span className="text-red-400 block xs:inline">General Trias, Cavite</span>
             </p>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xs xs:text-sm sm:text-base lg:text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
               Experience nature&apos;s tranquility at our eco-friendly camping resort. 
               Perfect for families, couples, and adventure seekers.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mt-6 sm:mt-8 lg:mt-10 px-4 sm:px-0">
               <Link
                 href="/book"
-                className="group px-8 py-4 bg-red-600 rounded-full font-bold text-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center gap-2"
+                className="group w-full sm:w-auto px-4 xs:px-6 sm:px-8 py-3 sm:py-4 bg-red-600 rounded-full font-bold text-sm xs:text-base lg:text-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-2"
               >
-                <Calendar className="w-5 h-5" />
-                Book Your Stay
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="whitespace-nowrap">Book Your Stay</span>
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -324,39 +345,46 @@ function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="bg-gray-800 text-white py-16 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-          <Image
-            src="/pool.jpg"
-            alt="Resort"
-            width={600}
-            height={400}
-            className="rounded-xl shadow-lg"
-          />
-          <div>
-            <h2 className="text-3xl font-bold mb-4 text-center md:text-left">
+      <section id="about" className="bg-gray-800 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 xl:gap-16 items-center">
+          <div className="order-2 lg:order-1">
+            <div className="relative overflow-hidden rounded-xl shadow-2xl">
+              <Image
+                src="/pool.jpg"
+                alt="Resort Pool and Nature View"
+                width={600}
+                height={400}
+                className="w-full h-48 xs:h-56 sm:h-64 md:h-72 lg:h-80 xl:h-96 object-cover transition-transform duration-300 hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            </div>
+          </div>
+          <div className="order-1 lg:order-2 space-y-4 sm:space-y-6">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-center lg:text-left leading-tight">
               About Our Resort
             </h2>
-            <p className="mb-4 text-gray-300">
-              Nested in the lush landscapes of Barangay Tapia, General Trias,
-              Cavite, Kampo Ibayo offers a serene retreat from the hustle and
-              bustle of city life. Our nature-based camping resort provides the
-              perfect setting to reconnect with nature, unwind and create lasting
-              memories.
-            </p>
-            <p className="mb-4 text-gray-300">
-              With carefully designed spaces that blend seamlessly with the
-              natural environment, we offer a unique camping experience that
-              combines comfort with adventure.
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              <span className="bg-red-600 px-3 py-1 rounded-full text-sm">
+            <div className="space-y-3 sm:space-y-4">
+              <p className="text-gray-300 text-sm xs:text-base sm:text-lg leading-relaxed">
+                Nestled in the lush landscapes of Barangay Tapia, General Trias,
+                Cavite, Kampo Ibayo offers a serene retreat from the hustle and
+                bustle of city life. Our nature-based camping resort provides the
+                perfect setting to reconnect with nature, unwind and create lasting
+                memories.
+              </p>
+              <p className="text-gray-300 text-sm xs:text-base sm:text-lg leading-relaxed">
+                With carefully designed spaces that blend seamlessly with the
+                natural environment, we offer a unique camping experience that
+                combines comfort with adventure.
+              </p>
+            </div>
+            <div className="flex gap-2 sm:gap-3 flex-wrap justify-center lg:justify-start pt-2 sm:pt-4">
+              <span className="bg-red-600 hover:bg-red-700 transition-colors px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs xs:text-sm font-medium">
                 🌱 Eco-friendly
               </span>
-              <span className="bg-red-600 px-3 py-1 rounded-full text-sm">
+              <span className="bg-red-600 hover:bg-red-700 transition-colors px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs xs:text-sm font-medium">
                 🌄 Scenic Views
               </span>
-              <span className="bg-red-600 px-3 py-1 rounded-full text-sm">
+              <span className="bg-red-600 hover:bg-red-700 transition-colors px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs xs:text-sm font-medium">
                 👨‍👩‍👧 Family-friendly
               </span>
             </div>
@@ -365,50 +393,57 @@ function Home() {
       </section>
 
       {/* Amenities Section */}
-      <section id="amenities" className="bg-gray-900 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">Our Amenities</h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            {
-              title: "Tent Camping",
-              desc: "Comfortable and spacious tents with ventilation and flooring.",
-              icon: "⛺",
-            },
-            {
-              title: "Bonfire Area",
-              desc: "Safe bonfire spots for storytelling, roasting, and stargazing.",
-              icon: "🔥",
-            },
-            {
-              title: "Clean Restroom",
-              desc: "Well-maintained restroom and shower facilities with hot water.",
-              icon: "🚻",
-            },
-            {
-              title: "River Access",
-              desc: "Direct access to a clear river for swimming and relaxing.",
-              icon: "🌊",
-            },
-            {
-              title: "Outdoor Kitchen",
-              desc: "Equipped cooking area with grills, stoves, and tables.",
-              icon: "🍴",
-            },
-            {
-              title: "Picnic Areas",
-              desc: "Shaded picnic spots with tables and benches.",
-              icon: "🌲",
-            },
-          ].map((a) => (
-            <div
-              key={a.title}
-              className="bg-gray-800 p-6 rounded-xl shadow hover:bg-gray-700 transition"
-            >
-              <div className="text-4xl mb-4">{a.icon}</div>
-              <h3 className="text-xl font-semibold mb-2">{a.title}</h3>
-              <p className="text-gray-300 text-sm">{a.desc}</p>
-            </div>
-          ))}
+      <section id="amenities" className="bg-gray-900 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Our Amenities</h2>
+            <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
+              Experience comfort and adventure with our thoughtfully designed facilities
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+            {[
+              {
+                title: "Tent Camping",
+                desc: "Comfortable and spacious tents with ventilation and flooring.",
+                icon: "⛺",
+              },
+              {
+                title: "Bonfire Area",
+                desc: "Safe bonfire spots for storytelling, roasting, and stargazing.",
+                icon: "🔥",
+              },
+              {
+                title: "Clean Restroom",
+                desc: "Well-maintained restroom and shower facilities with hot water.",
+                icon: "🚻",
+              },
+              {
+                title: "River Access",
+                desc: "Direct access to a clear river for swimming and relaxing.",
+                icon: "🌊",
+              },
+              {
+                title: "Outdoor Kitchen",
+                desc: "Equipped cooking area with grills, stoves, and tables.",
+                icon: "🍴",
+              },
+              {
+                title: "Picnic Areas",
+                desc: "Shaded picnic spots with tables and benches.",
+                icon: "🌲",
+              },
+            ].map((amenity) => (
+              <div
+                key={amenity.title}
+                className="group bg-gray-800 p-3 sm:p-4 lg:p-6 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-center"
+              >
+                <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3 transition-transform group-hover:scale-110 duration-300">{amenity.icon}</div>
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-1 sm:mb-2 text-white">{amenity.title}</h3>
+                <p className="text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed hidden lg:block">{amenity.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -416,118 +451,268 @@ function Home() {
       <TrustBadges />
 
       {/* Enhanced Gallery Section */}
-      <EnhancedGallery />
+      <section id="gallery">
+        <EnhancedGallery />
+      </section>
       {/* Testimonials Section */}
-      <section id="reviews" className="bg-gray-900 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">
-          What Our Guests Say
-        </h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            {
-              name: "Maria",
-              text: "Peaceful and relaxing stay. Perfect for family bonding!",
-            },
-            {
-              name: "John",
-              text: "Loved the bonfire nights. Will definitely come back.",
-            },
-            {
-              name: "Anna",
-              text: "The staff was very friendly and helpful.",
-            },
-          ].map((r, i) => (
-            <div
-              key={i}
-              className="bg-gray-800 p-6 rounded-xl shadow hover:bg-gray-700 transition"
-            >
-              <p className="text-gray-300 italic">“{r.text}”</p>
-              <p className="mt-4 font-bold text-red-500">- {r.name}</p>
-            </div>
-          ))}
+      <section id="reviews" className="bg-gray-900 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
+              What Our Guests Say
+            </h2>
+            <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
+              Read authentic reviews from families and adventurers who experienced Kampo Ibayo
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {[
+              {
+                name: "Maria Santos",
+                location: "Manila",
+                text: "Peaceful and relaxing stay. Perfect for family bonding! The kids loved the river and we enjoyed the bonfire nights.",
+                rating: 5,
+              },
+              {
+                name: "John Rivera",
+                location: "Quezon City",
+                text: "Loved the bonfire nights and the natural surroundings. Will definitely come back with friends for another adventure.",
+                rating: 5,
+              },
+              {
+                name: "Anna Cruz",
+                location: "Cavite",
+                text: "The staff was very friendly and helpful. Clean facilities and beautiful nature views. Highly recommended!",
+                rating: 5,
+              },
+            ].map((review, i) => (
+              <div
+                key={i}
+                className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <div className="flex items-center mb-3 sm:mb-4">
+                  <div className="flex text-yellow-400 text-sm xs:text-base">
+                    {[...Array(review.rating)].map((_, index) => (
+                      <span key={index}>⭐</span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed mb-4 sm:mb-6">
+                  &ldquo;{review.text}&rdquo;
+                </p>
+                <div className="border-t border-gray-600 pt-3 sm:pt-4">
+                  <p className="font-bold text-red-400 text-sm xs:text-base">
+                    - {review.name}
+                  </p>
+                  <p className="text-gray-500 text-xs xs:text-sm mt-1">
+                    {review.location}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="bg-gray-900 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">Contact Us</h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3865.1028711673293!2d120.87771827498175!3d14.363458286095279!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33962b004deb807d%3A0xeca498f7c0532508!2sKampo%20Ibayo!5e0!3m2!1sen!2sph!4v1757564277392!5m2!1sen!2sph"
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className="rounded-xl shadow-lg"
-          ></iframe>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-red-400" />
-                Location
-              </h3>
-              <p className="text-gray-300">
-                132 Ibayo Brgy Tapia 4107 General Trias, Philippines
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Phone className="w-5 h-5 text-red-400" />
-                Contact Details
-              </h3>
-              <div className="space-y-2">
-                <p className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-green-400" />
-                  +63945 277 9541
-                </p>
-                <p className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-400" />
-                  kampoibayo@gmail.com
-                </p>
-                <p className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-blue-500" />
-                  Kampo Ibayo
-                </p>
+      <section id="contact" className="bg-gray-900 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Contact Us</h2>
+            <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
+              Get in touch to book your stay or ask any questions about our resort
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 xl:gap-16">
+            <div className="order-2 lg:order-1">
+              <div className="relative overflow-hidden rounded-xl shadow-2xl h-64 sm:h-80 lg:h-96 xl:h-[500px]">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3865.1028711673293!2d120.87771827498175!3d14.363458286095279!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33962b004deb807d%3A0xeca498f7c0532508!2sKampo%20Ibayo!5e0!3m2!1sen!2sph!4v1757564277392!5m2!1sen!2sph"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="rounded-xl"
+                  title="Kampo Ibayo Location Map"
+                ></iframe>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-red-400" />
-                Operating Hours
-              </h3>
-              <div className="space-y-1 text-gray-300">
-                <p>Open daily from 8:00 AM to 8:00 PM</p>
-                <p>Check-in: 2:00 PM | Check-out: 12:00 NN</p>
+            <div className="order-1 lg:order-2 space-y-6 sm:space-y-8">
+              <div className="bg-gray-800 p-4 sm:p-6 rounded-xl">
+                <h3 className="text-lg xs:text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                  <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                  Location
+                </h3>
+                <p className="text-gray-300 text-sm xs:text-base sm:text-lg leading-relaxed">
+                  132 Ibayo Brgy Tapia 4107 General Trias, Philippines
+                </p>
               </div>
-            </div>
 
-            <button className="w-full mt-6 px-6 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              Message us on Facebook
-            </button>
+              <div className="bg-gray-800 p-4 sm:p-6 rounded-xl">
+                <h3 className="text-lg xs:text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                  <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                  Contact Details
+                </h3>
+                <div className="space-y-2 sm:space-y-3">
+                  <a 
+                    href="tel:+639452779541"
+                    className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-green-400 transition-colors group"
+                  >
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    +63 945 277 9541
+                  </a>
+                  <a 
+                    href="mailto:kampoibayo@gmail.com"
+                    className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group"
+                  >
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    kampoibayo@gmail.com
+                  </a>
+                  <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg">
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+                    Kampo Ibayo (Facebook)
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-800 p-4 sm:p-6 rounded-xl">
+                <h3 className="text-lg xs:text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                  Operating Hours
+                </h3>
+                <div className="space-y-1 sm:space-y-2 text-gray-300 text-sm xs:text-base sm:text-lg">
+                  <p className="flex justify-between">
+                    <span>Daily Operations</span>
+                    <span className="text-green-400 font-semibold">8:00 AM - 8:00 PM</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>Check-in</span>
+                    <span className="text-blue-400 font-semibold">2:00 PM</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>Check-out</span>
+                    <span className="text-orange-400 font-semibold">12:00 NN</span>
+                  </p>
+                </div>
+              </div>
+
+              <a 
+                href="#" 
+                className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl"
+              >
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                Message us on Facebook
+              </a>
+            </div>
           </div>
         </div>
-
-
-        {/* Footer */}
-        <footer className="mt-12 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
-          <p>© 2025 Kampo Ibayo. All rights reserved.</p>
-          <p className="mt-2">Pet-friendly stays | Nature-inspired comfort</p>
-        </footer>
       </section>
+
+      {/* Single Unified Footer */}
+      <footer className="bg-gray-900 border-t border-gray-700 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 pb-0">
+        <div className="max-w-7xl mx-auto">
+          {/* Main Footer Content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-0 pb-4">
+              
+              {/* Company Info */}
+              <div className="lg:col-span-2">
+                <div className="flex items-center space-x-2 mb-4">
+                  <span className="text-2xl font-bold text-red-500">Kampo</span>
+                  <span className="text-2xl font-bold text-white">Ibayo</span>
+                </div>
+                <p className="text-gray-400 text-base leading-relaxed mb-4 max-w-md">
+                  Your premier eco-friendly camping resort in General Trias, Cavite. 
+                  Experience nature&apos;s tranquility with modern comfort and adventure.
+                </p>
+                
+                {/* Contact Info */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-red-400 flex-shrink-0" />
+                    <span className="text-gray-300 text-sm">132 Ibayo, Brgy Tapia, General Trias, Cavite</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <a href="tel:+639452779541" className="text-gray-300 text-sm hover:text-green-400 transition-colors">
+                      +63 945 277 9541
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                    <a href="mailto:kampoibayo@gmail.com" className="text-gray-300 text-sm hover:text-blue-400 transition-colors">
+                      kampoibayo@gmail.com
+                    </a>
+                  </div>
+                </div>
+
+                {/* Social Media */}
+                <div className="flex gap-4 mb-4">
+                  <a href="#" className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors">
+                    <span className="text-white text-sm">📘</span>
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-pink-600 rounded-lg flex items-center justify-center hover:bg-pink-700 transition-colors">
+                    <span className="text-white text-sm">📷</span>
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors">
+                    <span className="text-white text-sm">💬</span>
+                  </a>
+                </div>
+
+                {/* Copyright - moved under company info */}
+                <div className="text-center lg:text-left">
+                  <p className="text-gray-400 text-sm">
+                    © 2025 Kampo Ibayo Resort. All rights reserved.
+                  </p>
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-xs mt-2">
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors">Cancellation Policy</a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-lg">Quick Links</h4>
+                <ul className="space-y-2">
+                  <li><a href="#home" className="text-gray-400 hover:text-red-400 transition-colors text-sm">Home</a></li>
+                  <li><a href="#about" className="text-gray-400 hover:text-red-400 transition-colors text-sm">About Us</a></li>
+                  <li><a href="#amenities" className="text-gray-400 hover:text-red-400 transition-colors text-sm">Amenities</a></li>
+                  <li><a href="#gallery" className="text-gray-400 hover:text-red-400 transition-colors text-sm">Gallery</a></li>
+                  <li><a href="#reviews" className="text-gray-400 hover:text-red-400 transition-colors text-sm">Reviews</a></li>
+                  <li><a href="#contact" className="text-gray-400 hover:text-red-400 transition-colors text-sm">Contact</a></li>
+                  <li><Link href="/book" className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium">Book Now</Link></li>
+                </ul>
+              </div>
+
+              {/* Services */}
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-lg">Our Services</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li>🏕️ Tent Camping</li>
+                  <li>🔥 Bonfire Facilities</li>
+                  <li>🏊‍♂️ River Swimming</li>
+                  <li>🍖 BBQ & Outdoor Cooking</li>
+                  <li>🌿 Nature Walks & Hiking</li>
+                  <li>📸 Event Photography</li>
+                  <li>🚐 Group Packages</li>
+                  <li>🐕 Pet-Friendly Stays</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </footer>
 
       {/* Back to Top Button */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed bottom-6 right-6 bg-red-600 text-white h-10 w-10 flex items-center justify-center rounded-full shadow-lg hover:bg-red-700 transition z-40"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-red-600 text-white h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center rounded-full shadow-lg hover:bg-red-700 transition-colors duration-300 z-40"
         aria-label="Back to top"
       >
-        <ArrowUp className="h-6 w-6" />
+        <ArrowUp className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
     </div>
   );

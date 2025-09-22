@@ -268,27 +268,27 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c]">
-      <div className="w-full max-w-5xl flex rounded-3xl shadow-2xl overflow-hidden bg-white/5 backdrop-blur-lg">
-        {/* Left Side */}
-        <div className="w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-12 flex flex-col justify-between">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-4">
+      <div className="w-full max-w-5xl flex flex-col lg:flex-row rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden bg-white/5 backdrop-blur-lg">
+        {/* Left Side - Hidden on mobile, shown on desktop */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8 xl:p-12 flex-col justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-10">
-              <div className="bg-red-600 p-3 rounded-full shadow-lg">
-                <span className="text-3xl">⛺</span>
+            <div className="flex items-center gap-3 mb-8 xl:mb-10">
+              <div className="bg-red-600 p-2 xl:p-3 rounded-full shadow-lg">
+                <span className="text-2xl xl:text-3xl">⛺</span>
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight">
+              <h1 className="text-2xl xl:text-3xl font-extrabold tracking-tight">
                 <span className="text-red-500">Kampo</span> Ibayo
               </h1>
             </div>
 
-            <p className="text-xl font-semibold mb-8 opacity-90">
+            <p className="text-lg xl:text-xl font-semibold mb-6 xl:mb-8 opacity-90">
               Where adventure meets comfort
             </p>
 
-            <h2 className="font-bold mb-6 text-lg">Your Wilderness Experience</h2>
+            <h2 className="font-bold mb-4 xl:mb-6 text-base xl:text-lg">Your Wilderness Experience</h2>
 
-            <ul className="space-y-5 text-base">
+            <ul className="space-y-4 xl:space-y-5 text-sm xl:text-base">
               <li className="flex items-start gap-3">
                 <span>🏕️</span>
                 <span>
@@ -326,12 +326,25 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           </p>
         </div>
 
-        {/* Right Side */}
-        <div className="w-1/2 bg-white p-12 flex flex-col justify-center">
-          <div className="flex mb-8 rounded-lg overflow-hidden border border-gray-200">
+        {/* Right Side - Main content on mobile, right side on desktop */}
+        <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+          {/* Mobile Header - Only shown on mobile */}
+          <div className="lg:hidden text-center mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="bg-red-600 p-2 rounded-full shadow-lg">
+                <span className="text-2xl">⛺</span>
+              </div>
+              <h1 className="text-2xl font-extrabold tracking-tight">
+                <span className="text-red-500">Kampo</span> <span className="text-gray-700">Ibayo</span>
+              </h1>
+            </div>
+            <p className="text-gray-600 text-sm">Where adventure meets comfort</p>
+          </div>
+
+          <div className="flex mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
             <button
               onClick={() => setIsLogin(true)}
-              className={`w-1/2 py-3 font-semibold transition-colors duration-200 ${
+              className={`w-1/2 py-2 lg:py-3 font-semibold transition-colors duration-200 text-sm lg:text-base ${
                 isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
               }`}
             >
@@ -339,7 +352,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`w-1/2 py-3 font-semibold transition-colors duration-200 ${
+              className={`w-1/2 py-2 lg:py-3 font-semibold transition-colors duration-200 text-sm lg:text-base ${
                 !isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
               }`}
             >
@@ -349,114 +362,124 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
           {/* Sign In Form */}
           {isLogin ? (
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4 lg:space-y-5">
               <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaEnvelope className="text-gray-400 mr-3" />
+                <FaEnvelope className="text-gray-400 mr-3 text-sm lg:text-base" />
                 <input
                   type="email"
                   name="email"
                   placeholder="your@email.com"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                   required
                 />
               </div>
 
               <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaLock className="text-gray-400 mr-3" />
+                <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
                 <input
                   type="password"
                   name="password"
                   placeholder="Password"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                   required
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition"
+                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-sm lg:text-base"
               >
                 Sign In
               </button>
             </form>
           ) : (
             // Register Form
-            <form onSubmit={handleRegister} className="space-y-5">
-              <div className="flex gap-3">
-                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-1/2">
-                  <FaUser className="text-gray-400 mr-3" />
+            <form onSubmit={handleRegister} className="space-y-4 lg:space-y-5">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
+                  <FaUser className="text-gray-400 mr-3 text-sm lg:text-base" />
                   <input
                     type="text"
                     name="firstName"
                     placeholder="First Name"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
+                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                     required
                   />
                 </div>
-                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-1/2">
-                  <FaUser className="text-gray-400 mr-3" />
+                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
+                  <FaUser className="text-gray-400 mr-3 text-sm lg:text-base" />
                   <input
                     type="text"
                     name="lastName"
                     placeholder="Last Name"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
+                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                     required
                   />
                 </div>
               </div>
 
               <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaEnvelope className="text-gray-400 mr-3" />
+                <FaEnvelope className="text-gray-400 mr-3 text-sm lg:text-base" />
                 <input
                   type="email"
                   name="email"
                   placeholder="your@email.com"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                   required
                 />
               </div>
 
               <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaPhone className="text-gray-400 mr-3" />
+                <FaPhone className="text-gray-400 mr-3 text-sm lg:text-base" />
                 <input
                   type="tel"
                   name="phone"
                   placeholder="Phone Number"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                   required
                 />
               </div>
 
-              <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaLock className="text-gray-400 mr-3" />
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaLock className="text-gray-400 mr-3" />
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400"
-                  required
-                />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
+                  <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                    required
+                  />
+                </div>
+                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
+                  <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                    required
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition"
+                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-sm lg:text-base"
               >
-                Create Account →
+                Create Account
               </button>
             </form>
           )}
+
+          {/* Footer - Mobile optimized spacing */}
+          <div className="mt-6 lg:mt-8 text-center">
+            <p className="text-gray-500 text-xs lg:text-sm">
+              By signing up, you agree to our{" "}
+              <a href="#" className="text-red-500 hover:underline">Terms of Service</a> and{" "}
+              <a href="#" className="text-red-500 hover:underline">Privacy Policy</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
