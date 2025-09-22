@@ -4,7 +4,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
-import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { 
+  checkAndExpirePendingBookings, 
+  getDaysPending, 
+  shouldShowExpirationWarning, 
+  getExpirationWarningMessage,
+  getUserBookingStats,
+  cleanupOldCompletedBookings,
+  BookingStats
+} from "../utils/bookingUtils";
+import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaCommentDots } from "react-icons/fa";
 
 interface Booking {
   id: number;
@@ -34,6 +43,7 @@ export default function BookingsPage() {
   const [showModal, setShowModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
+  const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,6 +63,32 @@ export default function BookingsPage() {
     async function loadBookings() {
       if (!user) return;
       
+      // First, check and auto-cancel any pending bookings older than 7 days
+      try {
+        const cancelledBookings = await checkAndExpirePendingBookings();
+        if (cancelledBookings.length > 0) {
+          console.log(`Auto-cancelled ${cancelledBookings.length} booking(s) that were pending for 7+ days`);
+        }
+      } catch (error) {
+        console.error("Error checking pending bookings:", error);
+      }
+
+      // Clean up old completed bookings (keep only 5 most recent)
+      try {
+        await cleanupOldCompletedBookings(user.id);
+      } catch (error) {
+        console.error("Error cleaning up old completed bookings:", error);
+      }
+      
+      // Load booking stats
+      try {
+        const stats = await getUserBookingStats(user.id);
+        setBookingStats(stats);
+      } catch (error) {
+        console.error("Error loading booking stats:", error);
+      }
+      
+      // Then load all bookings (including any newly auto-cancelled ones)
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
@@ -240,158 +276,268 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-6">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-gray-400 hover:text-white transition">
-              <FaHome className="w-6 h-6" />
-            </Link>
-            <div className="text-white">
-              <h1 className="text-3xl font-bold">My Bookings</h1>
-              <p className="text-gray-400">Manage your reservations</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Mobile-First Sticky Header */}
+      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+        <div className="px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/" 
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+              </Link>
+              <div className="text-white">
+                <h1 className="text-lg sm:text-xl font-bold">My Bookings</h1>
+                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Manage your reservations</p>
+              </div>
             </div>
+            <Link href="/book" className="flex-shrink-0">
+              <button className="flex items-center gap-1 sm:gap-2 bg-red-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition">
+                <FaPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">New </span>Book
+              </button>
+            </Link>
           </div>
-          <Link href="/book">
-            <button className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
-              <FaPlus className="w-4 h-4" />
-              New Booking
-            </button>
-          </Link>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto">
-        {bookings.length === 0 ? (
-          // Empty State
-          <div className="bg-gray-800 rounded-xl shadow-2xl p-12 text-center">
-            <div className="bg-gray-700 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-              <FaCalendarAlt className="w-8 h-8 text-gray-400" />
+      {/* Main Content Container */}
+      <div className="px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
+
+        {/* Booking Stats - Mobile Optimized */}
+        {bookingStats && (
+          <div className="mb-4 sm:mb-6">
+            <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
+              <h2 className="text-sm sm:text-base lg:text-lg font-bold text-white mb-3 sm:mb-4">Booking Summary</h2>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
+                <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-lg p-2 sm:p-3">
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                    <FaHourglassHalf className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />
+                    <span className="text-yellow-400 font-medium text-xs sm:text-sm">Pending</span>
+                  </div>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                    {bookingStats.pendingCount}/3
+                  </p>
+                  <p className="text-xs text-yellow-300 truncate">
+                    {bookingStats.canCreatePending ? 
+                      `${3 - bookingStats.pendingCount} slots left` : 
+                      'Limit reached'
+                    }
+                  </p>
+                </div>
+                
+                <div className="bg-green-600/20 border border-green-600/50 rounded-lg p-2 sm:p-3">
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                    <FaCheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-green-400 font-medium text-xs sm:text-sm">Confirmed</span>
+                  </div>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                    {bookingStats.confirmedCount}
+                  </p>
+                  <p className="text-xs text-green-300">Active bookings</p>
+                </div>
+                
+                <div className="bg-blue-600/20 border border-blue-600/50 rounded-lg p-2 sm:p-3">
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                    <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                    <span className="text-blue-400 font-medium text-xs sm:text-sm">Completed</span>
+                  </div>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                    {bookingStats.completedCount}/5
+                  </p>
+                  <p className="text-xs text-blue-300 truncate">
+                    {bookingStats.completedCount >= 5 ? 
+                      'Auto-archived' : 
+                      'Recent ones'
+                    }
+                  </p>
+                </div>
+                
+                <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-2 sm:p-3">
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                    <FaTimesCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                    <span className="text-red-400 font-medium text-xs sm:text-sm">Cancelled</span>
+                  </div>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                    {bookingStats.cancelledCount}
+                  </p>
+                  <p className="text-xs text-red-300">Total cancelled</p>
+                </div>
+              </div>
+              
+              {!bookingStats.canCreatePending && (
+                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-yellow-900/30 border border-yellow-600/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FaExclamationTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />
+                    <p className="text-yellow-400 text-xs sm:text-sm font-medium">
+                      {bookingStats.message}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">No bookings yet</h2>
-            <p className="text-gray-400 mb-8 max-w-md mx-auto">
+          </div>
+        )}
+
+        {/* Main Content - Mobile First */}
+        {bookings.length === 0 ? (
+          // Empty State - Mobile Optimized
+          <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 lg:p-12 text-center">
+            <div className="bg-gray-700 p-3 sm:p-4 lg:p-6 rounded-full w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto mb-3 sm:mb-4 lg:mb-6 flex items-center justify-center">
+              <FaCalendarAlt className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-gray-400" />
+            </div>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-2 sm:mb-3 lg:mb-4">No bookings yet</h2>
+            <p className="text-gray-400 mb-4 sm:mb-6 lg:mb-8 max-w-md mx-auto text-xs sm:text-sm lg:text-base px-2">
               You haven&apos;t made any reservations yet. Start planning your perfect getaway at Kampo Ibayo!
             </p>
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4">
               <Link href="/book">
-                <button className="bg-red-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
+                <button className="bg-red-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-red-700 transition w-full sm:w-auto">
                   Make Your First Booking
                 </button>
               </Link>
               <div className="text-center">
-                <Link href="/" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="/" className="text-gray-400 hover:text-white transition text-xs sm:text-sm">
                   ← Back to Home
                 </Link>
               </div>
             </div>
           </div>
         ) : (
-          // Bookings List
-          <div className="space-y-6">
-            <div className="bg-gray-800 rounded-xl shadow-2xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">
+          // Bookings List - Mobile Optimized
+          <div className="space-y-3 sm:space-y-4">
+            <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 lg:mb-6 gap-2">
+                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white">
                   Your Reservations ({bookings.length})
                 </h2>
-                <div className="text-sm text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-400">
                   {bookings.length > 6 ? (
-                    <>Showing {startIndex + 1} to {endIndex} of {bookings.length} bookings</>
+                    <>Showing {startIndex + 1} to {endIndex} of {bookings.length}</>
                   ) : (
                     <>Showing all bookings</>
                   )}
                 </div>
               </div>
 
-              <div className="grid gap-6">
+              <div className="space-y-3 sm:space-y-4">
                 {paginatedBookings.map((booking) => (
                   <div 
                     key={booking.id} 
-                    className="bg-gray-700 rounded-lg p-6 hover:bg-gray-650 transition"
+                    className="bg-gray-700 rounded-lg p-3 sm:p-4 lg:p-6 hover:bg-gray-650 transition border border-gray-600/50"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-red-600 p-2 rounded-full">
-                          <FaCalendarAlt className="w-4 h-4 text-white" />
+                    {/* Header Section - Mobile Stack */}
+                    <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div className="bg-red-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                            <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-white truncate">
+                              Booking #{booking.id}
+                            </h3>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">
-                            Booking #{booking.id}
-                          </h3>
-                          <p className="text-gray-400 text-sm">
-                            {booking.guest_name} • {booking.guest_email}
-                          </p>
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                          {getStatusIcon(booking.status || 'pending')}
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(booking.status || 'pending')}`}>
+                            {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(booking.status || 'pending')}
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(booking.status || 'pending')}`}>
-                          {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
-                        </span>
+                      <div className="px-2 sm:px-3">
+                        <p className="text-gray-400 text-xs sm:text-sm">
+                          {booking.guest_name} • {booking.guest_email}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-4 gap-4 mb-4">
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <FaCalendarAlt className="w-4 h-4 text-red-500" />
-                        <div>
+                    {/* Expiration Warning - Mobile Optimized */}
+                    {shouldShowExpirationWarning(booking.created_at, booking.status || 'pending') && (
+                      <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-orange-900/30 border border-orange-600/50 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <FaExclamationTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-orange-400 text-xs sm:text-sm font-medium">
+                              {getExpirationWarningMessage(booking.created_at)}
+                            </p>
+                            <p className="text-orange-300 text-xs mt-1">
+                              Pending for {getDaysPending(booking.created_at)} day(s). Contact admin or complete payment to confirm.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Details Grid - Mobile Responsive */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
+                        <FaCalendarAlt className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">Check-in</p>
-                          <p className="font-semibold">
+                          <p className="font-semibold text-xs truncate">
                             {booking.check_in_date ? new Date(booking.check_in_date).toLocaleDateString() : "N/A"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <FaCalendarAlt className="w-4 h-4 text-red-500" />
-                        <div>
+                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
+                        <FaCalendarAlt className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">Check-out</p>
-                          <p className="font-semibold">
+                          <p className="font-semibold text-xs truncate">
                             {booking.check_out_date ? new Date(booking.check_out_date).toLocaleDateString() : "N/A"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <FaUsers className="w-4 h-4 text-red-500" />
-                        <div>
+                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
+                        <FaUsers className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">Guests</p>
-                          <p className="font-semibold">{booking.number_of_guests} guest(s)</p>
+                          <p className="font-semibold text-xs">{booking.number_of_guests} guest(s)</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <FaClock className="w-4 h-4 text-red-500" />
-                        <div>
+                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
+                        <FaClock className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">Total Amount</p>
-                          <p className="font-semibold text-green-400">₱{booking.total_amount.toLocaleString()}</p>
+                          <p className="font-semibold text-green-400 text-xs">₱{booking.total_amount.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
 
+                    {/* Contact Info - Mobile Optimized */}
                     {booking.guest_phone && (
-                      <div className="mb-4">
-                        <p className="text-gray-400 text-sm">
-                          Contact: <a href={`tel:${booking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline">{booking.guest_phone}</a>
+                      <div className="mb-3 sm:mb-4 p-2 bg-gray-600/30 rounded">
+                        <p className="text-gray-400 text-xs sm:text-sm">
+                          📞 Contact: <a href={`tel:${booking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline font-medium">{booking.guest_phone}</a>
                         </p>
                       </div>
                     )}
 
+                    {/* Special Requests - Mobile Optimized */}
                     {booking.special_requests && (
-                      <div className="bg-gray-600 p-3 rounded-lg mb-4">
-                        <p className="text-xs text-gray-400 mb-1">Special Request:</p>
-                        <p className="text-gray-200 text-sm">{booking.special_requests}</p>
+                      <div className="bg-gray-600/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
+                        <p className="text-xs text-gray-400 mb-1">💬 Special Request:</p>
+                        <p className="text-gray-200 text-xs sm:text-sm">{booking.special_requests}</p>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-600">
-                      <p className="text-gray-400 text-sm">
-                        Booking Date: {booking.created_at ? new Date(booking.created_at).toLocaleDateString() : "N/A"}
-                      </p>
-                      <div className="flex gap-2">
+                    {/* Actions Section - Mobile First */}
+                    <div className="flex flex-col gap-2 sm:gap-3 pt-3 border-t border-gray-600">
+                      <div className="flex items-center justify-between">
+                        <p className="text-gray-400 text-xs">
+                          📅 {booking.created_at ? new Date(booking.created_at).toLocaleDateString() : "N/A"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <button 
                           onClick={() => openModal(booking)}
-                          className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition"
+                          className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-500 transition flex items-center justify-center gap-1"
                         >
-                          View Details
+                          👁️ View Details
                         </button>
                         {canCancelBooking(booking) ? (
                           <button 
@@ -400,18 +546,18 @@ export default function BookingsPage() {
                               setShowModal(true);
                               setShowCancelModal(true);
                             }}
-                            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition"
+                            className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition flex items-center justify-center gap-1"
                             title={getCancellationMessage(booking)}
                           >
-                            Cancel
+                            ❌ Cancel
                           </button>
                         ) : booking.status?.toLowerCase() !== 'cancelled' && (
                           <button 
                             disabled
-                            className="bg-gray-500 text-gray-300 px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed"
+                            className="bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1"
                             title={getCancellationMessage(booking)}
                           >
-                            Cancel
+                            🚫 Cannot Cancel
                           </button>
                         )}
                       </div>
@@ -420,59 +566,62 @@ export default function BookingsPage() {
                 ))}
               </div>
 
-              {/* Pagination Controls */}
+              {/* Pagination Controls - Mobile First Layout */}
               {bookings.length > 6 && (
-                <div className="mt-8 flex items-center justify-between border-t border-gray-700 pt-6">
-                  <div className="flex items-center gap-2">
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-700">
+                  {/* Mobile: Single row with Prev | Numbers | Next */}
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    {/* Previous Button */}
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
                       title="Previous page"
                     >
                       <FaChevronLeft className="w-3 h-3" />
-                      Previous
+                      <span className="hidden sm:inline">Previous</span>
+                      <span className="sm:hidden">Prev</span>
                     </button>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* Page numbers */}
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNumber;
-                      if (totalPages <= 5) {
-                        pageNumber = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNumber = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i;
-                      } else {
-                        pageNumber = currentPage - 2 + i;
-                      }
+                    {/* Page Numbers - Centered */}
+                    <div className="flex items-center gap-1 flex-1 justify-center">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNumber;
+                        if (totalPages <= 5) {
+                          pageNumber = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNumber = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNumber = totalPages - 4 + i;
+                        } else {
+                          pageNumber = currentPage - 2 + i;
+                        }
 
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => goToPage(pageNumber)}
-                          className={`px-3 py-2 text-sm rounded-lg transition ${
-                            currentPage === pageNumber
-                              ? 'bg-red-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-                          }`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => goToPage(pageNumber)}
+                            className={`px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg transition min-w-[28px] sm:min-w-[32px] ${
+                              currentPage === pageNumber
+                                ? 'bg-red-600 text-white'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                  <div className="flex items-center gap-2">
+                    {/* Next Button */}
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
                       title="Next page"
                     >
-                      Next
+                      <span className="hidden sm:inline">Next</span>
+                      <span className="sm:hidden">Next</span>
                       <FaChevronRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -481,27 +630,26 @@ export default function BookingsPage() {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Modal Overlay - Matching Your Gray & Red UI Design */}
+      {/* Modal Overlay - Mobile Responsive */}
       {showModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header - Matching Your UI Style */}
-            <div className="bg-gray-700 p-6 rounded-t-xl">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="bg-gray-700 p-4 sm:p-6 rounded-t-xl">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-red-600 p-2 rounded-full">
-                    <FaCalendarAlt className="w-4 h-4 text-white" />
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div className="bg-red-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                    <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-white">Booking Details</h2>
-                    <p className="text-gray-400 text-sm">Your reservation information</p>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-bold text-white truncate">Booking Details</h2>
+                    <p className="text-gray-400 text-xs sm:text-sm">Your reservation information</p>
                   </div>
                 </div>
                 <button
                   onClick={closeModal}
-                  className="text-gray-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition"
+                  className="text-gray-400 hover:text-white text-xl sm:text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition flex-shrink-0"
                 >
                   ×
                 </button>
@@ -509,66 +657,66 @@ export default function BookingsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {/* Booking Info Section */}
-              <div className="bg-gray-700 rounded-lg p-6 mb-6">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-red-600 p-2 rounded-full">
-                      <FaCalendarAlt className="w-4 h-4 text-white" />
+              <div className="bg-gray-700 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="bg-red-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                      <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                         Booking #{selectedBooking.id}
                       </h3>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-xs sm:text-sm truncate">
                         {selectedBooking.guest_name} • {selectedBooking.guest_email}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {getStatusIcon(selectedBooking.status || 'pending')}
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(selectedBooking.status || 'pending')}`}>
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(selectedBooking.status || 'pending')}`}>
                       {(selectedBooking.status || 'pending').charAt(0).toUpperCase() + (selectedBooking.status || 'pending').slice(1)}
                     </span>
                   </div>
                 </div>
 
                 {/* Dates and Guest Info */}
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <FaCalendarAlt className="w-4 h-4 text-red-500" />
-                      <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
+                      <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-400">Check-in Date</p>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-sm sm:text-base truncate">
                           {selectedBooking.check_in_date ? new Date(selectedBooking.check_in_date).toLocaleDateString() : "N/A"}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <FaUsers className="w-4 h-4 text-red-500" />
-                      <div>
+                    <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
+                      <FaUsers className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-400">Number of Guests</p>
-                        <p className="font-semibold">{selectedBooking.number_of_guests} guest(s)</p>
+                        <p className="font-semibold text-sm sm:text-base">{selectedBooking.number_of_guests} guest(s)</p>
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <FaCalendarAlt className="w-4 h-4 text-red-500" />
-                      <div>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
+                      <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-400">Check-out Date</p>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-sm sm:text-base truncate">
                           {selectedBooking.check_out_date ? new Date(selectedBooking.check_out_date).toLocaleDateString() : "N/A"}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <FaClock className="w-4 h-4 text-red-500" />
-                      <div>
+                    <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
+                      <FaClock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-400">Total Amount</p>
-                        <p className="font-semibold text-green-400">₱{selectedBooking.total_amount.toLocaleString()}</p>
+                        <p className="font-semibold text-green-400 text-sm sm:text-base">₱{selectedBooking.total_amount.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
@@ -576,58 +724,73 @@ export default function BookingsPage() {
 
                 {/* Contact Information */}
                 {selectedBooking.guest_phone && (
-                  <div className="border-t border-gray-600 pt-4">
-                    <p className="text-gray-400 text-sm">
+                  <div className="border-t border-gray-600 pt-3 sm:pt-4">
+                    <p className="text-gray-400 text-xs sm:text-sm">
                       Phone: <a href={`tel:${selectedBooking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline font-medium">{selectedBooking.guest_phone}</a>
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Additional Information */}
-              <div className="space-y-4">
+              {/* Additional Information - Mobile Responsive */}
+              <div className="space-y-3 sm:space-y-4">
                 {/* Special Requests */}
                 {selectedBooking.special_requests && (
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">Special Requests</h4>
-                    <p className="text-gray-300 text-sm">{selectedBooking.special_requests}</p>
+                  <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
+                    <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                      <FaCommentDots className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                      Special Requests
+                    </h4>
+                    <p className="text-gray-300 text-xs sm:text-sm bg-gray-600 p-2 sm:p-3 rounded break-words">
+                      {selectedBooking.special_requests}
+                    </p>
                   </div>
                 )}
 
                 {/* Pet Information */}
                 {selectedBooking.brings_pet !== null && (
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">Pet Policy</h4>
-                    <p className="text-gray-300 text-sm">
+                  <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
+                    <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                      <span className="text-lg">🐾</span>
+                      Pet Policy
+                    </h4>
+                    <p className="text-gray-300 text-xs sm:text-sm">
                       {selectedBooking.brings_pet ? (
-                        <span className="text-green-400">✅ Pet-friendly booking</span>
+                        <span className="text-green-400 flex items-center gap-1">
+                          <span>✅</span> Pet-friendly booking
+                        </span>
                       ) : (
-                        <span className="text-gray-400">🚫 No pets for this booking</span>
+                        <span className="text-gray-400 flex items-center gap-1">
+                          <span>🚫</span> No pets for this booking
+                        </span>
                       )}
                     </p>
                   </div>
                 )}
 
                 {/* Booking Date */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Booking Information</h4>
-                  <div className="space-y-2">
-                    <p className="text-gray-300 text-sm">
-                      Created on: {selectedBooking.created_at ? new Date(selectedBooking.created_at).toLocaleDateString() : "N/A"}
+                <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
+                  <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                    <FaClock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                    Booking Timeline
+                  </h4>
+                  <div className="space-y-1 sm:space-y-2">
+                    <p className="text-gray-300 text-xs sm:text-sm">
+                      <span className="text-gray-400">Created:</span> {selectedBooking.created_at ? new Date(selectedBooking.created_at).toLocaleDateString() : "N/A"}
                     </p>
                     {selectedBooking.status?.toLowerCase() === 'cancelled' && selectedBooking.cancelled_by && (
-                      <div className="border-t border-gray-600 pt-2">
-                        <p className="text-red-400 text-sm font-medium">
-                          ❌ Cancelled by {selectedBooking.cancelled_by === 'user' ? 'Guest' : 'Admin'}
+                      <div className="border-t border-gray-600 pt-2 mt-2">
+                        <p className="text-red-400 text-xs sm:text-sm font-medium flex items-center gap-1">
+                          <span>❌</span> Cancelled by {selectedBooking.cancelled_by === 'user' ? 'Guest' : 'Admin'}
                         </p>
                         {selectedBooking.cancelled_at && (
                           <p className="text-gray-400 text-xs">
-                            Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString()} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
+                            <span className="text-gray-500">When:</span> {new Date(selectedBooking.cancelled_at).toLocaleDateString()} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
                           </p>
                         )}
                         {selectedBooking.cancellation_reason && (
-                          <p className="text-gray-400 text-xs">
-                            Reason: {selectedBooking.cancellation_reason}
+                          <p className="text-gray-400 text-xs break-words">
+                            <span className="text-gray-500">Reason:</span> {selectedBooking.cancellation_reason}
                           </p>
                         )}
                       </div>
@@ -637,43 +800,43 @@ export default function BookingsPage() {
               </div>
             </div>
 
-            {/* Modal Footer - Matching Your Button Style */}
-            <div className="bg-gray-700 p-6 rounded-b-xl border-t border-gray-600">
+            {/* Modal Footer - Mobile Responsive */}
+            <div className="bg-gray-700 p-4 sm:p-6 rounded-b-xl border-t border-gray-600">
               {canCancelBooking(selectedBooking) && !showCancelModal ? (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                   <button 
                     onClick={() => setShowCancelModal(true)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition"
+                    className="bg-red-600 text-white px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition order-2 sm:order-1"
                     title={getCancellationMessage(selectedBooking)}
                   >
                     Cancel Booking
                   </button>
                   <button
                     onClick={closeModal}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition"
+                    className="bg-gray-600 text-white px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
                   >
                     Close
                   </button>
                 </div>
               ) : showCancelModal ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <h4 className="text-white font-medium mb-2">Why are you cancelling this booking?</h4>
+                    <h4 className="text-white font-medium mb-2 text-sm sm:text-base">Why are you cancelling this booking?</h4>
                     <textarea
                       value={cancellationReason}
                       onChange={(e) => setCancellationReason(e.target.value)}
                       placeholder="Please provide a reason for cancellation (required)"
-                      className="w-full p-3 rounded-lg bg-gray-600 text-white placeholder-gray-400 border border-gray-500 focus:border-red-500 focus:outline-none resize-none"
+                      className="w-full p-3 rounded-lg bg-gray-600 text-white placeholder-gray-400 border border-gray-500 focus:border-red-500 focus:outline-none resize-none text-sm"
                       rows={3}
                       maxLength={200}
                     />
                     <p className="text-gray-400 text-xs mt-1">{cancellationReason.length}/200 characters</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                     <button 
                       onClick={() => handleCancelBooking(selectedBooking.id)}
                       disabled={!cancellationReason.trim()}
-                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition ${
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition order-2 sm:order-1 ${
                         cancellationReason.trim() 
                           ? 'bg-red-600 text-white hover:bg-red-700' 
                           : 'bg-gray-500 text-gray-300 cursor-not-allowed'
@@ -686,14 +849,14 @@ export default function BookingsPage() {
                         setShowCancelModal(false);
                         setCancellationReason("");
                       }}
-                      className="bg-gray-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-gray-500 transition"
+                      className="bg-gray-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
                     >
                       Back
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                   {!canCancelBooking(selectedBooking) && selectedBooking.status?.toLowerCase() !== 'cancelled' && (
                     <button 
                       disabled
@@ -705,7 +868,7 @@ export default function BookingsPage() {
                   )}
                   <button
                     onClick={closeModal}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition"
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition flex-1"
                   >
                     Close
                   </button>
@@ -715,6 +878,7 @@ export default function BookingsPage() {
           </div>
         </div>
       )}
+      </div> {/* Close main content container */}
     </div>
   );
 }

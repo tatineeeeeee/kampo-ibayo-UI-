@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FaChevronDown, FaCalendarAlt } from "react-icons/fa";
+import { FaChevronDown, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
+import { canUserCreatePendingBooking } from "../utils/bookingUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -33,6 +34,8 @@ function BookingPage() {
 
   const [minDate, setMinDate] = useState<Date>(new Date());
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
+  const [canCreateBooking, setCanCreateBooking] = useState(true);
+  const [limitMessage, setLimitMessage] = useState("");
 
   // Auth check useEffect
   useEffect(() => {
@@ -47,6 +50,19 @@ function BookingPage() {
     // Convert to Philippines timezone (UTC+8)
     const philippinesTime = new Date(today.getTime() + (8 * 60 * 60 * 1000));
     setMinDate(philippinesTime);
+    
+    // Check if user can create pending bookings
+    const checkBookingLimits = async () => {
+      if (user) {
+        try {
+          const result = await canUserCreatePendingBooking(user.id);
+          setCanCreateBooking(result.canCreate);
+          setLimitMessage(result.message || "");
+        } catch (error) {
+          console.error("Error checking booking limits:", error);
+        }
+      }
+    };
     
     // Auto-fill user information
     const loadUserData = async () => {
@@ -111,7 +127,8 @@ function BookingPage() {
     
     loadUserData();
     fetchExistingBookings();
-  }, []);
+    checkBookingLimits();
+  }, [user]);
 
   // Show loading if auth is still loading
   if (loading) {
@@ -199,6 +216,12 @@ function BookingPage() {
     if (!user) {
       alert('Please log in to make a booking');
       window.location.href = '/auth';
+      return;
+    }
+
+    // Check if user can create pending bookings (enforce limit)
+    if (!canCreateBooking) {
+      alert(limitMessage || 'You have reached the maximum number of pending bookings (3). Please wait for confirmation or cancel existing pending bookings.');
       return;
     }
     
@@ -401,6 +424,18 @@ function BookingPage() {
         {/* Title - clean and simple */}
         <h1 className="text-2xl font-bold text-center mb-6">Book your Stay</h1>
 
+        {/* Booking Limit Warning */}
+        {!canCreateBooking && (
+          <div className="mb-6 p-4 bg-red-900/30 border border-red-600 rounded-lg">
+            <div className="flex items-center gap-2">
+              <FaExclamationTriangle className="w-4 h-4 text-red-500" />
+              <p className="text-red-400 text-sm font-medium">
+                {limitMessage}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Full Name */}
@@ -596,9 +631,14 @@ function BookingPage() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-red-600 text-white font-semibold py-3 rounded-md hover:bg-red-700 transition"
+            disabled={!canCreateBooking}
+            className={`w-full font-semibold py-3 rounded-md transition ${
+              canCreateBooking 
+                ? 'bg-red-600 text-white hover:bg-red-700' 
+                : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+            }`}
           >
-            Reserve Now
+            {canCreateBooking ? 'Reserve Now' : 'Booking Limit Reached'}
           </button>
         </form>
       </div>
