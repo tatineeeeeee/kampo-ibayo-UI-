@@ -276,6 +276,7 @@ export default function SettingsPage() {
                       type="checkbox" 
                       className="sr-only peer" 
                       defaultChecked 
+                      aria-label="Enable notifications to receive system alerts and updates"
                     />
                     <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                   </label>
@@ -297,6 +298,7 @@ export default function SettingsPage() {
                     <input 
                       type="checkbox" 
                       className="sr-only peer" 
+                      aria-label="Allow online payments and enable payment processing"
                     />
                     <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                   </label>
@@ -318,6 +320,7 @@ export default function SettingsPage() {
                     <input 
                       type="checkbox" 
                       className="sr-only peer" 
+                      aria-label="Enable dark mode to switch to dark theme"
                     />
                     <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                   </label>

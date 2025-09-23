@@ -452,10 +452,11 @@ export default function SettingsPage() {
 
             <form onSubmit={handleProfileUpdate} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="full-name-input" className="block text-sm font-medium text-gray-300 mb-2">
                   Full Name
                 </label>
                 <input
+                  id="full-name-input"
                   type="text"
                   value={profileData.name}
                   onChange={(e) => setProfileData({...profileData, name: e.target.value})}
@@ -465,10 +466,11 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="email-input" className="block text-sm font-medium text-gray-300 mb-2">
                   Email Address
                 </label>
                 <input
+                  id="email-input"
                   type="email"
                   value={profileData.email}
                   disabled
@@ -478,10 +480,11 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="phone-input" className="block text-sm font-medium text-gray-300 mb-2">
                   Phone Number
                 </label>
                 <input
+                  id="phone-input"
                   type="tel"
                   value={profileData.phone}
                   onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
@@ -510,11 +513,12 @@ export default function SettingsPage() {
 
             <form onSubmit={handlePasswordUpdate} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="current-password-input" className="block text-sm font-medium text-gray-300 mb-2">
                   Current Password
                 </label>
                 <div className="relative">
                   <input
+                    id="current-password-input"
                     type={showCurrentPassword ? "text" : "password"}
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
@@ -532,11 +536,12 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="new-password-input" className="block text-sm font-medium text-gray-300 mb-2">
                   New Password
                 </label>
                 <div className="relative">
                   <input
+                    id="new-password-input"
                     type={showNewPassword ? "text" : "password"}
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
@@ -554,11 +559,12 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="confirm-password-input" className="block text-sm font-medium text-gray-300 mb-2">
                   Confirm New Password
                 </label>
                 <div className="relative">
                   <input
+                    id="confirm-password-input"
                     type={showConfirmPassword ? "text" : "password"}
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
