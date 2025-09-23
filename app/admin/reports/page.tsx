@@ -46,19 +46,36 @@ export default function ReportsPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <select className="border rounded-md px-3 py-2 text-sm text-gray-700">
-            <option>Booking Report</option>
-            <option>Revenue Report</option>
-            <option>User Report</option>
-          </select>
-          <input
-            type="date"
-            className="border rounded-md px-3 py-2 text-sm text-gray-700"
-          />
-          <input
-            type="date"
-            className="border rounded-md px-3 py-2 text-sm text-gray-700"
-          />
+          <div>
+            <label htmlFor="report-type" className="block text-xs text-gray-600 mb-1">
+              Report Type
+            </label>
+            <select id="report-type" className="border rounded-md px-3 py-2 text-sm text-gray-700">
+              <option>Booking Report</option>
+              <option>Revenue Report</option>
+              <option>User Report</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="start-date" className="block text-xs text-gray-600 mb-1">
+              Start Date
+            </label>
+            <input
+              id="start-date"
+              type="date"
+              className="border rounded-md px-3 py-2 text-sm text-gray-700"
+            />
+          </div>
+          <div>
+            <label htmlFor="end-date" className="block text-xs text-gray-600 mb-1">
+              End Date
+            </label>
+            <input
+              id="end-date"
+              type="date"
+              className="border rounded-md px-3 py-2 text-sm text-gray-700"
+            />
+          </div>
         </div>
 
         {/* Action Buttons */}
