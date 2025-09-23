@@ -9,7 +9,8 @@ import {
   ChevronRight, 
   X,
   Wifi,
-  Car
+  Car,
+  Star
 } from "lucide-react";
 
 // Loading Skeleton Component
@@ -20,24 +21,17 @@ export const LoadingSkeleton = ({ className }: { className?: string }) => (
 // Enhanced Gallery with Lightbox
 export const EnhancedGallery = () => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
 
   const galleryImages = [
-    { src: "/gallery1.jpg", alt: "Swimming Pool Area" },
-    { src: "/gallery2.jpg", alt: "Camping Grounds" },
-    { src: "/gallery3.jpg", alt: "Bonfire Area" },
-    { src: "/gallery4.jpg", alt: "River Access" },
-    { src: "/gallery5.jpg", alt: "Outdoor Kitchen" },
-    { src: "/gallery6.jpg", alt: "Picnic Areas" },
+    { src: "/gallery1.jpg", alt: "Crystal clear swimming pool with mountain views" },
+    { src: "/gallery2.jpg", alt: "Spacious camping grounds under starlit skies" },
+    { src: "/gallery3.jpg", alt: "Cozy bonfire area perfect for evening gatherings" },
+    { src: "/gallery4.jpg", alt: "Private river access for swimming and relaxation" },
+    { src: "/gallery5.jpg", alt: "Fully equipped outdoor kitchen for group cooking" },
+    { src: "/gallery6.jpg", alt: "Scenic picnic areas surrounded by nature" },
+    { src: "/pool.jpg", alt: "Resort overview showcasing all premium amenities" },
+    { src: "/pooll.jpg", alt: "Pool facilities with crystal-clear waters" },
   ];
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % galleryImages.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
-  };
 
   const nextImage = useCallback(() => {
     setSelectedImage((prev) => prev !== null ? (prev + 1) % galleryImages.length : 0);
@@ -71,121 +65,179 @@ export const EnhancedGallery = () => {
 
   return (
     <>
-      <section id="gallery" className="bg-gray-800 text-white py-16 px-6">
-        <h2 className="text-3xl font-bold text-center mb-10">
+      <section id="gallery" className="bg-gray-800 text-white py-6 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-8 sm:mb-10 lg:mb-12">
           Photo Gallery
         </h2>
         
-        {/* Featured Carousel */}
-        <div className="max-w-5xl mx-auto mb-10">
-          <div className="relative h-[500px] rounded-xl overflow-hidden group bg-gradient-to-br from-gray-800 to-gray-900">
-            <Image
-              src={galleryImages[currentSlide].src}
-              alt={galleryImages[currentSlide].alt}
-              fill
-              className="object-cover object-center transition-transform duration-500"
-              style={{ filter: 'brightness(0.9)' }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
-            
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg"
+        {/* Modern Featured Gallery */}
+        <div className="max-w-7xl mx-auto mb-12">
+          {/* Hero Image - Real-World Best Practice */}
+          <div className="relative mb-8">
+            {/* Main hero container */}
+            <div 
+              className="relative h-[60vh] sm:h-[70vh] lg:h-[80vh] max-h-[600px] rounded-xl overflow-hidden cursor-pointer group bg-gray-700"
+              onClick={() => setSelectedImage(0)}
             >
-              <ChevronLeft className="w-8 h-8 text-white" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg"
-            >
-              <ChevronRight className="w-8 h-8 text-white" />
-            </button>
+              <Image
+                src={galleryImages[0].src}
+                alt={galleryImages[0].alt}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              
+              {/* Progressive overlay - not too dark */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+              
+              {/* Subtle hover overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+              
+              {/* Content overlay */}
+              <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
+                {/* Top section - Featured badge */}
+                <div className="flex justify-start">
+                  <div className="bg-gradient-to-r from-red-900/80 to-red-800/80 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm border border-red-700/50 flex items-center gap-2">
+                    <Star className="w-4 h-4 fill-current" />
+                    Featured
+                  </div>
+                </div>
+                
+                {/* Bottom section - main content */}
+                <div className="text-white">
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight">
+                    {galleryImages[0].alt}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm sm:text-base text-white/90">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View full size
+                    </span>
+                    <span>•</span>
+                    <span>Tap to explore</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            {/* Dots Indicator */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3">
-              {galleryImages.map((_, index) => (
+          {/* Production-Ready Thumbnail Gallery */}
+          <div className="relative">
+            {/* Universal responsive grid - works everywhere */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3">
+              {galleryImages.map((image, index) => (
                 <button
                   key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 hover:scale-125 ${
-                    index === currentSlide ? "bg-white shadow-lg" : "bg-white/60 hover:bg-white/80"
-                  }`}
-                />
+                  type="button"
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-105"
+                  onClick={() => setSelectedImage(index)}
+                  aria-label={`View photo ${index + 1}: ${image.alt}`}
+                >
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    sizes="(max-width: 640px) 25vw, (max-width: 1024px) 16vw, 12vw"
+                    className="object-cover transition-transform duration-200 group-hover:scale-110"
+                  />
+                  
+                  {/* Simple, reliable hover effect */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
+                  
+                  {/* Image number - always visible for clarity */}
+                  <div className="absolute bottom-1 right-1">
+                    <span className="bg-gradient-to-r from-red-900/80 to-red-800/80 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg border border-red-700/50">
+                      {index + 1}
+                    </span>
+                  </div>
+                  
+                  {/* Active state indicator */}
+                  {selectedImage === index && (
+                    <div className="absolute inset-0 ring-2 ring-red-500 ring-inset rounded-lg"></div>
+                  )}
+                </button>
               ))}
+            </div>
+            
+            {/* Mobile scroll hint */}
+            <div className="block sm:hidden mt-3 text-center">
+              <p className="text-gray-400 text-xs">Tap any photo to view full size</p>
             </div>
           </div>
         </div>
 
-        {/* Thumbnail Grid */}
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
-          {galleryImages.map((image, index) => (
-            <div
-              key={index}
-              className="relative h-36 md:h-40 lg:h-44 rounded-lg overflow-hidden cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => setSelectedImage(index)}
-            >
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
-              
-              {/* Image label overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <p className="text-white font-semibold text-sm">{image.alt}</p>
-              </div>
-            </div>
-          ))}
+        {/* View All Photos Button */}
+        <div className="max-w-7xl mx-auto text-center">
+          <button 
+            onClick={() => setSelectedImage(0)}
+            className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-full px-6 py-3 transition-all duration-300 group"
+          >
+            <span className="text-white/80 text-sm group-hover:text-white">View all</span>
+            <span className="bg-gradient-to-r from-red-900/80 to-red-800/80 group-hover:from-red-800/90 group-hover:to-red-700/90 text-white text-sm font-semibold px-3 py-1 rounded-full transition-all duration-300 shadow-lg border border-red-700/50">
+              {galleryImages.length} Photos
+            </span>
+          </button>
         </div>
       </section>
 
-      {/* Lightbox Modal */}
+      {/* Enhanced Lightbox Modal */}
       {selectedImage !== null && (
-        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/96 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="relative w-full h-full flex items-center justify-center">
-            <div className="relative">
+            {/* Main Image Container */}
+            <div className="relative max-w-6xl max-h-[90vh]">
               <Image
                 src={galleryImages[selectedImage].src}
                 alt={galleryImages[selectedImage].alt}
                 width={0}
                 height={0}
                 sizes="100vw"
-                className="rounded-lg max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain"
+                className="rounded-2xl max-w-[95vw] max-h-[90vh] w-auto h-auto object-contain shadow-2xl"
                 style={{ width: 'auto', height: 'auto' }}
               />
               
-              {/* Close Button */}
+              {/* Elegant Controls */}
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 backdrop-blur-sm rounded-full p-3 transition-all duration-300 z-10"
+                className="absolute -top-4 -right-4 bg-white text-gray-900 hover:bg-gray-100 rounded-full p-3 transition-all duration-300 shadow-lg hover:shadow-xl group"
               >
-                <X className="w-6 h-6 text-white" />
+                <X className="w-5 h-5" />
               </button>
               
-              {/* Previous Button */}
+              {/* Navigation */}
               <button
                 onClick={prevImage}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 backdrop-blur-sm rounded-full p-3 transition-all duration-300 z-10"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-full p-4 transition-all duration-300 shadow-lg"
               >
-                <ChevronLeft className="w-6 h-6 text-white" />
+                <ChevronLeft className="w-6 h-6" />
               </button>
               
-              {/* Next Button */}
               <button
                 onClick={nextImage}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 backdrop-blur-sm rounded-full p-3 transition-all duration-300 z-10"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-full p-4 transition-all duration-300 shadow-lg"
               >
-                <ChevronRight className="w-6 h-6 text-white" />
+                <ChevronRight className="w-6 h-6" />
               </button>
-              
-              {/* Image info */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
-                <span className="font-medium">{galleryImages[selectedImage].alt}</span>
-                <span className="mx-2">•</span>
-                <span>{selectedImage + 1} / {galleryImages.length}</span>
+            </div>
+            
+            {/* Image Information Panel */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-md text-white px-6 py-4 rounded-2xl shadow-xl border border-white/20">
+              <div className="text-center">
+                <h3 className="font-semibold text-lg mb-1">{galleryImages[selectedImage].alt}</h3>
+                <div className="flex items-center justify-center gap-4 text-sm text-white/80">
+                  <span>{selectedImage + 1} of {galleryImages.length}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    Use 
+                    <kbd className="bg-white/20 px-2 py-0.5 rounded text-xs font-mono">←</kbd>
+                    <kbd className="bg-white/20 px-2 py-0.5 rounded text-xs font-mono">→</kbd>
+                    to navigate
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -281,27 +333,41 @@ export const ContactForm = () => {
 // Trust Badges Section
 export const TrustBadges = () => {
   const badges = [
-    { icon: <Award className="w-8 h-8" />, title: "Certified Safe", desc: "DOT Certified" },
-    { icon: <Users className="w-8 h-8" />, title: "Family Friendly", desc: "Kid Safe Environment" },
-    { icon: <Wifi className="w-8 h-8" />, title: "Free WiFi", desc: "High Speed Internet" },
-    { icon: <Car className="w-8 h-8" />, title: "Free Parking", desc: "Secure Vehicle Area" },
+    { icon: <Award className="w-6 h-6 sm:w-8 sm:h-8" />, title: "Certified Safe", desc: "DOT Certified" },
+    { icon: <Users className="w-6 h-6 sm:w-8 sm:h-8" />, title: "Family Friendly", desc: "Kid Safe Environment" },
+    { icon: <Wifi className="w-6 h-6 sm:w-8 sm:h-8" />, title: "Free WiFi", desc: "High Speed Internet" },
+    { icon: <Car className="w-6 h-6 sm:w-8 sm:h-8" />, title: "Free Parking", desc: "Secure Vehicle Area" },
   ];
 
   return (
-    <section className="bg-gray-900 py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-4 gap-6">
-          {badges.map((badge, index) => (
-            <div key={index} className="text-center text-white group hover:scale-105 transition-transform duration-300">
-              <div className="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-red-500 transition-colors">
-                {badge.icon}
-              </div>
-              <h3 className="font-semibold mb-1">{badge.title}</h3>
-              <p className="text-gray-400 text-sm">{badge.desc}</p>
+    <div className="max-w-6xl mx-auto">
+      {/* Mobile: Stack vertically */}
+      <div className="block sm:hidden space-y-4">
+        {badges.map((badge, index) => (
+          <div key={index} className="bg-gray-800 p-4 rounded-lg flex items-center gap-4 text-white">
+            <div className="bg-red-600 w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
+              {badge.icon}
             </div>
-          ))}
-        </div>
+            <div className="text-left">
+              <h3 className="font-semibold text-sm">{badge.title}</h3>
+              <p className="text-gray-400 text-xs">{badge.desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
-    </section>
+      
+      {/* Desktop: Grid layout */}
+      <div className="hidden sm:grid gap-6 grid-cols-2 md:grid-cols-4">
+        {badges.map((badge, index) => (
+          <div key={index} className="text-center text-white group hover:scale-105 transition-transform duration-300">
+            <div className="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-red-500 transition-colors">
+              {badge.icon}
+            </div>
+            <h3 className="font-semibold mb-1 text-base">{badge.title}</h3>
+            <p className="text-gray-400 text-sm">{badge.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

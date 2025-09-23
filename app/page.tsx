@@ -16,9 +16,20 @@ import {
   Phone,
   Mail,
   Clock,
-  MessageCircle,
-  ArrowRight
+  MessageCircleHeart,
+  ArrowRight,
+  CreditCard,
+  HomeIcon,
+  Gamepad2,
+  UtensilsCrossed,
+  Wifi,
+  Car,
+  Heart,
+  Waves,
+  Facebook,
+  Instagram
 } from "lucide-react";
+import { FaHome, FaGamepad, FaUtensils, FaMapMarkedAlt } from "react-icons/fa";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./contexts/AuthContext";
 import { TrustBadges, EnhancedGallery } from "./components/EnhancedComponents";
@@ -393,71 +404,207 @@ function Home() {
       </section>
 
       {/* Amenities Section */}
-      <section id="amenities" className="bg-gray-900 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+      <section id="amenities" className="bg-gray-900 text-white py-6 px-4 sm:py-8 sm:px-6 lg:py-12 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Our Amenities</h2>
             <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
-              Experience comfort and adventure with our thoughtfully designed facilities
+              Complete resort facilities for up to 15 guests with modern comforts in a natural setting
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
-            {[
-              {
-                title: "Tent Camping",
-                desc: "Comfortable and spacious tents with ventilation and flooring.",
-                icon: "⛺",
-              },
-              {
-                title: "Bonfire Area",
-                desc: "Safe bonfire spots for storytelling, roasting, and stargazing.",
-                icon: "🔥",
-              },
-              {
-                title: "Clean Restroom",
-                desc: "Well-maintained restroom and shower facilities with hot water.",
-                icon: "🚻",
-              },
-              {
-                title: "River Access",
-                desc: "Direct access to a clear river for swimming and relaxing.",
-                icon: "🌊",
-              },
-              {
-                title: "Outdoor Kitchen",
-                desc: "Equipped cooking area with grills, stoves, and tables.",
-                icon: "🍴",
-              },
-              {
-                title: "Picnic Areas",
-                desc: "Shaded picnic spots with tables and benches.",
-                icon: "🌲",
-              },
-            ].map((amenity) => (
-              <div
-                key={amenity.title}
-                className="group bg-gray-800 p-3 sm:p-4 lg:p-6 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-center"
-              >
-                <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3 transition-transform group-hover:scale-110 duration-300">{amenity.icon}</div>
-                <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-1 sm:mb-2 text-white">{amenity.title}</h3>
-                <p className="text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed hidden lg:block">{amenity.desc}</p>
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            {/* Summer Promo */}
+            <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-5 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-red-600/30 hover:border-red-500/50">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                SAVE ₱3K
               </div>
-            ))}
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-1">Summer Special</h3>
+                  <p className="text-2xl font-extrabold mb-1">₱9,000</p>
+                  <p className="text-red-100 text-sm">22hrs • Up to 15 pax • Mon-Thu</p>
+                </div>
+                <div className="text-right">
+                  <Link href="/book" className="bg-white/90 backdrop-blur text-red-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-white transition-colors shadow-lg hover:shadow-xl transform hover:scale-105">
+                    Book Now
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Weekend Rate */}
+            <div className="bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 p-5 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-gray-600">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-1 text-yellow-400">Weekend & Holidays</h3>
+                  <p className="text-2xl font-extrabold mb-1 text-yellow-400">₱12,000</p>
+                  <p className="text-gray-300 text-sm">22hrs • Up to 15 pax • Fri-Sun</p>
+                </div>
+                <div className="text-right">
+                  <Link href="/book" className="bg-yellow-400/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105">
+                    Book Now
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* Compact Amenities Grid */}
+          <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:mb-8">
+            {/* Accommodation */}
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
+                <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                  <FaHome className="text-red-400" />
+                </div>
+                <h4 className="text-base font-bold text-red-400 sm:text-lg">Accommodation</h4>
+              </div>
+              <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  2 poolside AC family rooms (8 pax each)
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Private bathrooms with bidet & hot/cold shower
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Camping area with full-sized campfire
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Treehouse with electricity & extra space
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Open shower area near pool with comfort room
+                </li>
+              </ul>
+            </div>
+
+            {/* Entertainment & Facilities */}
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
+                <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                  <FaGamepad className="text-red-400" />
+                </div>
+                <h4 className="text-base font-bold text-red-400 sm:text-lg">Entertainment & Fun</h4>
+              </div>
+              <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Swimming pool & poolside lounge
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Videoke & arcade machine
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Board games & gazebo dining area
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Function hall/stage for events
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Adventure hanging bridge access
+                </li>
+              </ul>
+            </div>
+
+            {/* Kitchen & Amenities */}
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
+                <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                  <FaUtensils className="text-red-400" />
+                </div>
+                <h4 className="text-base font-bold text-red-400 sm:text-lg">Kitchen & More</h4>
+              </div>
+              <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Fully-equipped kitchen with appliances
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Grill area & complete cooking utensils
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Hot/cold water dispenser (1st gallon FREE)
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  8-vehicle parking & WiFi access
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Pet-friendly facility - all furbabies welcome
+                </li>
+              </ul>
+            </div>
+
+            {/* Special Location Features */}
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
+                <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                  <FaMapMarkedAlt className="text-red-400" />
+                </div>
+                <h4 className="text-base font-bold text-red-400 sm:text-lg">Special Features</h4>
+              </div>
+              <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Adventure hanging bridge (safe & secure)
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Nestled in peaceful farmlands
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Caretaker assistance & guided walk
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Easy landmark access (Dali Grocery)
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-400">•</span>
+                  Exclusive countryside experience
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Quick Note */}
+          <div className="bg-gradient-to-r from-red-900/30 to-red-800/30 border border-red-700/50 p-3 rounded-xl mb-6 sm:p-4 sm:mb-8">
+            <p className="text-red-100 text-xs text-center sm:text-sm">
+              <span className="text-red-400 font-semibold">All-inclusive experience</span> • No hidden fees • Pet-friendly • 
+              <span className="text-red-400 font-semibold">Bring:</span> Food, drinks & personal items
+            </p>
+          </div>
+
+          {/* Trust Badges inside Amenities */}
+          <TrustBadges />
         </div>
       </section>
-
-      {/* Trust Badges Section */}
-      <TrustBadges />
 
       {/* Enhanced Gallery Section */}
       <section id="gallery">
         <EnhancedGallery />
       </section>
       {/* Testimonials Section */}
-      <section id="reviews" className="bg-gray-900 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+      <section id="reviews" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-1">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               What Our Guests Say
             </h2>
@@ -515,7 +662,7 @@ function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="bg-gray-900 text-white py-8 sm:py-12 lg:py-16 xl:py-20 px-4 sm:px-6 lg:px-8">
+      <section id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Contact Us</h2>
@@ -537,6 +684,48 @@ function Home() {
                   className="rounded-xl"
                   title="Kampo Ibayo Location Map"
                 ></iframe>
+              </div>
+
+              {/* Enhanced Important Booking Terms - Perfect Compact Size */}
+              <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-600/30 rounded-xl mt-6 overflow-hidden">
+                {/* Compact Header */}
+                <div className="px-4 py-2 border-b border-red-600/20">
+                  <h4 className="text-red-400 font-semibold text-sm flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-red-400" />
+                    Important Booking Terms
+                    <span className="ml-auto bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full font-medium">Required</span>
+                  </h4>
+                </div>
+
+                {/* Compact Content with Numbers and Hover Effects */}
+                <div className="p-3">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                      <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
+                        <span className="text-red-400 text-xs font-bold">1</span>
+                      </div>
+                      <span className="text-gray-300 group-hover:text-white transition-colors">50% downpayment required to secure booking</span>
+                    </div>
+                    <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                      <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
+                        <span className="text-red-400 text-xs font-bold">2</span>
+                      </div>
+                      <span className="text-gray-300 group-hover:text-white transition-colors">No same-day cancellations allowed</span>
+                    </div>
+                    <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                      <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
+                        <span className="text-red-400 text-xs font-bold">3</span>
+                      </div>
+                      <span className="text-gray-300 group-hover:text-white transition-colors">Remaining balance due at check-in</span>
+                    </div>
+                    <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                      <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
+                        <span className="text-red-400 text-xs font-bold">4</span>
+                      </div>
+                      <span className="text-gray-300 group-hover:text-white transition-colors">48-hour advance notice required for changes</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -572,7 +761,7 @@ function Home() {
                     kampoibayo@gmail.com
                   </a>
                   <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg">
-                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+                    <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
                     Kampo Ibayo (Facebook)
                   </div>
                 </div>
@@ -603,7 +792,7 @@ function Home() {
                 href="#" 
                 className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl"
               >
-                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5" />
                 Message us on Facebook
               </a>
             </div>
@@ -648,18 +837,29 @@ function Home() {
                   </div>
                 </div>
 
-                {/* Social Media */}
-                <div className="flex gap-4 mb-4">
-                  <a href="#" className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors">
-                    <span className="text-white text-sm">📘</span>
-                  </a>
-                  <a href="#" className="w-10 h-10 bg-pink-600 rounded-lg flex items-center justify-center hover:bg-pink-700 transition-colors">
-                    <span className="text-white text-sm">📷</span>
-                  </a>
-                  <a href="#" className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors">
-                    <span className="text-white text-sm">💬</span>
-                  </a>
-                </div>
+<div>
+      <h4 className="text-white font-semibold mb-4 text-lg">Follow Us</h4>
+      <div className="flex gap-4 mb-4">
+        <a
+          href="#"
+          className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+        >
+          <Facebook className="w-5 h-5 text-white" />
+        </a>
+        <a
+          href="#"
+          className="w-10 h-10 bg-pink-600 rounded-lg flex items-center justify-center hover:bg-pink-700 transition-colors"
+        >
+          <Instagram className="w-5 h-5 text-white" />
+        </a>
+        <a
+          href="#"
+          className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+        >
+          <MessageCircleHeart className="w-5 h-5 text-white" />
+        </a>
+      </div>
+    </div>
 
                 {/* Copyright - moved under company info */}
                 <div className="text-center lg:text-left">
@@ -689,19 +889,32 @@ function Home() {
               </div>
 
               {/* Services */}
-              <div>
-                <h4 className="text-white font-semibold mb-4 text-lg">Our Services</h4>
-                <ul className="space-y-2 text-gray-400 text-sm">
-                  <li>🏕️ Tent Camping</li>
-                  <li>🔥 Bonfire Facilities</li>
-                  <li>🏊‍♂️ River Swimming</li>
-                  <li>🍖 BBQ & Outdoor Cooking</li>
-                  <li>🌿 Nature Walks & Hiking</li>
-                  <li>📸 Event Photography</li>
-                  <li>🚐 Group Packages</li>
-                  <li>🐕 Pet-Friendly Stays</li>
-                </ul>
-              </div>
+<div>
+      <h4 className="text-white font-semibold mb-4 text-lg">Our Services</h4>
+      <ul className="space-y-2 text-gray-400 text-sm">
+        <li className="flex items-center gap-2">
+          <HomeIcon size={16} /> Poolside Family Rooms
+        </li>
+        <li className="flex items-center gap-2">
+          <Gamepad2 size={16} /> Videoke & Arcade
+        </li>
+        <li className="flex items-center gap-2">
+          <UtensilsCrossed size={16} /> Fully-Equipped Kitchen
+        </li>
+        <li className="flex items-center gap-2">
+          <Waves size={16} /> Pool & Lounge Area
+        </li>
+        <li className="flex items-center gap-2">
+          <Heart size={16} /> Pet-Friendly Facility
+        </li>
+        <li className="flex items-center gap-2">
+          <Car size={16} /> 8-Vehicle Parking
+        </li>
+        <li className="flex items-center gap-2">
+          <Wifi size={16} /> WiFi Access
+        </li>
+      </ul>
+    </div>
             </div>
           </div>
         </footer>
