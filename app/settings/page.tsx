@@ -21,6 +21,7 @@ import {
   FaFileCode,
   FaTable
 } from "react-icons/fa";
+import { Check, X } from "lucide-react";
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -34,6 +35,30 @@ export default function SettingsPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string): boolean => {
+    // Remove all non-digit characters
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length === 11;
+  };
+
+  // Format phone number as user types
+  const formatPhoneNumber = (value: string): string => {
+    // Remove all non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Limit to 11 digits
+    const limited = digitsOnly.slice(0, 11);
+    
+    // Format as 09XX-XXX-XXXX
+    if (limited.length >= 8) {
+      return `${limited.slice(0, 4)}-${limited.slice(4, 7)}-${limited.slice(7)}`;
+    } else if (limited.length >= 4) {
+      return `${limited.slice(0, 4)}-${limited.slice(4)}`;
+    }
+    return limited;
+  };
+
   // Form states
   const [profileData, setProfileData] = useState({
     name: "",
@@ -46,6 +71,51 @@ export default function SettingsPage() {
     newPassword: "",
     confirmPassword: ""
   });
+
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+
+  // Password strength validation
+  const validatePasswordStrength = (password: string): {
+    isValid: boolean;
+    requirements: {
+      length: boolean;
+      uppercase: boolean;
+      lowercase: boolean;
+      number: boolean;
+      special: boolean;
+    };
+    score: number;
+  } => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    };
+
+    const score = Object.values(requirements).filter(Boolean).length;
+    const isValid = score === 5;
+
+    return { isValid, requirements, score };
+  };
+
+  // Real-time password matching validation
+  const handleNewPasswordChange = (value: string) => {
+    setPasswordData(prev => ({ ...prev, newPassword: value }));
+    if (passwordData.confirmPassword) {
+      setPasswordsMatch(value === passwordData.confirmPassword);
+    }
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setPasswordData(prev => ({ ...prev, confirmPassword: value }));
+    if (value && passwordData.newPassword) {
+      setPasswordsMatch(passwordData.newPassword === value);
+    } else {
+      setPasswordsMatch(null);
+    }
+  };
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -62,10 +132,11 @@ export default function SettingsPage() {
         router.push("/auth");
       } else {
         // Load user profile data
+        const existingPhone = data.session.user.user_metadata?.phone || "";
         setProfileData({
           name: data.session.user.user_metadata?.name || "",
           email: data.session.user.email || "",
-          phone: data.session.user.user_metadata?.phone || ""
+          phone: formatPhoneNumber(existingPhone)
         });
       }
       setLoading(false);
@@ -146,6 +217,13 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
 
+    // Validate phone number if provided
+    if (profileData.phone && !validatePhoneNumber(profileData.phone)) {
+      alert("Phone number must be exactly 11 digits long!");
+      setSaving(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
@@ -173,8 +251,10 @@ export default function SettingsPage() {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      alert("Password must be at least 6 characters long!");
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(passwordData.newPassword);
+    if (!passwordValidation.isValid) {
+      alert("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
       return;
     }
 
@@ -460,7 +540,7 @@ export default function SettingsPage() {
                   type="text"
                   value={profileData.name}
                   onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 "
                   placeholder="Enter your full name"
                 />
               </div>
@@ -487,9 +567,12 @@ export default function SettingsPage() {
                   id="phone-input"
                   type="tel"
                   value={profileData.phone}
-                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Enter your phone number"
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    setProfileData({...profileData, phone: formatted});
+                  }}
+                  className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 "
+                  placeholder="09XX-XXX-XXXX (11 digits)"
                 />
               </div>
 
@@ -522,7 +605,7 @@ export default function SettingsPage() {
                     type={showCurrentPassword ? "text" : "password"}
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 pr-12 "
                     placeholder="Enter current password"
                   />
                   <button
@@ -544,8 +627,8 @@ export default function SettingsPage() {
                     id="new-password-input"
                     type={showNewPassword ? "text" : "password"}
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    onChange={(e) => handleNewPasswordChange(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 pr-12 "
                     placeholder="Enter new password"
                   />
                   <button
@@ -555,6 +638,36 @@ export default function SettingsPage() {
                   >
                     {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
+                </div>
+                
+                {/* Password Requirements & Strength */}
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="text-gray-400">Use 8+ characters with letters, numbers and symbols</span>
+                  {passwordData.newPassword && (
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-400">Strength:</span>
+                      <div className="flex space-x-0.5">
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <div
+                            key={level}
+                            className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
+                              level <= validatePasswordStrength(passwordData.newPassword).score
+                                ? level <= 1
+                                  ? 'bg-red-400'
+                                  : level <= 2
+                                  ? 'bg-yellow-400'
+                                  : level <= 3
+                                  ? 'bg-blue-400'
+                                  : level <= 4
+                                  ? 'bg-green-400'
+                                  : 'bg-green-500'
+                                : 'bg-gray-500'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -567,8 +680,8 @@ export default function SettingsPage() {
                     id="confirm-password-input"
                     type={showConfirmPassword ? "text" : "password"}
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 pr-12 "
                     placeholder="Confirm new password"
                   />
                   <button
@@ -579,6 +692,21 @@ export default function SettingsPage() {
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+                
+                {/* Password Match Validation */}
+                {passwordData.confirmPassword && (
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Password confirmation</span>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-400">Match:</span>
+                      {passwordsMatch ? (
+                        <Check className="w-3 h-3 text-green-500" />
+                      ) : (
+                        <X className="w-3 h-3 text-red-400" />
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button

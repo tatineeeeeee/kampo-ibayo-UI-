@@ -65,6 +65,30 @@ function ProfilePageContent({ user }: { user: User }) {
     setToast({ message, type });
   };
 
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string): boolean => {
+    // Remove all non-digit characters
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length === 11;
+  };
+
+  // Format phone number as user types
+  const formatPhoneNumber = (value: string): string => {
+    // Remove all non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Limit to 11 digits
+    const limited = digitsOnly.slice(0, 11);
+    
+    // Format as 09XX-XXX-XXXX
+    if (limited.length >= 8) {
+      return `${limited.slice(0, 4)}-${limited.slice(4, 7)}-${limited.slice(7)}`;
+    } else if (limited.length >= 4) {
+      return `${limited.slice(0, 4)}-${limited.slice(4)}`;
+    }
+    return limited;
+  };
+
   // Removed auth state listener - it was causing tab switching issues
 
   const handleSignOut = async () => {
@@ -172,6 +196,11 @@ function ProfilePageContent({ user }: { user: User }) {
       showToast('Please enter a valid phone number.', 'warning');
       return;
     }
+
+    if (!validatePhoneNumber(newPhone)) {
+      showToast('Phone number must be exactly 11 digits long!', 'error');
+      return;
+    }
     
     setUpdatingPhone(true);
     showToast('Updating your phone number...', 'warning');
@@ -224,7 +253,9 @@ function ProfilePageContent({ user }: { user: User }) {
   };
 
   const handleStartPhoneEdit = () => {
-    setNewPhone(user?.user_metadata?.phone || "");
+    const currentPhone = user?.user_metadata?.phone || "";
+    const formatted = formatPhoneNumber(currentPhone);
+    setNewPhone(formatted);
     setEditingPhone(true);
   };
 
@@ -370,8 +401,11 @@ function ProfilePageContent({ user }: { user: User }) {
                     <input
                       type="tel"
                       value={newPhone}
-                      onChange={(e) => setNewPhone(e.target.value)}
-                      placeholder="+63 912 345 6789"
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        setNewPhone(formatted);
+                      }}
+                      placeholder="09XX-XXX-XXXX (11 digits)"
                       className="bg-gray-600 text-white px-3 py-1 rounded border border-gray-500 focus:border-red-500 focus:outline-none flex-1 text-sm sm:text-base"
                       autoFocus
                       onKeyDown={(e) => {

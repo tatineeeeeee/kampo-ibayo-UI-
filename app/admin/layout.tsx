@@ -106,14 +106,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
           
         </nav>
-        <div className="p-4 border-t">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
-          >
-            <LogOut className="w-5 h-5" /> Logout
-          </button>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -129,6 +121,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <ShieldCheck className="w-5 h-5 text-blue-600" />
               {adminName || user?.email || "Admin User"}
             </div>
+            {/* Logout Button */}
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 

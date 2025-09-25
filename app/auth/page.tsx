@@ -2,17 +2,38 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../supabaseClient"; // adjust path if needed
-import {FaLock, FaEnvelope, FaUser, FaPhone } from "react-icons/fa";
+import {FaLock, FaEnvelope, FaUser, FaPhone, FaUserPlus } from "react-icons/fa";
+import { Eye, EyeOff, Check, X } from "lucide-react";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [passwordValue, setPasswordValue] = useState('');
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState('');
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const router = useRouter();
 
   // Handle session recovery and cleanup on component mount
   useEffect(() => {
     const handleSessionRecovery = async () => {
       try {
+        // Check if user is returning from password reset email
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        
+        if (mode === 'recovery') {
+          console.log("🔄 User returning from password reset email");
+          alert("You can now set a new password. Please log in with your new password after setting it.");
+        }
+        
         // Get current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -191,6 +212,27 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     return;
   }
 
+  if (!validatePhoneNumber(phone)) {
+    alert("Phone number must be exactly 11 digits long!");
+    return;
+  }
+
+  if (!termsAccepted) {
+    setTermsError(true);
+    alert("Please accept the Terms of Service and Privacy Policy to continue.");
+    return;
+  }
+
+  // Clear any previous terms error
+  setTermsError(false);
+
+  // Validate password strength
+  const passwordValidation = validatePasswordStrength(password);
+  if (!passwordValidation.isValid) {
+    alert("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
+    return;
+  }
+
   try {
     // Clear any existing session first
     await supabase.auth.signOut();
@@ -257,6 +299,111 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     alert("An unexpected error occurred during registration. Please try again.");
   }
 }
+
+  // 🔹 Handle forgot password
+  async function handleForgotPassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("resetEmail") as string;
+
+    if (!email || !email.includes('@')) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=recovery`,
+      });
+
+      if (error) {
+        console.error("Password reset error:", error);
+        
+        // Handle specific error cases
+        if (error.message.includes("not found") || error.message.includes("invalid")) {
+          alert("If an account with this email exists, you will receive a password reset link shortly.");
+        } else {
+          alert(`Error: ${error.message}`);
+        }
+        return;
+      }
+
+      setResetEmailSent(true);
+      console.log("✅ Password reset email sent successfully");
+    } catch (error: unknown) {
+      console.error("Unexpected password reset error:", error);
+      alert("An unexpected error occurred. Please try again.");
+    }
+  }
+
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string): boolean => {
+    // Remove all non-digit characters
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length === 11;
+  };
+
+  // Format phone number as user types
+  const formatPhoneNumber = (value: string): string => {
+    // Remove all non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Limit to 11 digits
+    const limited = digitsOnly.slice(0, 11);
+    
+    // Format as 09XX-XXX-XXXX
+    if (limited.length >= 8) {
+      return `${limited.slice(0, 4)}-${limited.slice(4, 7)}-${limited.slice(7)}`;
+    } else if (limited.length >= 4) {
+      return `${limited.slice(0, 4)}-${limited.slice(4)}`;
+    }
+    return limited;
+  };
+
+  // Password strength validation
+  const validatePasswordStrength = (password: string): {
+    isValid: boolean;
+    requirements: {
+      length: boolean;
+      uppercase: boolean;
+      lowercase: boolean;
+      number: boolean;
+      special: boolean;
+    };
+    score: number;
+  } => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    };
+
+    const score = Object.values(requirements).filter(Boolean).length;
+    const isValid = score === 5;
+
+    return { isValid, requirements, score };
+  };
+
+  // Real-time password matching validation
+  const handlePasswordChange = (value: string) => {
+    setPasswordValue(value);
+    if (confirmPasswordValue) {
+      setPasswordsMatch(value === confirmPasswordValue);
+    }
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPasswordValue(value);
+    if (value && passwordValue) {
+      setPasswordsMatch(passwordValue === value);
+    } else {
+      setPasswordsMatch(null);
+    }
+  };
+
+
 
   // Show loading state while checking session
   if (isLoading) {
@@ -327,7 +474,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         </div>
 
         {/* Right Side - Main content on mobile, right side on desktop */}
-        <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+        <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col overflow-y-auto max-h-screen">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
           {/* Mobile Header - Only shown on mobile */}
           <div className="lg:hidden text-center mb-6">
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -377,12 +525,23 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               <div className="flex items-center border border-gray-300 p-3 rounded-lg">
                 <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
                   className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                  )}
+                </button>
               </div>
 
               <button
@@ -391,6 +550,16 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               >
                 Sign In
               </button>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-red-500 hover:text-red-600 text-sm font-medium hover:underline transition-colors"
+                >
+                  Forgot your password?
+                </button>
+              </div>
             </form>
           ) : (
             // Register Form
@@ -434,53 +603,493 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                 <input
                   type="tel"
                   name="phone"
-                  placeholder="Phone Number"
+                  placeholder="09XX-XXX-XXXX (11 digits)"
                   className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    e.target.value = formatted;
+                  }}
+                  onBlur={(e) => {
+                    const phone = e.target.value.replace(/\D/g, '');
+                    if (phone.length > 0 && !validatePhoneNumber(e.target.value)) {
+                      e.target.setCustomValidity('Phone number must be exactly 11 digits');
+                    } else {
+                      e.target.setCustomValidity('');
+                    }
+                  }}
                   required
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
-                  <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
-                    required
-                  />
+              {/* Password Field - Full Width */}
+              <div className="space-y-3">
+                <div className="w-full">
+                  <div className="flex items-center border border-gray-300 p-3 rounded-lg">
+                    <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Password"
+                      value={passwordValue}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+                      ) : (
+                        <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* Password Requirements & Strength */}
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className="text-gray-500">Use 8+ characters with letters, numbers and symbols</span>
+                    {passwordValue && (
+                      <div className="flex items-center space-x-1">
+                        <span className="text-gray-400">Strength:</span>
+                        <div className="flex space-x-0.5">
+                          {[1, 2, 3, 4].map((level) => (
+                            <div
+                              key={level}
+                              className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
+                                level <= validatePasswordStrength(passwordValue).score
+                                  ? level <= 1
+                                    ? 'bg-red-400'
+                                    : level <= 2
+                                    ? 'bg-yellow-400'
+                                    : level <= 3
+                                    ? 'bg-blue-400'
+                                    : 'bg-green-500'
+                                  : 'bg-gray-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
-                  <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
-                    required
-                  />
+
+                {/* Confirm Password Field - Full Width */}
+                <div className="w-full">
+                  <div className="flex items-center border border-gray-300 p-3 rounded-lg">
+                    <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      placeholder="Confirm Password"
+                      value={confirmPasswordValue}
+                      onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+                      ) : (
+                        <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* Password Match Validation */}
+                  {confirmPasswordValue && (
+                    <div className="mt-2 flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Password confirmation</span>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-gray-400">Match:</span>
+                        {passwordsMatch ? (
+                          <Check className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <X className="w-3 h-3 text-red-400" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
+              {/* Terms and Privacy Policy Consent */}
+              <div className="space-y-2">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="terms-consent"
+                    checked={termsAccepted}
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      if (e.target.checked) {
+                        setTermsError(false);
+                      }
+                    }}
+                    className="mt-1 w-4 h-4 text-red-600  accent-red-600"
+                    required
+                  />
+                  <label htmlFor="terms-consent" className="text-xs text-gray-600 leading-relaxed">
+                    I agree to Kampo Ibayo&apos;s{" "}
+                    <button
+                      type="button"
+                      onClick={() => setShowTermsModal(true)}
+                      className="text-red-500 hover:text-red-600 underline font-medium transition-colors"
+                    >
+                      Terms of Service
+                    </button>{" "}
+                    and{" "}
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacyModal(true)}
+                      className="text-red-500 hover:text-red-600 underline font-medium transition-colors"
+                    >
+                      Privacy Policy
+                    </button>
+                  </label>
+                </div>
+                {termsError && (
+                  <div className="flex items-center space-x-1 text-xs text-red-500 ml-7">
+                    <X className="w-3 h-3" />
+                    <span>You must accept the Terms of Service and Privacy Policy to create an account</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Create Account Button */}
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-sm lg:text-base"
+                className="w-full bg-red-500 text-white py-3 px-4 rounded-lg font-semibold shadow-lg hover:bg-red-600 hover:shadow-xl transition-all duration-200 text-sm lg:text-base flex items-center justify-center space-x-2 mt-6"
               >
-                Create Account
+                <FaUserPlus className="text-sm lg:text-base" />
+                <span>Create Account</span>
               </button>
             </form>
           )}
 
+          {/* Forgot Password Modal */}
+          {showForgotPassword && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Reset Password</h3>
+                  <p className="text-gray-600 text-sm">
+                    Enter your email address and we&apos;ll send you a link to reset your password.
+                  </p>
+                </div>
+
+                {resetEmailSent ? (
+                  <div className="text-center">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                      <div className="text-green-600 font-semibold mb-1">Email Sent!</div>
+                      <div className="text-green-700 text-sm">
+                        Check your inbox for password reset instructions.
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setResetEmailSent(false);
+                      }}
+                      className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div className="flex items-center border border-gray-300 p-3 rounded-lg">
+                      <FaEnvelope className="text-gray-400 mr-3 text-sm" />
+                      <input
+                        type="email"
+                        name="resetEmail"
+                        placeholder="your@email.com"
+                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setResetEmailSent(false);
+                        }}
+                        className="w-1/2 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="w-1/2 bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition"
+                      >
+                        Send Reset Link
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Footer - Mobile optimized spacing */}
           <div className="mt-6 lg:mt-8 text-center">
-            <p className="text-gray-500 text-xs lg:text-sm">
-              By signing up, you agree to our{" "}
-              <a href="#" className="text-red-500 hover:underline">Terms of Service</a> and{" "}
-              <a href="#" className="text-red-500 hover:underline">Privacy Policy</a>
-            </p>
           </div>
         </div>
+          </div>
+
+        {/* Terms of Service Modal */}
+        {showTermsModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-gray-100 flex flex-col">
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-1">Terms of Service</h2>
+                    <p className="text-sm text-gray-600">Effective Date: September 26, 2025</p>
+                  </div>
+                  <button
+                    onClick={() => setShowTermsModal(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
+                  >
+                    <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="px-8 py-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="space-y-8">
+                  <div className="space-y-6">
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">1</span>
+                        Resort Services & Acceptance
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed pl-9">
+                        Welcome to Kampo Ibayo, a premium eco-resort located in the pristine wilderness of Palawan, Philippines. By using our booking platform, you agree to these terms and confirm you are at least 18 years old or booking with parental consent. Our services include luxury camping accommodations, guided nature tours, water sports, and organic dining experiences.
+                      </p>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">2</span>
+                        Booking & Payment Policy
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Reservations:</strong> All bookings require a 50% deposit within 24 hours of confirmation. Full payment is due 14 days before arrival.</p>
+                        <p><strong>Peak Season:</strong> December-April bookings require full payment upon confirmation due to high demand.</p>
+                        <p><strong>Group Bookings:</strong> Parties of 8+ guests qualify for group rates and flexible payment terms.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">3</span>
+                        Cancellation & Refund Policy
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Free Cancellation:</strong> Full refund if cancelled 30+ days before arrival.</p>
+                        <p><strong>Partial Refund:</strong> 50% refund if cancelled 14-29 days before arrival.</p>
+                        <p><strong>No Refund:</strong> Cancellations within 14 days of arrival are non-refundable.</p>
+                        <p><strong>Weather Policy:</strong> 100% refund for cancellations due to typhoons or government travel advisories.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">4</span>
+                        Resort Rules & Conduct
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Eco-Friendly Policy:</strong> Kampo Ibayo is a sustainable resort. Single-use plastics are prohibited. We provide reusable water bottles and eco-friendly amenities.</p>
+                        <p><strong>Quiet Hours:</strong> 10 PM - 6 AM to preserve the natural ambiance and respect wildlife.</p>
+                        <p><strong>Safety Requirements:</strong> Life jackets mandatory for water activities. Professional guides required for jungle treks.</p>
+                        <p><strong>Wildlife Protection:</strong> Feeding or disturbing local wildlife is strictly prohibited and may result in immediate removal.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">5</span>
+                        Liability & Insurance
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Travel Insurance:</strong> We strongly recommend comprehensive travel insurance covering medical emergencies, trip cancellation, and adventure activities.</p>
+                        <p><strong>Activity Risks:</strong> Guests participate in outdoor activities at their own risk. Kampo Ibayo provides safety equipment and professional guides but cannot guarantee against natural hazards.</p>
+                        <p><strong>Personal Property:</strong> The resort is not liable for lost, stolen, or damaged personal items. We recommend using our complimentary safety deposit boxes.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">6</span>
+                        Force Majeure & Modifications
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed pl-9">
+                        Kampo Ibayo reserves the right to modify activities, accommodations, or services due to weather conditions, natural disasters, government regulations, or other circumstances beyond our control. In such cases, we will provide alternative arrangements or partial refunds as appropriate.
+                      </p>
+                    </section>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="px-8 py-6 border-t border-gray-100 bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    Questions? Contact us at <span className="font-medium">legal@kampoibayo.com</span>
+                  </p>
+                  <button
+                    onClick={() => setShowTermsModal(false)}
+                    className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors shadow-sm"
+                  >
+                    Got it
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Privacy Policy Modal */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-gray-100 flex flex-col">
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-1">Privacy Policy</h2>
+                    <p className="text-sm text-gray-600">Last Updated: September 26, 2025</p>
+                  </div>
+                  <button
+                    onClick={() => setShowPrivacyModal(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
+                  >
+                    <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="px-8 py-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="space-y-8">
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                    <p className="text-sm text-blue-800">
+                      <span className="font-medium">Your privacy matters.</span> This policy explains how we collect, use, and protect your information when you use Kampo Ibayo.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">1</span>
+                        Information We Collect
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Personal Information:</strong> Name, email, phone number, date of birth, and emergency contact details for booking and safety purposes.</p>
+                        <p><strong>Payment Data:</strong> Credit card information is processed securely through Stripe and PayPal. We never store complete card details on our servers.</p>
+                        <p><strong>Travel Preferences:</strong> Dietary restrictions, accessibility needs, activity preferences, and previous booking history to personalize your experience.</p>
+                        <p><strong>Location Data:</strong> GPS coordinates during guided tours (with permission) for safety tracking and emergency response.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">2</span>
+                        How We Use Your Information
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Booking Management:</strong> Processing reservations, sending confirmations, and coordinating arrival logistics including airport transfers.</p>
+                        <p><strong>Safety & Security:</strong> Emergency contact procedures, guest check-ins during activities, and coordination with local authorities if needed.</p>
+                        <p><strong>Personalized Service:</strong> Customizing meals for dietary needs, arranging accessibility accommodations, and recommending activities based on interests.</p>
+                        <p><strong>Communication:</strong> Pre-arrival preparation emails, weather updates, activity schedules, and post-stay feedback requests.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">3</span>
+                        Information Sharing & Partners
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Service Providers:</strong> Local tour operators, transport companies, and activity partners receive necessary booking details to provide services.</p>
+                        <p><strong>Payment Processors:</strong> Stripe, PayPal, and GCash process payments securely with bank-level encryption.</p>
+                        <p><strong>Emergency Services:</strong> Local hospitals and rescue services may receive guest information during medical emergencies.</p>
+                        <p><strong>Government Compliance:</strong> Tourist registration with Philippine Department of Tourism as required by law.</p>
+                        <p><strong>Never Sold:</strong> We never sell, rent, or trade your personal information to marketing companies or data brokers.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">4</span>
+                        Data Security & Protection
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Encryption:</strong> All data is encrypted using AES-256 encryption in transit and at rest. Our servers are hosted on AWS with SOC 2 compliance.</p>
+                        <p><strong>Access Control:</strong> Only authorized staff with legitimate business needs can access guest information, with full audit trails maintained.</p>
+                        <p><strong>Physical Security:</strong> Guest registration documents are stored in locked, fireproof safes at the resort and destroyed after legal retention periods.</p>
+                        <p><strong>Regular Audits:</strong> Quarterly security assessments and annual penetration testing by certified cybersecurity firms.</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">5</span>
+                        Your Privacy Rights
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Access & Download:</strong> Request a complete copy of your personal data in portable format within 30 days.</p>
+                        <p><strong>Correction & Updates:</strong> Modify your profile information, preferences, and contact details anytime through your account dashboard.</p>
+                        <p><strong>Deletion Rights:</strong> Request complete account deletion. Note: Some booking records may be retained for legal compliance (7 years).</p>
+                        <p><strong>Marketing Opt-out:</strong> Unsubscribe from promotional emails while still receiving important booking-related communications.</p>
+                        <p><strong>Location Tracking:</strong> Disable GPS tracking for tours (required for some remote activities for safety).</p>
+                      </div>
+                    </section>
+                    
+                    <section>
+                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">6</span>
+                        Contact & Complaints
+                      </h3>
+                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
+                        <p><strong>Privacy Officer:</strong> privacy@kampoibayo.com or +63-917-555-0123</p>
+                        <p><strong>Data Protection Authority:</strong> You may file complaints with the Philippine National Privacy Commission if privacy concerns are not resolved.</p>
+                        <p><strong>Response Time:</strong> We respond to all privacy requests within 5 business days and resolve issues within 30 days.</p>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="px-8 py-6 border-t border-gray-100 bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    Questions about privacy? Email <span className="font-medium">privacy@kampoibayo.com</span>
+                  </p>
+                  <button
+                    onClick={() => setShowPrivacyModal(false)}
+                    className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors shadow-sm"
+                  >
+                    Got it
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

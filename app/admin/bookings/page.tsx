@@ -343,7 +343,7 @@ export default function BookingsPage() {
                     <td className="p-3 text-black">{booking.number_of_guests}</td>
                     <td className="p-3 text-black font-medium">₱{booking.total_amount.toLocaleString()}</td>
                     <td className="p-3">
-                      <span className={`px-2 py-1 rounded-md text-xs ${getStatusColor(booking.status || 'pending')}`}>
+                      <span className={`px-2 py-1 rounded-md text-xs text-white ${getStatusColor(booking.status || 'pending')}`}>
                         {booking.status || 'pending'}
                       </span>
                     </td>
