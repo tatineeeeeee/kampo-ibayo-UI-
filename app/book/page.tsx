@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FaChevronDown, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
+import Link from "next/link";
+import { FaChevronDown, FaCalendarAlt, FaExclamationTriangle, FaHome, FaUser } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
@@ -36,6 +37,7 @@ function BookingPage() {
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
   const [canCreateBooking, setCanCreateBooking] = useState(true);
   const [limitMessage, setLimitMessage] = useState("");
+  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
 
   // Auth check useEffect
   useEffect(() => {
@@ -43,6 +45,32 @@ function BookingPage() {
       router.push("/auth");
     }
   }, [user, loading, router]);
+
+  // Calculate price based on check-in date (weekday vs weekend/holiday)
+  const calculatePrice = (checkInDate: Date) => {
+    const day = checkInDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+    
+    // Philippine holidays 2024-2025 (add more as needed)
+    const holidays = [
+      '2024-12-25', '2024-12-30', '2024-12-31', '2025-01-01', // New Year
+      '2025-02-14', // Valentine's Day  
+      '2025-04-17', '2025-04-18', '2025-04-19', // Holy Week
+      '2025-06-12', // Independence Day
+      '2025-08-25', // National Heroes Day
+      '2025-11-01', '2025-11-02', // All Saints/Souls Day
+      '2025-11-30', // Bonifacio Day
+      '2025-12-25', '2025-12-30', '2025-12-31' // Christmas season
+    ];
+    
+    const dateString = checkInDate.toISOString().split('T')[0];
+    const isHoliday = holidays.includes(dateString);
+    
+    // Weekend: Friday (5), Saturday (6), Sunday (0)
+    const isWeekend = day === 0 || day === 5 || day === 6;
+    
+    // Return weekend/holiday rate or weekday rate
+    return (isWeekend || isHoliday) ? 12000 : 9000;
+  };
 
   // Data loading useEffect  
   useEffect(() => {
@@ -129,6 +157,16 @@ function BookingPage() {
     fetchExistingBookings();
     checkBookingLimits();
   }, [user]);
+
+  // Update price when check-in date changes
+  useEffect(() => {
+    if (formData.checkIn) {
+      const price = calculatePrice(formData.checkIn);
+      setEstimatedPrice(price);
+    } else {
+      setEstimatedPrice(null);
+    }
+  }, [formData.checkIn]);
 
   // Show loading if auth is still loading
   if (loading) {
@@ -262,6 +300,9 @@ function BookingPage() {
       return;
     }
     
+    // Calculate dynamic price based on check-in date
+    const totalAmount = calculatePrice(formData.checkIn!);
+    
     // Automatically add times to the selected dates (Option 3)
     const checkInDateTime = `${formData.checkIn!.toISOString().split('T')[0]}T14:00:00`; // 2 PM
     const checkOutDateTime = `${formData.checkOut!.toISOString().split('T')[0]}T12:00:00`; // 12 PM
@@ -277,7 +318,7 @@ function BookingPage() {
       brings_pet: formData.pet,
       special_requests: formData.request.trim() || null,
       status: 'pending',
-      total_amount: 9000 // You can calculate this based on duration
+      total_amount: totalAmount // Dynamic pricing based on date
     };
     
     console.log('Attempting to insert booking data:', bookingData);
@@ -413,16 +454,53 @@ function BookingPage() {
           background: transparent !important;
         }
       `}</style>
+      
+      {/* Navigation Bar */}
+      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+        <div className="px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/" 
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+              </Link>
+              <div className="text-white">
+                <h1 className="text-lg sm:text-xl font-bold">Kampo Ibayo</h1>
+                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Booking Portal</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/profile" 
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+              </Link>
+              <div className="text-xs sm:text-sm text-gray-400 text-right">
+                <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  ● Online
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main
-      className="min-h-screen bg-cover bg-center flex items-center justify-center p-6"
+      className="min-h-screen bg-cover bg-center flex items-center justify-center p-6 pt-20"
       style={{
         backgroundImage:
           "url('/pool.jpg')", // replace with your background image
       }}
     >
       <div className="bg-gray-900 bg-opacity-90 text-white rounded-lg shadow-2xl w-full max-w-2xl p-8">
-        {/* Title - clean and simple */}
-        <h1 className="text-2xl font-bold text-center mb-6">Book your Stay</h1>
+        {/* Clean, minimal header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-white mb-2">Book Your Stay</h1>
+          <p className="text-gray-400 text-sm">Fill out the form below to reserve your dates</p>
+        </div>
 
         {/* Booking Limit Warning */}
         {!canCreateBooking && (
@@ -534,7 +612,13 @@ function BookingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Check-in Date <span className="text-red-500">*</span>
+                Check-in Date 
+                {estimatedPrice && (
+                  <span className="ml-2 text-green-400 font-semibold">
+                    (₱{estimatedPrice.toLocaleString()} - {estimatedPrice === 12000 ? 'Weekend' : 'Weekday'})
+                  </span>
+                )}
+                <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className={`rounded-md border transition-colors ${
@@ -638,7 +722,12 @@ function BookingPage() {
                 : 'bg-gray-600 text-gray-300 cursor-not-allowed'
             }`}
           >
-            {canCreateBooking ? 'Reserve Now' : 'Booking Limit Reached'}
+            {canCreateBooking 
+              ? estimatedPrice 
+                ? `Reserve Now - ₱${estimatedPrice.toLocaleString()} (${estimatedPrice === 12000 ? 'Weekend Rate' : 'Weekday Rate'})`
+                : 'Reserve Now'
+              : 'Booking Limit Reached'
+            }
           </button>
         </form>
       </div>
