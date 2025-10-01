@@ -237,3 +237,5 @@ For technical support or questions:
 ---
 
 Built with React, Next.js, and Supabase for Kampo Ibayo Resort
+
+**Last Updated**: October 2, 2025
