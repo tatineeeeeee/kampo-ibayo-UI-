@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaChevronDown, FaCalendarAlt, FaExclamationTriangle, FaHome, FaUser } from "react-icons/fa";
+import { FaCalendarAlt, FaExclamationTriangle, FaHome, FaUser } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
@@ -39,6 +39,10 @@ function BookingPage() {
   const [limitMessage, setLimitMessage] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
 
+  // Calculate 2 years from today for max booking date
+  const maxBookingDate = new Date();
+  maxBookingDate.setFullYear(maxBookingDate.getFullYear() + 2);
+
   // Auth check useEffect
   useEffect(() => {
     if (!loading && !user) {
@@ -46,8 +50,8 @@ function BookingPage() {
     }
   }, [user, loading, router]);
 
-  // Calculate price based on check-in date (weekday vs weekend/holiday)
-  const calculatePrice = (checkInDate: Date) => {
+  // Calculate price based on check-in date (weekday vs weekend/holiday) and guest count
+  const calculatePrice = (checkInDate: Date, guestCount: number = 15) => {
     const day = checkInDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
     
     // Philippine holidays 2024-2025 (add more as needed)
@@ -68,8 +72,13 @@ function BookingPage() {
     // Weekend: Friday (5), Saturday (6), Sunday (0)
     const isWeekend = day === 0 || day === 5 || day === 6;
     
-    // Return weekend/holiday rate or weekday rate
-    return (isWeekend || isHoliday) ? 12000 : 9000;
+    // Base rate: weekend/holiday or weekday
+    const baseRate = (isWeekend || isHoliday) ? 12000 : 9000;
+    
+    // Add excess guest fee: ₱500 per person above 15
+    const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 500 : 0;
+    
+    return baseRate + excessGuestFee;
   };
 
   // Data loading useEffect  
@@ -97,15 +106,6 @@ function BookingPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          console.log('📱 User data for auto-fill:', {
-            user_metadata: user.user_metadata,
-            email: user.email,
-            phone: user.phone,
-            user_metadata_phone: user.user_metadata?.phone,
-            user_metadata_mobile: user.user_metadata?.mobile,
-            user_metadata_phone_number: user.user_metadata?.phone_number,
-          });
-          
           // Try multiple possible field names for phone
           const phoneNumber = user.user_metadata?.phone || 
                              user.user_metadata?.mobile || 
@@ -115,8 +115,6 @@ function BookingPage() {
           
           const userName = user.user_metadata?.name || "";
           const userEmail = user.email || "";
-          
-          console.log('📱 Final phone number found:', phoneNumber);
           
           setFormData(prevData => ({
             ...prevData,
@@ -133,19 +131,15 @@ function BookingPage() {
     // Fetch existing bookings
     const fetchExistingBookings = async () => {
       try {
-        console.log('🔄 Fetching existing bookings...');
+        // BOOKING PAGE: Check BOTH confirmed AND pending to prevent actual conflicts
         const { data, error } = await supabase
           .from('bookings')
           .select('id, check_in_date, check_out_date, status')
-          .in('status', ['confirmed', 'pending']); // Only active bookings
-
-        console.log('📊 Raw booking data from database:', data);
-        console.log('❌ Any errors?', error);
+          .in('status', ['confirmed', 'pending']); // Prevent conflicts with all active bookings
 
         if (error) {
           console.error('Error fetching bookings:', error);
         } else {
-          console.log(`✅ Found ${data?.length || 0} active bookings`);
           setExistingBookings(data || []);
         }
       } catch (error) {
@@ -158,15 +152,19 @@ function BookingPage() {
     checkBookingLimits();
   }, [user]);
 
-  // Update price when check-in date changes
+  // Update price when check-in date or guest count changes
   useEffect(() => {
-    if (formData.checkIn) {
-      const price = calculatePrice(formData.checkIn);
+    if (formData.checkIn && formData.guests) {
+      const guestCount = parseInt(formData.guests) || 15;
+      const price = calculatePrice(formData.checkIn, guestCount);
+      setEstimatedPrice(price);
+    } else if (formData.checkIn) {
+      const price = calculatePrice(formData.checkIn, 15);
       setEstimatedPrice(price);
     } else {
       setEstimatedPrice(null);
     }
-  }, [formData.checkIn]);
+  }, [formData.checkIn, formData.guests]);
 
   // Show loading if auth is still loading
   if (loading) {
@@ -185,51 +183,99 @@ function BookingPage() {
     return null;
   }
   
-  // Calculate unavailable dates for the date picker
+  // Calculate unavailable dates for the date picker based on CONFIRMED bookings only
   const getUnavailableDates = () => {
-    const unavailable: Date[] = [];
+    const toYMD = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${da}`;
+    };
     
-    existingBookings.forEach(booking => {
+    // Filter only CONFIRMED bookings for DatePicker exclusions
+    const confirmedBookings = existingBookings.filter(booking => booking.status === 'confirmed');
+    
+    // Count check-ins AND check-outs per date (same as home page logic)
+    const checkInCounts = new Map<string, number>();
+    const checkOutCounts = new Map<string, number>();
+
+    confirmedBookings.forEach(booking => {
       const checkIn = new Date(booking.check_in_date);
       const checkOut = new Date(booking.check_out_date);
       
-      // Add all dates between check-in and check-out (inclusive of check-in, exclusive of check-out)
-      const currentDate = new Date(checkIn);
-      while (currentDate < checkOut) {
-        unavailable.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+      const checkInDate = toYMD(checkIn);
+      const checkOutDate = toYMD(checkOut);
+
+      // Count check-ins (guests arriving)
+      const prevCheckIns = checkInCounts.get(checkInDate) || 0;
+      checkInCounts.set(checkInDate, prevCheckIns + 1);
+      
+      // Count check-outs (guests leaving)
+      const prevCheckOuts = checkOutCounts.get(checkOutDate) || 0;
+      checkOutCounts.set(checkOutDate, prevCheckOuts + 1);
     });
+
+    // Calculate total daily activity (check-ins + check-outs) - same as home page
+    const dailyActivity = new Map<string, number>();
     
+    // Add check-ins
+    for (const [date, count] of checkInCounts.entries()) {
+      dailyActivity.set(date, (dailyActivity.get(date) || 0) + count);
+    }
+    
+    // Add check-outs
+    for (const [date, count] of checkOutCounts.entries()) {
+      dailyActivity.set(date, (dailyActivity.get(date) || 0) + count);
+    }
+
+    // A date is unavailable if total activity >= 2 (2/2 capacity)
+    const unavailable: Date[] = [];
+    for (const [dateStr, activity] of dailyActivity) {
+      if (activity >= 2) {
+        unavailable.push(new Date(dateStr));
+      }
+    }
+
     return unavailable;
   };
   
   const checkBookingConflict = (checkInDate: Date | null, checkOutDate: Date | null) => {
     if (!checkInDate || !checkOutDate) return false;
+
+    // Use local date formatting to avoid timezone issues
+    const formatLocalDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
     
-    console.log('🔎 Conflict check - New booking:', checkInDate.toISOString().split('T')[0], 'to', checkOutDate.toISOString().split('T')[0]);
+    const newCheckInDate = formatLocalDate(checkInDate);
     
-    const newCheckIn = new Date(checkInDate);
-    const newCheckOut = new Date(checkOutDate);
+    // Count check-ins per date (same-day turnover allows 2 check-ins per day)
+    const checkInCounts = new Map<string, number>();
     
-    const hasConflict = existingBookings.some(booking => {
+    // Filter confirmed and pending bookings for conflict checking
+    const activeBookings = existingBookings.filter(booking => 
+      booking.status === 'confirmed' || booking.status === 'pending'
+    );
+    
+    activeBookings.forEach(booking => {
       const existingCheckIn = new Date(booking.check_in_date);
-      const existingCheckOut = new Date(booking.check_out_date);
+      const existingCheckInDate = formatLocalDate(existingCheckIn);
       
-      console.log(`📅 Existing booking: ${booking.id} - ${existingCheckIn.toISOString().split('T')[0]} to ${existingCheckOut.toISOString().split('T')[0]} (Status: ${booking.status})`);
-      
-      // Check if dates overlap
-      const overlaps = (newCheckIn < existingCheckOut) && (newCheckOut > existingCheckIn);
-      
-      if (overlaps) {
-        console.log('❌ CONFLICT DETECTED with booking', booking.id);
-      }
-      
-      return overlaps;
+      const prevCount = checkInCounts.get(existingCheckInDate) || 0;
+      checkInCounts.set(existingCheckInDate, prevCount + 1);
     });
+
+    // Check if new check-in date already has 2 bookings (capacity limit)
+    const currentCheckIns = checkInCounts.get(newCheckInDate) || 0;
     
-    console.log('🔍 Final conflict result:', hasConflict);
-    return hasConflict;
+    if (currentCheckIns >= 2) {
+      return true;
+    }
+
+    return false;
   };
 
   const handleChange = (
@@ -292,20 +338,24 @@ function BookingPage() {
     }
     
     // Check for booking conflicts
-    console.log('🔍 Checking conflicts for:', formData.checkIn, 'to', formData.checkOut);
-    console.log('📋 Existing bookings:', existingBookings);
-    
     if (checkBookingConflict(formData.checkIn, formData.checkOut)) {
-      alert('Sorry, these dates are not available. Please choose different dates.');
+      alert('Sorry, these dates are not available due to capacity limits (maximum 2 bookings per day). Please choose different dates.');
       return;
     }
     
     // Calculate dynamic price based on check-in date
     const totalAmount = calculatePrice(formData.checkIn!);
     
-    // Automatically add times to the selected dates (Option 3)
-    const checkInDateTime = `${formData.checkIn!.toISOString().split('T')[0]}T14:00:00`; // 2 PM
-    const checkOutDateTime = `${formData.checkOut!.toISOString().split('T')[0]}T12:00:00`; // 12 PM
+    // Fix timezone issue - use local date strings instead of UTC
+    const formatLocalDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    const checkInDateTime = `${formatLocalDate(formData.checkIn!)}T14:00:00`; // 2 PM
+    const checkOutDateTime = `${formatLocalDate(formData.checkOut!)}T12:00:00`; // 12 PM
     
     const bookingData = {
       user_id: user.id,
@@ -321,7 +371,6 @@ function BookingPage() {
       total_amount: totalAmount // Dynamic pricing based on date
     };
     
-    console.log('Attempting to insert booking data:', bookingData);
     
     try {
       const { error } = await supabase
@@ -351,70 +400,92 @@ function BookingPage() {
     <>
       <style jsx global>{`
         .react-datepicker {
-          background-color: #1f2937 !important;
-          border: none !important;
+          background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+          border: 2px solid #374151 !important;
           color: white !important;
           font-family: inherit !important;
-          border-radius: 0.375rem !important;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+          border-radius: 1rem !important;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
         }
         .react-datepicker__header {
-          background-color: #111827 !important;
-          border-bottom: 1px solid #374151 !important;
-          border-radius: 0.375rem 0.375rem 0 0 !important;
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          border-bottom: none !important;
+          border-radius: 1rem 1rem 0 0 !important;
+          padding: 1.25rem 0 !important;
         }
-        .react-datepicker__current-month,
-        .react-datepicker__day-name {
+        .react-datepicker__current-month {
           color: white !important;
+          font-weight: 700 !important;
+          font-size: 1.3rem !important;
+          margin-bottom: 1rem !important;
+        }
+        .react-datepicker__day-name {
+          color: rgba(255, 255, 255, 0.9) !important;
           font-weight: 600 !important;
+          font-size: 1rem !important;
+          width: 3rem !important;
+          height: 3rem !important;
+          line-height: 3rem !important;
+          margin: 0.25rem !important;
+          display: inline-block !important;
+          text-align: center !important;
         }
         .react-datepicker__day {
           color: white !important;
-          border-radius: 0.25rem !important;
-          margin: 0.1rem !important;
+          border-radius: 0.5rem !important;
+          margin: 0.25rem !important;
           border: none !important;
+          width: 3rem !important;
+          height: 3rem !important;
+          line-height: 3rem !important;
+          font-size: 1rem !important;
+          transition: all 0.2s ease !important;
+          display: inline-block !important;
+          text-align: center !important;
         }
         .react-datepicker__day:hover {
-          background-color: transparent !important;
-          border: none !important;
+          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          transform: scale(1.05) !important;
+          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
         }
-        .react-datepicker__day--selected {
-          background-color: #dc2626 !important;
+        .react-datepicker__day--selected,
+        .react-datepicker__day--range-start,
+        .react-datepicker__day--range-end {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
           color: white !important;
-          border-radius: 0.25rem !important;
-          border: none !important;
+          font-weight: 700 !important;
+          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.5) !important;
+        }
+        .react-datepicker__day--in-range {
+          background: rgba(220, 38, 38, 0.3) !important;
+          color: white !important;
         }
         .react-datepicker__day--excluded {
-          color: #9ca3af !important;
-          text-decoration: line-through;
-          background-color: transparent !important;
-          border: none !important;
+          color: #6b7280 !important;
+          text-decoration: line-through !important;
+          background-color: #1f2937 !important;
+          opacity: 0.5 !important;
         }
         .react-datepicker__day--excluded:hover {
-          background-color: transparent !important;
+          background-color: #1f2937 !important;
           cursor: not-allowed !important;
-          border: none !important;
+          transform: none !important;
         }
         .react-datepicker__day--disabled {
-          color: #6b7280 !important;
+          color: #4b5563 !important;
           background-color: transparent !important;
-          border: none !important;
+          opacity: 0.3 !important;
         }
         .react-datepicker__navigation {
-          top: 13px !important;
-          border: none !important;
+          top: 1.2rem !important;
         }
         .react-datepicker__navigation--previous {
           border-right-color: white !important;
-          border-left: none !important;
-          border-top: none !important;
-          border-bottom: none !important;
+          left: 1rem !important;
         }
         .react-datepicker__navigation--next {
           border-left-color: white !important;
-          border-right: none !important;
-          border-top: none !important;
-          border-bottom: none !important;
+          right: 1rem !important;
         }
         .react-datepicker__input-container input {
           background-color: #1f2937 !important;
@@ -453,6 +524,34 @@ function BookingPage() {
           background-color: transparent !important;
           background: transparent !important;
         }
+
+        /* Inline calendar specific styles */
+        .inline-calendar {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          width: 100% !important;
+        }
+        .inline-calendar .react-datepicker__month-container {
+          background: transparent !important;
+          width: 100% !important;
+        }
+        .react-datepicker--inline {
+          background: transparent !important;
+          border: none !important;
+          width: 100% !important;
+        }
+        .react-datepicker--inline .react-datepicker__month {
+          margin: 0 !important;
+        }
+        .react-datepicker__week {
+          display: flex !important;
+          justify-content: space-around !important;
+        }
+        .react-datepicker__day-names {
+          display: flex !important;
+          justify-content: space-around !important;
+        }
       `}</style>
       
       {/* Navigation Bar */}
@@ -489,17 +588,21 @@ function BookingPage() {
       </div>
 
       <main
-      className="min-h-screen bg-cover bg-center flex items-center justify-center p-6 pt-20"
+      className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center p-4 sm:p-6 pt-24"
       style={{
-        backgroundImage:
-          "url('/pool.jpg')", // replace with your background image
+        backgroundImage: "url('/pool.jpg')",
       }}
     >
-      <div className="bg-gray-900 bg-opacity-90 text-white rounded-lg shadow-2xl w-full max-w-2xl p-8">
-        {/* Clean, minimal header */}
+      <div className="bg-gray-900/95 backdrop-blur-sm text-white rounded-2xl shadow-2xl w-full max-w-6xl p-4 sm:p-6 lg:p-8 border border-gray-700/50">
+        {/* Modern header with gradient accent */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2">Book Your Stay</h1>
-          <p className="text-gray-400 text-sm">Fill out the form below to reserve your dates</p>
+          <div className="inline-block mb-3">
+            <div className="w-16 h-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 rounded-full mx-auto"></div>
+          </div>
+          <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent mb-2">
+            Book Your Escape
+          </h1>
+          <p className="text-gray-400 text-base">Experience luxury and comfort at Kampo Ibayo</p>
         </div>
 
         {/* Booking Limit Warning */}
@@ -515,220 +618,364 @@ function BookingPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Full Name <span className="text-red-500">*</span>
-            </label>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left Column - Personal Info & Preferences */}
+          <div className="space-y-6 flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center">
+                <FaUser className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">Guest Details</h2>
+            </div>
+            
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-300">
+                Full Name <span className="text-red-500">*</span>
+              </label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full rounded-md border px-4 py-2 transition-colors ${
+              className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 ${
                 formData.name 
-                  ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
-                  : 'bg-gray-800 border-gray-700 focus:border-gray-600'
-              }`}
+                  ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
+                  : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
+              } placeholder-gray-500`}
               required
-               placeholder="e.g. John Doe"
+               placeholder="Enter your full name"
             />
-          </div>
+            </div>
 
-          {/* Email + Mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Email Address <span className="text-red-500">*</span>
-              </label>
+            {/* Email + Mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-300">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full rounded-md border px-4 py-2 transition-colors ${
+                className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 ${
                   formData.email 
-                    ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
-                    : 'bg-gray-800 border-gray-700 focus:border-gray-600'
-                }`}
+                    ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
+                    : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
+                } placeholder-gray-500`}
                 required
-                placeholder="your@email.com"
+                placeholder="you@example.com"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Mobile Number
-              </label>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-300">
+                  Mobile Number
+                </label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className={`w-full rounded-md border px-4 py-2 transition-colors ${
+                className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 ${
                   formData.phone 
-                    ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
-                    : 'bg-gray-800 border-gray-700 focus:border-gray-600'
-                }`}
-                placeholder="e.g. +63 912 345 6789"              
+                    ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
+                    : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
+                } placeholder-gray-500`}
+                placeholder="+63 912 345 6789"              
               />
-            </div>
-          </div>
-
-          {/* Guests */}
-{/* Guests */}
-<div>
-  <label className="block text-sm font-medium mb-1">
-    Number of Guest <span className="text-red-500">*</span>
-  </label>
-  <div className="relative">
-    <select
-      name="guests"
-      value={formData.guests}
-      onChange={handleChange}
-      className={`w-full appearance-none rounded-md border px-4 py-2 text-white transition-colors ${
-        formData.guests 
-          ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
-          : 'bg-gray-800 border-gray-700 focus:border-gray-600'
-      }`}
-    >
-      <option value="">Select number of Guest</option>
-      {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-        <option key={num} value={num}>
-          {num}
-        </option>
-      ))}
-    </select>
-
-    {/* Custom dropdown icon */}
-    <FaChevronDown
-      className="pointer-events-none absolute inset-y-0 right-3 my-auto text-gray-400"
-    />
-  </div>
-</div>
-
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Check-in Date 
-                {estimatedPrice && (
-                  <span className="ml-2 text-green-400 font-semibold">
-                    (₱{estimatedPrice.toLocaleString()} - {estimatedPrice === 12000 ? 'Weekend' : 'Weekday'})
-                  </span>
-                )}
-                <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className={`rounded-md border transition-colors ${
-                  formData.checkIn 
-                    ? 'bg-green-900/30 border-green-600' 
-                    : 'bg-gray-800 border-gray-700'
-                }`}>
-                  <DatePicker
-                    selected={formData.checkIn}
-                    onChange={(date: Date | null) => setFormData({ ...formData, checkIn: date })}
-                    minDate={minDate}
-                    excludeDates={getUnavailableDates()}
-                    placeholderText="Select check-in date"
-                    className="w-full rounded-md border-none px-4 py-2 pr-10 text-white placeholder-gray-400 h-[42px] focus:outline-none [&>input]:!bg-transparent"
-                    wrapperClassName="w-full"
-                    required
-                    dateFormat="MMM dd, yyyy"
-                    showPopperArrow={false}
-                  />
-                </div>
-                <FaCalendarAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
-              <p className="text-xs text-gray-400 mt-1">Check-in time: 2:00 PM</p>
             </div>
+
+            {/* Guests */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Check-out Date <span className="text-red-500">*</span>
+              <label className="block text-sm font-semibold mb-2 text-gray-300">
+                Number of Guests <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <div className={`rounded-md border transition-colors ${
-                  formData.checkOut 
-                    ? 'bg-green-900/30 border-green-600' 
-                    : 'bg-gray-800 border-gray-700'
-                }`}>
-                  <DatePicker
-                    selected={formData.checkOut}
-                    onChange={(date: Date | null) => setFormData({ ...formData, checkOut: date })}
-                    minDate={formData.checkIn ? new Date(formData.checkIn.getTime() + 24 * 60 * 60 * 1000) : minDate}
-                    excludeDates={getUnavailableDates()}
-                    placeholderText="Select check-out date"
-                    className="w-full rounded-md border-none px-4 py-2 pr-10 text-white placeholder-gray-400 h-[42px] focus:outline-none [&>input]:!bg-transparent"
-                    wrapperClassName="w-full"
-                    required
-                    dateFormat="MMM dd, yyyy"
-                    showPopperArrow={false}
-                  />
-                </div>
-                <FaCalendarAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <div className="mb-3 p-3 bg-blue-900/20 border border-blue-600/40 rounded-lg">
+                <p className="text-xs text-blue-200">
+                  ℹ️ <span className="font-semibold">Standard:</span> 15 guests · ₱500/person for extras
+                </p>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Check-out time: 12:00 PM</p>
-            </div>
-          </div>
-
-          {/* Pet info */}
-          <div>
-            <label className="flex items-start space-x-2">
-              <input
-                type="checkbox"
-                name="pet"
-                checked={formData.pet}
-                onChange={handleChange}
-                className="mt-1 h-4 w-4 text-red-500 focus:ring-red-500 border-gray-700 rounded"
-              />
-              <span>
-                <span className="block">I will be bringing a pet</span>
-                <span className="text-sm text-gray-400">
-                  Pets are welcome at no additional cost. Please notify us in
-                  advance.
-                </span>
-              </span>
-            </label>
-          </div>
-
-          {/* Special Request */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Special Request
-            </label>
-            <textarea
-              name="request"
-              value={formData.request}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Any special accommodations or request..."
-              className={`w-full rounded-md border px-4 py-2 transition-colors ${
-                formData.request 
-                  ? 'bg-green-900/30 border-green-600 focus:border-green-500' 
-                  : 'bg-gray-800 border-gray-700 focus:border-gray-600'
-              }`}
               
-            />
+              {/* Quick Select Cards */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, guests: "8" })}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    formData.guests === "8"
+                      ? 'bg-red-600 border-red-500 shadow-lg shadow-red-500/30'
+                      : 'bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800'
+                  }`}
+                >
+                  <div className="text-3xl font-bold text-white">8</div>
+                  <div className="text-xs text-gray-300 mt-1">guests</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, guests: "15" })}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    formData.guests === "15"
+                      ? 'bg-red-600 border-red-500 shadow-lg shadow-red-500/30'
+                      : 'bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800'
+                  }`}
+                >
+                  <div className="text-3xl font-bold text-white">15</div>
+                  <div className="text-xs text-green-400 mt-1">Standard</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, guests: "25" })}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    formData.guests === "25"
+                      ? 'bg-red-600 border-red-500 shadow-lg shadow-red-500/30'
+                      : 'bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800'
+                  }`}
+                >
+                  <div className="text-3xl font-bold text-white">25</div>
+                  <div className="text-xs text-yellow-400 mt-1">Maximum</div>
+                </button>
+              </div>
+
+              {/* Custom Counter */}
+              <div className={`flex items-center justify-between rounded-xl border-2 px-4 py-3 transition-all duration-200 ${
+                formData.guests 
+                  ? 'bg-green-900/20 border-green-600' 
+                  : 'bg-gray-800/50 border-gray-600'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = parseInt(formData.guests) || 1;
+                    if (current > 1) {
+                      setFormData({ ...formData, guests: String(current - 1) });
+                    }
+                  }}
+                  className="w-10 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!formData.guests || parseInt(formData.guests) <= 1}
+                >
+                  −
+                </button>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white">
+                    {formData.guests || 0}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {formData.guests ? `guest${parseInt(formData.guests) > 1 ? 's' : ''}` : 'Select guests'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = parseInt(formData.guests) || 0;
+                    if (current < 25) {
+                      setFormData({ ...formData, guests: String(current + 1) });
+                    }
+                  }}
+                  className="w-10 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!!(formData.guests && parseInt(formData.guests) >= 25)}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Pet info */}
+            <div className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+              formData.pet 
+                ? 'bg-green-900/20 border-green-600' 
+                : 'bg-gray-800/30 border-gray-600 hover:border-gray-500'
+            }`}>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="pet"
+                  checked={formData.pet}
+                  onChange={handleChange}
+                  className="mt-1 h-5 w-5 text-red-600 focus:ring-2 focus:ring-red-500 border-gray-600 rounded cursor-pointer"
+                />
+                <span className="flex-1">
+                  <span className="block font-semibold text-white">I will be bringing a pet 🐾</span>
+                  <span className="text-sm text-gray-400 mt-1 block">
+                    Pets are welcome at no additional cost. Please notify us in advance.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            {/* Special Request */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-300">
+                Special Requests
+              </label>
+              <textarea
+                name="request"
+                value={formData.request}
+                onChange={handleChange}
+                rows={9.9}
+                placeholder="Tell us about any special accommodations or requests..."
+                className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 resize-none ${
+                  formData.request 
+                    ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
+                    : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
+                } placeholder-gray-500`}
+              />
+            </div>
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={!canCreateBooking}
-            className={`w-full font-semibold py-3 rounded-md transition ${
-              canCreateBooking 
-                ? 'bg-red-600 text-white hover:bg-red-700' 
-                : 'bg-gray-600 text-gray-300 cursor-not-allowed'
-            }`}
-          >
-            {canCreateBooking 
-              ? estimatedPrice 
-                ? `Reserve Now - ₱${estimatedPrice.toLocaleString()} (${estimatedPrice === 12000 ? 'Weekend Rate' : 'Weekday Rate'})`
-                : 'Reserve Now'
-              : 'Booking Limit Reached'
-            }
-          </button>
+          {/* Right Column - Dates & Calendar */}
+          <div className="space-y-6 flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center">
+                <FaCalendarAlt className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">Select Your Dates</h2>
+            </div>
+
+            {/* Inline Calendar - Larger */}
+            <div>
+              <div className="bg-gray-800/50 rounded-xl border-2 border-gray-700 p-4 flex justify-center">
+                <DatePicker
+                  selected={formData.checkIn}
+                  onChange={(dates) => {
+                    if (Array.isArray(dates)) {
+                      const [start, end] = dates;
+                      setFormData({ ...formData, checkIn: start, checkOut: end });
+                    }
+                  }}
+                  startDate={formData.checkIn}
+                  endDate={formData.checkOut}
+                  selectsRange
+                  minDate={minDate}
+                  maxDate={maxBookingDate}
+                  excludeDates={getUnavailableDates()}
+                  inline
+                  monthsShown={1}
+                  calendarClassName="inline-calendar"
+                />
+              </div>
+              <div className="mt-3 flex items-center justify-center gap-6 text-sm">
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-red-600"></span>
+                  <span className="text-gray-300">Selected</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-gray-600 opacity-50"></span>
+                  <span className="text-gray-300">Unavailable</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-gray-700 border border-gray-600"></span>
+                  <span className="text-gray-300">Available</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Pricing Info - Always Show with Dates */}
+            <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border-2 border-gray-700 p-5 shadow-xl">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">₱</span>
+                </div>
+                <h3 className="text-lg font-bold text-white">Booking Summary</h3>
+              </div>
+              <div className="space-y-2">
+                {/* Check-in and Check-out Dates */}
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="p-2.5 bg-gray-800/50 rounded-lg">
+                    <p className="text-xs text-gray-400 mb-1">Check-in</p>
+                    <p className="text-white font-semibold text-sm">
+                      {formData.checkIn ? formData.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Select date'}
+                    </p>
+                    <p className="text-xs text-green-400 mt-0.5">● 2:00 PM</p>
+                  </div>
+                  <div className="p-2.5 bg-gray-800/50 rounded-lg">
+                    <p className="text-xs text-gray-400 mb-1">Check-out</p>
+                    <p className="text-white font-semibold text-sm">
+                      {formData.checkOut ? formData.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Select date'}
+                    </p>
+                    <p className="text-xs text-orange-400 mt-0.5">● 12:00 PM</p>
+                  </div>
+                </div>
+
+                {estimatedPrice && formData.checkIn ? (
+                  <>
+                    <div className="flex justify-between items-center p-2.5 bg-gray-800/50 rounded-lg">
+                      <span className="text-gray-300 text-sm font-medium">Rate Type:</span>
+                      <span className="text-white font-semibold text-sm">
+                        {calculatePrice(formData.checkIn, 15) === 12000 ? '🌴 Weekend/Holiday' : '📅 Weekday'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-2.5 bg-gray-800/50 rounded-lg">
+                      <span className="text-gray-300 text-sm font-medium">Base Rate:</span>
+                      <span className="text-white font-semibold">
+                        ₱{calculatePrice(formData.checkIn, 15).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className={`flex justify-between items-center p-2.5 rounded-lg border ${
+                      formData.guests && parseInt(formData.guests) > 15
+                        ? 'bg-yellow-900/20 border-yellow-600/30'
+                        : 'bg-gray-800/50 border-gray-700'
+                    }`}>
+                      <span className={`text-sm font-medium ${
+                        formData.guests && parseInt(formData.guests) > 15
+                          ? 'text-yellow-200'
+                          : 'text-gray-300'
+                      }`}>
+                        Extra Guests {formData.guests && parseInt(formData.guests) > 15 ? `(+${parseInt(formData.guests) - 15})` : '(+0)'}:
+                      </span>
+                      <span className={`font-semibold ${
+                        formData.guests && parseInt(formData.guests) > 15
+                          ? 'text-yellow-400'
+                          : 'text-white'
+                      }`}>
+                        {formData.guests && parseInt(formData.guests) > 15 
+                          ? `+₱${((parseInt(formData.guests) - 15) * 500).toLocaleString()}`
+                          : '₱0'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-gray-700">
+                      <span className="text-lg font-bold text-white">Total:</span>
+                      <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                        ₱{estimatedPrice.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4 border-t border-gray-700">
+                    <p className="text-gray-400 text-sm">Complete dates to see pricing</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Full Width Submit Button */}
+          <div className="lg:col-span-2 mt-6">
+            <button
+              type="submit"
+              disabled={!canCreateBooking}
+              className={`w-full font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-lg ${
+                canCreateBooking 
+                  ? 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white hover:from-red-700 hover:via-red-800 hover:to-red-900 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]' 
+                  : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+              }`}
+            >
+              {canCreateBooking 
+                ? estimatedPrice 
+                  ? `🎉 Reserve Now - ₱${estimatedPrice.toLocaleString()}`
+                  : '📅 Complete Booking Details'
+                : '⚠️ Booking Limit Reached'
+              }
+            </button>
+            {estimatedPrice && canCreateBooking && (
+              <p className="text-center text-sm text-gray-400 mt-3">
+                By reserving, you agree to our booking terms and conditions
+              </p>
+            )}
+          </div>
         </form>
       </div>
     </main>
