@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { FaCalendarAlt, FaExclamationTriangle, FaHome, FaUser } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
@@ -566,7 +567,17 @@ function BookingPage() {
                 <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
               </Link>
               <div className="text-white">
-                <h1 className="text-lg sm:text-xl font-bold">Kampo Ibayo</h1>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 relative">
+                    <Image
+                      src="/logo.png"
+                      alt="Kampo Ibayo Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <h1 className="text-lg sm:text-xl font-bold">Kampo Ibayo</h1>
+                </div>
                 <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Booking Portal</p>
               </div>
             </div>

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, Users, FileText, LogOut, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -80,7 +81,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md flex flex-col">
         <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold text-blue-600">Admin Panel</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 relative">
+              <Image
+                src="/logo.png"
+                alt="Kampo Ibayo Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-red-600">Kampo Ibayo</h1>
+              <p className="text-sm text-gray-500">Admin Panel</p>
+            </div>
+          </div>
         </div>
         <nav className="flex-1 p-4 space-y-2">
           <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">

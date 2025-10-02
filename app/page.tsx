@@ -96,9 +96,20 @@ const Navbar = () => {
     <nav className="bg-gray-900/90 backdrop-blur text-white shadow-md w-full fixed top-0 left-0 z-50 transition">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-14 sm:h-16 items-center">
         {/* Logo */}
-        <Link href="#home" className="flex items-center space-x-1">
-          <span className="text-lg sm:text-xl font-bold text-red-500">Kampo</span>
-          <span className="text-lg sm:text-xl font-bold text-white">Ibayo</span>
+        <Link href="#home" className="flex items-center space-x-2">
+          <div className="w-8 h-8 relative">
+            <Image
+              src="/logo.png"
+              alt="Kampo Ibayo Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div>
+            <span className="text-lg sm:text-xl font-bold text-red-500">Kampo</span>
+            <span className="text-lg sm:text-xl font-bold text-white">Ibayo</span>
+          </div>
         </Link>
 
         {/* Desktop Menu */}

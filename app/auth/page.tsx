@@ -3,7 +3,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../supabaseClient"; // adjust path if needed
 import {FaLock, FaEnvelope, FaUser, FaPhone, FaUserPlus } from "react-icons/fa";
-import { Eye, EyeOff, Check, X } from "lucide-react";
+import { 
+  Eye, EyeOff, Check, X, Shield, Star, Users, 
+  Mountain
+} from "lucide-react";
+import { useToastHelpers } from "../components/Toast";
+import Image from "next/image";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,10 +21,9 @@ export default function AuthPage() {
   const [confirmPasswordValue, setConfirmPasswordValue] = useState('');
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const router = useRouter();
+  const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
 
   // Handle session recovery and cleanup on component mount
   useEffect(() => {
@@ -31,7 +35,7 @@ export default function AuthPage() {
         
         if (mode === 'recovery') {
           console.log("🔄 User returning from password reset email");
-          alert("You can now set a new password. Please log in with your new password after setting it.");
+          info("Password Reset Ready", "You can now set a new password. Please log in with your new password after setting it.");
         }
         
         // Get current session
@@ -81,7 +85,7 @@ export default function AuthPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, info]);
 
   // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -104,11 +108,11 @@ export default function AuthPage() {
         
         // Handle specific auth errors
         if (error.message.includes("Invalid login credentials")) {
-          alert("Invalid email or password. Please try again.");
+          showError("Invalid Credentials", "Please check your email and password and try again.");
         } else if (error.message.includes("Email not confirmed")) {
-          alert("Please check your email and confirm your account before logging in.");
+          warning("Email Not Confirmed", "Please check your email and confirm your account before logging in.");
         } else {
-          alert(`Login error: ${error.message}`);
+          showError("Login Failed", error.message);
         }
         return;
       }
@@ -148,8 +152,8 @@ export default function AuthPage() {
           // Direct check for admin email as fallback
           if (data.user.email === 'admin@kampoibayow.com') {
             console.log("🔑 Admin email detected, redirecting to admin dashboard");
-            alert("Welcome Admin!");
-            router.push("/admin");
+            loginSuccess("admin");
+            setTimeout(() => router.push("/admin"), 1500);
             return;
           }
           
@@ -158,24 +162,24 @@ export default function AuthPage() {
             console.log("⚠️ User not found in users table");
             
             // Account has been permanently deleted
-            alert("Your account has been permanently removed from our system. You will need to create a new account to access our services.");
+            showError("Account Deleted", "Your account has been permanently removed from our system. You will need to create a new account to access our services.");
             await supabase.auth.signOut();
             return;
           }
           
           // For other errors, redirect to homepage as fallback
-          alert("Login successful!");
-          router.push("/");
+          loginSuccess("user");
+          setTimeout(() => router.push("/"), 1500);
         } else {
           const userRole = userData?.role || "user";
           console.log("User role detected:", userRole);
           
           if (userRole === "admin") {
-            alert("Welcome Admin!");
-            router.push("/admin");
+            loginSuccess("admin");
+            setTimeout(() => router.push("/admin"), 1500);
           } else {
-            alert("Login successful!");
-            router.push("/");
+            loginSuccess("user");
+            setTimeout(() => router.push("/"), 1500);
           }
         }
       }
@@ -188,9 +192,9 @@ export default function AuthPage() {
         console.log("Clearing corrupted session data...");
         await supabase.auth.signOut();
         localStorage.removeItem('supabase.auth.token');
-        alert("Session expired. Please try logging in again.");
+        warning("Session Expired", "Please try logging in again.");
       } else {
-        alert("An unexpected error occurred. Please try again.");
+        showError("Unexpected Error", "An unexpected error occurred. Please try again.");
       }
     }
   }
@@ -208,18 +212,18 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   const confirmPassword = formData.get("confirmPassword") as string;
 
   if (password !== confirmPassword) {
-    alert("Passwords do not match!");
+    showError("Password Mismatch", "Passwords do not match!");
     return;
   }
 
   if (!validatePhoneNumber(phone)) {
-    alert("Phone number must be exactly 11 digits long!");
+    showError("Invalid Phone Number", "Phone number must be exactly 11 digits long!");
     return;
   }
 
   if (!termsAccepted) {
     setTermsError(true);
-    alert("Please accept the Terms of Service and Privacy Policy to continue.");
+    showError("Terms Required", "Please accept the Terms of Service and Privacy Policy to continue.");
     return;
   }
 
@@ -229,7 +233,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   // Validate password strength
   const passwordValidation = validatePasswordStrength(password);
   if (!passwordValidation.isValid) {
-    alert("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
+    showError("Weak Password", "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
     return;
   }
 
@@ -250,11 +254,11 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       
       // Handle specific registration errors
       if (error.message.includes("User already registered")) {
-        alert("An account with this email already exists. Please try logging in instead.");
+        showError("Account Exists", "An account with this email already exists. Please try logging in instead.");
       } else if (error.message.includes("Password")) {
-        alert("Password is too weak. Please choose a stronger password.");
+        showError("Password Issue", "Password is too weak. Please choose a stronger password.");
       } else {
-        alert(`Registration error: ${error.message}`);
+        showError("Registration Failed", error.message);
       }
       return;
     }
@@ -280,11 +284,11 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         // Continue anyway - auth account was created successfully
       }
 
-      alert("✅ Registration successful! Please log in.");
+      registrationSuccess();
       // 🚀 Force logout so they must sign in manually
       await supabase.auth.signOut();
       // Switch UI to login form instead of redirecting home
-      setIsLogin(true);
+      setTimeout(() => setIsLogin(true), 2000);
     }
   } catch (error: unknown) {
     console.error("Unexpected registration error:", error);
@@ -296,7 +300,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       localStorage.removeItem('supabase.auth.token');
     }
     
-    alert("An unexpected error occurred during registration. Please try again.");
+    showError("Registration Error", "An unexpected error occurred during registration. Please try again.");
   }
 }
 
@@ -307,7 +311,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     const email = formData.get("resetEmail") as string;
 
     if (!email || !email.includes('@')) {
-      alert("Please enter a valid email address.");
+      showError("Invalid Email", "Please enter a valid email address.");
       return;
     }
 
@@ -321,18 +325,19 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         
         // Handle specific error cases
         if (error.message.includes("not found") || error.message.includes("invalid")) {
-          alert("If an account with this email exists, you will receive a password reset link shortly.");
+          info("Reset Email Sent", "If an account with this email exists, you will receive a password reset link shortly.");
         } else {
-          alert(`Error: ${error.message}`);
+          showError("Reset Failed", error.message);
         }
         return;
       }
 
       setResetEmailSent(true);
+      passwordResetSent();
       console.log("✅ Password reset email sent successfully");
     } catch (error: unknown) {
       console.error("Unexpected password reset error:", error);
-      alert("An unexpected error occurred. Please try again.");
+      showError("Reset Error", "An unexpected error occurred. Please try again.");
     }
   }
 
@@ -420,9 +425,16 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         {/* Left Side - Hidden on mobile, shown on desktop */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8 xl:p-12 flex-col justify-between">
           <div>
+            {/* Brand Header */}
             <div className="flex items-center gap-3 mb-8 xl:mb-10">
-              <div className="bg-red-600 p-2 xl:p-3 rounded-full shadow-lg">
-                <span className="text-2xl xl:text-3xl">⛺</span>
+              <div className="w-16 h-16 relative">
+                <Image
+                  src="/logo.png"
+                  alt="Kampo Ibayo Logo"
+                  fill
+                  className="object-contain drop-shadow-lg rounded-lg"
+                  priority
+                />
               </div>
               <h1 className="text-2xl xl:text-3xl font-extrabold tracking-tight">
                 <span className="text-red-500">Kampo</span> Ibayo
@@ -435,30 +447,39 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
             <h2 className="font-bold mb-4 xl:mb-6 text-base xl:text-lg">Your Wilderness Experience</h2>
 
+            {/* Features List */}
             <ul className="space-y-4 xl:space-y-5 text-sm xl:text-base">
               <li className="flex items-start gap-3">
-                <span>🏕️</span>
-                <span>
-                  <strong>Premium Camping</strong> <br />
-                  Modern facilities in pristine wilderness
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span>🌄</span>
-                <span>
-                  <strong>Breathtaking Views</strong> <br />
-                  Unmatched natural beauty
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span>🔒</span>
+                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                  <Shield className="w-4 h-4 text-red-400" />
+                </div>
                 <span>
                   <strong>24/7 Security</strong> <br />
-                  Your safety is our priority
+                  Professional staff ensuring your safety
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <span>✅</span>
+                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                  <Mountain className="w-4 h-4 text-red-400" />
+                </div>
+                <span>
+                  <strong>Breathtaking Views</strong> <br />
+                  Unmatched natural beauty of Cavite
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                  <Users className="w-4 h-4 text-red-400" />
+                </div>
+                <span>
+                  <strong>Family-Friendly</strong> <br />
+                  Perfect for all ages and group sizes
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                  <Check className="w-4 h-4 text-red-400" />
+                </div>
                 <span>
                   <strong>Easy Booking</strong> <br />
                   Reserve your spot in minutes
@@ -467,10 +488,19 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             </ul>
           </div>
 
-          <p className="text-xs mt-8 opacity-80 italic">
-            &quot;The best camping experience I&apos;ve ever had!&quot; <br />
-            <span className="text-gray-400">Maria S., Frequent Camper</span>
-          </p>
+          {/* Bottom testimonial */}
+          <div className="mt-8">
+            <div className="flex items-center gap-1 mb-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              ))}
+              <span className="text-gray-400 text-sm ml-2">4.9/5</span>
+            </div>
+            <p className="text-xs opacity-80 italic">
+              &quot;The best camping experience I&apos;ve ever had!&quot; <br />
+              <span className="text-gray-400">Maria S., Frequent Camper</span>
+            </p>
+          </div>
         </div>
 
         {/* Right Side - Main content on mobile, right side on desktop */}
@@ -704,19 +734,21 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   </div>
                   
                   {/* Password Match Validation */}
-                  {confirmPasswordValue && (
-                    <div className="mt-2 flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Password confirmation</span>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-gray-400">Match:</span>
-                        {passwordsMatch ? (
+                  <div className="mt-2 flex items-center justify-between text-xs min-h-[16px]">
+                    <span className="text-gray-500">Password confirmation</span>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-400">Match:</span>
+                      {confirmPasswordValue ? (
+                        passwordsMatch ? (
                           <Check className="w-3 h-3 text-green-500" />
                         ) : (
                           <X className="w-3 h-3 text-red-400" />
-                        )}
-                      </div>
+                        )
+                      ) : (
+                        <div className="w-3 h-3"></div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
@@ -738,21 +770,23 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   />
                   <label htmlFor="terms-consent" className="text-xs text-gray-600 leading-relaxed">
                     I agree to Kampo Ibayo&apos;s{" "}
-                    <button
-                      type="button"
-                      onClick={() => setShowTermsModal(true)}
+                    <a
+                      href="/legal/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-red-500 hover:text-red-600 underline font-medium transition-colors"
                     >
                       Terms of Service
-                    </button>{" "}
+                    </a>{" "}
                     and{" "}
-                    <button
-                      type="button"
-                      onClick={() => setShowPrivacyModal(true)}
+                    <a
+                      href="/legal/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-red-500 hover:text-red-600 underline font-medium transition-colors"
                     >
                       Privacy Policy
-                    </button>
+                    </a>
                   </label>
                 </div>
                 {termsError && (
@@ -845,251 +879,6 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           </div>
         </div>
           </div>
-
-        {/* Terms of Service Modal */}
-        {showTermsModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-gray-100 flex flex-col">
-              {/* Header */}
-              <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-1">Terms of Service</h2>
-                    <p className="text-sm text-gray-600">Effective Date: September 26, 2025</p>
-                  </div>
-                  <button
-                    onClick={() => setShowTermsModal(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
-                  >
-                    <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-                  </button>
-                </div>
-              </div>
-              
-              {/* Content */}
-              <div className="px-8 py-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="space-y-8">
-                  <div className="space-y-6">
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">1</span>
-                        Resort Services & Acceptance
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed pl-9">
-                        Welcome to Kampo Ibayo, a premium eco-resort located in the pristine wilderness of Palawan, Philippines. By using our booking platform, you agree to these terms and confirm you are at least 18 years old or booking with parental consent. Our services include luxury camping accommodations, guided nature tours, water sports, and organic dining experiences.
-                      </p>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">2</span>
-                        Booking & Payment Policy
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Reservations:</strong> All bookings require a 50% deposit within 24 hours of confirmation. Full payment is due 14 days before arrival.</p>
-                        <p><strong>Peak Season:</strong> December-April bookings require full payment upon confirmation due to high demand.</p>
-                        <p><strong>Group Bookings:</strong> Parties of 8+ guests qualify for group rates and flexible payment terms.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">3</span>
-                        Cancellation & Refund Policy
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Free Cancellation:</strong> Full refund if cancelled 30+ days before arrival.</p>
-                        <p><strong>Partial Refund:</strong> 50% refund if cancelled 14-29 days before arrival.</p>
-                        <p><strong>No Refund:</strong> Cancellations within 14 days of arrival are non-refundable.</p>
-                        <p><strong>Weather Policy:</strong> 100% refund for cancellations due to typhoons or government travel advisories.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">4</span>
-                        Resort Rules & Conduct
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Eco-Friendly Policy:</strong> Kampo Ibayo is a sustainable resort. Single-use plastics are prohibited. We provide reusable water bottles and eco-friendly amenities.</p>
-                        <p><strong>Quiet Hours:</strong> 10 PM - 6 AM to preserve the natural ambiance and respect wildlife.</p>
-                        <p><strong>Safety Requirements:</strong> Life jackets mandatory for water activities. Professional guides required for jungle treks.</p>
-                        <p><strong>Wildlife Protection:</strong> Feeding or disturbing local wildlife is strictly prohibited and may result in immediate removal.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">5</span>
-                        Liability & Insurance
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Travel Insurance:</strong> We strongly recommend comprehensive travel insurance covering medical emergencies, trip cancellation, and adventure activities.</p>
-                        <p><strong>Activity Risks:</strong> Guests participate in outdoor activities at their own risk. Kampo Ibayo provides safety equipment and professional guides but cannot guarantee against natural hazards.</p>
-                        <p><strong>Personal Property:</strong> The resort is not liable for lost, stolen, or damaged personal items. We recommend using our complimentary safety deposit boxes.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">6</span>
-                        Force Majeure & Modifications
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed pl-9">
-                        Kampo Ibayo reserves the right to modify activities, accommodations, or services due to weather conditions, natural disasters, government regulations, or other circumstances beyond our control. In such cases, we will provide alternative arrangements or partial refunds as appropriate.
-                      </p>
-                    </section>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Footer */}
-              <div className="px-8 py-6 border-t border-gray-100 bg-gray-50/50">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    Questions? Contact us at <span className="font-medium">legal@kampoibayo.com</span>
-                  </p>
-                  <button
-                    onClick={() => setShowTermsModal(false)}
-                    className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors shadow-sm"
-                  >
-                    Got it
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Privacy Policy Modal */}
-        {showPrivacyModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-gray-100 flex flex-col">
-              {/* Header */}
-              <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-1">Privacy Policy</h2>
-                    <p className="text-sm text-gray-600">Last Updated: September 26, 2025</p>
-                  </div>
-                  <button
-                    onClick={() => setShowPrivacyModal(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
-                  >
-                    <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-                  </button>
-                </div>
-              </div>
-              
-              {/* Content */}
-              <div className="px-8 py-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="space-y-8">
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-                    <p className="text-sm text-blue-800">
-                      <span className="font-medium">Your privacy matters.</span> This policy explains how we collect, use, and protect your information when you use Kampo Ibayo.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">1</span>
-                        Information We Collect
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Personal Information:</strong> Name, email, phone number, date of birth, and emergency contact details for booking and safety purposes.</p>
-                        <p><strong>Payment Data:</strong> Credit card information is processed securely through Stripe and PayPal. We never store complete card details on our servers.</p>
-                        <p><strong>Travel Preferences:</strong> Dietary restrictions, accessibility needs, activity preferences, and previous booking history to personalize your experience.</p>
-                        <p><strong>Location Data:</strong> GPS coordinates during guided tours (with permission) for safety tracking and emergency response.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">2</span>
-                        How We Use Your Information
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Booking Management:</strong> Processing reservations, sending confirmations, and coordinating arrival logistics including airport transfers.</p>
-                        <p><strong>Safety & Security:</strong> Emergency contact procedures, guest check-ins during activities, and coordination with local authorities if needed.</p>
-                        <p><strong>Personalized Service:</strong> Customizing meals for dietary needs, arranging accessibility accommodations, and recommending activities based on interests.</p>
-                        <p><strong>Communication:</strong> Pre-arrival preparation emails, weather updates, activity schedules, and post-stay feedback requests.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">3</span>
-                        Information Sharing & Partners
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Service Providers:</strong> Local tour operators, transport companies, and activity partners receive necessary booking details to provide services.</p>
-                        <p><strong>Payment Processors:</strong> Stripe, PayPal, and GCash process payments securely with bank-level encryption.</p>
-                        <p><strong>Emergency Services:</strong> Local hospitals and rescue services may receive guest information during medical emergencies.</p>
-                        <p><strong>Government Compliance:</strong> Tourist registration with Philippine Department of Tourism as required by law.</p>
-                        <p><strong>Never Sold:</strong> We never sell, rent, or trade your personal information to marketing companies or data brokers.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">4</span>
-                        Data Security & Protection
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Encryption:</strong> All data is encrypted using AES-256 encryption in transit and at rest. Our servers are hosted on AWS with SOC 2 compliance.</p>
-                        <p><strong>Access Control:</strong> Only authorized staff with legitimate business needs can access guest information, with full audit trails maintained.</p>
-                        <p><strong>Physical Security:</strong> Guest registration documents are stored in locked, fireproof safes at the resort and destroyed after legal retention periods.</p>
-                        <p><strong>Regular Audits:</strong> Quarterly security assessments and annual penetration testing by certified cybersecurity firms.</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">5</span>
-                        Your Privacy Rights
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Access & Download:</strong> Request a complete copy of your personal data in portable format within 30 days.</p>
-                        <p><strong>Correction & Updates:</strong> Modify your profile information, preferences, and contact details anytime through your account dashboard.</p>
-                        <p><strong>Deletion Rights:</strong> Request complete account deletion. Note: Some booking records may be retained for legal compliance (7 years).</p>
-                        <p><strong>Marketing Opt-out:</strong> Unsubscribe from promotional emails while still receiving important booking-related communications.</p>
-                        <p><strong>Location Tracking:</strong> Disable GPS tracking for tours (required for some remote activities for safety).</p>
-                      </div>
-                    </section>
-                    
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">6</span>
-                        Contact & Complaints
-                      </h3>
-                      <div className="text-gray-700 leading-relaxed pl-9 space-y-2">
-                        <p><strong>Privacy Officer:</strong> privacy@kampoibayo.com or +63-917-555-0123</p>
-                        <p><strong>Data Protection Authority:</strong> You may file complaints with the Philippine National Privacy Commission if privacy concerns are not resolved.</p>
-                        <p><strong>Response Time:</strong> We respond to all privacy requests within 5 business days and resolve issues within 30 days.</p>
-                      </div>
-                    </section>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Footer */}
-              <div className="px-8 py-6 border-t border-gray-100 bg-gray-50/50">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    Questions about privacy? Email <span className="font-medium">privacy@kampoibayo.com</span>
-                  </p>
-                  <button
-                    onClick={() => setShowPrivacyModal(false)}
-                    className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors shadow-sm"
-                  >
-                    Got it
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
