@@ -93,8 +93,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []); // Empty dependency array to prevent infinite loop
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      // Check if there's a session first
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Only try to sign out if there's a session
+        await supabase.auth.signOut();
+      }
+      
+      // Clear any local storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      
+      // Always redirect to home regardless of sign out success
+      router.push("/");
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout fails, clear storage and redirect
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      router.push("/");
+    }
   };
 
   if (loading) {

@@ -23,6 +23,55 @@ import {
 } from "react-icons/fa";
 import { Check, X } from "lucide-react";
 
+// Robust session validation helper
+const validateAndRefreshSession = async (maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error(`Session validation attempt ${attempt} failed:`, error);
+        if (attempt < maxRetries) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        throw error;
+      }
+      
+      if (session && session.access_token) {
+        // Verify the session is still valid by making a test request
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error(`User validation attempt ${attempt} failed:`, userError);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          throw userError;
+        }
+        
+        if (userData.user) {
+          return { session, user: userData.user };
+        }
+      }
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } catch (err) {
+      console.error(`Session validation attempt ${attempt} error:`, err);
+      if (attempt === maxRetries) {
+        throw err;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  throw new Error('No valid session found after multiple attempts');
+};
+
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -225,16 +274,40 @@ export default function SettingsPage() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Validate session with retry logic
+      await validateAndRefreshSession();
+      
+      const { error: authError } = await supabase.auth.updateUser({
         data: {
           name: profileData.name,
           phone: profileData.phone
         }
       });
 
-      if (error) throw error;
+      if (authError) {
+        console.error("Error updating auth profile:", authError);
+        throw authError;
+      }
 
-      alert("Profile updated successfully!");
+      // Also update the users table so admin panel shows the changes
+      if (user?.id) {
+        const { error: dbError } = await supabase
+          .from('users')
+          .update({ 
+            name: profileData.name,
+            phone: profileData.phone 
+          })
+          .eq('auth_id', user.id);
+
+        if (dbError) {
+          console.error('Error updating database profile:', dbError);
+          alert('Profile updated in account but may not appear in admin panel. Please contact support.');
+        } else {
+          alert("Profile updated successfully!");
+        }
+      } else {
+        alert("Profile updated successfully!");
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("Error updating profile. Please try again.");
@@ -261,6 +334,9 @@ export default function SettingsPage() {
     setSaving(true);
 
     try {
+      // Validate session with retry logic
+      await validateAndRefreshSession();
+      
       const { error } = await supabase.auth.updateUser({
         password: passwordData.newPassword
       });

@@ -9,6 +9,55 @@ import type { User } from "@supabase/supabase-js";
 import { FaUser, FaEnvelope, FaUserTag, FaEdit, FaSignOutAlt, FaHome, FaCalendarAlt, FaClock, FaChartLine, FaStar, FaCalendarPlus, FaHistory, FaCog, FaSpinner, FaPhone } from "react-icons/fa";
 import { useToastHelpers } from "../components/Toast";
 
+// Robust session validation helper
+const validateAndRefreshSession = async (maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error(`Session validation attempt ${attempt} failed:`, error);
+        if (attempt < maxRetries) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        throw error;
+      }
+      
+      if (session && session.access_token) {
+        // Verify the session is still valid by making a test request
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error(`User validation attempt ${attempt} failed:`, userError);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          throw userError;
+        }
+        
+        if (userData.user) {
+          return { session, user: userData.user };
+        }
+      }
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } catch (err) {
+      console.error(`Session validation attempt ${attempt} error:`, err);
+      if (attempt === maxRetries) {
+        throw err;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  throw new Error('No valid session found after multiple attempts');
+};
+
 function ProfilePageContent({ user }: { user: User }) {
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
@@ -57,13 +106,17 @@ function ProfilePageContent({ user }: { user: User }) {
     warning('Signing out...');
     
     try {
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
+      // Check if there's a session first
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (error) {
-        console.error('Sign out error:', error);
-        showError('Failed to sign out. Please try again.');
-        return;
+      if (session) {
+        // Only try to sign out if there's a session
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          console.error('Sign out error:', error);
+          // Don't return on error, continue with cleanup
+        }
       }
       
       // Clear local storage and session storage
@@ -101,6 +154,9 @@ function ProfilePageContent({ user }: { user: User }) {
     info('Updating your name...');
     
     try {
+      // Validate session with retry logic
+      await validateAndRefreshSession();
+      
       // Update both auth metadata and users table
       const { error: authError } = await supabase.auth.updateUser({
         data: { name: newName.trim() }
@@ -167,6 +223,9 @@ function ProfilePageContent({ user }: { user: User }) {
     info('Updating your phone number...');
     
     try {
+      // Validate session with retry logic
+      await validateAndRefreshSession();
+      
       // Update both auth metadata and users table
       const { error: authError } = await supabase.auth.updateUser({
         data: { phone: newPhone.trim() }
