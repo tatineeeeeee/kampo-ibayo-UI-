@@ -148,9 +148,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 priority
               />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-red-600">Kampo Ibayo</h1>
-              <p className="text-sm text-gray-500">Admin Panel</p>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-bold text-red-600 leading-tight">Kampo Ibayo</h1>
+              <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
           </div>
         </div>

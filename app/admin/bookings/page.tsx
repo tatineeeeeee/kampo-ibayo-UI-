@@ -38,6 +38,7 @@ export default function BookingsPage() {
   const [showDeletedUsers, setShowDeletedUsers] = useState(true);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,7 +48,75 @@ export default function BookingsPage() {
   // Toast helpers
   const { success, error: showError, warning } = useToastHelpers();
   useEffect(() => {
+    // Initial fetch
     fetchBookings();
+
+    // Set up real-time subscription for bookings
+    const bookingsSubscription = supabase
+      .channel('bookings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'bookings'
+        },
+        (payload) => {
+          console.log('🔄 Real-time booking change detected:', payload.eventType, payload);
+          
+          // Optimistic update for faster UI response
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            setBookings(prevBookings => 
+              prevBookings.map(booking => 
+                booking.id === payload.new.id 
+                  ? { ...booking, ...payload.new }
+                  : booking
+              )
+            );
+          } else if (payload.eventType === 'INSERT' && payload.new) {
+            // For new bookings, do a refresh to get user status
+            fetchBookings(true);
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            // Remove deleted booking immediately
+            setBookings(prevBookings => 
+              prevBookings.filter(booking => booking.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Bookings subscription status:', status);
+      });
+
+    // Set up real-time subscription for users (to detect user deletions)
+    const usersSubscription = supabase
+      .channel('users_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users'
+        },
+        (payload) => {
+          console.log('🔄 Real-time user change detected:', payload.eventType, payload);
+          
+          // When users are added/deleted, refresh bookings to update user_exists status
+          setTimeout(() => {
+            fetchBookings(true);
+          }, 500);
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Users subscription status:', status);
+      });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      console.log('🧹 Cleaning up real-time subscriptions...');
+      supabase.removeChannel(bookingsSubscription);
+      supabase.removeChannel(usersSubscription);
+    };
   }, []);
 
   // Filter bookings based on user preference
@@ -71,10 +140,16 @@ export default function BookingsPage() {
     setCurrentPage(1);
   }, [filteredBookings]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (isRefresh = false) => {
     try {
-      console.log('🔍 Fetching bookings...');
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      console.log('🔍 Fetching bookings with optimized queries...');
       
+      // Step 1: Get all bookings (same as before)
       const { data: bookingsData, error } = await supabase
         .from('bookings')
         .select('*')
@@ -88,28 +163,51 @@ export default function BookingsPage() {
       console.log('📊 Database response:', { data: bookingsData, error });
       console.log('📈 Number of bookings found:', bookingsData?.length || 0);
 
-      // Check which users still exist
-      const bookingsWithUserStatus = await Promise.all(
-        (bookingsData || []).map(async (booking) => {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('auth_id', booking.user_id)
-            .single();
-          
-          return {
-            ...booking,
-            user_exists: !userError && userData !== null
-          };
-        })
-      );
+      // If no bookings, return early
+      if (!bookingsData || bookingsData.length === 0) {
+        console.log('✅ No bookings found');
+        setBookings([]);
+        return;
+      }
+
+      // Step 2: Get all unique user IDs from bookings
+      const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
+      console.log('👥 Checking existence for', userIds.length, 'unique users');
+      
+      // Step 3: Single query to check which users exist (MUCH faster than N queries)
+      const { data: existingUsers, error: usersError } = await supabase
+        .from('users')
+        .select('auth_id')
+        .in('auth_id', userIds);
+
+      if (usersError) {
+        console.error('❌ Error fetching users:', usersError);
+        // Continue anyway, just mark all as existing to preserve functionality
+        const bookingsWithUserStatus = bookingsData.map(booking => ({
+          ...booking,
+          user_exists: true
+        }));
+        setBookings(bookingsWithUserStatus as Booking[]);
+        return;
+      }
+
+      // Step 4: Create a Set of existing user IDs for O(1) lookup performance
+      const existingUserIds = new Set(existingUsers?.map(user => user.auth_id) || []);
+      
+      // Step 5: Add user_exists flag efficiently (same result as before, much faster)
+      const bookingsWithUserStatus = bookingsData.map(booking => ({
+        ...booking,
+        user_exists: existingUserIds.has(booking.user_id)
+      }));
 
       console.log('✅ Successfully fetched bookings with user status');
+      console.log('📈 Performance: Checked', userIds.length, 'users in 2 queries instead of', bookingsData.length + 1, 'queries');
       setBookings(bookingsWithUserStatus as Booking[]);
     } catch (error) {
       console.error('💥 Unexpected error:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -135,6 +233,15 @@ export default function BookingsPage() {
   };
 
   const updateBookingStatus = async (bookingId: number, newStatus: string) => {
+    // Optimistic update - immediately update UI for instant feedback
+    setBookings(prevBookings => 
+      prevBookings.map(booking => 
+        booking.id === bookingId 
+          ? { ...booking, status: newStatus }
+          : booking
+      )
+    );
+
     try {
       const updateData: {
         status: string;
@@ -164,13 +271,17 @@ export default function BookingsPage() {
       if (error) {
         console.error('Error updating booking:', error);
         showError('Error updating booking status');
+        // Revert optimistic update on error
+        fetchBookings(true);
       } else {
         success('Booking status updated successfully');
-        fetchBookings(); // Refresh the list
+        // Real-time subscription will handle the update, but we already updated optimistically
       }
     } catch (error) {
       console.error('Error:', error);
       showError('Error updating booking status');
+      // Revert optimistic update on error
+      fetchBookings(true);
     }
   };
 
@@ -279,10 +390,22 @@ export default function BookingsPage() {
               Show deleted user bookings
             </label>
             <button 
-              onClick={fetchBookings}
-              className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
+              onClick={() => fetchBookings(true)}
+              disabled={refreshing}
+              className={`px-3 py-1 text-white rounded-md text-sm transition ${
+                refreshing 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
             >
-              Refresh
+              {refreshing ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                  Refreshing...
+                </span>
+              ) : (
+                'Refresh'
+              )}
             </button>
           </div>
         </div>
