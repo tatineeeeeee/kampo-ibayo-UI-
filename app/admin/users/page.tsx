@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
+import { useToastHelpers } from "../../components/Toast";
 
 interface User {
   id: number;
@@ -37,6 +38,9 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Toast helpers for modal
+  const { error: showError } = useToastHelpers();
+
   useEffect(() => {
     const fetchUserBookings = async () => {
       if (!user.auth_id) {
@@ -53,20 +57,20 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
 
         if (error) {
           console.error('Error fetching user bookings:', error);
-          alert('Error loading user bookings');
+          showError('Error loading user bookings');
         } else {
           setBookings(data || []);
         }
       } catch (error) {
         console.error('Error:', error);
-        alert('Failed to load bookings');
+        showError('Failed to load bookings');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserBookings();
-  }, [user.auth_id]);
+  }, [user.auth_id, showError]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -239,11 +243,10 @@ export default function UsersPage() {
   const [showBookingsModal, setShowBookingsModal] = useState(false);
   const [selectedUserBookings, setSelectedUserBookings] = useState<User | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Standardized toast helpers
+  const { success, error: showError, warning } = useToastHelpers();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       console.log('🔍 Fetching users...');
       
@@ -262,27 +265,31 @@ export default function UsersPage() {
 
       if (error) {
         console.error('❌ Error fetching users:', error);
-        alert('Error loading users. Please check console for details.');
+        showError('Error loading users. Please check console for details.');
       } else {
         console.log('✅ Successfully fetched users');
         setUsers(data as User[] || []);
       }
     } catch (error) {
       console.error('💥 Unexpected error:', error);
-      alert('Unexpected error occurred while loading users.');
+      showError('Unexpected error occurred while loading users.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const updateUserRole = async (userId: number, newRole: string) => {
     if (!userId || !newRole) {
-      alert('Invalid user data');
+      warning('Invalid user data');
       return;
     }
 
     if (selectedUser?.role === newRole) {
-      alert('User already has this role');
+      warning('User already has this role');
       return;
     }
 
@@ -296,32 +303,32 @@ export default function UsersPage() {
 
       if (error) {
         console.error('Error updating user role:', error);
-        alert(`Error updating user role: ${error.message}`);
+        showError(`Error updating user role: ${error.message}`);
       } else {
-        alert('User role updated successfully');
+        success('User role updated successfully');
         fetchUsers(); // Refresh the list
         closeModal();
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Unexpected error while updating user role');
+      showError('Unexpected error while updating user role');
     }
   };
 
   const deleteUser = async (userId: number) => {
     if (!userId) {
-      alert('Invalid user ID');
+      warning('Invalid user ID');
       return;
     }
 
     const userToDelete = users.find(u => u.id === userId);
     if (!userToDelete) {
-      alert('User not found');
+      warning('User not found');
       return;
     }
 
     if (userToDelete.role === 'admin') {
-      alert('Cannot delete admin users');
+      warning('Cannot delete admin users');
       return;
     }
 
@@ -347,22 +354,22 @@ export default function UsersPage() {
 
       if (!response.ok) {
         console.error('Deletion error:', result.error);
-        alert(`Failed to delete user: ${result.error}`);
+        showError(`Failed to delete user: ${result.error}`);
         return;
       }
 
       console.log('✅', result.message);
-      alert('User deleted successfully!');
+      success('User deleted successfully!');
       fetchUsers(); // Refresh the list
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      showError('Failed to delete user');
     }
   };
 
   const openEditModal = (user: User) => {
     if (!user) {
-      alert('Invalid user data');
+      warning('Invalid user data');
       return;
     }
     setSelectedUser(user);

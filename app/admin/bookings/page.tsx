@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
+import { useToastHelpers } from "../../components/Toast";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 interface Booking {
@@ -41,6 +42,8 @@ export default function BookingsPage() {
   const [itemsPerPage] = useState(10); // You can make this configurable
   const [paginatedBookings, setPaginatedBookings] = useState<Booking[]>([]);
 
+  // Toast helpers
+  const { success, error: showError, warning } = useToastHelpers();
   useEffect(() => {
     fetchBookings();
   }, []);
@@ -158,20 +161,20 @@ export default function BookingsPage() {
 
       if (error) {
         console.error('Error updating booking:', error);
-        alert('Error updating booking status');
+        showError('Error updating booking status');
       } else {
-        alert('Booking status updated successfully');
+        success('Booking status updated successfully');
         fetchBookings(); // Refresh the list
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error updating booking status');
+      showError('Error updating booking status');
     }
   };
 
   const handleAdminCancelBooking = async (bookingId: number) => {
     if (!adminCancellationReason.trim()) {
-      alert('Please provide a reason for cancellation');
+      warning('Please provide a reason for cancellation');
       return;
     }
 
@@ -198,15 +201,15 @@ export default function BookingsPage() {
 
       if (error) {
         console.error('Error cancelling booking:', error);
-        alert('Error cancelling booking');
+        showError('Error cancelling booking');
       } else {
-        alert('Booking cancelled successfully');
+        success('Booking cancelled successfully');
         fetchBookings(); // Refresh the list
         closeModal();
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error cancelling booking');
+      showError('Error cancelling booking');
     }
   };
 

@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import { useToastHelpers } from "../../components/Toast";
 import type { User } from "@supabase/supabase-js";
 import { 
-  CheckCircle, 
-  AlertCircle, 
   User as UserIcon, 
   Mail, 
   Phone, 
@@ -30,7 +29,9 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+
+  // Toast helpers
+  const { success, error: showError } = useToastHelpers();
 
   useEffect(() => {
     const loadAdminData = async () => {
@@ -66,7 +67,6 @@ export default function SettingsPage() {
     if (!user) return;
     
     setSaving(true);
-    setMessage("");
 
     try {
       // Update user data in database
@@ -89,10 +89,10 @@ export default function SettingsPage() {
         if (authError) throw authError;
       }
 
-      setMessage("Profile updated successfully!");
+      success("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);
-      setMessage("Error updating profile. Please try again.");
+      showError("Error updating profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -130,33 +130,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-
-      {/* Success/Error Message */}
-      {message && (
-        <div className={`p-5 rounded-2xl text-sm border-l-4 shadow-lg transform transition-all duration-500 ease-out ${
-          message.includes("successfully") 
-            ? "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-500 shadow-green-100" 
-            : "bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border-red-500 shadow-red-100"
-        }`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full ${
-              message.includes("successfully") ? "bg-green-100" : "bg-red-100"
-            }`}>
-              {message.includes("successfully") ? (
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-red-600" />
-              )}
-            </div>
-            <div>
-              <span className="font-semibold">{message}</span>
-              <p className="text-xs mt-1 opacity-75">
-                {message.includes("successfully") ? "Changes have been saved successfully" : "Please check your input and try again"}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Profile Settings */}

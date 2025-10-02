@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../supabaseClient";
 import type { User } from "@supabase/supabase-js";
 import { NotificationDropdown } from "../components/NotificationDropdown";
+import { useToastHelpers } from "../components/Toast";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -14,6 +15,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminName, setAdminName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Toast helpers
+  const { error: showError } = useToastHelpers();
 
   useEffect(() => {
     // Check authentication and role
@@ -36,7 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       if (error || userData?.role !== "admin") {
         // Not an admin, redirect to home
-        alert("Access denied. Admin privileges required.");
+        showError("Access denied. Admin privileges required.");
         router.push("/");
         return;
       }
@@ -58,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, showError]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
