@@ -542,10 +542,10 @@ function Home() {
         const { data: userData } = await supabase
           .from("users")
           .select("role")
-          .eq("auth_id", session.user.id)
-          .single();
+          .eq("auth_id", session.user.id);
 
-        if (userData?.role === "admin") {
+        const user = userData?.[0];
+        if (user?.role === "admin") {
           console.log("Admin detected, redirecting to admin dashboard...");
           router.push("/admin");
           return;

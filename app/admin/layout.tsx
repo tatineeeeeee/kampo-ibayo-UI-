@@ -11,43 +11,66 @@ import { useToastHelpers } from "../components/Toast";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [adminName, setAdminName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Toast helpers
   const { error: showError } = useToastHelpers();
 
   useEffect(() => {
-    // Check authentication and role
+    let isMounted = true;
+    
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        router.push("/auth");
-        return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        if (!session?.user) {
+          router.push("/auth");
+          return;
+        }
+
+        setUser(session.user);
+
+        // Get user role from database
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("role, name")
+          .eq("auth_id", session.user.id);
+
+        if (!isMounted) return;
+
+        const user = userData?.[0];
+
+        if (error) {
+          console.error("Admin layout - database error:", error);
+          showError("Database connection error. Please refresh the page.");
+          setLoading(false);
+          return;
+        }
+
+        if (!user) {
+          showError("User not found. Access denied.");
+          router.push("/");
+          return;
+        }
+
+        if (user.role !== "admin") {
+          showError("Access denied. Admin privileges required.");
+          router.push("/");
+          return;
+        }
+
+        setAdminName(user.name);
+        setLoading(false);
+      } catch (error) {
+        if (isMounted) {
+          console.error("Admin layout - unexpected error:", error);
+          showError("An unexpected error occurred. Please refresh the page.");
+          setLoading(false);
+        }
       }
-
-      setUser(session.user);
-
-      // Get user role from database
-      const { data: userData, error } = await supabase
-        .from("users")
-        .select("role, name")
-        .eq("auth_id", session.user.id)
-        .single();
-
-      if (error || userData?.role !== "admin") {
-        // Not an admin, redirect to home
-        showError("Access denied. Admin privileges required.");
-        router.push("/");
-        return;
-      }
-
-      setUserRole(userData.role);
-      setAdminName(userData.name); // Store the admin name from database
-      setLoading(false);
     };
 
     checkAuth();
@@ -55,14 +78,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
         if (!session?.user) {
           router.push("/auth");
         }
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [router, showError]);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array to prevent infinite loop
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -77,9 +105,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user || userRole !== "admin") {
-    return null; // Will redirect
+  if (!user) {
+    return null;
   }
+
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
@@ -123,7 +152,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link href="/admin/help" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <FileText className="w-5 h-5" /> Help/FAQs
           </Link>
-          
         </nav>
       </aside>
 
