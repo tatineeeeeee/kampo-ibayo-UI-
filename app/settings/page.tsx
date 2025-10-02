@@ -22,6 +22,7 @@ import {
   FaTable
 } from "react-icons/fa";
 import { Check, X } from "lucide-react";
+import { useToastHelpers } from "../components/Toast";
 
 // Robust session validation helper
 const validateAndRefreshSession = async (maxRetries = 3) => {
@@ -83,6 +84,9 @@ export default function SettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+
+  // Toast notification helpers
+  const { success, error: showError, warning, info } = useToastHelpers();
 
   // Phone number validation function
   const validatePhoneNumber = (phone: string): boolean => {
@@ -265,10 +269,12 @@ export default function SettingsPage() {
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    
+    info('Updating your profile...');
 
     // Validate phone number if provided
     if (profileData.phone && !validatePhoneNumber(profileData.phone)) {
-      alert("Phone number must be exactly 11 digits long!");
+      showError("Phone number must be exactly 11 digits long!");
       setSaving(false);
       return;
     }
@@ -301,16 +307,16 @@ export default function SettingsPage() {
 
         if (dbError) {
           console.error('Error updating database profile:', dbError);
-          alert('Profile updated in account but may not appear in admin panel. Please contact support.');
+          warning('Profile updated in account but may not appear in admin panel. Please contact support.');
         } else {
-          alert("Profile updated successfully!");
+          success("Profile updated successfully!");
         }
       } else {
-        alert("Profile updated successfully!");
+        success("Profile updated successfully!");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Error updating profile. Please try again.");
+      showError("Error updating profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -320,18 +326,20 @@ export default function SettingsPage() {
     e.preventDefault();
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords don't match!");
+      showError("New passwords don't match!");
       return;
     }
 
     // Validate password strength
     const passwordValidation = validatePasswordStrength(passwordData.newPassword);
     if (!passwordValidation.isValid) {
-      alert("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
+      showError("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
       return;
     }
 
     setSaving(true);
+    
+    info('Updating your password...');
 
     try {
       // Validate session with retry logic
@@ -343,7 +351,7 @@ export default function SettingsPage() {
 
       if (error) throw error;
 
-      alert("Password updated successfully!");
+      success("Password updated successfully!");
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -351,7 +359,7 @@ export default function SettingsPage() {
       });
     } catch (error) {
       console.error("Error updating password:", error);
-      alert("Error updating password. Please try again.");
+      showError("Error updating password. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -389,11 +397,11 @@ export default function SettingsPage() {
       // In a real app, you'd call your backend to delete user data
       // For now, we'll just sign out the user
       await supabase.auth.signOut();
-      alert("Account deletion initiated. You have been signed out.");
+      warning("Account deletion initiated. You have been signed out.");
       router.push("/");
     } catch (error) {
       console.error("Error deleting account:", error);
-      alert("Error deleting account. Please contact support.");
+      showError("Error deleting account. Please contact support.");
     }
   };
 
@@ -401,6 +409,8 @@ export default function SettingsPage() {
     if (!user?.id) return;
     
     setExporting(true);
+    
+    info(`Exporting your data as ${format.toUpperCase()}...`);
     
     try {
       // Get user profile data
@@ -488,10 +498,10 @@ export default function SettingsPage() {
         downloadFile(csvBlob, `kampo-ibayo-bookings-${new Date().toISOString().split('T')[0]}.csv`);
       }
 
-      alert(`Your data has been exported successfully as ${format.toUpperCase()}!`);
+      success(`Your data has been exported successfully as ${format.toUpperCase()}!`);
     } catch (error) {
       console.error('Error exporting data:', error);
-      alert('Failed to export data. Please try again.');
+      showError('Failed to export data. Please try again.');
     } finally {
       setExporting(false);
     }
