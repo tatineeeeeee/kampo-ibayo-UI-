@@ -36,6 +36,8 @@ export default function BookingsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [adminCancellationReason, setAdminCancellationReason] = useState("");
   const [showDeletedUsers, setShowDeletedUsers] = useState(true);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -178,10 +180,13 @@ export default function BookingsPage() {
       return;
     }
 
-    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+    // Show confirmation state instead of browser confirm
+    if (!showConfirmCancel) {
+      setShowConfirmCancel(true);
       return;
     }
 
+    setIsProcessing(true);
     try {
       // Store Philippines time (UTC+8) correctly
       const now = new Date();
@@ -210,6 +215,8 @@ export default function BookingsPage() {
     } catch (error) {
       console.error('Error:', error);
       showError('Error cancelling booking');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -223,6 +230,8 @@ export default function BookingsPage() {
     setSelectedBooking(null);
     setShowCancelModal(false);
     setAdminCancellationReason("");
+    setShowConfirmCancel(false);
+    setIsProcessing(false);
   };
 
   // Pagination helpers
@@ -623,39 +632,88 @@ export default function BookingsPage() {
               ) : showCancelModal ? (
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-gray-800 font-medium mb-2">Reason for cancelling this booking:</h4>
+                    <h4 className="text-gray-800 font-medium mb-2">Reason for cancellation</h4>
                     <textarea
                       value={adminCancellationReason}
                       onChange={(e) => setAdminCancellationReason(e.target.value)}
-                      placeholder="Please provide a detailed reason for cancellation (required)"
-                      className="w-full p-3 rounded-md border border-gray-300 focus:border-red-500 focus:outline-none resize-none"
+                      placeholder="Please provide a reason for cancelling this booking"
+                      className="w-full p-3 border border-gray-300 rounded-md resize-none text-gray-700 focus:border-red-500 focus:outline-none"
                       rows={3}
                       maxLength={200}
+                      disabled={isProcessing}
                     />
-                    <p className="text-gray-500 text-xs mt-1">{adminCancellationReason.length}/200 characters</p>
+                    <p className="text-gray-500 text-sm mt-1">{adminCancellationReason.length}/200 characters</p>
                   </div>
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => handleAdminCancelBooking(selectedBooking.id)}
-                      disabled={!adminCancellationReason.trim()}
-                      className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition ${
-                        adminCancellationReason.trim() 
-                          ? 'bg-red-500 text-white hover:bg-red-600' 
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      Confirm Cancellation
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowCancelModal(false);
-                        setAdminCancellationReason("");
-                      }}
-                      className="bg-gray-500 text-white py-2 px-4 rounded-md text-sm font-semibold hover:bg-gray-600 transition"
-                    >
-                      Back
-                    </button>
-                  </div>
+                  {!showConfirmCancel ? (
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => handleAdminCancelBooking(selectedBooking.id)}
+                        disabled={!adminCancellationReason.trim() || isProcessing}
+                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${
+                          adminCancellationReason.trim() && !isProcessing
+                            ? 'bg-red-500 text-white hover:bg-red-600' 
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {isProcessing ? 'Processing...' : 'Continue'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCancelModal(false);
+                          setAdminCancellationReason("");
+                          setShowConfirmCancel(false);
+                        }}
+                        disabled={isProcessing}
+                        className="bg-gray-500 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"
+                      >
+                        Back
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-red-500">⚠️</span>
+                          <h4 className="text-red-800 font-medium">Confirm Cancellation</h4>
+                        </div>
+                        <p className="text-red-700 text-sm">
+                          This will permanently cancel the booking for <strong>{selectedBooking.guest_name}</strong>. 
+                          The guest will be notified.
+                        </p>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={() => handleAdminCancelBooking(selectedBooking.id)}
+                          disabled={isProcessing}
+                          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${
+                            isProcessing 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-red-600 hover:bg-red-700'
+                          } text-white`}
+                        >
+                          {isProcessing ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Cancelling...
+                            </span>
+                          ) : (
+                            'Yes, Cancel Booking'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowConfirmCancel(false);
+                            warning('Cancellation cancelled');
+                          }}
+                          disabled={isProcessing}
+                          className="bg-gray-500 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"
+                        >
+                          No, Keep Booking
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex justify-end">
