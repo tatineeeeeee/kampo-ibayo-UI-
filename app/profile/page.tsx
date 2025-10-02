@@ -6,44 +6,8 @@ import { supabase } from "../supabaseClient";
 import { useBookingStats } from "../hooks/useBookingStats";
 import { useAuth } from "../contexts/AuthContext";
 import type { User } from "@supabase/supabase-js";
-import { FaUser, FaEnvelope, FaUserTag, FaEdit, FaSignOutAlt, FaHome, FaCalendarAlt, FaClock, FaChartLine, FaStar, FaCalendarPlus, FaHistory, FaCog, FaCheck, FaTimes, FaExclamationTriangle, FaSpinner, FaPhone } from "react-icons/fa";
-
-// Toast notification component
-function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error' | 'warning'; onClose: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  const colors = {
-    success: 'bg-green-600/90 border-green-500/50 text-green-100',
-    error: 'bg-red-600/90 border-red-500/50 text-red-100',
-    warning: 'bg-yellow-600/90 border-yellow-500/50 text-yellow-100'
-  };
-
-  const icons = {
-    success: <FaCheck className="w-4 h-4" />,
-    error: <FaTimes className="w-4 h-4" />,
-    warning: <FaExclamationTriangle className="w-4 h-4" />
-  };
-
-  return (
-    <div className={`fixed top-4 right-4 z-50 ${colors[type]} backdrop-blur-sm border rounded-lg shadow-xl p-4 pr-12 max-w-md transition-all duration-300 ease-in-out`}>
-      <div className="flex items-center gap-3">
-        {icons[type]}
-        <p className="text-sm font-medium">{message}</p>
-      </div>
-      <button
-        onClick={onClose}
-        className="absolute top-3 right-3 text-current hover:opacity-70 transition-opacity"
-      >
-        <FaTimes className="w-3 h-3" />
-      </button>
-    </div>
-  );
-}
+import { FaUser, FaEnvelope, FaUserTag, FaEdit, FaSignOutAlt, FaHome, FaCalendarAlt, FaClock, FaChartLine, FaStar, FaCalendarPlus, FaHistory, FaCog, FaSpinner, FaPhone } from "react-icons/fa";
+import { useToastHelpers } from "../components/Toast";
 
 function ProfilePageContent({ user }: { user: User }) {
   const [editingName, setEditingName] = useState(false);
@@ -53,17 +17,14 @@ function ProfilePageContent({ user }: { user: User }) {
   const [updating, setUpdating] = useState(false);
   const [updatingPhone, setUpdatingPhone] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  // Toast state
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  
+  // Standardized toast helpers
+  const { success, error: showError, warning, info } = useToastHelpers();
+  
   const router = useRouter();
   
   // Use the booking stats hook
   const { stats: bookingStats, loading: statsLoading } = useBookingStats(user);
-
-  // Toast helper function
-  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
-    setToast({ message, type });
-  };
 
   // Phone number validation function
   const validatePhoneNumber = (phone: string): boolean => {
@@ -93,7 +54,7 @@ function ProfilePageContent({ user }: { user: User }) {
 
   const handleSignOut = async () => {
     setSigningOut(true);
-    showToast('Signing out...', 'warning');
+    warning('Signing out...');
     
     try {
       // Sign out from Supabase
@@ -101,7 +62,7 @@ function ProfilePageContent({ user }: { user: User }) {
       
       if (error) {
         console.error('Sign out error:', error);
-        showToast('Failed to sign out. Please try again.', 'error');
+        showError('Failed to sign out. Please try again.');
         return;
       }
       
@@ -111,7 +72,7 @@ function ProfilePageContent({ user }: { user: User }) {
         sessionStorage.clear();
       }
       
-      showToast('Successfully signed out!', 'success');
+      success('Successfully signed out!');
       
       // Delay redirect to show success message
       setTimeout(() => {
@@ -120,7 +81,7 @@ function ProfilePageContent({ user }: { user: User }) {
       
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
-      showToast('An unexpected error occurred during sign out.', 'error');
+      showError('An unexpected error occurred during sign out.');
       // Force redirect even if sign out fails
       setTimeout(() => {
         router.push("/");
@@ -132,12 +93,12 @@ function ProfilePageContent({ user }: { user: User }) {
 
   const handleUpdateName = async () => {
     if (!user || !newName.trim()) {
-      showToast('Please enter a valid name.', 'warning');
+      warning('Please enter a valid name.');
       return;
     }
     
     setUpdating(true);
-    showToast('Updating your name...', 'warning');
+    info('Updating your name...');
     
     try {
       // Update both auth metadata and users table
@@ -147,7 +108,7 @@ function ProfilePageContent({ user }: { user: User }) {
 
       if (authError) {
         console.error('Error updating auth name:', authError);
-        showToast('Failed to update name. Please try again.', 'error');
+        showError('Failed to update name. Please try again.');
         return;
       }
 
@@ -159,9 +120,9 @@ function ProfilePageContent({ user }: { user: User }) {
 
       if (dbError) {
         console.error('Error updating database name:', dbError);
-        showToast('Name updated in profile but may not appear in admin panel.', 'warning');
+        warning('Name updated in profile but may not appear in admin panel.');
       } else {
-        showToast('Name updated successfully!', 'success');
+        success('Name updated successfully!');
       }
       
       setEditingName(false);
@@ -174,7 +135,7 @@ function ProfilePageContent({ user }: { user: User }) {
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      showToast('An unexpected error occurred. Please try again.', 'error');
+      showError('An unexpected error occurred. Please try again.');
     } finally {
       setUpdating(false);
     }
@@ -183,7 +144,7 @@ function ProfilePageContent({ user }: { user: User }) {
   const handleCancelEdit = () => {
     setEditingName(false);
     setNewName("");
-    showToast('Name edit cancelled.', 'warning');
+    warning('Name edit cancelled.');
   };
 
   const handleStartEdit = () => {
@@ -193,17 +154,17 @@ function ProfilePageContent({ user }: { user: User }) {
 
   const handleUpdatePhone = async () => {
     if (!user || !newPhone.trim()) {
-      showToast('Please enter a valid phone number.', 'warning');
+      warning('Please enter a valid phone number.');
       return;
     }
 
     if (!validatePhoneNumber(newPhone)) {
-      showToast('Phone number must be exactly 11 digits long!', 'error');
+      showError('Phone number must be exactly 11 digits long!');
       return;
     }
     
     setUpdatingPhone(true);
-    showToast('Updating your phone number...', 'warning');
+    info('Updating your phone number...');
     
     try {
       // Update both auth metadata and users table
@@ -213,7 +174,7 @@ function ProfilePageContent({ user }: { user: User }) {
 
       if (authError) {
         console.error('Error updating auth phone:', authError);
-        showToast('Failed to update phone number. Please try again.', 'error');
+        showError('Failed to update phone number. Please try again.');
         return;
       }
 
@@ -225,9 +186,9 @@ function ProfilePageContent({ user }: { user: User }) {
 
       if (dbError) {
         console.error('Error updating database phone:', dbError);
-        showToast('Phone updated in profile but may not appear in admin panel.', 'warning');
+        warning('Phone updated in profile but may not appear in admin panel.');
       } else {
-        showToast('Phone number updated successfully!', 'success');
+        success('Phone number updated successfully!');
       }
       
       setEditingPhone(false);
@@ -240,7 +201,7 @@ function ProfilePageContent({ user }: { user: User }) {
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      showToast('An unexpected error occurred. Please try again.', 'error');
+      showError('An unexpected error occurred. Please try again.');
     } finally {
       setUpdatingPhone(false);
     }
@@ -249,7 +210,7 @@ function ProfilePageContent({ user }: { user: User }) {
   const handleCancelPhoneEdit = () => {
     setEditingPhone(false);
     setNewPhone("");
-    showToast('Phone edit cancelled.', 'warning');
+    warning('Phone edit cancelled.');
   };
 
   const handleStartPhoneEdit = () => {
@@ -284,15 +245,6 @@ function ProfilePageContent({ user }: { user: User }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Toast Notifications */}
-      {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
-        />
-      )}
-      
       {/* Mobile-First Sticky Header */}
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
         <div className="px-4 py-3 sm:px-6">
