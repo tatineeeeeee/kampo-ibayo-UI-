@@ -370,14 +370,14 @@ Is there anything else about Kampo Ibayo I can help you with?`;
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="relative bg-red-600 hover:bg-red-700 text-white h-12 w-12 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 group border border-red-500 hover:border-red-400"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 group border border-red-500 hover:border-red-400"
         aria-label="Open chat"
       >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
           {/* Online status indicator */}
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></span>
-          {/* Help tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 border border-gray-600 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-lg">
+          <span className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full animate-pulse"></span>
+          {/* Help tooltip - hide on mobile */}
+          <div className="hidden sm:block absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 border border-gray-600 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-lg">
             Need help? Ask me anything!
             <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
           </div>
@@ -386,45 +386,53 @@ Is there anything else about Kampo Ibayo I can help you with?`;
   }
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${isMinimized ? 'w-80' : 'w-96'}`}>
+    <div className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 transition-all duration-300 
+      ${isMinimized ? 'w-72 sm:w-80' : 'w-full sm:w-96'} 
+      ${isMinimized ? '' : 'max-w-[calc(100vw-2rem)] sm:max-w-none'}
+      ${isMinimized ? '' : 'left-4 sm:left-auto'}`}>
       {/* Chat Window */}
-      <div className={`bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700 flex flex-col transition-all duration-300 ${isMinimized ? 'h-16' : 'h-[600px]'} overflow-hidden`}>
+      <div className={`bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700 flex flex-col transition-all duration-300 
+        ${isMinimized ? 'h-14 sm:h-16' : 'h-[70vh] sm:h-[600px] max-h-[600px]'} 
+        overflow-hidden`}>
         {/* Header - Different styles for minimized vs expanded */}
-        <div className={`bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-between text-white transition-all duration-300 ${isMinimized ? 'h-full p-3 rounded-2xl' : 'p-4 rounded-t-2xl border-b border-gray-700'}`}>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className={`bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform ${isMinimized ? 'w-8 h-8' : 'w-10 h-10'}`}>
-                <MessageCircle className={`text-red-400 ${isMinimized ? 'w-4 h-4' : 'w-5 h-5'}`} />
+        <div className={`bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-between text-white transition-all duration-300 
+          ${isMinimized ? 'h-full p-2 sm:p-3 rounded-2xl' : 'p-3 sm:p-4 rounded-t-2xl border-b border-gray-700'}`}>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="relative flex-shrink-0">
+              <div className={`bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform 
+                ${isMinimized ? 'w-6 h-6 sm:w-8 sm:h-8' : 'w-8 h-8 sm:w-10 sm:h-10'}`}>
+                <MessageCircle className={`text-red-400 ${isMinimized ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-4 h-4 sm:w-5 sm:h-5'}`} />
               </div>
-              <span className={`absolute bg-green-500 rounded-full ${isMinimized ? 'bottom-0 right-0 w-2.5 h-2.5' : 'bottom-0 right-0 w-3 h-3'}`}></span>
+              <span className={`absolute bg-green-500 rounded-full 
+                ${isMinimized ? 'bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5' : 'bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3'}`}></span>
             </div>
             {!isMinimized && (
-              <div>
-                <h3 className="font-bold text-white">Kampo Ibayo Assistant</h3>
-                <p className="text-xs text-red-100">Online • {FAQ_DATABASE.length}+ answers ready</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-white text-sm sm:text-base truncate">Kampo Ibayo Assistant</h3>
+                <p className="text-xs text-red-100 truncate">Online • {FAQ_DATABASE.length}+ answers ready</p>
               </div>
             )}
             {isMinimized && (
-              <div>
-                <h3 className="font-semibold text-white text-sm">Assistant</h3>
-                <p className="text-xs text-green-400">Online</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-white text-xs sm:text-sm truncate">Assistant</h3>
+                <p className="text-xs text-green-400 truncate">Online</p>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">{/* Modified header structure */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className="text-white hover:bg-red-800 p-1.5 rounded-lg transition-colors"
+              className="text-white hover:bg-red-800 p-1 sm:p-1.5 rounded-lg transition-colors"
               aria-label={isMinimized ? "Maximize" : "Minimize"}
             >
-              <Minimize2 className="w-5 h-5" />
+              <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-red-800 p-1.5 rounded-lg transition-colors"
+              className="text-white hover:bg-red-800 p-1 sm:p-1.5 rounded-lg transition-colors"
               aria-label="Close chat"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -432,20 +440,20 @@ Is there anything else about Kampo Ibayo I can help you with?`;
         {!isMinimized && (
           <>
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-800">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-gray-800">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] rounded-2xl p-3 ${
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-2.5 sm:p-3 ${
                       message.sender === "user"
                         ? "bg-red-600 text-white rounded-br-none shadow-lg"
                         : "bg-gray-700 text-gray-100 rounded-bl-none shadow-md border border-gray-600"
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-line">{message.text}</p>
+                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">{message.text}</p>
                     <p className={`text-xs mt-1 ${
                       message.sender === "user" 
                         ? "text-red-100 text-right" 
@@ -459,7 +467,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
 
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-700 rounded-2xl rounded-bl-none p-3 shadow-md border border-gray-600">
+                  <div className="bg-gray-700 rounded-2xl rounded-bl-none p-2.5 sm:p-3 shadow-md border border-gray-600">
                     <div className="flex gap-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
@@ -474,7 +482,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
 
             {/* Quick Questions - Always Accessible */}
             {showQuickQuestions && (
-              <div className="px-4 py-3 bg-gray-800 border-t border-gray-700">
+              <div className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border-t border-gray-700">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Quick Topics</p>
                   <button 
@@ -484,12 +492,12 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                     Hide
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {quickQuestions.map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleQuickQuestion(question)}
-                      className="text-xs bg-gray-700 hover:bg-red-600 text-gray-200 hover:text-white px-3 py-2 rounded-lg transition-all duration-200 text-left hover:scale-105 border border-gray-600 hover:border-red-600"
+                      className="text-xs bg-gray-700 hover:bg-red-600 text-gray-200 hover:text-white px-2.5 sm:px-3 py-2 rounded-lg transition-all duration-200 text-left hover:scale-105 border border-gray-600 hover:border-red-600"
                     >
                       {question}
                     </button>
@@ -500,7 +508,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
 
             {/* Show Quick Questions Toggle when hidden */}
             {!showQuickQuestions && (
-              <div className="px-4 py-2 bg-gray-800 border-t border-gray-700">
+              <div className="px-3 sm:px-4 py-2 bg-gray-800 border-t border-gray-700">
                 <button 
                   onClick={() => setShowQuickQuestions(true)}
                   className="w-full text-xs text-red-400 hover:text-red-300 transition-colors font-medium text-center py-1"
@@ -511,7 +519,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
             )}
 
             {/* Input Area */}
-            <div className="p-4 bg-gradient-to-br from-gray-800 to-gray-900 border-t border-gray-700 rounded-b-2xl">
+            <div className="p-3 sm:p-4 bg-gradient-to-br from-gray-800 to-gray-900 border-t border-gray-700 rounded-b-2xl">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -519,15 +527,15 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="flex-1 bg-gray-800 text-white border border-gray-600 rounded-xl px-4 py-2.5 focus:outline-none focus:border-red-500 focus:bg-gray-700 transition-all text-sm placeholder-gray-400"
+                  className="flex-1 bg-gray-800 text-white border border-gray-600 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 focus:outline-none focus:border-red-500 focus:bg-gray-700 transition-all text-xs sm:text-sm placeholder-gray-400"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputText.trim()}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2.5 rounded-xl transition-colors shadow-lg hover:shadow-xl"
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 sm:p-2.5 rounded-xl transition-colors shadow-lg hover:shadow-xl flex-shrink-0"
                   aria-label="Send message"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>

@@ -420,14 +420,14 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-4">
-      <div className="w-full max-w-5xl flex flex-col lg:flex-row rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden bg-white/5 backdrop-blur-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-2 sm:p-4">
+      <div className="w-full max-w-6xl flex flex-col lg:flex-row rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden bg-white/5 backdrop-blur-lg">
         {/* Left Side - Hidden on mobile, shown on desktop */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8 xl:p-12 flex-col justify-between">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 xl:p-12 flex-col justify-between">
           <div>
             {/* Brand Header */}
-            <div className="flex items-center gap-3 mb-8 xl:mb-10">
-              <div className="w-16 h-16 relative">
+            <div className="flex items-center gap-3 mb-6 xl:mb-10">
+              <div className="w-12 h-12 xl:w-16 xl:h-16 relative">
                 <Image
                   src="/logo.png"
                   alt="Kampo Ibayo Logo"
@@ -436,49 +436,49 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   priority
                 />
               </div>
-              <h1 className="text-2xl xl:text-3xl font-extrabold tracking-tight">
+              <h1 className="text-xl xl:text-3xl font-extrabold tracking-tight">
                 <span className="text-red-500">Kampo</span> Ibayo
               </h1>
             </div>
 
-            <p className="text-lg xl:text-xl font-semibold mb-6 xl:mb-8 opacity-90">
+            <p className="text-base xl:text-xl font-semibold mb-4 xl:mb-8 opacity-90">
               Where adventure meets comfort
             </p>
 
-            <h2 className="font-bold mb-4 xl:mb-6 text-base xl:text-lg">Your Wilderness Experience</h2>
+            <h2 className="font-bold mb-3 xl:mb-6 text-sm xl:text-lg">Your Wilderness Experience</h2>
 
             {/* Features List */}
-            <ul className="space-y-4 xl:space-y-5 text-sm xl:text-base">
-              <li className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                  <Shield className="w-4 h-4 text-red-400" />
+            <ul className="space-y-3 xl:space-y-5 text-xs xl:text-base">
+              <li className="flex items-start gap-2 xl:gap-3">
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Shield className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
                 </div>
                 <span>
                   <strong>24/7 Security</strong> <br />
                   Professional staff ensuring your safety
                 </span>
               </li>
-              <li className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                  <Mountain className="w-4 h-4 text-red-400" />
+              <li className="flex items-start gap-2 xl:gap-3">
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Mountain className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
                 </div>
                 <span>
                   <strong>Breathtaking Views</strong> <br />
                   Unmatched natural beauty of Cavite
                 </span>
               </li>
-              <li className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                  <Users className="w-4 h-4 text-red-400" />
+              <li className="flex items-start gap-2 xl:gap-3">
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Users className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
                 </div>
                 <span>
                   <strong>Family-Friendly</strong> <br />
                   Perfect for all ages and group sizes
                 </span>
               </li>
-              <li className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                  <Check className="w-4 h-4 text-red-400" />
+              <li className="flex items-start gap-2 xl:gap-3">
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
                 </div>
                 <span>
                   <strong>Easy Booking</strong> <br />
@@ -489,14 +489,14 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           </div>
 
           {/* Bottom testimonial */}
-          <div className="mt-8">
-            <div className="flex items-center gap-1 mb-3">
+          <div className="mt-6 xl:mt-8">
+            <div className="flex items-center gap-1 mb-2 xl:mb-3">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <Star key={star} className="w-3 h-3 xl:w-4 xl:h-4 text-yellow-500 fill-yellow-500" />
               ))}
-              <span className="text-gray-400 text-sm ml-2">4.9/5</span>
+              <span className="text-gray-400 text-xs xl:text-sm ml-2">4.9/5</span>
             </div>
-            <p className="text-xs opacity-80 italic">
+            <p className="text-xs xl:text-sm opacity-80 italic">
               &quot;The best camping experience I&apos;ve ever had!&quot; <br />
               <span className="text-gray-400">Maria S., Frequent Camper</span>
             </p>
@@ -504,25 +504,31 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         </div>
 
         {/* Right Side - Main content on mobile, right side on desktop */}
-        <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col overflow-y-auto max-h-screen">
+        <div className="w-full lg:w-1/2 bg-white p-4 sm:p-6 lg:p-8 xl:p-12 flex flex-col overflow-y-auto max-h-screen">
           <div className="flex-1 flex flex-col justify-center min-h-0">
           {/* Mobile Header - Only shown on mobile */}
-          <div className="lg:hidden text-center mb-6">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="bg-red-600 p-2 rounded-full shadow-lg">
-                <span className="text-2xl">⛺</span>
+          <div className="lg:hidden text-center mb-4 sm:mb-6">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 relative">
+                <Image
+                  src="/logo.png"
+                  alt="Kampo Ibayo Logo"
+                  fill
+                  className="object-contain drop-shadow-lg rounded-lg"
+                  priority
+                />
               </div>
-              <h1 className="text-2xl font-extrabold tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
                 <span className="text-red-500">Kampo</span> <span className="text-gray-700">Ibayo</span>
               </h1>
             </div>
-            <p className="text-gray-600 text-sm">Where adventure meets comfort</p>
+            <p className="text-gray-600 text-xs sm:text-sm">Where adventure meets comfort</p>
           </div>
 
-          <div className="flex mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
+          <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
             <button
               onClick={() => setIsLogin(true)}
-              className={`w-1/2 py-2 lg:py-3 font-semibold transition-colors duration-200 text-sm lg:text-base ${
+              className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
                 isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
               }`}
             >
@@ -530,7 +536,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`w-1/2 py-2 lg:py-3 font-semibold transition-colors duration-200 text-sm lg:text-base ${
+              className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
                 !isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
               }`}
             >
@@ -540,52 +546,52 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
           {/* Sign In Form */}
           {isLogin ? (
-            <form onSubmit={handleLogin} className="space-y-4 lg:space-y-5">
-              <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaEnvelope className="text-gray-400 mr-3 text-sm lg:text-base" />
+            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4 lg:space-y-5">
+              <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                 <input
                   type="email"
                   name="email"
                   placeholder="your@email.com"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                   required
                 />
               </div>
 
-              <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+              <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+                    <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                   ) : (
-                    <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                   )}
                 </button>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-sm lg:text-base"
+                className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base"
               >
                 Sign In
               </button>
 
-              <div className="text-center mt-4">
+              <div className="text-center mt-3 sm:mt-4">
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-red-500 hover:text-red-600 text-sm font-medium hover:underline transition-colors"
+                  className="text-red-500 hover:text-red-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
                 >
                   Forgot your password?
                 </button>
@@ -593,48 +599,48 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             </form>
           ) : (
             // Register Form
-            <form onSubmit={handleRegister} className="space-y-4 lg:space-y-5">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
-                  <FaUser className="text-gray-400 mr-3 text-sm lg:text-base" />
+            <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4 lg:space-y-5">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg w-full sm:w-1/2">
+                  <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                   <input
                     type="text"
                     name="firstName"
                     placeholder="First Name"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                     required
                   />
                 </div>
-                <div className="flex items-center border border-gray-300 p-3 rounded-lg w-full sm:w-1/2">
-                  <FaUser className="text-gray-400 mr-3 text-sm lg:text-base" />
+                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg w-full sm:w-1/2">
+                  <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                   <input
                     type="text"
                     name="lastName"
                     placeholder="Last Name"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaEnvelope className="text-gray-400 mr-3 text-sm lg:text-base" />
+              <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                 <input
                   type="email"
                   name="email"
                   placeholder="your@email.com"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                   required
                 />
               </div>
 
-              <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                <FaPhone className="text-gray-400 mr-3 text-sm lg:text-base" />
+              <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                <FaPhone className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                 <input
                   type="tel"
                   name="phone"
                   placeholder="09XX-XXX-XXXX (11 digits)"
-                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                   onChange={(e) => {
                     const formatted = formatPhoneNumber(e.target.value);
                     e.target.value = formatted;
@@ -652,43 +658,43 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               </div>
 
               {/* Password Field - Full Width */}
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="w-full">
-                  <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                    <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                    <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
                       placeholder="Password"
                       value={passwordValue}
                       onChange={(e) => handlePasswordChange(e.target.value)}
-                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+                        <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                       ) : (
-                        <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                       )}
                     </button>
                   </div>
                   
                   {/* Password Requirements & Strength */}
-                  <div className="mt-2 flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Use 8+ characters with letters, numbers and symbols</span>
+                  <div className="mt-1.5 sm:mt-2 flex items-center justify-between text-xs">
+                    <span className="text-gray-500 text-xs">Use 8+ characters with letters, numbers and symbols</span>
                     {passwordValue && (
                       <div className="flex items-center space-x-1">
-                        <span className="text-gray-400">Strength:</span>
+                        <span className="text-gray-400 text-xs">Strength:</span>
                         <div className="flex space-x-0.5">
                           {[1, 2, 3, 4].map((level) => (
                             <div
                               key={level}
-                              className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
+                              className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full transition-colors duration-200 ${
                                 level <= validatePasswordStrength(passwordValue).score
                                   ? level <= 1
                                     ? 'bg-red-400'
@@ -709,43 +715,43 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
                 {/* Confirm Password Field - Full Width */}
                 <div className="w-full">
-                  <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                    <FaLock className="text-gray-400 mr-3 text-sm lg:text-base" />
+                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                    <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       name="confirmPassword"
                       placeholder="Confirm Password"
                       value={confirmPasswordValue}
                       onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm lg:text-base"
+                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+                        <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                       ) : (
-                        <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                       )}
                     </button>
                   </div>
                   
                   {/* Password Match Validation */}
-                  <div className="mt-2 flex items-center justify-between text-xs min-h-[16px]">
-                    <span className="text-gray-500">Password confirmation</span>
+                  <div className="mt-1.5 sm:mt-2 flex items-center justify-between text-xs min-h-[14px] sm:min-h-[16px]">
+                    <span className="text-gray-500 text-xs">Password confirmation</span>
                     <div className="flex items-center space-x-1">
-                      <span className="text-gray-400">Match:</span>
+                      <span className="text-gray-400 text-xs">Match:</span>
                       {confirmPasswordValue ? (
                         passwordsMatch ? (
-                          <Check className="w-3 h-3 text-green-500" />
+                          <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
                         ) : (
-                          <X className="w-3 h-3 text-red-400" />
+                          <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400" />
                         )
                       ) : (
-                        <div className="w-3 h-3"></div>
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3"></div>
                       )}
                     </div>
                   </div>
@@ -753,8 +759,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               </div>
 
               {/* Terms and Privacy Policy Consent */}
-              <div className="space-y-2">
-                <div className="flex items-start space-x-3">
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex items-start space-x-2 sm:space-x-3">
                   <input
                     type="checkbox"
                     id="terms-consent"
@@ -765,10 +771,10 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                         setTermsError(false);
                       }
                     }}
-                    className="mt-1 w-4 h-4 text-red-600  accent-red-600"
+                    className="mt-0.5 sm:mt-1 w-3 h-3 sm:w-4 sm:h-4 text-red-600 accent-red-600 flex-shrink-0"
                     required
                   />
-                  <label htmlFor="terms-consent" className="text-xs text-gray-600 leading-relaxed">
+                  <label htmlFor="terms-consent" className="text-xs leading-relaxed text-gray-600">
                     I agree to Kampo Ibayo&apos;s{" "}
                     <a
                       href="/legal/terms"
@@ -790,8 +796,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   </label>
                 </div>
                 {termsError && (
-                  <div className="flex items-center space-x-1 text-xs text-red-500 ml-7">
-                    <X className="w-3 h-3" />
+                  <div className="flex items-center space-x-1 text-xs text-red-500 ml-5 sm:ml-7">
+                    <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
                     <span>You must accept the Terms of Service and Privacy Policy to create an account</span>
                   </div>
                 )}
@@ -800,9 +806,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               {/* Create Account Button */}
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-3 px-4 rounded-lg font-semibold shadow-lg hover:bg-red-600 hover:shadow-xl transition-all duration-200 text-sm lg:text-base flex items-center justify-center space-x-2 mt-6"
+                className="w-full bg-red-500 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold shadow-lg hover:bg-red-600 hover:shadow-xl transition-all duration-200 text-xs sm:text-sm lg:text-base flex items-center justify-center space-x-1.5 sm:space-x-2 mt-4 sm:mt-6"
               >
-                <FaUserPlus className="text-sm lg:text-base" />
+                <FaUserPlus className="text-xs sm:text-sm lg:text-base" />
                 <span>Create Account</span>
               </button>
             </form>
@@ -810,20 +816,20 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
           {/* Forgot Password Modal */}
           {showForgotPassword && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Reset Password</h3>
-                  <p className="text-gray-600 text-sm">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl mx-2">
+                <div className="text-center mb-4 sm:mb-6">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Reset Password</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">
                     Enter your email address and we&apos;ll send you a link to reset your password.
                   </p>
                 </div>
 
                 {resetEmailSent ? (
                   <div className="text-center">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                      <div className="text-green-600 font-semibold mb-1">Email Sent!</div>
-                      <div className="text-green-700 text-sm">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+                      <div className="text-green-600 font-semibold mb-1 text-sm sm:text-base">Email Sent!</div>
+                      <div className="text-green-700 text-xs sm:text-sm">
                         Check your inbox for password reset instructions.
                       </div>
                     </div>
@@ -832,38 +838,38 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                         setShowForgotPassword(false);
                         setResetEmailSent(false);
                       }}
-                      className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+                      className="w-full bg-gray-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-xs sm:text-sm"
                     >
                       Close
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleForgotPassword} className="space-y-4">
-                    <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-                      <FaEnvelope className="text-gray-400 mr-3 text-sm" />
+                  <form onSubmit={handleForgotPassword} className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                      <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm flex-shrink-0" />
                       <input
                         type="email"
                         name="resetEmail"
                         placeholder="your@email.com"
-                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-sm"
+                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm"
                         required
                       />
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <button
                         type="button"
                         onClick={() => {
                           setShowForgotPassword(false);
                           setResetEmailSent(false);
                         }}
-                        className="w-1/2 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+                        className="w-full sm:w-1/2 bg-gray-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-xs sm:text-sm order-2 sm:order-1"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="w-1/2 bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition"
+                        className="w-full sm:w-1/2 bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-red-600 transition text-xs sm:text-sm order-1 sm:order-2"
                       >
                         Send Reset Link
                       </button>
@@ -875,7 +881,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           )}
 
           {/* Footer - Mobile optimized spacing */}
-          <div className="mt-6 lg:mt-8 text-center">
+          <div className="mt-4 sm:mt-6 lg:mt-8 text-center">
           </div>
         </div>
           </div>

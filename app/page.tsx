@@ -659,19 +659,19 @@ function Home() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mt-6 sm:mt-8 lg:mt-10 px-4 sm:px-0">
               <button
                 onClick={() => setShowAvailabilityModal(true)}
-                className="group w-full sm:w-auto px-4 xs:px-6 sm:px-8 py-3 sm:py-4 bg-green-600 rounded-full font-bold text-sm xs:text-base lg:text-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-2"
+                className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-green-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-green-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
               >
-                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
+                <CalendarDays className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                 <span className="whitespace-nowrap">Check Availability</span>
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <Link
                 href="/book"
-                className="group w-full sm:w-auto px-4 xs:px-6 sm:px-8 py-3 sm:py-4 bg-red-600 rounded-full font-bold text-sm xs:text-base lg:text-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-2"
+                className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-red-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
               >
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                 <span className="whitespace-nowrap">Book Your Stay</span>
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -1324,77 +1324,79 @@ function Home() {
 
       {/* Availability Modal */}
       {showAvailabilityModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-700 max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-lg border border-gray-700 max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-700 bg-gray-900">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <CalendarDays className="w-6 h-6 text-green-400" />
-                Check Availability
+            <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6 border-b border-gray-700 bg-gray-900">
+              <h2 className="text-sm sm:text-lg lg:text-xl font-bold text-white flex items-center gap-1 sm:gap-2">
+                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-400" />
+                <span className="hidden xs:inline">Check Availability</span>
+                <span className="xs:hidden">Availability</span>
               </h2>
               <button
                 onClick={() => setShowAvailabilityModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1"
+                className="text-gray-400 hover:text-white transition-colors p-1 sm:p-2 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-              <div className="p-6 space-y-6">
+            <div className="overflow-y-auto max-h-[calc(95vh-80px)] sm:max-h-[calc(90vh-120px)]">
+              <div className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
                 {/* Calendar View */}
-                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-600">
+                <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 lg:p-4 border border-gray-600">
                   {/* Month Header */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-2 sm:mb-3 lg:mb-4">
                     <button 
                       onClick={goToPreviousMonth}
-                      className={`text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors ${
+                      className={`text-gray-400 hover:text-white p-1 sm:p-2 rounded-lg hover:bg-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
                         loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
                           ? 'opacity-30 cursor-not-allowed' 
                           : ''
                       }`}
                       disabled={loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
-                    <h4 className="text-white font-semibold text-lg">
+                    <h4 className="text-white font-semibold text-sm sm:text-base lg:text-lg text-center px-2">
                       {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                     </h4>
                     <button 
                       onClick={goToNextMonth}
-                      className={`text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors ${
+                      className={`text-gray-400 hover:text-white p-1 sm:p-2 rounded-lg hover:bg-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
                         loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
                           ? 'opacity-30 cursor-not-allowed' 
                           : ''
                       }`}
                       disabled={loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
 
                   {/* Day Headers */}
-                  <div className="grid grid-cols-7 gap-1 mb-2">
+                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <div key={day} className="text-gray-400 text-sm font-semibold text-center py-2">
-                        {day}
+                      <div key={day} className="text-gray-400 text-xs sm:text-sm font-semibold text-center py-1 sm:py-2">
+                        <span className="hidden xs:inline">{day}</span>
+                        <span className="xs:hidden">{day.substring(0, 1)}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Calendar Grid */}
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                     {loading ? (
                       Array.from({length: 42}).map((_, i) => (
-                        <div key={i} className="aspect-square flex items-center justify-center">
-                          <div className="w-6 h-6 bg-gray-600 rounded animate-pulse"></div>
+                        <div key={i} className="aspect-square flex items-center justify-center min-h-[32px] sm:min-h-[40px]">
+                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gray-600 rounded animate-pulse"></div>
                         </div>
                       ))
                     ) : (
                       generateCalendarDays().map((day, index) => {
                         if (day === null) {
-                          return <div key={`empty-${index}`} className="aspect-square bg-transparent"></div>;
+                          return <div key={`empty-${index}`} className="aspect-square bg-transparent min-h-[32px] sm:min-h-[40px]"></div>;
                         }
 
                         const isPast = isDatePast(day);
@@ -1411,7 +1413,7 @@ function Home() {
                           <div 
                             key={day}
                             className={`
-                              aspect-square flex items-center justify-center text-sm font-medium rounded-lg transition-all
+                              aspect-square min-h-[32px] sm:min-h-[40px] flex items-center justify-center text-xs sm:text-sm font-medium rounded-md sm:rounded-lg transition-all touch-manipulation
                               ${isPast 
                                 ? 'text-gray-500 cursor-not-allowed' 
                                 : isToday
@@ -1440,7 +1442,7 @@ function Home() {
                             <div className="relative w-full h-full flex items-center justify-center">
                               <span>{day}</span>
                               {!isPast && !isBooked && !isTooFar && countForDay > 0 && (
-                                <span className={`absolute bottom-1 right-1 text-[10px] px-1 py-0.5 rounded border ${
+                                <span className={`absolute bottom-0 right-0 text-[8px] sm:text-[10px] px-0.5 sm:px-1 py-0.5 rounded border ${
                                   countForDay === 1 
                                     ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
                                     : countForDay === 2
@@ -1459,35 +1461,35 @@ function Home() {
                 </div>
 
                 {/* Legend */}
-                <div className="grid grid-cols-5 gap-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border border-green-500/30 rounded bg-green-600/10"></div>
-                    <span className="text-gray-300">Available</span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 text-xs">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 border border-green-500/30 rounded bg-green-600/10"></div>
+                    <span className="text-gray-300 text-xs">Available</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-red-900/30 border border-red-500/30 rounded"></div>
-                    <span className="text-gray-300">Booked</span>
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-900/30 border border-red-500/30 rounded"></div>
+                    <span className="text-gray-300 text-xs">Booked</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border border-yellow-500/40 rounded bg-yellow-500/20"></div>
-                    <span className="text-gray-300">1/2 Capacity</span>
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 border border-yellow-500/40 rounded bg-yellow-500/20"></div>
+                    <span className="text-gray-300 text-xs">1/2 Capacity</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-600 rounded"></div>
-                    <span className="text-gray-300">Today</span>
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded"></div>
+                    <span className="text-gray-300 text-xs">Today</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border border-orange-500/30 rounded bg-orange-600/10 opacity-60"></div>
-                    <span className="text-gray-300">Too Far</span>
+                  <div className="flex items-center gap-1 sm:gap-2 col-span-2 sm:col-span-1">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 border border-orange-500/30 rounded bg-orange-600/10 opacity-60"></div>
+                    <span className="text-gray-300 text-xs">Too Far</span>
                   </div>
                 </div>
 
                 {/* Booking Policy Notice */}
-                <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-3">
+                <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-2 sm:p-3">
                   <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 text-amber-400 mt-0.5">ℹ️</div>
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 mt-0.5 text-sm sm:text-base">ℹ️</div>
                     <div>
-                      <p className="text-amber-200 text-sm font-medium mb-1">Booking Policy</p>
+                      <p className="text-amber-200 text-xs sm:text-sm font-medium mb-1">Booking Policy</p>
                       <p className="text-amber-100/80 text-xs leading-relaxed">
                         {getBookingPolicyMessage()}
                       </p>
@@ -1496,14 +1498,14 @@ function Home() {
                 </div>
 
                 {/* Real-time Status */}
-                <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-3">
+                <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`}></div>
-                    <span className="text-blue-400 font-semibold text-sm">
+                    <span className="text-blue-400 font-semibold text-xs sm:text-sm">
                       {loading ? 'Loading availability...' : 'Live Availability Data'}
                     </span>
                   </div>
-                  <p className="text-gray-300 text-xs">
+                  <p className="text-gray-300 text-xs leading-relaxed">
                     {loading 
                       ? 'Fetching real-time booking information from database...'
                       : 'Showing current availability based on active bookings (pending + confirmed). Navigate months to see more dates.'
@@ -1512,9 +1514,9 @@ function Home() {
                 </div>
 
                 {/* Pricing Info */}
-                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-600">
-                  <h3 className="text-white font-semibold mb-3">Resort Rates</h3>
-                  <div className="space-y-2 text-sm">
+                <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 lg:p-4 border border-gray-600">
+                  <h3 className="text-white font-semibold mb-2 sm:mb-3 text-sm sm:text-base">Resort Rates</h3>
+                  <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-300">Weekdays (Mon-Thu)</span>
                       <span className="text-green-400 font-semibold">₱9,000</span>
@@ -1523,17 +1525,17 @@ function Home() {
                       <span className="text-gray-300">Weekends (Fri-Sun)</span>
                       <span className="text-yellow-400 font-semibold">₱12,000</span>
                     </div>
-                    <div className="text-xs text-gray-400 mt-2">
+                    <div className="text-xs text-gray-400 mt-1 sm:mt-2">
                       22-hour stay • Up to 15 guests • All amenities included
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-2 sm:gap-3 pt-1 sm:pt-2">
                   <button
                     onClick={() => setShowAvailabilityModal(false)}
-                    className="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-white transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-white transition-colors text-xs sm:text-sm lg:text-base min-h-[44px] touch-manipulation"
                   >
                     Close
                   </button>
