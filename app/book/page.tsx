@@ -374,9 +374,11 @@ function BookingPage() {
     
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('bookings')
-        .insert([bookingData]);
+        .insert([bookingData])
+        .select()
+        .single();
         
       if (error) {
         console.error('Supabase error details:', {
@@ -387,6 +389,44 @@ function BookingPage() {
         });
         alert(`Error creating booking: ${error.message || 'Unknown error'}. Please try again.`);
       } else {
+        // Send confirmation emails
+        try {
+          const emailBookingDetails = {
+            bookingId: data.id.toString(),
+            guestName: bookingData.guest_name,
+            checkIn: formData.checkIn!.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }),
+            checkOut: formData.checkOut!.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }),
+            guests: bookingData.number_of_guests,
+            totalAmount: bookingData.total_amount,
+            email: bookingData.guest_email,
+          };
+
+          const emailResponse = await fetch('/api/email/booking-confirmation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ bookingDetails: emailBookingDetails }),
+          });
+
+          if (!emailResponse.ok) {
+            console.warn('Email sending failed, but booking was created successfully');
+          }
+        } catch (emailError) {
+          console.warn('Email service error:', emailError);
+          // Don't fail the booking if email fails
+        }
+
         alert('Reservation submitted successfully! Check-in: 2 PM, Check-out: 12 PM');
         // Redirect to bookings page
         window.location.href = '/bookings';

@@ -195,28 +195,27 @@ export default function BookingsPage() {
     }
 
     try {
-      // Store Philippines time (UTC+8) correctly
-      // Get current UTC time and add 8 hours to get Philippines time
-      const now = new Date();
-      const utcTime = now.getTime();
-      const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-      const philippinesTime = new Date(utcTime + philippinesOffset);
-      
-      const { error } = await supabase
-        .from('bookings')
-        .update({ 
-          status: 'cancelled',
-          cancelled_by: 'user',
-          cancelled_at: philippinesTime.toISOString(),
-          cancellation_reason: cancellationReason.trim()
-        })
-        .eq('id', bookingId);
+      // Use the new API route that sends email notifications
+      const response = await fetch('/api/user/cancel-booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          bookingId,
+          userId: user?.id,
+          cancellationReason: cancellationReason.trim()
+        }),
+      });
 
-      if (error) {
-        console.error('Error cancelling booking:', error);
-        alert('Error cancelling booking. Please try again.');
-      } else {
-        alert('Booking cancelled successfully');
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.warning ? 
+          `${result.message}\n\nNote: ${result.warning}` : 
+          'Booking cancelled successfully! You will receive a confirmation email shortly.'
+        );
+        
         // Refresh the bookings list
         if (user) {
           const { data, error } = await supabase
@@ -230,10 +229,12 @@ export default function BookingsPage() {
           }
         }
         closeModal();
+      } else {
+        throw new Error(result.error || 'Failed to cancel booking');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error cancelling booking. Please try again.');
+      alert(`Error cancelling booking: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     }
   };
 

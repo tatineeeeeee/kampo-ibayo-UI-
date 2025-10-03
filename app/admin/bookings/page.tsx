@@ -243,43 +243,59 @@ export default function BookingsPage() {
     );
 
     try {
-      const updateData: {
-        status: string;
-        cancelled_by?: string;
-        cancelled_at?: string;
-        cancellation_reason?: string;
-      } = { status: newStatus };
-      
-      // If cancelling, add cancellation tracking
-      if (newStatus === 'cancelled') {
-        // Store Philippines time (UTC+8) correctly
-        const now = new Date();
-        const utcTime = now.getTime();
-        const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-        const philippinesTime = new Date(utcTime + philippinesOffset);
-        
-        updateData.cancelled_by = 'admin';
-        updateData.cancelled_at = philippinesTime.toISOString();
-        updateData.cancellation_reason = 'Cancelled by administrator';
-      }
+      if (newStatus === 'confirmed') {
+        // Use the new API route that sends email notifications
+        const response = await fetch('/api/admin/confirm-booking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ bookingId }),
+        });
 
-      const { error } = await supabase
-        .from('bookings')
-        .update(updateData)
-        .eq('id', bookingId);
+        const result = await response.json();
 
-      if (error) {
-        console.error('Error updating booking:', error);
-        showError('Error updating booking status');
-        // Revert optimistic update on error
-        fetchBookings(true);
+        if (result.success) {
+          success('Booking confirmed and guest notified via email');
+        } else {
+          throw new Error(result.error || 'Failed to confirm booking');
+        }
       } else {
+        // For other status updates, use the original method
+        const updateData: {
+          status: string;
+          cancelled_by?: string;
+          cancelled_at?: string;
+          cancellation_reason?: string;
+        } = { status: newStatus };
+        
+        // If cancelling, add cancellation tracking
+        if (newStatus === 'cancelled') {
+          // Store Philippines time (UTC+8) correctly
+          const now = new Date();
+          const utcTime = now.getTime();
+          const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+          const philippinesTime = new Date(utcTime + philippinesOffset);
+          
+          updateData.cancelled_by = 'admin';
+          updateData.cancelled_at = philippinesTime.toISOString();
+          updateData.cancellation_reason = 'Cancelled by administrator';
+        }
+
+        const { error } = await supabase
+          .from('bookings')
+          .update(updateData)
+          .eq('id', bookingId);
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        
         success('Booking status updated successfully');
-        // Real-time subscription will handle the update, but we already updated optimistically
       }
     } catch (error) {
-      console.error('Error:', error);
-      showError('Error updating booking status');
+      console.error('Error updating booking:', error);
+      showError(`Error updating booking status: ${error instanceof Error ? error.message : 'Unknown error'}`);
       // Revert optimistic update on error
       fetchBookings(true);
     }
@@ -299,33 +315,27 @@ export default function BookingsPage() {
 
     setIsProcessing(true);
     try {
-      // Store Philippines time (UTC+8) correctly
-      const now = new Date();
-      const utcTime = now.getTime();
-      const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-      const philippinesTime = new Date(utcTime + philippinesOffset);
-      
-      const { error } = await supabase
-        .from('bookings')
-        .update({ 
-          status: 'cancelled',
-          cancelled_by: 'admin',
-          cancelled_at: philippinesTime.toISOString(),
-          cancellation_reason: adminCancellationReason.trim()
-        })
-        .eq('id', bookingId);
+      // Use the new API route that sends email notifications
+      const response = await fetch('/api/admin/cancel-booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bookingId }),
+      });
 
-      if (error) {
-        console.error('Error cancelling booking:', error);
-        showError('Error cancelling booking');
-      } else {
-        success('Booking cancelled successfully');
+      const result = await response.json();
+
+      if (result.success) {
+        success('Booking cancelled and guest notified via email');
         fetchBookings(); // Refresh the list
         closeModal();
+      } else {
+        throw new Error(result.error || 'Failed to cancel booking');
       }
     } catch (error) {
       console.error('Error:', error);
-      showError('Error cancelling booking');
+      showError(`Error cancelling booking: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
     }
