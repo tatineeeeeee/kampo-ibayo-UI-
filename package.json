@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.57.4",
     "@types/nodemailer": "^7.0.2",
+    "@vercel/speed-insights": "^1.2.0",
     "chart.js": "^4.5.0",
     "lucide-react": "^0.543.0",
     "next": "15.5.2",
