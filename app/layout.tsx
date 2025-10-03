@@ -21,9 +21,12 @@ export const metadata: Metadata = {
   keywords: "resort, vacation, booking, luxury, relaxation, paradise, getaway, hotel",
   authors: [{ name: "Kampo Ibayo Resort" }],
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: [
+      { url: "/logo-ico.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+    ],
+    shortcut: "/logo-ico.ico",
+    apple: "/apple-icon.png",
   },
   openGraph: {
     title: "Kampo Ibayo Resort - Paradise Awaits",
@@ -46,6 +49,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/logo-ico.ico" sizes="any" />
+        <link rel="icon" href="/icon.png" type="image/png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
+        <link rel="shortcut icon" href="/logo-ico.ico" />
+        <meta name="theme-color" content="#3b82f6" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
