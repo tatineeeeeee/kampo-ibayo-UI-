@@ -362,6 +362,7 @@ function Home() {
   const router = useRouter();
   const { user, loading: isLoadingAuth } = useAuth();
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -622,7 +623,7 @@ function Home() {
   // Track scroll position for back-to-top button
   useEffect(() => {
     const handleBackToTopScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
+      setShowBackToTop(window.scrollY > 200); // Reduced threshold from 300 to 200px
     };
     window.addEventListener("scroll", handleBackToTopScroll);
     return () => window.removeEventListener("scroll", handleBackToTopScroll);
@@ -1280,20 +1281,20 @@ function Home() {
         </div>
       </footer>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col-reverse gap-3 items-end">
-        <Chatbot />
-        
-        {showBackToTop && (
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="bg-red-600 hover:bg-red-700 text-white h-12 w-12 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-red-500 hover:border-red-400"
-            aria-label="Back to top"
-          >
-            <ChevronUp className="h-6 w-6" />
-          </button>
-        )}
-      </div>
+      {/* Floating Action Buttons - Properly matched sizing and positioning */}
+      {/* Chatbot - Independent positioning */}
+      <Chatbot onOpenStateChange={setChatbotOpen} />
+      
+      {/* Back to Top Button - Hide when chatbot is open to prevent overlap */}
+      {showBackToTop && !chatbotOpen && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-red-500 hover:border-red-400 backdrop-blur-sm"
+          aria-label="Back to top"
+        >
+          <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+      )}
 
       {/* Availability Modal */}
       {showAvailabilityModal && (

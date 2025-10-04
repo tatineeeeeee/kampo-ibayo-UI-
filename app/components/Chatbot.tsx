@@ -16,6 +16,10 @@ interface FAQItem {
   answer: string;
 }
 
+interface ChatbotProps {
+  onOpenStateChange?: (isOpen: boolean) => void;
+}
+
 const FAQ_DATABASE: FAQItem[] = [
   // PRICING & PACKAGES
   {
@@ -223,7 +227,7 @@ const HELP_MESSAGE = `I can assist you with the following topics:
 
 Feel free to ask me anything about Kampo Ibayo Resort, or select from the quick questions below for instant answers.`;
 
-export default function Chatbot() {
+export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -231,6 +235,12 @@ export default function Chatbot() {
   const [isTyping, setIsTyping] = useState(false);
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Custom setter that immediately calls the callback
+  const setChatbotOpen = (open: boolean) => {
+    setIsOpen(open);
+    onOpenStateChange?.(open);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -369,7 +379,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setChatbotOpen(true)}
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 group border border-red-500 hover:border-red-400"
         aria-label="Open chat"
       >
@@ -428,7 +438,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
               <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => setChatbotOpen(false)}
               className="text-white hover:bg-red-800 p-1 sm:p-1.5 rounded-lg transition-colors"
               aria-label="Close chat"
             >
