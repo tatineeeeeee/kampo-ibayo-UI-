@@ -994,8 +994,8 @@ function Home() {
             </h2>
           </div>
           <ReviewSystem 
-            limit={6} 
-            showPagination={true} 
+            limit={4} 
+            showPagination={false} 
             className="" 
           />
           <div className="text-center mt-8">

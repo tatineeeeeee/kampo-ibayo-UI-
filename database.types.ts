@@ -61,7 +61,7 @@ export type Database = {
           created_at: string
           guest_location: string | null
           guest_name: string
-          id: number
+          id: string
           location_rating: number | null
           original_submission_date: string | null
           rating: number
@@ -82,7 +82,7 @@ export type Database = {
           created_at?: string
           guest_location?: string | null
           guest_name: string
-          id?: number
+          id?: string
           location_rating?: number | null
           original_submission_date?: string | null
           rating: number
@@ -103,7 +103,7 @@ export type Database = {
           created_at?: string
           guest_location?: string | null
           guest_name?: string
-          id?: number
+          id?: string
           location_rating?: number | null
           original_submission_date?: string | null
           rating?: number
@@ -135,7 +135,7 @@ export type Database = {
       review_photos: {
         Row: {
           id: number
-          review_id: number
+          review_id: string
           photo_url: string
           caption: string | null
           display_order: number
@@ -143,7 +143,7 @@ export type Database = {
         }
         Insert: {
           id?: number
-          review_id: number
+          review_id: string
           photo_url: string
           caption?: string | null
           display_order?: number
@@ -151,7 +151,7 @@ export type Database = {
         }
         Update: {
           id?: number
-          review_id?: number
+          review_id?: string
           photo_url?: string
           caption?: string | null
           display_order?: number

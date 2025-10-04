@@ -7,22 +7,16 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-r
 
 interface Booking {
   id: number;
-  user_id: string;
+  user_id: string | null;
   guest_name: string;
-  guest_email: string;
-  guest_phone: string | null;
+  phone: string | null;
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
   total_amount: number;
   status: string | null;
   special_requests: string | null;
-  brings_pet: boolean | null;
   created_at: string | null;
-  updated_at: string | null;
-  cancelled_by: string | null; // 'user' or 'admin'
-  cancelled_at: string | null;
-  cancellation_reason: string | null;
   // Add user info to track if user still exists
   user_exists?: boolean;
 }
@@ -470,14 +464,14 @@ export default function BookingsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="p-3 text-black text-sm">{booking.guest_email}</td>
+                    <td className="p-3 text-black text-sm">No email</td>
                     <td className="p-3 text-black text-sm">
-                      {booking.guest_phone ? (
+                      {booking.phone ? (
                         <a 
-                          href={`tel:${booking.guest_phone}`}
+                          href={`tel:${booking.phone}`}
                           className="text-blue-600 hover:text-blue-800 hover:underline"
                         >
-                          {booking.guest_phone}
+                          {booking.phone}
                         </a>
                       ) : (
                         <span className="text-gray-400">No phone</span>
@@ -634,7 +628,7 @@ export default function BookingsPage() {
                       Booking #{selectedBooking.id}
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      {selectedBooking.guest_name} • {selectedBooking.guest_email}
+                      {selectedBooking.guest_name}
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
                       Booked on {selectedBooking.created_at ? formatDate(selectedBooking.created_at) : 'N/A'}
@@ -676,14 +670,14 @@ export default function BookingsPage() {
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">Contact Information</h4>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Email</p>
-                      <p className="text-gray-800 font-medium">{selectedBooking.guest_email}</p>
+                      <p className="text-xs text-gray-500 mb-1">Guest Name</p>
+                      <p className="text-gray-800 font-medium">{selectedBooking.guest_name}</p>
                     </div>
-                    {selectedBooking.guest_phone && (
+                    {selectedBooking.phone && (
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Phone</p>
-                        <a href={`tel:${selectedBooking.guest_phone}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
-                          {selectedBooking.guest_phone}
+                        <a href={`tel:${selectedBooking.phone}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                          {selectedBooking.phone}
                         </a>
                       </div>
                     )}
@@ -698,41 +692,9 @@ export default function BookingsPage() {
                   </div>
                 )}
 
-                {/* Pet Information */}
-                {selectedBooking.brings_pet !== null && (
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-3">
-                    <h4 className="text-sm font-semibold text-purple-700 mb-2">Pet Policy</h4>
-                    <p className="text-gray-700 text-sm">
-                      {selectedBooking.brings_pet ? (
-                        <span className="text-green-600 font-medium">✅ Guest is bringing a pet</span>
-                      ) : (
-                        <span className="text-gray-600">🚫 No pets for this booking</span>
-                      )}
-                    </p>
-                  </div>
-                )}
-
-                {/* Cancellation Information */}
-                {selectedBooking.status?.toLowerCase() === 'cancelled' && selectedBooking.cancelled_by && (
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <h4 className="text-sm font-semibold text-red-700 mb-2">Cancellation Information</h4>
-                    <div className="space-y-1">
-                      <p className="text-red-600 text-sm font-medium">
-                        ❌ Cancelled by {selectedBooking.cancelled_by === 'user' ? 'Guest' : 'Administrator'}
-                      </p>
-                      {selectedBooking.cancelled_at && (
-                        <p className="text-gray-600 text-xs">
-                          Cancelled on: {new Date(selectedBooking.cancelled_at).toLocaleDateString('en-PH', {timeZone: 'Asia/Manila'})} at {new Date(selectedBooking.cancelled_at).toLocaleTimeString('en-PH', {timeZone: 'Asia/Manila', hour: '2-digit', minute:'2-digit', hour12: true})}
-                        </p>
-                      )}
-                      {selectedBooking.cancellation_reason && (
-                        <p className="text-gray-600 text-xs">
-                          Reason: {selectedBooking.cancellation_reason}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Pet Information - Remove since field doesn't exist */}
+                
+                {/* Cancellation Information - Remove since fields don't exist */}
               </div>
             </div>
 

@@ -272,7 +272,7 @@ const ReviewSubmissionForm = ({
             const { error: photoDbError } = await supabase
               .from('review_photos')
               .insert({
-                review_id: Number(reviewId), // Ensure it's a number
+                review_id: reviewId, // Keep as UUID string
                 photo_url: publicUrl,
                 display_order: i + 1
               });
@@ -292,7 +292,7 @@ const ReviewSubmissionForm = ({
       // Success!
       setSubmitted(true);
       if (onSuccess) {
-        setTimeout(onSuccess, 2000); // Give time to see success message
+        onSuccess(); // Call immediately, parent handles success display
       }
 
     } catch (err: unknown) {
@@ -341,8 +341,8 @@ const ReviewSubmissionForm = ({
     }
   };
 
-  // Success state
-  if (submitted) {
+  // Success state - only show if no onSuccess callback (modal usage)
+  if (submitted && !onSuccess) {
     return (
       <div className={`${className} ${isModal ? 'max-w-full' : 'max-w-md'} mx-auto`}>
         <div className={`${isModal ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-900/20 border-green-500/30 text-white'} border rounded-xl p-6 text-center`}>

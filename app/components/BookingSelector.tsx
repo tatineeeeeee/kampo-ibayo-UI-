@@ -18,8 +18,10 @@ interface Booking {
 
 interface BookingWithReview extends Booking {
   hasReview: boolean;
-  reviewStatus?: 'pending' | 'approved' | 'rejected';
+  reviewStatus?: 'pending' | 'approved' | 'rejected' | 'blocked';
   reviewRating?: number;
+  resubmissionCount?: number;
+  rejectionReason?: string;
 }
 
 interface BookingSelectorProps {
@@ -63,38 +65,46 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
 
       // Fetch review information for these bookings with real-time data
       const bookingIds = pastStays.map(booking => booking.id);
-      let reviewData: { booking_id: number | null; approved: boolean | null; rating: number; resubmission_count?: number | null }[] = [];
+      let reviewData: { 
+        booking_id: number | null; 
+        approved: boolean | null; 
+        rating: number; 
+        resubmission_count: number | null;
+        rejection_reason: string | null;
+      }[] = [];
       
       if (bookingIds.length > 0) {
         // Always fetch fresh data from database
         const { data: reviews, error: reviewError } = await supabase
           .from('guest_reviews')
-          .select('booking_id, approved, rating')
+          .select('booking_id, approved, rating, resubmission_count, rejection_reason')
           .eq('user_id', user.id)
           .in('booking_id', bookingIds);
 
         if (reviewError) {
           console.error('Error fetching reviews:', reviewError);
         } else {
-          reviewData = (reviews || []).map(review => ({
-            ...review,
-            resubmission_count: 0 // Default for now
-          }));
+          reviewData = reviews || [];
         }
       }
 
       // Combine booking data with review status
       const bookingsWithReviewStatus: BookingWithReview[] = pastStays.map(booking => {
         const existingReview = reviewData.find(review => review.booking_id === booking.id);
+        const resubmissionCount = existingReview?.resubmission_count || 0;
+        const isBlocked = resubmissionCount >= 2; // Block after 2 attempts
         
         return {
           ...booking,
           hasReview: !!existingReview,
+          reviewRating: existingReview?.rating || undefined,
+          resubmissionCount,
+          rejectionReason: existingReview?.rejection_reason || undefined,
           reviewStatus: existingReview 
-            ? (existingReview.approved === true ? 'approved' : 
+            ? isBlocked && existingReview.approved === false ? 'blocked' :
+              (existingReview.approved === true ? 'approved' : 
                existingReview.approved === false ? 'rejected' : 'pending')  // null = pending
-            : undefined,
-          reviewRating: existingReview?.rating || undefined
+            : undefined
         };
       });
 
@@ -216,10 +226,18 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
       case 'rejected':
         return {
           icon: XCircle,
-          text: 'Submit New Review',
+          text: `Submit Revised Review (${(booking.resubmissionCount || 0) + 1}/2)`,
           color: 'text-red-400',
           bgColor: 'bg-red-900/20 border-red-500/30',
           clickable: true // Allow re-submission
+        };
+      case 'blocked':
+        return {
+          icon: XCircle,
+          text: 'Review Limit Reached',
+          color: 'text-gray-400',
+          bgColor: 'bg-gray-900/20 border-gray-500/30',
+          clickable: false // No more submissions allowed
         };
       default:
         return {
@@ -378,19 +396,51 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                 <div className={`mt-4 p-3 rounded-lg ${
                   booking.reviewStatus === 'approved' ? 'bg-green-900/30 border border-green-600/30' :
                   booking.reviewStatus === 'pending' ? 'bg-yellow-900/30 border border-yellow-600/30' :
+                  booking.reviewStatus === 'blocked' ? 'bg-gray-900/30 border border-gray-600/30' :
                   'bg-red-900/30 border border-red-600/30'
                 }`}>
                   <p className={`text-sm ${
                     booking.reviewStatus === 'approved' ? 'text-green-200' :
                     booking.reviewStatus === 'pending' ? 'text-yellow-200' :
+                    booking.reviewStatus === 'blocked' ? 'text-gray-200' :
                     'text-red-200'
                   }`}>
                     {booking.reviewStatus === 'approved' && 
                       `✅ Your review has been published and is visible to other guests.`}
                     {booking.reviewStatus === 'pending' && 
                       `⏳ Your review is waiting for admin confirmation. This usually takes 24-48 hours.`}
-                    {booking.reviewStatus === 'rejected' && 
-                      `❌ Your review was not approved. You have ONE opportunity to submit a revised review addressing our feedback.`}
+                    {booking.reviewStatus === 'rejected' && (
+                      <div className="space-y-2">
+                        <div>
+                          🔄 <strong>Review not approved</strong> - You can submit a revised review (Attempt {(booking.resubmissionCount || 0) + 1}/2)
+                        </div>
+                        {booking.rejectionReason && (
+                          <div className="mt-2 p-2 bg-red-800/30 rounded border-l-2 border-red-500">
+                            <div className="text-xs text-red-300 font-medium mb-1">Admin Feedback:</div>
+                            <div className="text-xs text-red-100">{booking.rejectionReason}</div>
+                          </div>
+                        )}
+                        <div className="text-xs text-red-300 mt-2">
+                          💡 Please address the feedback above when resubmitting your review.
+                        </div>
+                      </div>
+                    )}
+                    {booking.reviewStatus === 'blocked' && (
+                      <div className="space-y-2">
+                        <div>
+                          🚫 <strong>Review limit reached</strong> - No more submissions allowed for this booking
+                        </div>
+                        {booking.rejectionReason && (
+                          <div className="mt-2 p-2 bg-gray-800/30 rounded border-l-2 border-gray-500">
+                            <div className="text-xs text-gray-400 font-medium mb-1">Last Rejection Reason:</div>
+                            <div className="text-xs text-gray-200">{booking.rejectionReason}</div>
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-2">
+                          You had 2 attempts to submit a review for this booking. Contact support if you believe this was an error.
+                        </div>
+                      </div>
+                    )}
                   </p>
                 </div>
               )}

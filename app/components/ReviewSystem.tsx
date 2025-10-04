@@ -70,8 +70,10 @@ const ReviewSystem = ({
       
       try {
         console.log('📸 Attempting to fetch reviews with photos...');
-        // Try the advanced query with photos first
-        const { data, error, count: reviewCount } = await supabase
+        
+        // For homepage (limit=4, no pagination), prioritize best reviews
+        // For other pages, show all reviews with pagination
+        let query = supabase
           .from('guest_reviews')
           .select(`
             *,
@@ -82,9 +84,22 @@ const ReviewSystem = ({
               display_order
             )
           `, { count: 'exact' })
-          .eq('approved', true)
-          .order('created_at', { ascending: false })
-          .range(offset, offset + reviewsPerPage - 1);
+          .eq('approved', true);
+
+        if (limit === 4 && !showPagination) {
+          // Homepage: Show 4 best reviews (5-star with photos first, then by recency)
+          query = query
+            .order('rating', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(4);
+        } else {
+          // Other pages: Standard pagination
+          query = query
+            .order('created_at', { ascending: false })
+            .range(offset, offset + reviewsPerPage - 1);
+        }
+        
+        const { data, error, count: reviewCount } = await query;
         
         reviewsData = data;
         reviewsError = error;
@@ -94,6 +109,27 @@ const ReviewSystem = ({
           console.error('❌ Photos query failed:', error);
         } else {
           console.log('✅ Photos query successful, found', data?.length, 'reviews');
+          
+          // For homepage, filter and prioritize reviews with photos
+          if (limit === 4 && !showPagination && data) {
+            const reviewsWithPhotos = data.filter(review => 
+              review.review_photos && review.review_photos.length > 0
+            );
+            const reviewsWithoutPhotos = data.filter(review => 
+              !review.review_photos || review.review_photos.length === 0
+            );
+            
+            // Prioritize: 5-star with photos, then 4-star with photos, then others
+            const prioritized = [
+              ...reviewsWithPhotos.filter(r => r.rating === 5),
+              ...reviewsWithPhotos.filter(r => r.rating === 4),
+              ...reviewsWithPhotos.filter(r => r.rating < 4),
+              ...reviewsWithoutPhotos
+            ].slice(0, 4);
+            
+            reviewsData = prioritized;
+            console.log('🎯 Homepage: Prioritized', prioritized.length, 'best reviews');
+          }
         }
       } catch (photoError) {
         console.log('❌ Photos query crashed, falling back to basic query:', photoError);
@@ -140,7 +176,7 @@ const ReviewSystem = ({
     } finally {
       setLoading(false);
     }
-  }, [reviewsPerPage]);
+  }, [reviewsPerPage, limit, showPagination]);
 
   useEffect(() => {
     fetchReviews(currentPage);
