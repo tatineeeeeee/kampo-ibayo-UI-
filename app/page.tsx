@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { 
   ChevronUp,
   Menu, 
@@ -28,9 +30,7 @@ import {
   Shield,
   Users,
   Award,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight
+  CalendarDays
 } from "lucide-react";
 import { FaHome, FaGamepad, FaUtensils, FaMapMarkedAlt } from "react-icons/fa";
 import { supabase } from "./supabaseClient";
@@ -364,15 +364,19 @@ function Home() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [availabilityGuideOpen, setAvailabilityGuideOpen] = useState(true); // Open by default on desktop
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     console.log('🗓️ Initializing currentMonth to:', now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
     return now;
   });
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  // Track per-day counts for the displayed month to render capacity indicators
-  const [dayCounts, setDayCounts] = useState<Record<string, number>>({});
+  // Store actual booking data for proper date type determination
+  const [existingBookings, setExistingBookings] = useState<{
+    check_in_date: string;
+    check_out_date: string;
+    status: string | null;
+  }[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [monthCache, setMonthCache] = useState<{[key: string]: string[]}>({});
 
@@ -412,12 +416,14 @@ function Home() {
 
       if (error) {
         console.error('Error fetching bookings:', error);
-        setBookedDates([]);
-        setDayCounts({});
+        setExistingBookings([]);
         return;
       }
 
       console.log('📅 Fetched bookings:', bookings);
+
+      // Store the actual booking data for date type determination
+      setExistingBookings(bookings || []);
 
       // NEW LOGIC: Count check-ins AND checkouts for same-day turnover capacity
       const checkInCounts = new Map<string, number>();
@@ -463,7 +469,7 @@ function Home() {
       
       console.log('📊 Check-in counts for month (for UI display):', countsObj);
       console.log('� Check-out counts for month (for same-day turnover):', Object.fromEntries(checkOutCounts));
-      setDayCounts(countsObj);
+      // setDayCounts(countsObj); // Removed since we're using React DatePicker
 
       // Only mark dates as unavailable when check-in capacity (2) is reached or exceeded
       const bookedArray = Array.from(checkInCounts.entries())
@@ -472,14 +478,12 @@ function Home() {
 
       console.log('🚫 Fully booked (check-in capacity reached) dates:', bookedArray);
       
-      // Cache the result
+      // Cache the result (we can keep for future optimization)
       setMonthCache(prev => ({ ...prev, [monthKey]: bookedArray }));
-      setBookedDates(bookedArray);
     } catch (error) {
       console.error('Error fetching booked dates:', error);
-      // Fallback to empty array on error
-      setBookedDates([]);
-      setDayCounts({});
+      // Fallback to empty on error
+      // setDayCounts({}); // Removed since we're using React DatePicker
     } finally {
       setLoading(false);
     }
@@ -494,21 +498,22 @@ function Home() {
   }, [showAvailabilityModal, currentMonth, fetchBookedDates]);
 
   // Navigation functions
-  const goToPreviousMonth = () => {
-    const prevMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
-    if (!isMonthOutOfRange(prevMonth)) {
-      setCurrentMonth(prevMonth);
-    }
-  };
+  // const goToPreviousMonth = () => {
+  //   const prevMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+  //   if (!isMonthOutOfRange(prevMonth)) {
+  //     setCurrentMonth(prevMonth);
+  //   }
+  // };
 
-  const goToNextMonth = () => {
-    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
-    if (!isMonthOutOfRange(nextMonth)) {
-      setCurrentMonth(nextMonth);
-    }
-  };
+  // const goToNextMonth = () => {
+  //   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+  //   if (!isMonthOutOfRange(nextMonth)) {
+  //     setCurrentMonth(nextMonth);
+  //   }
+  // };
 
-  // Generate calendar days for current month (always 42 days for consistency)
+  // Generate calendar days for current month (dynamic rows for better appearance)
+  /*
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -519,41 +524,106 @@ function Home() {
 
     const days = [];
 
-    // Empty cells for days before month starts
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
+    // Add previous month's trailing days to fill the first week
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const prevMonthLastDay = new Date(prevYear, prevMonth + 1, 0).getDate();
+    
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      days.push({
+        day: prevMonthLastDay - i,
+        isCurrentMonth: false,
+        isPrevMonth: true,
+        isNextMonth: false
+      });
     }
 
-    // Days of the month
+    // Days of the current month
     for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
+      days.push({
+        day: day,
+        isCurrentMonth: true,
+        isPrevMonth: false,
+        isNextMonth: false
+      });
     }
 
-    // Fill remaining cells to make exactly 42 days (6 weeks) for consistent height
-    while (days.length < 42) {
-      days.push(null);
+    // Add next month's leading days to complete the last week
+    const remainingCells = 7 - (days.length % 7);
+    if (remainingCells < 7) {
+      for (let day = 1; day <= remainingCells; day++) {
+        days.push({
+          day: day,
+          isCurrentMonth: false,
+          isPrevMonth: false,
+          isNextMonth: true
+        });
+      }
     }
 
     return days;
   };
+  */
 
-  // Check if a date is booked (bookedDates now means capacity reached for the day)
-  const isDateBooked = (day: number) => {
-    const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const toYMD = (d2: Date) => {
-      const y = d2.getFullYear();
-      const m = String(d2.getMonth() + 1).padStart(2, '0');
-      const da = String(d2.getDate()).padStart(2, '0');
-      return `${y}-${m}-${da}`;
-    };
-    const dateString = toYMD(d);
-    const isBooked = bookedDates.includes(dateString);
-    if (isBooked) {
-      console.log(`🔴 Date ${dateString} is booked`);
+  // Calculate date capacity and type for visual indicators (EXACT same as booking page)
+  const getDateCapacity = (date: Date) => {
+    // Don't show capacity indicators for past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) {
+      return ''; // Past dates should appear normal
     }
-    return isBooked;
+    
+    const activeBookings = existingBookings.filter(booking => 
+      booking.status === 'confirmed' || booking.status === 'pending'
+    );
+    
+    // Normalize date for comparison (remove time component)
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    let isCheckIn = false;
+    let isCheckOut = false;
+    let isOccupied = false;
+    
+    activeBookings.forEach(booking => {
+      const checkIn = new Date(booking.check_in_date);
+      checkIn.setHours(0, 0, 0, 0);
+      
+      const checkOut = new Date(booking.check_out_date);
+      checkOut.setHours(0, 0, 0, 0);
+      
+      // Check if this date is a check-in date
+      if (targetDate.getTime() === checkIn.getTime()) {
+        isCheckIn = true;
+      }
+      
+      // Check if this date is a check-out date
+      if (targetDate.getTime() === checkOut.getTime()) {
+        isCheckOut = true;
+      }
+      
+      // Check if this date is between check-in and check-out (occupied)
+      if (targetDate > checkIn && targetDate < checkOut) {
+        isOccupied = true;
+      }
+    });
+    
+    // Determine the appropriate indicator (same logic as booking page)
+    if (isCheckIn && isCheckOut) {
+      return 'same-day'; // Same day check-in and check-out (1-day stay)
+    } else if (isCheckIn) {
+      return 'checkin';
+    } else if (isCheckOut) {
+      return 'checkout';
+    } else if (isOccupied) {
+      return 'occupied';
+    }
+    
+    return '';
   };
 
+  /*
   // Check if a date is in the past
   const isDatePast = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
@@ -588,6 +658,7 @@ function Home() {
     
     return monthEnd < today || monthStart > maxDate;
   };
+  */
 
   // Get booking policy message
   const getBookingPolicyMessage = () => {
@@ -630,6 +701,681 @@ function Home() {
   }, []);
 
   return (
+    <>
+      <style jsx global>{`
+        .react-datepicker {
+          background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+          border: 2px solid #374151 !important;
+          color: white !important;
+          font-family: inherit !important;
+          border-radius: 0.5rem !important;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
+          min-height: 300px !important;
+          max-height: 420px !important;
+          height: auto !important;
+          overflow: hidden !important;
+          width: 100% !important;
+        }
+        
+        /* Ultra-small screens (320px phones) optimizations */
+        @media (max-width: 374px) {
+          .react-datepicker {
+            min-height: 280px !important;
+            border-radius: 0.375rem !important;
+          }
+          
+          .react-datepicker__month-container {
+            min-height: 220px !important;
+          }
+          
+          .react-datepicker__month {
+            min-height: 180px !important;
+          }
+          
+          .react-datepicker__week {
+            height: 2rem !important;
+          }
+          
+          .react-datepicker__day,
+          .react-datepicker__day-name {
+            width: 2rem !important;
+            height: 2rem !important;
+            line-height: 2rem !important;
+            font-size: 0.625rem !important;
+            margin: 0.0625rem !important;
+          }
+          
+          .react-datepicker__current-month {
+            font-size: 0.875rem !important;
+            margin-bottom: 0.375rem !important;
+          }
+          
+          .react-datepicker__header {
+            padding: 0.5rem 0 !important;
+          }
+          
+          .react-datepicker__navigation {
+            top: 0.5rem !important;
+            border-width: 5px !important;
+          }
+          
+          .react-datepicker__navigation--previous {
+            left: 0.5rem !important;
+          }
+          
+          .react-datepicker__navigation--next {
+            right: 0.5rem !important;
+          }
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker {
+            min-height: 350px !important;
+            border-radius: 0.75rem !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker {
+            min-height: 380px !important;
+            border-radius: 1rem !important;
+          }
+        }
+        
+        @media (min-width: 768px) {
+          .react-datepicker {
+            min-height: 420px !important;
+          }
+        }
+        .react-datepicker__month-container {
+          min-height: 240px !important;
+          max-height: 360px !important;
+          height: auto !important;
+          width: 100% !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__month-container {
+            min-height: 290px !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__month-container {
+            min-height: 320px !important;
+          }
+        }
+        
+        @media (min-width: 768px) {
+          .react-datepicker__month-container {
+            min-height: 360px !important;
+          }
+        }
+        
+        .react-datepicker__month {
+          min-height: 200px !important;
+          max-height: 300px !important;
+          height: auto !important;
+          display: flex !important;
+          flex-direction: column !important;
+          width: 100% !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__month {
+            min-height: 250px !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__month {
+            min-height: 280px !important;
+          }
+        }
+        
+        @media (min-width: 768px) {
+          .react-datepicker__month {
+            min-height: 300px !important;
+          }
+        }
+        .react-datepicker__week {
+          display: flex !important;
+          justify-content: space-around !important;
+          align-items: center !important;
+          height: 2.5rem !important;
+          width: 100% !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__week {
+            height: 3rem !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__week {
+            height: 3.5rem !important;
+          }
+        }
+        .react-datepicker__header {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          border-bottom: none !important;
+          border-radius: 0.5rem 0.5rem 0 0 !important;
+          padding: 0.75rem 0 !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__header {
+            padding: 1rem 0 !important;
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__header {
+            padding: 1.25rem 0 !important;
+            border-radius: 1rem 1rem 0 0 !important;
+          }
+        }
+        
+        .react-datepicker__current-month {
+          color: white !important;
+          font-weight: 700 !important;
+          font-size: 1rem !important;
+          margin-bottom: 0.5rem !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__current-month {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__current-month {
+            font-size: 1.2rem !important;
+            margin-bottom: 1rem !important;
+          }
+        }
+        
+        @media (min-width: 768px) {
+          .react-datepicker__current-month {
+            font-size: 1.3rem !important;
+          }
+        }
+        .react-datepicker__day-name {
+          color: rgba(255, 255, 255, 0.9) !important;
+          font-weight: 600 !important;
+          font-size: 0.75rem !important;
+          width: 2.25rem !important;
+          height: 2.25rem !important;
+          line-height: 2.25rem !important;
+          margin: 0.125rem !important;
+          display: inline-block !important;
+          text-align: center !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__day-name {
+            font-size: 0.875rem !important;
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            line-height: 2.5rem !important;
+            margin: 0.1875rem !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__day-name {
+            font-size: 1rem !important;
+            width: 3rem !important;
+            height: 3rem !important;
+            line-height: 3rem !important;
+            margin: 0.25rem !important;
+          }
+        }
+        
+        .react-datepicker__day {
+          color: white !important;
+          border-radius: 0.375rem !important;
+          margin: 0.125rem !important;
+          border: none !important;
+          width: 2.25rem !important;
+          height: 2.25rem !important;
+          line-height: 2.25rem !important;
+          font-size: 0.75rem !important;
+          transition: all 0.2s ease !important;
+          display: inline-block !important;
+          text-align: center !important;
+          touch-action: manipulation !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__day {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            line-height: 2.5rem !important;
+            font-size: 0.875rem !important;
+            margin: 0.1875rem !important;
+            border-radius: 0.5rem !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__day {
+            width: 3rem !important;
+            height: 3rem !important;
+            line-height: 3rem !important;
+            font-size: 1rem !important;
+            margin: 0.25rem !important;
+            border-radius: 0.5rem !important;
+          }
+        }
+        .react-datepicker__day:hover {
+          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          transform: scale(1.05) !important;
+          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+        }
+        .react-datepicker__day--selected,
+        .react-datepicker__day--range-start,
+        .react-datepicker__day--range-end {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          color: white !important;
+          font-weight: 700 !important;
+          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.5) !important;
+        }
+        .react-datepicker__day--in-range {
+          background: rgba(220, 38, 38, 0.3) !important;
+          color: white !important;
+        }
+        .react-datepicker__day--excluded {
+          color: #6b7280 !important;
+          text-decoration: line-through !important;
+          background-color: #1f2937 !important;
+          opacity: 0.5 !important;
+        }
+        .react-datepicker__day--excluded:hover {
+          background-color: #1f2937 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+        
+        /* Override today styling to look normal */
+        .react-datepicker__day--today {
+          background: transparent !important;
+          color: white !important;
+          font-weight: normal !important;
+          border: none !important;
+        }
+        .react-datepicker__day--today:hover {
+          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          transform: scale(1.05) !important;
+          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+        }
+        .react-datepicker__day--disabled {
+          color: #4b5563 !important;
+          background-color: transparent !important;
+          opacity: 0.3 !important;
+        }
+        
+        /* Selected dates override all other states */
+        .react-datepicker__day--selected {
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+          border: 2px solid #1e40af !important;
+        }
+        .react-datepicker__day--selected:hover {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--selected::after {
+          content: 'SELECTED' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 6px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        .react-datepicker__day--same-day {
+          background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--same-day:hover {
+          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--same-day::after {
+          content: 'FULL DAY' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          right: 1px !important;
+          font-size: 8px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 3px !important;
+          border-radius: 3px !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+        
+        /* Custom capacity indicator classes */
+        .react-datepicker__day--checkin {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--checkin:hover {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--checkin::after {
+          content: 'CHECK-IN' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          right: 1px !important;
+          font-size: 8px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 3px !important;
+          border-radius: 3px !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+        
+        .react-datepicker__day--checkout {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--checkout:hover {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--checkout::after {
+          content: 'CHECK-OUT' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          right: 1px !important;
+          font-size: 7px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 3px !important;
+          border-radius: 3px !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+        
+        .react-datepicker__day--occupied {
+          background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--occupied:hover {
+          background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--occupied::after {
+          content: 'OCCUPIED' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          right: 1px !important;
+          font-size: 8px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 3px !important;
+          border-radius: 3px !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+        
+        .react-datepicker__day--same-day::after,
+        .react-datepicker__day--checkin::after,
+        .react-datepicker__day--checkout::after,
+        .react-datepicker__day--occupied::after {
+          position: absolute !important;
+          bottom: 0px !important;
+          right: 0px !important;
+          font-size: 4px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 0.5px 1px !important;
+          border-radius: 1px !important;
+          line-height: 1 !important;
+          font-weight: 600 !important;
+          max-width: 100% !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+        
+        /* Mobile responsive text sizing */
+        @media (max-width: 479px) {
+          .react-datepicker__day--same-day::after,
+          .react-datepicker__day--checkin::after,
+          .react-datepicker__day--checkout::after,
+          .react-datepicker__day--occupied::after {
+            font-size: 4px !important;
+            padding: 0.5px 1px !important;
+            border-radius: 1px !important;
+          }
+        }
+        
+        @media (min-width: 480px) and (max-width: 639px) {
+          .react-datepicker__day--same-day::after,
+          .react-datepicker__day--checkin::after,
+          .react-datepicker__day--checkout::after,
+          .react-datepicker__day--occupied::after {
+            font-size: 5px !important;
+            padding: 1px 1.5px !important;
+            border-radius: 1.5px !important;
+          }
+        }
+        
+        @media (min-width: 640px) and (max-width: 767px) {
+          .react-datepicker__day--same-day::after,
+          .react-datepicker__day--checkin::after,
+          .react-datepicker__day--checkout::after,
+          .react-datepicker__day--occupied::after {
+            font-size: 6px !important;
+            padding: 1px 2px !important;
+            border-radius: 2px !important;
+          }
+        }
+        
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .react-datepicker__day--same-day::after,
+          .react-datepicker__day--checkin::after,
+          .react-datepicker__day--checkout::after,
+          .react-datepicker__day--occupied::after {
+            font-size: 7px !important;
+            padding: 1px 3px !important;
+            border-radius: 2px !important;
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          .react-datepicker__day--same-day::after,
+          .react-datepicker__day--checkin::after,
+          .react-datepicker__day--occupied::after {
+            font-size: 8px !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+          }
+          .react-datepicker__day--checkout::after {
+            font-size: 7px !important;
+            padding: 2px 3px !important;
+            border-radius: 3px !important;
+          }
+        }
+        
+        /* Specific content for each status */
+        .react-datepicker__day--same-day::after {
+          content: 'FULL' !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__day--same-day::after {
+            content: 'FULL DAY' !important;
+          }
+        }
+        
+        .react-datepicker__day--checkin::after {
+          content: 'IN' !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__day--checkin::after {
+            content: 'CHECK-IN' !important;
+          }
+        }
+        
+        .react-datepicker__day--checkout::after {
+          content: 'OUT' !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__day--checkout::after {
+            content: 'CHECK-OUT' !important;
+          }
+        }
+        
+        .react-datepicker__day--occupied::after {
+          content: 'BUSY' !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__day--occupied::after {
+            content: 'OCCUPIED' !important;
+          }
+        }
+        
+        .react-datepicker__navigation {
+          top: 0.75rem !important;
+          border-width: 6px !important;
+        }
+        
+        @media (min-width: 480px) {
+          .react-datepicker__navigation {
+            top: 1rem !important;
+            border-width: 7px !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__navigation {
+            top: 1.2rem !important;
+            border-width: 8px !important;
+          }
+        }
+        
+        .react-datepicker__navigation--previous {
+          border-right-color: white !important;
+          left: 0.75rem !important;
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__navigation--previous {
+            left: 1rem !important;
+          }
+        }
+        
+        .react-datepicker__navigation--next {
+          border-left-color: white !important;
+          right: 0.75rem !important;
+        }
+        
+        @media (min-width: 640px) {
+          .react-datepicker__navigation--next {
+            right: 1rem !important;
+          }
+        }
+        
+        /* Make calendar read-only for availability display with enhanced touch responsiveness */
+        .react-datepicker__day:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day) {
+          cursor: default !important;
+          pointer-events: none !important;
+        }
+        
+        .react-datepicker__day--checkin,
+        .react-datepicker__day--checkout,
+        .react-datepicker__day--occupied,
+        .react-datepicker__day--same-day {
+          cursor: default !important;
+          pointer-events: none !important;
+        }
+        
+        .react-datepicker__day--checkin:hover,
+        .react-datepicker__day--checkout:hover,
+        .react-datepicker__day--occupied:hover,
+        .react-datepicker__day--same-day:hover {
+          transform: none !important;
+        }
+        
+        /* Enhanced touch targets for mobile */
+        @media (max-width: 479px) {
+          .react-datepicker__navigation {
+            width: 36px !important;
+            height: 36px !important;
+            border-width: 8px !important;
+          }
+          
+          .react-datepicker__day,
+          .react-datepicker__day-name {
+            min-width: 36px !important;
+            min-height: 36px !important;
+            touch-action: manipulation !important;
+          }
+        }
+        
+        /* Extra large screen optimizations */
+        @media (min-width: 1536px) {
+          .react-datepicker {
+            min-height: 480px !important;
+          }
+          
+          .react-datepicker__month-container {
+            min-height: 420px !important;
+          }
+          
+          .react-datepicker__month {
+            min-height: 360px !important;
+          }
+          
+          .react-datepicker__week {
+            height: 4rem !important;
+          }
+          
+          .react-datepicker__day,
+          .react-datepicker__day-name {
+            width: 3.5rem !important;
+            height: 3.5rem !important;
+            line-height: 3.5rem !important;
+            font-size: 1.125rem !important;
+            margin: 0.3rem !important;
+          }
+          
+          .react-datepicker__current-month {
+            font-size: 1.5rem !important;
+          }
+          
+          .react-datepicker__header {
+            padding: 1.5rem 0 !important;
+          }
+        }
+      `}</style>
     <div>
       <Navbar />
 
@@ -1298,163 +2044,168 @@ function Home() {
 
       {/* Availability Modal */}
       {showAvailabilityModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-lg border border-gray-700 max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-1 xs:p-2 sm:p-3 md:p-4 lg:p-6">
+          <div className="bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl shadow-2xl w-full max-w-[98vw] xs:max-w-[95vw] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl border border-gray-700 max-h-[95vh] xs:max-h-[90vh] sm:max-h-[85vh] md:max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6 border-b border-gray-700 bg-gray-900">
-              <h2 className="text-sm sm:text-lg lg:text-xl font-bold text-white flex items-center gap-1 sm:gap-2">
-                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-400" />
+            <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 lg:p-6 border-b border-gray-700 bg-gray-900">
+              <h2 className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white flex items-center gap-1 sm:gap-2 md:gap-3">
+                <CalendarDays className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-green-400 flex-shrink-0" />
                 <span className="hidden xs:inline">Check Availability</span>
                 <span className="xs:hidden">Availability</span>
               </h2>
               <button
                 onClick={() => setShowAvailabilityModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1 sm:p-2 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+                className="text-gray-400 hover:text-white transition-colors p-1 sm:p-2 md:p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-800"
               >
-                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="overflow-y-auto max-h-[calc(95vh-80px)] sm:max-h-[calc(90vh-120px)]">
-              <div className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
-                {/* Calendar View */}
-                <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 lg:p-4 border border-gray-600">
-                  {/* Month Header */}
-                  <div className="flex items-center justify-between mb-2 sm:mb-3 lg:mb-4">
-                    <button 
-                      onClick={goToPreviousMonth}
-                      className={`text-gray-400 hover:text-white p-1 sm:p-2 rounded-lg hover:bg-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
-                        loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
-                          ? 'opacity-30 cursor-not-allowed' 
-                          : ''
-                      }`}
-                      disabled={loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
-                    >
-                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                    <h4 className="text-white font-semibold text-sm sm:text-base lg:text-lg text-center px-2">
-                      {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </h4>
-                    <button 
-                      onClick={goToNextMonth}
-                      className={`text-gray-400 hover:text-white p-1 sm:p-2 rounded-lg hover:bg-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
-                        loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
-                          ? 'opacity-30 cursor-not-allowed' 
-                          : ''
-                      }`}
-                      disabled={loading || isMonthOutOfRange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
-                    >
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  </div>
-
-                  {/* Day Headers */}
-                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <div key={day} className="text-gray-400 text-xs sm:text-sm font-semibold text-center py-1 sm:py-2">
-                        <span className="hidden xs:inline">{day}</span>
-                        <span className="xs:hidden">{day.substring(0, 1)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Calendar Grid */}
-                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-                    {loading ? (
-                      Array.from({length: 42}).map((_, i) => (
-                        <div key={i} className="aspect-square flex items-center justify-center min-h-[32px] sm:min-h-[40px]">
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gray-600 rounded animate-pulse"></div>
-                        </div>
-                      ))
-                    ) : (
-                      generateCalendarDays().map((day, index) => {
-                        if (day === null) {
-                          return <div key={`empty-${index}`} className="aspect-square bg-transparent min-h-[32px] sm:min-h-[40px]"></div>;
-                        }
-
-                        const isPast = isDatePast(day);
-                        const isToday = isDateToday(day);
-                        const isBooked = isDateBooked(day);
-                        const isTooFar = isDateTooFar(day);
-                        
-                        // Lookup per-day count for capacity indicator
-                        const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                        const countForDay = dayCounts[key] || 0;
-                        
-                        return (
-                          <div 
-                            key={day}
-                            className={`
-                              aspect-square min-h-[32px] sm:min-h-[40px] flex items-center justify-center text-xs sm:text-sm font-medium rounded-md sm:rounded-lg transition-all touch-manipulation
-                              ${isPast 
-                                ? 'text-gray-500 cursor-not-allowed' 
-                                : isToday
-                                  ? 'bg-blue-600 text-white font-bold cursor-pointer'
-                                  : isBooked
-                                    ? 'bg-red-900/30 text-red-300 border border-red-500/30 cursor-not-allowed'
-                                    : isTooFar
-                                      ? 'text-orange-400 border border-orange-500/30 cursor-not-allowed opacity-60'
-                                      : 'text-white hover:bg-green-600/20 border border-green-500/30 hover:border-green-400 cursor-pointer'
-                              }
-                            `}
-                            title={
-                              isPast 
-                                ? 'Past date - cannot book'
-                                : isBooked 
-                                  ? 'Date already booked'
-                                  : isTooFar
-                                    ? 'Beyond booking window - contact us for long-term stays'
-                                    : countForDay === 1 
-                                      ? 'One booking already - 1/2 capacity' 
-                                      : countForDay === 2
-                                        ? 'Full capacity - 2/2 capacity with same-day turnover'
-                                        : 'Available for booking'
-                            }
-                          >
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              <span>{day}</span>
-                              {!isPast && !isBooked && !isTooFar && countForDay > 0 && (
-                                <span className={`absolute bottom-0 right-0 text-[8px] sm:text-[10px] px-0.5 sm:px-1 py-0.5 rounded border ${
-                                  countForDay === 1 
-                                    ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
-                                    : countForDay === 2
-                                      ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
-                                      : 'bg-red-500/20 text-red-300 border-red-500/40'
-                                }`}>
-                                  {countForDay}/2
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
+            <div className="overflow-y-auto max-h-[calc(95vh-50px)] xs:max-h-[calc(90vh-60px)] sm:max-h-[calc(85vh-80px)] md:max-h-[calc(90vh-100px)] lg:max-h-[calc(90vh-120px)]">
+              <div className="p-2 xs:p-3 sm:p-4 md:p-5 lg:p-6 space-y-2 xs:space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
+                {/* Calendar View - React DatePicker (Read-only for availability display) */}
+                <div className="bg-gray-800/50 rounded-md sm:rounded-lg md:rounded-xl p-1 xs:p-2 sm:p-3 md:p-4 lg:p-5 border border-gray-600">
+                  <DatePicker
+                    selected={null}
+                    onChange={() => {}} // Read-only - no interaction needed
+                    onMonthChange={(date) => setCurrentMonth(date)}
+                    dayClassName={(date) => {
+                      // Show booking status using exact same logic as booking page
+                      const capacity = getDateCapacity(date);
+                      if (capacity === 'same-day') return 'react-datepicker__day--same-day';
+                      if (capacity === 'checkin') return 'react-datepicker__day--checkin';
+                      if (capacity === 'checkout') return 'react-datepicker__day--checkout';
+                      if (capacity === 'occupied') return 'react-datepicker__day--occupied';
+                      return '';
+                    }}
+                    inline
+                    monthsShown={1}
+                    calendarClassName="inline-calendar"
+                    minDate={new Date()}
+                    maxDate={(() => {
+                      const maxDate = new Date();
+                      maxDate.setFullYear(maxDate.getFullYear() + 2);
+                      return maxDate;
+                    })()}
+                    readOnly
+                    disabled={false}
+                  />
+                  
+                  {/* Legend - EXACT same as booking page */}
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-green-600"></span>
+                      <span className="text-gray-300">Check-in</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-red-600"></span>
+                      <span className="text-gray-300">Check-out</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-yellow-600"></span>
+                      <span className="text-gray-300">Occupied</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-purple-600"></span>
+                      <span className="text-gray-300">Full Day</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-gray-700 border border-gray-600"></span>
+                      <span className="text-gray-300">Available</span>
+                    </span>
                   </div>
                 </div>
 
-                {/* Legend */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 text-xs">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 border border-green-500/30 rounded bg-green-600/10"></div>
-                    <span className="text-gray-300 text-xs">Available</span>
+                {/* Mobile-Responsive Availability Guide */}
+                <div className="bg-blue-900/20 border border-blue-600/30 rounded-md sm:rounded-lg md:rounded-xl overflow-hidden">
+                  {/* Collapsible Header - Only on Mobile/Small Tablet */}
+                  <button 
+                    onClick={() => setAvailabilityGuideOpen(!availabilityGuideOpen)}
+                    className="w-full p-2 xs:p-2.5 sm:p-3 md:hidden flex items-center justify-between hover:bg-blue-800/10 transition-colors touch-manipulation"
+                  >
+                    <div className="flex items-center gap-1.5 xs:gap-2">
+                      <div className="w-4 h-4 xs:w-5 xs:h-5 text-blue-400 text-sm xs:text-base">ℹ️</div>
+                      <h4 className="text-blue-200 text-xs xs:text-sm sm:text-base font-semibold">How to Read Availability</h4>
+                    </div>
+                    <div 
+                      className="w-4 h-4 xs:w-5 xs:h-5 text-blue-300 transition-transform duration-200 text-xs xs:text-sm"
+                      style={{ transform: availabilityGuideOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    >
+                      ▼
+                    </div>
+                  </button>
+
+                  {/* Desktop Header - Always Visible */}
+                  <div className="hidden md:flex items-center gap-2 md:gap-3 p-3 md:p-4 lg:p-5 border-b border-blue-600/20">
+                    <div className="w-5 h-5 md:w-6 md:h-6 text-blue-400 text-base md:text-lg">ℹ️</div>
+                    <h4 className="text-blue-200 text-base md:text-lg lg:text-xl font-semibold">How to Read Availability</h4>
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-900/30 border border-red-500/30 rounded"></div>
-                    <span className="text-gray-300 text-xs">Booked</span>
-                  </div>
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 border border-yellow-500/40 rounded bg-yellow-500/20"></div>
-                    <span className="text-gray-300 text-xs">1/2 Capacity</span>
-                  </div>
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded"></div>
-                    <span className="text-gray-300 text-xs">Today</span>
-                  </div>
-                  <div className="flex items-center gap-1 sm:gap-2 col-span-2 sm:col-span-1">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 border border-orange-500/30 rounded bg-orange-600/10 opacity-60"></div>
-                    <span className="text-gray-300 text-xs">Too Far</span>
+
+                  {/* Content - Collapsible on mobile/tablet, always visible on desktop */}
+                  <div className={`${availabilityGuideOpen ? 'block' : 'hidden'} md:block`}>
+                    <div className="px-2 pb-2 xs:px-2.5 xs:pb-2.5 sm:px-3 sm:pb-3 md:px-4 md:pb-4 lg:px-5 lg:pb-5">
+                      {/* Responsive Grid Layout */}
+                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 mt-2 xs:mt-2.5 sm:mt-3 md:mt-4">
+                        {/* Check-in */}
+                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-green-900/20 border border-green-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
+                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-green-600 flex-shrink-0 mt-0.5"></span>
+                          <div className="min-w-0">
+                            <div className="text-green-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Check-in Day</div>
+                            <div className="text-green-100/80 text-xs sm:text-xs md:text-sm leading-tight">You can check-out here (guests arrive 2 PM)</div>
+                          </div>
+                        </div>
+
+                        {/* Check-out */}
+                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-red-900/20 border border-red-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
+                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-red-600 flex-shrink-0 mt-0.5"></span>
+                          <div className="min-w-0">
+                            <div className="text-red-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Check-out Day</div>
+                            <div className="text-red-100/80 text-xs sm:text-xs md:text-sm leading-tight">You can check-in here (guests leave 12 PM)</div>
+                          </div>
+                        </div>
+
+                        {/* Occupied */}
+                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
+                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-yellow-600 flex-shrink-0 mt-0.5"></span>
+                          <div className="min-w-0">
+                            <div className="text-yellow-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Occupied</div>
+                            <div className="text-yellow-100/80 text-xs sm:text-xs md:text-sm leading-tight">Resort fully occupied (no availability)</div>
+                          </div>
+                        </div>
+
+                        {/* Full Day */}
+                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-purple-900/20 border border-purple-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
+                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-purple-600 flex-shrink-0 mt-0.5"></span>
+                          <div className="min-w-0">
+                            <div className="text-purple-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Full Day</div>
+                            <div className="text-purple-100/80 text-xs sm:text-xs md:text-sm leading-tight">Same-day check-in & check-out</div>
+                          </div>
+                        </div>
+
+                        {/* Available - Full width on smaller screens */}
+                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-gray-800/20 border border-gray-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg xs:col-span-2 lg:col-span-4 xl:col-span-2">
+                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded border border-green-500/50 bg-gray-700 flex-shrink-0 mt-0.5"></span>
+                          <div className="min-w-0">
+                            <div className="text-gray-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Available</div>
+                            <div className="text-gray-100/80 text-xs sm:text-xs md:text-sm leading-tight">Free for both check-in and check-out</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pro Tip - Enhanced Responsiveness */}
+                      <div className="mt-2 xs:mt-2.5 sm:mt-3 md:mt-4 p-1.5 xs:p-2 sm:p-2.5 md:p-3 lg:p-4 bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
+                        <div className="flex items-start gap-1.5 xs:gap-2">
+                          <div className="text-green-400 text-sm xs:text-base sm:text-lg md:text-xl flex-shrink-0">💡</div>
+                          <div>
+                            <div className="text-green-200 text-xs xs:text-sm sm:text-base md:text-lg font-medium mb-0.5 xs:mb-1">Same-Day Turnover Available!</div>
+                            <div className="text-green-100/90 text-xs xs:text-sm sm:text-base md:text-base leading-relaxed">
+                              You can check-in on red (check-out) days since guests leave at 12 PM and new arrivals start at 2 PM.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1505,11 +2256,11 @@ function Home() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 sm:gap-3 pt-1 sm:pt-2">
+                {/* Action Button */}
+                <div className="flex justify-center pt-1.5 xs:pt-2 sm:pt-2.5 md:pt-3">
                   <button
                     onClick={() => setShowAvailabilityModal(false)}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-white transition-colors text-xs sm:text-sm lg:text-base min-h-[44px] touch-manipulation"
+                    className="w-full xs:w-auto xs:px-6 sm:px-8 md:px-10 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2.5 xs:py-2.5 sm:py-3 md:py-3.5 rounded-md sm:rounded-lg md:rounded-xl font-semibold text-xs xs:text-sm sm:text-base md:text-lg transition-colors min-h-[44px] touch-manipulation"
                   >
                     Close
                   </button>
@@ -1520,6 +2271,7 @@ function Home() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

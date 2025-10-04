@@ -200,7 +200,65 @@ function BookingPage() {
     return null;
   }
   
-  // Calculate unavailable dates for the date picker based on CONFIRMED bookings only
+  // Calculate capacity for visual indicators
+  const getDateCapacity = (date: Date) => {
+    // Don't show capacity indicators for past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) {
+      return 0; // Past dates should appear normal
+    }
+    
+    const activeBookings = existingBookings.filter(booking => 
+      booking.status === 'confirmed' || booking.status === 'pending'
+    );
+    
+    // Normalize date for comparison (remove time component)
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    let isCheckIn = false;
+    let isCheckOut = false;
+    let isOccupied = false;
+    
+    activeBookings.forEach(booking => {
+      const checkIn = new Date(booking.check_in_date);
+      checkIn.setHours(0, 0, 0, 0);
+      
+      const checkOut = new Date(booking.check_out_date);
+      checkOut.setHours(0, 0, 0, 0);
+      
+      // Check if this date is a check-in date
+      if (targetDate.getTime() === checkIn.getTime()) {
+        isCheckIn = true;
+      }
+      
+      // Check if this date is a check-out date
+      if (targetDate.getTime() === checkOut.getTime()) {
+        isCheckOut = true;
+      }
+      
+      // Check if this date is between check-in and check-out (occupied)
+      if (targetDate > checkIn && targetDate < checkOut) {
+        isOccupied = true;
+      }
+    });
+    
+    // Determine the appropriate indicator
+    if (isCheckIn && isCheckOut) {
+      return 'same-day'; // Same day check-in and check-out (1-day stay)
+    } else if (isCheckIn) {
+      return 'checkin';
+    } else if (isCheckOut) {
+      return 'checkout';
+    } else if (isOccupied) {
+      return 'occupied';
+    }
+    
+    return '';
+  };
+
+  // Calculate unavailable dates for the date picker - ONLY block real conflicts
   const getUnavailableDates = () => {
     const toYMD = (d: Date) => {
       const y = d.getFullYear();
@@ -209,55 +267,39 @@ function BookingPage() {
       return `${y}-${m}-${da}`;
     };
     
-    // Filter only CONFIRMED bookings for DatePicker exclusions
-    const confirmedBookings = existingBookings.filter(booking => booking.status === 'confirmed');
+    // Filter confirmed and pending bookings
+    const activeBookings = existingBookings.filter(booking => 
+      booking.status === 'confirmed' || booking.status === 'pending'
+    );
     
-    // Count check-ins AND check-outs per date (same as home page logic)
+    const unavailableDates: Date[] = [];
+    
+    // Count check-ins per date (max 2 check-ins allowed per day)
     const checkInCounts = new Map<string, number>();
-    const checkOutCounts = new Map<string, number>();
-
-    confirmedBookings.forEach(booking => {
+    
+    activeBookings.forEach(booking => {
       const checkIn = new Date(booking.check_in_date);
-      const checkOut = new Date(booking.check_out_date);
-      
       const checkInDate = toYMD(checkIn);
-      const checkOutDate = toYMD(checkOut);
-
-      // Count check-ins (guests arriving)
-      const prevCheckIns = checkInCounts.get(checkInDate) || 0;
-      checkInCounts.set(checkInDate, prevCheckIns + 1);
       
-      // Count check-outs (guests leaving)
-      const prevCheckOuts = checkOutCounts.get(checkOutDate) || 0;
-      checkOutCounts.set(checkOutDate, prevCheckOuts + 1);
+      const prevCount = checkInCounts.get(checkInDate) || 0;
+      checkInCounts.set(checkInDate, prevCount + 1);
     });
 
-    // Calculate total daily activity (check-ins + check-outs) - same as home page
-    const dailyActivity = new Map<string, number>();
-    
-    // Add check-ins
-    for (const [date, count] of checkInCounts.entries()) {
-      dailyActivity.set(date, (dailyActivity.get(date) || 0) + count);
-    }
-    
-    // Add check-outs
-    for (const [date, count] of checkOutCounts.entries()) {
-      dailyActivity.set(date, (dailyActivity.get(date) || 0) + count);
-    }
-
-    // A date is unavailable if total activity >= 2 (2/2 capacity)
-    const unavailable: Date[] = [];
-    for (const [dateStr, activity] of dailyActivity) {
-      if (activity >= 2) {
-        unavailable.push(new Date(dateStr));
+    // Only block dates that have reached check-in capacity (2/2)
+    for (const [dateStr, count] of checkInCounts) {
+      if (count >= 2) {
+        unavailableDates.push(new Date(dateStr));
       }
     }
 
-    return unavailable;
+    // Don't block any other dates - let the conflict checker handle it
+    // This allows checkout dates to be selectable for new checkins
+    
+    return unavailableDates;
   };
   
   const checkBookingConflict = (checkInDate: Date | null, checkOutDate: Date | null) => {
-    if (!checkInDate || !checkOutDate) return false;
+    if (!checkInDate || !checkOutDate) return { hasConflict: false, message: '' };
 
     // Use local date formatting to avoid timezone issues
     const formatLocalDate = (date: Date) => {
@@ -268,14 +310,64 @@ function BookingPage() {
     };
     
     const newCheckInDate = formatLocalDate(checkInDate);
-    
-    // Count check-ins per date (same-day turnover allows 2 check-ins per day)
-    const checkInCounts = new Map<string, number>();
+    const newCheckOutDate = formatLocalDate(checkOutDate);
     
     // Filter confirmed and pending bookings for conflict checking
     const activeBookings = existingBookings.filter(booking => 
       booking.status === 'confirmed' || booking.status === 'pending'
     );
+    
+    // 1. Check for exact same date range (prevent double booking)
+    for (const booking of activeBookings) {
+      const existingCheckIn = new Date(booking.check_in_date);
+      const existingCheckOut = new Date(booking.check_out_date);
+      const existingCheckInDate = formatLocalDate(existingCheckIn);
+      const existingCheckOutDate = formatLocalDate(existingCheckOut);
+      
+      if (newCheckInDate === existingCheckInDate && newCheckOutDate === existingCheckOutDate) {
+        const checkInFormatted = checkInDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const checkOutFormatted = checkOutDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        return { 
+          hasConflict: true, 
+          message: `These exact dates (${checkInFormatted} to ${checkOutFormatted}) are already booked. Please choose different dates.` 
+        };
+      }
+    }
+    
+    // 2. Check for overlapping stays (guest would be occupying room at same time)
+    // Allow same-day turnover: Guest A checkout 12pm, Guest B checkin 2pm same day = OK
+    for (const booking of activeBookings) {
+      const existingCheckIn = new Date(booking.check_in_date);
+      const existingCheckOut = new Date(booking.check_out_date);
+      
+      const newCheckInTime = checkInDate.getTime();
+      const newCheckOutTime = checkOutDate.getTime();
+      const existingCheckInTime = existingCheckIn.getTime();
+      const existingCheckOutTime = existingCheckOut.getTime();
+      
+      // TRUE overlap: dates where guests would be there at the same time
+      // Same-day turnover is allowed (checkout 12pm, new checkin 2pm same day)
+      const hasOverlap = (
+        // New booking starts BEFORE existing booking ends (but not on same day)
+        (newCheckInTime >= existingCheckInTime && newCheckInTime < existingCheckOutTime) ||
+        // New booking ends AFTER existing booking starts (but not on same day)  
+        (newCheckOutTime > existingCheckInTime && newCheckOutTime <= existingCheckOutTime) ||
+        // New booking completely encompasses existing booking
+        (newCheckInTime < existingCheckInTime && newCheckOutTime > existingCheckOutTime)
+      );
+      
+      if (hasOverlap) {
+        const existingCheckInFormatted = existingCheckIn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const existingCheckOutFormatted = existingCheckOut.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        return { 
+          hasConflict: true, 
+          message: `Your dates overlap with an existing booking (${existingCheckInFormatted} to ${existingCheckOutFormatted}). Note: Same-day turnover is allowed (check-out 12pm, check-in 2pm).` 
+        };
+      }
+    }
+
+    // 3. Check check-in capacity (max 2 check-ins per day)
+    const checkInCounts = new Map<string, number>();
     
     activeBookings.forEach(booking => {
       const existingCheckIn = new Date(booking.check_in_date);
@@ -285,14 +377,17 @@ function BookingPage() {
       checkInCounts.set(existingCheckInDate, prevCount + 1);
     });
 
-    // Check if new check-in date already has 2 bookings (capacity limit)
     const currentCheckIns = checkInCounts.get(newCheckInDate) || 0;
     
     if (currentCheckIns >= 2) {
-      return true;
+      const checkInFormatted = checkInDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      return { 
+        hasConflict: true, 
+        message: `${checkInFormatted} already has 2 check-ins scheduled (full capacity). Please choose a different check-in date.` 
+      };
     }
 
-    return false;
+    return { hasConflict: false, message: '' }; // No conflicts found
   };
 
   const handleChange = (
@@ -363,8 +458,9 @@ function BookingPage() {
     }
     
     // Check for booking conflicts
-    if (checkBookingConflict(formData.checkIn, formData.checkOut)) {
-      showError('Dates Unavailable', 'Sorry, these dates are not available due to capacity limits (maximum 2 bookings per day). Please choose different dates.');
+    const conflictCheck = checkBookingConflict(formData.checkIn, formData.checkOut);
+    if (conflictCheck.hasConflict) {
+      showError('Booking Conflict', conflictCheck.message);
       setIsSubmitting(false);
       return;
     }
@@ -484,6 +580,28 @@ function BookingPage() {
           font-family: inherit !important;
           border-radius: 1rem !important;
           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
+          min-height: 420px !important;
+          max-height: 420px !important;
+          height: 420px !important;
+          overflow: hidden !important;
+        }
+        .react-datepicker__month-container {
+          min-height: 360px !important;
+          max-height: 360px !important;
+          height: 360px !important;
+        }
+        .react-datepicker__month {
+          min-height: 300px !important;
+          max-height: 300px !important;
+          height: 300px !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        .react-datepicker__week {
+          display: flex !important;
+          justify-content: space-around !important;
+          align-items: center !important;
+          height: 3.5rem !important;
         }
         .react-datepicker__header {
           background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
@@ -549,10 +667,188 @@ function BookingPage() {
           cursor: not-allowed !important;
           transform: none !important;
         }
+        
+        /* Override today styling to look normal */
+        .react-datepicker__day--today {
+          background: transparent !important;
+          color: white !important;
+          font-weight: normal !important;
+          border: none !important;
+        }
+        .react-datepicker__day--today:hover {
+          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          transform: scale(1.05) !important;
+          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+        }
         .react-datepicker__day--disabled {
           color: #4b5563 !important;
           background-color: transparent !important;
           opacity: 0.3 !important;
+        }
+        
+        /* Selected dates override all other states */
+        .react-datepicker__day--selected {
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+          border: 2px solid #1e40af !important;
+        }
+        .react-datepicker__day--selected:hover {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--selected::after {
+          content: 'SELECTED' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 6px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        .react-datepicker__day--same-day {
+          background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--same-day:hover {
+          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--same-day::after {
+          content: 'FULL DAY' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 6px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        /* Custom capacity indicator classes */
+        .react-datepicker__day--checkin {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--checkin:hover {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--checkin::after {
+          content: 'CHECK-IN' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 6px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        .react-datepicker__day--checkout {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--checkout:hover {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--checkout::after {
+          content: 'CHECK-OUT' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 5px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        .react-datepicker__day--occupied {
+          background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--occupied:hover {
+          background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--occupied::after {
+          content: 'OCCUPIED' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 6px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        .react-datepicker__day--partial {
+          background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--partial:hover {
+          background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%) !important;
+          transform: scale(1.05) !important;
+        }
+        .react-datepicker__day--partial::after {
+          content: 'BOOKED' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 7px !important;
+          background: rgba(0,0,0,0.7) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+        }
+        
+        .react-datepicker__day--booked {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          position: relative !important;
+        }
+        .react-datepicker__day--booked:hover {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+        .react-datepicker__day--booked::after {
+          content: 'ERROR' !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          right: 2px !important;
+          font-size: 7px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
         }
         .react-datepicker__navigation {
           top: 1.2rem !important;
@@ -939,19 +1235,49 @@ function BookingPage() {
                   minDate={minDate}
                   maxDate={maxBookingDate}
                   excludeDates={getUnavailableDates()}
+                  dayClassName={(date) => {
+                    // Check if this date is selected (check-in or check-out)
+                    const isSelected = (formData.checkIn && date.toDateString() === formData.checkIn.toDateString()) ||
+                                     (formData.checkOut && date.toDateString() === formData.checkOut.toDateString());
+                    
+                    // Selected dates override booking status
+                    if (isSelected) {
+                      return 'react-datepicker__day--selected';
+                    }
+                    
+                    // Otherwise show booking status
+                    const capacity = getDateCapacity(date);
+                    if (capacity === 'same-day') return 'react-datepicker__day--same-day';
+                    if (capacity === 'checkin') return 'react-datepicker__day--checkin';
+                    if (capacity === 'checkout') return 'react-datepicker__day--checkout';
+                    if (capacity === 'occupied') return 'react-datepicker__day--occupied';
+                    return '';
+                  }}
                   inline
                   monthsShown={1}
                   calendarClassName="inline-calendar"
                 />
               </div>
-              <div className="mt-3 flex items-center justify-center gap-6 text-sm">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-red-600"></span>
+                  <span className="w-4 h-4 rounded bg-blue-600"></span>
                   <span className="text-gray-300">Selected</span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-gray-600 opacity-50"></span>
-                  <span className="text-gray-300">Unavailable</span>
+                  <span className="w-4 h-4 rounded bg-green-600"></span>
+                  <span className="text-gray-300">Check-in</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-red-600"></span>
+                  <span className="text-gray-300">Check-out</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-yellow-600"></span>
+                  <span className="text-gray-300">Occupied</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-purple-600"></span>
+                  <span className="text-gray-300">Full Day</span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-gray-700 border border-gray-600"></span>
