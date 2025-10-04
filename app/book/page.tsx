@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { FaCalendarAlt, FaExclamationTriangle, FaHome, FaUser } from "react-icons/fa";
+import { FaCalendarAlt, FaExclamationTriangle, FaHome, FaUser, FaSpinner } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
+import { useToastHelpers } from "../components/Toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -21,6 +22,7 @@ interface Booking {
 function BookingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { success, error: showError, warning } = useToastHelpers();
 
   // All useState hooks must come before any early returns
   const [formData, setFormData] = useState({
@@ -39,6 +41,8 @@ function BookingPage() {
   const [canCreateBooking, setCanCreateBooking] = useState(true);
   const [limitMessage, setLimitMessage] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   // Calculate 2 years from today for max booking date
   const maxBookingDate = new Date();
@@ -89,25 +93,42 @@ function BookingPage() {
     const philippinesTime = new Date(today.getTime() + (8 * 60 * 60 * 1000));
     setMinDate(philippinesTime);
     
-    // Check if user can create pending bookings
-    const checkBookingLimits = async () => {
-      if (user) {
-        try {
-          const result = await canUserCreatePendingBooking(user.id);
-          setCanCreateBooking(result.canCreate);
-          setLimitMessage(result.message || "");
-        } catch (error) {
-          console.error("Error checking booking limits:", error);
-        }
+    // Run all data loading operations in parallel for faster loading
+    const loadAllData = async () => {
+      if (!user) {
+        setIsPageLoading(false);
+        return;
       }
-    };
-    
-    // Auto-fill user information
-    const loadUserData = async () => {
+      
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Try multiple possible field names for phone
+        // Execute all operations in parallel instead of sequentially
+        const [bookingLimitsResult, userData, existingBookingsData] = await Promise.allSettled([
+          // Check booking limits
+          canUserCreatePendingBooking(user.id),
+          
+          // Get user data  
+          supabase.auth.getUser(),
+          
+          // Fetch existing bookings - but only get essential data for calendar
+          supabase
+            .from('bookings')
+            .select('id, check_in_date, check_out_date, status')
+            .in('status', ['confirmed', 'pending'])
+            .limit(100) // Limit to recent bookings for faster query
+        ]);
+
+        // Handle booking limits result
+        if (bookingLimitsResult.status === 'fulfilled') {
+          setCanCreateBooking(bookingLimitsResult.value.canCreate);
+          setLimitMessage(bookingLimitsResult.value.message || "");
+        } else {
+          console.error("Error checking booking limits:", bookingLimitsResult.reason);
+          setCanCreateBooking(true); // Fallback to allow booking
+        }
+
+        // Handle user data result
+        if (userData.status === 'fulfilled' && userData.value.data?.user) {
+          const user = userData.value.data.user;
           const phoneNumber = user.user_metadata?.phone || 
                              user.user_metadata?.mobile || 
                              user.user_metadata?.phone_number || 
@@ -123,34 +144,27 @@ function BookingPage() {
             email: userEmail || prevData.email,
             phone: phoneNumber || prevData.phone,
           }));
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      }
-    };
-    
-    // Fetch existing bookings
-    const fetchExistingBookings = async () => {
-      try {
-        // BOOKING PAGE: Check BOTH confirmed AND pending to prevent actual conflicts
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('id, check_in_date, check_out_date, status')
-          .in('status', ['confirmed', 'pending']); // Prevent conflicts with all active bookings
-
-        if (error) {
-          console.error('Error fetching bookings:', error);
         } else {
-          setExistingBookings(data || []);
+          console.error('Error loading user data:', userData.status === 'rejected' ? userData.reason : 'No user data');
         }
+
+        // Handle existing bookings result
+        if (existingBookingsData.status === 'fulfilled') {
+          setExistingBookings(existingBookingsData.value.data || []);
+        } else {
+          console.error('Error fetching bookings:', existingBookingsData.reason);
+          setExistingBookings([]); // Fallback to empty array
+        }
+        
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error loading booking page data:', error);
+        // Continue with defaults - don't block the UI
+      } finally {
+        setIsPageLoading(false); // Always stop loading indicator
       }
     };
     
-    loadUserData();
-    fetchExistingBookings();
-    checkBookingLimits();
+    loadAllData();
   }, [user]);
 
   // Update price when check-in date or guest count changes
@@ -167,13 +181,15 @@ function BookingPage() {
     }
   }, [formData.checkIn, formData.guests]);
 
-  // Show loading if auth is still loading
-  if (loading) {
+  // Show loading if auth is still loading or page is loading data
+  if (loading || isPageLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-300">Loading...</div>
+          <div className="text-lg text-gray-300">
+            {loading ? 'Loading...' : 'Preparing booking form...'}
+          </div>
         </div>
       </div>
     );
@@ -295,52 +311,61 @@ function BookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      alert('Please log in to make a booking');
-      window.location.href = '/auth';
+      showError('Authentication Required', 'Please log in to make a booking');
+      router.push('/auth');
+      setIsSubmitting(false);
       return;
     }
 
     // Check if user can create pending bookings (enforce limit)
     if (!canCreateBooking) {
-      alert(limitMessage || 'You have reached the maximum number of pending bookings (3). Please wait for confirmation or cancel existing pending bookings.');
+      warning('Booking Limit Reached', limitMessage || 'You have reached the maximum number of pending bookings (3). Please wait for confirmation or cancel existing pending bookings.');
+      setIsSubmitting(false);
       return;
     }
     
     // Validate all required fields
     if (!formData.name.trim()) {
-      alert('Please enter your full name');
+      showError('Missing Information', 'Please enter your full name');
+      setIsSubmitting(false);
       return;
     }
     
     if (!formData.email.trim()) {
-      alert('Please enter your email address');
+      showError('Missing Information', 'Please enter your email address');
+      setIsSubmitting(false);
       return;
     }
     
     if (!formData.guests) {
-      alert('Please select number of guests');
+      showError('Missing Information', 'Please select number of guests');
+      setIsSubmitting(false);
       return;
     }
     
     // Validate dates are selected
     if (!formData.checkIn || !formData.checkOut) {
-      alert('Please select both check-in and check-out dates');
+      showError('Missing Dates', 'Please select both check-in and check-out dates');
+      setIsSubmitting(false);
       return;
     }
     
     // Validate check-out is after check-in
     if (new Date(formData.checkOut) <= new Date(formData.checkIn)) {
-      alert('Check-out date must be after check-in date');
+      showError('Invalid Dates', 'Check-out date must be after check-in date');
+      setIsSubmitting(false);
       return;
     }
     
     // Check for booking conflicts
     if (checkBookingConflict(formData.checkIn, formData.checkOut)) {
-      alert('Sorry, these dates are not available due to capacity limits (maximum 2 bookings per day). Please choose different dates.');
+      showError('Dates Unavailable', 'Sorry, these dates are not available due to capacity limits (maximum 2 bookings per day). Please choose different dates.');
+      setIsSubmitting(false);
       return;
     }
     
@@ -387,53 +412,65 @@ function BookingPage() {
           hint: error.hint,
           code: error.code
         });
-        alert(`Error creating booking: ${error.message || 'Unknown error'}. Please try again.`);
+        setIsSubmitting(false);
+        showError('Booking Failed', `Error creating booking: ${error.message || 'Unknown error'}. Please try again.`);
       } else {
-        // Send confirmation emails
-        try {
-          const emailBookingDetails = {
-            bookingId: data.id.toString(),
-            guestName: bookingData.guest_name,
-            checkIn: formData.checkIn!.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }),
-            checkOut: formData.checkOut!.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }),
-            guests: bookingData.number_of_guests,
-            totalAmount: bookingData.total_amount,
-            email: bookingData.guest_email,
-          };
+        // Show immediate success - don't wait for email
+        setIsSubmitting(false);
+        success('Reservation Confirmed!', 'Your booking has been submitted successfully. Check-in: 2 PM, Check-out: 12 PM');
+        
+        // Redirect to bookings page immediately
+        setTimeout(() => {
+          router.push('/bookings');
+        }, 1500);
 
-          const emailResponse = await fetch('/api/email/booking-confirmation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ bookingDetails: emailBookingDetails }),
-          });
+        // Send confirmation emails in the background (non-blocking)
+        const sendEmailInBackground = async () => {
+          try {
+            const emailBookingDetails = {
+              bookingId: data.id.toString(),
+              guestName: bookingData.guest_name,
+              checkIn: formData.checkIn!.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              checkOut: formData.checkOut!.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              guests: bookingData.number_of_guests,
+              totalAmount: bookingData.total_amount,
+              email: bookingData.guest_email,
+            };
 
-          if (!emailResponse.ok) {
-            console.warn('Email sending failed, but booking was created successfully');
+            const emailResponse = await fetch('/api/email/booking-confirmation', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ bookingDetails: emailBookingDetails }),
+            });
+
+            if (!emailResponse.ok) {
+              console.warn('Email sending failed, but booking was created successfully');
+            }
+          } catch (emailError) {
+            console.warn('Email service error:', emailError);
+            // Email failure doesn't affect user experience since booking is already confirmed
           }
-        } catch (emailError) {
-          console.warn('Email service error:', emailError);
-          // Don't fail the booking if email fails
-        }
+        };
 
-        alert('Reservation submitted successfully! Check-in: 2 PM, Check-out: 12 PM');
-        // Redirect to bookings page
-        window.location.href = '/bookings';
+        // Fire and forget - email sending won't block the UI
+        sendEmailInBackground();
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      alert('Unexpected error creating booking. Please try again.');
+      setIsSubmitting(false);
+      showError('Unexpected Error', 'Unexpected error creating booking. Please try again.');
     }
   };
 
@@ -1007,23 +1044,34 @@ function BookingPage() {
           <div className="lg:col-span-2 mt-6">
             <button
               type="submit"
-              disabled={!canCreateBooking}
-              className={`w-full font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-lg ${
-                canCreateBooking 
+              disabled={!canCreateBooking || isSubmitting}
+              className={`w-full font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-lg relative overflow-hidden ${
+                canCreateBooking && !isSubmitting
                   ? 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white hover:from-red-700 hover:via-red-800 hover:to-red-900 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]' 
                   : 'bg-gray-600 text-gray-300 cursor-not-allowed'
               }`}
             >
-              {canCreateBooking 
-                ? estimatedPrice 
+              {isSubmitting ? (
+                <div className="flex items-center justify-center gap-3">
+                  <FaSpinner className="animate-spin w-5 h-5" />
+                  <span>Processing Reservation...</span>
+                </div>
+              ) : canCreateBooking ? (
+                estimatedPrice 
                   ? `🎉 Reserve Now - ₱${estimatedPrice.toLocaleString()}`
                   : '📅 Complete Booking Details'
-                : '⚠️ Booking Limit Reached'
-              }
+              ) : (
+                '⚠️ Booking Limit Reached'
+              )}
             </button>
-            {estimatedPrice && canCreateBooking && (
+            {estimatedPrice && canCreateBooking && !isSubmitting && (
               <p className="text-center text-sm text-gray-400 mt-3">
                 By reserving, you agree to our booking terms and conditions
+              </p>
+            )}
+            {isSubmitting && (
+              <p className="text-center text-sm text-blue-400 mt-3 animate-pulse">
+                ⏳ Securing your reservation... Please don&apos;t close this page
               </p>
             )}
           </div>
