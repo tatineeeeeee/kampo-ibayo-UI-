@@ -14,26 +14,20 @@ import {
   BookingStats
 } from "../utils/bookingUtils";
 import { useToast } from "../components/Toast";
+import { Tables } from '../../database.types';
 import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaCommentDots } from "react-icons/fa";
 
-interface Booking {
-  id: number;
-  user_id: string;
-  guest_name: string;
-  guest_email: string;
-  guest_phone: string | null;
-  check_in_date: string;
-  check_out_date: string;
-  number_of_guests: number;
-  total_amount: number;
-  special_requests: string | null;
-  brings_pet: boolean | null;
-  status: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  cancelled_by: string | null; // 'user' or 'admin'
-  cancelled_at: string | null;
-  cancellation_reason: string | null;
+type DatabaseBooking = Tables<'bookings'>;
+
+interface Booking extends DatabaseBooking {
+  // Add any additional properties that might exist in the local interface
+  guest_email?: string;
+  guest_phone?: string | null;
+  brings_pet?: boolean | null;
+  updated_at?: string | null;
+  cancelled_by?: string | null;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
 }
 
 export default function BookingsPage() {

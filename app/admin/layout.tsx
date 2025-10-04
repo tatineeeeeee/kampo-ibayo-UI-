@@ -164,6 +164,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <Users className="w-5 h-5" /> Users
           </Link>
+          <Link href="/admin/reviews" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <FileText className="w-5 h-5" /> Reviews
+          </Link>
           <Link href="/admin/reports" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <FileText className="w-5 h-5" /> Reports
           </Link>

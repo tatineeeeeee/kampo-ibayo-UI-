@@ -37,6 +37,7 @@ import { supabase } from "./supabaseClient";
 import { useAuth } from "./contexts/AuthContext";
 import { TrustBadges, EnhancedGallery } from "./components/EnhancedComponents";
 import Chatbot from "./components/Chatbot";
+import ReviewSystem from "./components/ReviewSystem";
 
 // ----------------- Navbar -----------------
 const Navbar = () => {
@@ -166,6 +167,12 @@ const Navbar = () => {
                         className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
                       >
                         <BookOpen className="w-4 h-4 mr-2" /> My Bookings
+                      </Link>
+                      <Link
+                        href="/review"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
+                      >
+                        <MessageCircleHeart className="w-4 h-4 mr-2" /> Leave Review
                       </Link>
                     </>
                   )}
@@ -981,59 +988,25 @@ function Home() {
       {/* Reviews Section */}
       <section id="reviews" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12 lg:mb-1">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               What Our Guests Say
             </h2>
-            <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
-              Read authentic reviews from families and adventurers who experienced Kampo Ibayo
-            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {[
-              {
-                name: "Maria Santos",
-                location: "Manila",
-                text: "Peaceful and relaxing stay. Perfect for family bonding! The kids loved the river and we enjoyed the bonfire nights.",
-                rating: 5,
-              },
-              {
-                name: "John Rivera",
-                location: "Quezon City",
-                text: "Loved the bonfire nights and the natural surroundings. Will definitely come back with friends for another adventure.",
-                rating: 5,
-              },
-              {
-                name: "Anna Cruz",
-                location: "Cavite",
-                text: "The staff was very friendly and helpful. Clean facilities and beautiful nature views. Highly recommended!",
-                rating: 5,
-              },
-            ].map((review, i) => (
-              <div
-                key={i}
-                className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="flex items-center mb-3 sm:mb-4">
-                  <div className="flex text-yellow-400 text-sm xs:text-base">
-                    {[...Array(review.rating)].map((_, index) => (
-                      <span key={index}>⭐</span>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed mb-4 sm:mb-6">
-                  &ldquo;{review.text}&rdquo;
-                </p>
-                <div className="border-t border-gray-600 pt-3 sm:pt-4">
-                  <p className="font-bold text-red-400 text-sm xs:text-base">
-                    - {review.name}
-                  </p>
-                  <p className="text-gray-500 text-xs xs:text-sm mt-1">
-                    {review.location}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <ReviewSystem 
+            limit={6} 
+            showPagination={true} 
+            className="" 
+          />
+          <div className="text-center mt-8">
+            <Link
+              href="/review"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-full hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
+            >
+              <MessageCircleHeart className="w-5 h-5 mr-2" />
+              Share Your Experience
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
           </div>
         </div>
       </section>
