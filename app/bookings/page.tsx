@@ -13,6 +13,7 @@ import {
   cleanupOldCompletedBookings,
   BookingStats
 } from "../utils/bookingUtils";
+import { useToast } from "../components/Toast";
 import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaCommentDots } from "react-icons/fa";
 
 interface Booking {
@@ -38,6 +39,7 @@ interface Booking {
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const { user, loading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -186,16 +188,57 @@ export default function BookingsPage() {
 
   const handleCancelBooking = async (bookingId: number) => {
     if (!cancellationReason.trim()) {
-      alert('Please provide a reason for cancellation');
+      showToast({
+        type: 'warning',
+        title: 'Cancellation Reason Required',
+        message: 'Please provide a reason for cancellation before proceeding.',
+        duration: 4000
+      });
       return;
     }
 
-    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
-      return;
-    }
+    // INSTANT cancellation - no confirmation needed
+    console.log('⚡ INSTANT cancellation started for booking:', bookingId);
+    
+    // Close modal immediately
+    setShowCancelModal(false);
+    
+    // Immediately update booking to cancelled state
+    const instantUpdatedBookings = bookings.map(booking => 
+      booking.id === bookingId 
+        ? { 
+            ...booking, 
+            status: 'cancelled',
+            cancelled_by: 'user',
+            cancelled_at: new Date().toISOString(),
+            cancellation_reason: cancellationReason.trim()
+          } 
+        : booking
+    );
+    setBookings(instantUpdatedBookings);
+    console.log('✨ UI updated instantly - booking now shows as cancelled');
 
+    // Show immediate success toast
+    showToast({
+      type: 'success',
+      title: 'Booking Cancelled!',
+      message: 'Your booking has been cancelled successfully',
+      duration: 3000
+    });
+
+    // Clear cancellation reason
+    setCancellationReason("");
+
+    // Background server processing - user doesn't wait for this
+    console.log('🔄 Starting background server processing...');
+    processServerCancellation(bookingId);
+  };
+
+  // Background server processing function
+  const processServerCancellation = async (bookingId: number) => {
+    console.log('🚀 Starting background cancellation for booking:', bookingId);
+    
     try {
-      // Use the new API route that sends email notifications
       const response = await fetch('/api/user/cancel-booking', {
         method: 'POST',
         headers: {
@@ -209,32 +252,86 @@ export default function BookingsPage() {
       });
 
       const result = await response.json();
+      console.log('✅ Server response:', result);
 
       if (result.success) {
-        alert(result.warning ? 
-          `${result.message}\n\nNote: ${result.warning}` : 
-          'Booking cancelled successfully! You will receive a confirmation email shortly.'
-        );
+        console.log('🎉 Cancellation confirmed by server');
         
-        // Refresh the bookings list
-        if (user) {
-          const { data, error } = await supabase
-            .from("bookings")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
-          
-          if (!error) {
-            setBookings(data as Booking[] || []);
-          }
+        // Server confirmed - show additional info if needed
+        if (result.warning) {
+          showToast({
+            type: 'info',
+            title: 'Email Notification',
+            message: result.warning,
+            duration: 4000
+          });
+        } else {
+          // Optional: Show email confirmation toast
+          showToast({
+            type: 'info',
+            title: 'Email Sent',
+            message: 'Cancellation confirmation email sent',
+            duration: 2000
+          });
         }
-        closeModal();
+
+        // Refresh data silently in background
+        refreshBookingsInBackground();
       } else {
-        throw new Error(result.error || 'Failed to cancel booking');
+        console.error('❌ Server cancellation failed:', result.error);
+        
+        // Server failed - revert the optimistic update
+        const revertedBookings = bookings.map(booking => 
+          booking.id === bookingId 
+            ? { ...booking, status: 'pending' } // Revert to previous state
+            : booking
+        );
+        setBookings(revertedBookings);
+
+        showToast({
+          type: 'error',
+          title: 'Cancellation Failed',
+          message: 'There was an issue. Your booking is still active.',
+          duration: 5000
+        });
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert(`Error cancelling booking: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
+      console.error('🔥 Network error during cancellation:', error);
+      
+      // Revert optimistic update on network error
+      const revertedBookings = bookings.map(booking => 
+        booking.id === bookingId 
+          ? { ...booking, status: 'pending' }
+          : booking
+      );
+      setBookings(revertedBookings);
+
+      showToast({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Please check your connection and try again',
+        duration: 5000
+      });
+    }
+  };
+
+  // Background refresh function - non-blocking
+  const refreshBookingsInBackground = async () => {
+    try {
+      if (user) {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        
+        if (!error && data) {
+          setBookings(data as Booking[]);
+        }
+      }
+    } catch (error) {
+      console.error('Background refresh error:', error);
+      // Silent fail - don't show error to user
     }
   };
 
@@ -244,6 +341,8 @@ export default function BookingsPage() {
         return <FaCheckCircle className="w-5 h-5 text-green-500" />;
       case "pending":
         return <FaHourglassHalf className="w-5 h-5 text-yellow-500" />;
+      case "cancelling":
+        return <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>;
       case "cancelled":
         return <FaTimesCircle className="w-5 h-5 text-red-500" />;
       default:
@@ -257,6 +356,8 @@ export default function BookingsPage() {
         return "bg-green-600";
       case "pending":
         return "bg-yellow-600";
+      case "cancelling":
+        return "bg-orange-600";
       case "cancelled":
         return "bg-red-600";
       default:
@@ -544,8 +645,7 @@ export default function BookingsPage() {
                           <button 
                             onClick={() => {
                               setSelectedBooking(booking);
-                              setShowModal(true);
-                              setShowCancelModal(true);
+                              setShowCancelModal(true); // Skip booking details modal, go straight to cancellation
                             }}
                             className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition flex items-center justify-center gap-1"
                             title={getCancellationMessage(booking)}
@@ -632,25 +732,148 @@ export default function BookingsPage() {
           </div>
         )}
 
-      {/* Modal Overlay - Mobile Responsive */}
-      {showModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      {/* Modern Cancellation Modal - Matches Confirmation Design */}
+      {showCancelModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-start justify-center pt-20 z-[60] p-4">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/50 dark:border-gray-700/50 transform animate-in slide-in-from-top-4 fade-in duration-300">
+            
+            {/* Header with Icon */}
+            <div className="flex items-center gap-3 p-5 pb-4">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <FaTimesCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cancel Booking</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Booking #{selectedBooking.id}</p>
+              </div>
+            </div>
+
+            {/* Booking Summary Card */}
+            <div className="mx-5 mb-4">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Guest</span>
+                  <span className="text-sm text-gray-900 dark:text-white font-medium">
+                    {selectedBooking.guest_name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Check-in</span>
+                  <span className="text-sm text-gray-900 dark:text-white">
+                    {selectedBooking.check_in_date ? new Date(selectedBooking.check_in_date).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Check-out</span>
+                  <span className="text-sm text-gray-900 dark:text-white">
+                    {selectedBooking.check_out_date ? new Date(selectedBooking.check_out_date).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</span>
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    ₱{selectedBooking.total_amount.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Guests</span>
+                  <span className="text-sm text-gray-900 dark:text-white">
+                    {selectedBooking.number_of_guests} guest(s)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Cancellation Reason Input */}
+            <div className="mx-5 mb-4">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide block mb-2">
+                Reason for cancellation
+              </label>
+              <textarea
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                placeholder="Please tell us why you're cancelling (required)"
+                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200 dark:border-gray-700/50 focus:border-red-500 dark:focus:border-red-400 focus:outline-none resize-none text-sm backdrop-blur-sm"
+                rows={3}
+                maxLength={200}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400">{cancellationReason.length}/200 characters</p>
+                {!cancellationReason.trim() && (
+                  <p className="text-xs text-red-500">Required</p>
+                )}
+              </div>
+            </div>
+
+            {/* Warning Notice */}
+            <div className="mx-5 mb-5">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-3">
+                <div className="flex items-start gap-2">
+                  <div className="w-4 h-4 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center mt-0.5 flex-shrink-0">
+                    <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full"></div>
+                  </div>
+                  <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                    This action cannot be undone. Your reservation will be permanently cancelled and you&apos;ll receive a confirmation email.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 p-5 pt-0">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancellationReason("");
+                }}
+                className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-gray-200 dark:border-gray-700"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={() => handleCancelBooking(selectedBooking.id)}
+                disabled={!cancellationReason.trim()}
+                className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${
+                  cancellationReason.trim()
+                    ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-red-600/25'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <FaTimesCircle className="w-4 h-4" />
+                Cancel Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Details Modal - Keep for "View Details" button */}
+      {showModal && selectedBooking && !showCancelModal && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
             {/* Modal Header */}
-            <div className="bg-gray-700 p-4 sm:p-6 rounded-t-xl">
+            <div className="bg-red-600/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-gray-200/20 dark:border-gray-700/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <div className="bg-red-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                  <div className="bg-white/20 p-1.5 sm:p-2 rounded-full flex-shrink-0">
                     <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg sm:text-xl font-bold text-white truncate">Booking Details</h2>
-                    <p className="text-gray-400 text-xs sm:text-sm">Your reservation information</p>
+                    <p className="text-white/90 text-xs sm:text-sm">Your reservation information</p>
                   </div>
                 </div>
                 <button
                   onClick={closeModal}
-                  className="text-gray-400 hover:text-white text-xl sm:text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition flex-shrink-0"
+                  className="text-white/80 hover:text-white text-xl sm:text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition flex-shrink-0"
                 >
                   ×
                 </button>
@@ -658,19 +881,19 @@ export default function BookingsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
               {/* Booking Info Section */}
-              <div className="bg-gray-700 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+              <div className="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-200/50 dark:border-gray-600/50">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-3">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                    <div className="bg-red-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                    <div className="bg-red-600/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
                       <FaCalendarAlt className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg font-semibold text-white truncate">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
                         Booking #{selectedBooking.id}
                       </h3>
-                      <p className="text-gray-400 text-xs sm:text-sm truncate">
+                      <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
                         {selectedBooking.guest_name} • {selectedBooking.guest_email}
                       </p>
                     </div>
@@ -733,16 +956,16 @@ export default function BookingsPage() {
                 )}
               </div>
 
-              {/* Additional Information - Mobile Responsive */}
+              {/* Additional Information - Modern Design */}
               <div className="space-y-3 sm:space-y-4">
                 {/* Special Requests */}
                 {selectedBooking.special_requests && (
-                  <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
-                    <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                      <FaCommentDots className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                  <div className="bg-blue-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-200/50 dark:border-gray-600/50">
+                    <h4 className="text-gray-900 dark:text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                      <FaCommentDots className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
                       Special Requests
                     </h4>
-                    <p className="text-gray-300 text-xs sm:text-sm bg-gray-600 p-2 sm:p-3 rounded break-words">
+                    <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
                       {selectedBooking.special_requests}
                     </p>
                   </div>
@@ -750,14 +973,14 @@ export default function BookingsPage() {
 
                 {/* Pet Information */}
                 {selectedBooking.brings_pet !== null && (
-                  <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
-                    <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                  <div className="bg-green-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-green-200/50 dark:border-gray-600/50">
+                    <h4 className="text-gray-900 dark:text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
                       <span className="text-lg">🐾</span>
                       Pet Policy
                     </h4>
-                    <p className="text-gray-300 text-xs sm:text-sm">
+                    <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
                       {selectedBooking.brings_pet ? (
-                        <span className="text-green-400 flex items-center gap-1">
+                        <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
                           <span>✅</span> Pet-friendly booking
                         </span>
                       ) : (
@@ -801,8 +1024,8 @@ export default function BookingsPage() {
               </div>
             </div>
 
-            {/* Modal Footer - Mobile Responsive */}
-            <div className="bg-gray-700 p-4 sm:p-6 rounded-b-xl border-t border-gray-600">
+            {/* Modal Footer - Modern Design */}
+            <div className="bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm p-4 sm:p-6 rounded-b-2xl border-t border-gray-200/50 dark:border-gray-600/50">
               {canCancelBooking(selectedBooking) && !showCancelModal ? (
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                   <button 
@@ -879,6 +1102,7 @@ export default function BookingsPage() {
           </div>
         </div>
       )}
+
       </div> {/* Close main content container */}
     </div>
   );
