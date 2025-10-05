@@ -17,16 +17,21 @@ interface User {
 interface Booking {
   id: number;
   guest_name: string;
-  guest_email: string;
+  guest_email: string | null;
   guest_phone: string | null;
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
   total_amount: number;
   status: string | null;
-  brings_pet: boolean | null;
+  brings_pet?: boolean | null;
   special_requests: string | null;
   created_at: string | null;
+  user_id: string | null;
+  phone: string | null;
+  updated_at?: string | null;
+  payment_intent_id: string | null;
+  payment_status: string | null;
 }
 
 interface UserBookingsModalProps {
@@ -176,7 +181,7 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
                             </span>
                           </div>
                           <div className="space-y-1 text-sm">
-                            <p className="text-gray-600">{booking.guest_email}</p>
+                            <p className="text-gray-600">{booking.guest_email || 'No email'}</p>
                             {booking.guest_phone && (
                               <p className="text-gray-600">{booking.guest_phone}</p>
                             )}
