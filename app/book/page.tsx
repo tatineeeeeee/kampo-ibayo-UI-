@@ -497,8 +497,8 @@ function BookingPage() {
       return;
     }
     
-    // Calculate dynamic price based on check-in date
-    const totalAmount = calculatePrice(formData.checkIn!);
+    // Calculate dynamic price based on check-in date and guest count
+    const totalAmount = calculatePrice(formData.checkIn!, parseInt(formData.guests));
     
     // Fix timezone issue - use local date strings instead of UTC
     const formatLocalDate = (date: Date) => {
@@ -593,6 +593,12 @@ function BookingPage() {
 
           console.log('Payment method created:', paymentMethodData);
 
+          // Validate payment method data structure
+          if (!paymentMethodData.success || !paymentMethodData.payment_method || !paymentMethodData.payment_method.id) {
+            console.error('Invalid payment method response:', paymentMethodData);
+            throw new Error('Invalid payment method response from server');
+          }
+
           // Step 3: Attach Payment Method to Intent
           const attachResponse = await fetch('/api/paymongo/attach-payment-intent', {
             method: 'POST',
@@ -600,8 +606,8 @@ function BookingPage() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              payment_intent_id: paymentIntentData.data.id,
-              payment_method_id: paymentMethodData.data.id,
+              payment_intent_id: paymentIntentData.payment_intent.id,
+              payment_method_id: paymentMethodData.payment_method.id,
               bookingId: data.id,
             }),
           });
@@ -614,11 +620,17 @@ function BookingPage() {
 
           console.log('Payment attached successfully:', attachData);
 
+          // Validate attach data structure
+          if (!attachData.success || !attachData.attached_payment) {
+            console.error('Invalid attach response:', attachData);
+            throw new Error('Invalid attach response from server');
+          }
+
           // Update booking with payment intent ID
           const { error: updateError } = await supabase
             .from('bookings')
             .update({ 
-              payment_intent_id: paymentIntentData.data.id,
+              payment_intent_id: paymentIntentData.payment_intent.id,
               payment_status: 'processing'
             })
             .eq('id', data.id);
@@ -628,12 +640,12 @@ function BookingPage() {
           }
 
           // Redirect to PayMongo checkout URL
-          if (attachData.data.attributes.next_action?.redirect?.url) {
+          if (attachData.checkout_url) {
             setIsSubmitting(false);
             success('Redirecting to Payment', 'Please complete your payment to confirm the booking.');
             
             // Redirect to PayMongo checkout
-            window.location.href = attachData.data.attributes.next_action.redirect.url;
+            window.location.href = attachData.checkout_url;
           } else {
             throw new Error('No checkout URL received from PayMongo');
           }

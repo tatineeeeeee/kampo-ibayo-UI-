@@ -2,8 +2,11 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Loader2, Calendar, Users, CreditCard, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Calendar, Users, CreditCard, ArrowRight, Phone, Mail } from 'lucide-react';
+import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/app/supabaseClient';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface BookingDetails {
   id: number;
@@ -122,14 +125,14 @@ function BookingConfirmationContent() {
   const getStatusIcon = () => {
     switch (paymentStatus) {
       case 'success':
-        return <CheckCircle className="w-12 h-12 text-green-500" />;
+        return <CheckCircle className="w-20 h-20 text-green-400 drop-shadow-lg" />;
       case 'failed':
-        return <XCircle className="w-12 h-12 text-red-500" />;
+        return <XCircle className="w-20 h-20 text-red-400 drop-shadow-lg" />;
       case 'checking':
       case 'pending':
-        return <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />;
+        return <Loader2 className="w-20 h-20 text-white animate-spin drop-shadow-lg" />;
       default:
-        return <Loader2 className="w-12 h-12 text-gray-500" />;
+        return <Loader2 className="w-20 h-20 text-gray-400 drop-shadow-lg" />;
     }
   };
 
@@ -165,10 +168,17 @@ function BookingConfirmationContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading booking details...</p>
+      <div className="min-h-screen relative flex items-center justify-center">
+        {/* Pool Background */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/pool.jpg)' }}
+        />
+        <div className="absolute inset-0 bg-black/70" />
+        
+        <div className="relative text-center">
+          <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 animate-spin mx-auto mb-4" />
+          <p className="text-white text-base sm:text-lg">Loading booking details...</p>
         </div>
       </div>
     );
@@ -176,14 +186,21 @@ function BookingConfirmationContent() {
 
   if (error || !booking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Error</h1>
-          <p className="text-gray-600 mb-6">{error || 'Booking not found'}</p>
+      <div className="min-h-screen relative flex items-center justify-center p-4">
+        {/* Pool Background */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/pool.jpg)' }}
+        />
+        <div className="absolute inset-0 bg-black/70" />
+        
+        <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md text-center border border-white/20">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+          <h1 className="text-2xl font-bold text-white mb-4">Booking Not Found</h1>
+          <p className="text-gray-300 mb-8">{error || 'The booking could not be located'}</p>
           <button
             onClick={() => router.push('/book')}
-            className="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg"
           >
             Back to Booking
           </button>
@@ -193,60 +210,132 @@ function BookingConfirmationContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Status Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-          <div className={`p-8 text-center ${
-            paymentStatus === 'success' ? 'bg-gradient-to-r from-green-500 to-green-600' :
-            paymentStatus === 'failed' ? 'bg-gradient-to-r from-red-500 to-red-600' :
-            'bg-gradient-to-r from-blue-500 to-blue-600'
-          } text-white`}>
-            <div className="flex justify-center mb-4">
-              {getStatusIcon()}
+    <div className="min-h-screen relative">
+      {/* Pool Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/pool.jpg)' }}
+      />
+      <div className="absolute inset-0 bg-black/70" />
+      
+      {/* Navigation Bar */}
+      <div className="sticky top-0 bg-black/40 backdrop-blur-md border-b border-white/20 z-20">
+        <div className="px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/" 
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+              </Link>
+              <div className="text-white">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 relative">
+                    <Image
+                      src="/logo.png"
+                      alt="Kampo Ibayo Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <h1 className="text-lg sm:text-xl font-bold">Kampo Ibayo</h1>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Booking Confirmation</p>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold mb-2">{getStatusTitle()}</h1>
-            <p className="text-lg opacity-90">{getStatusMessage()}</p>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/bookings"
+                className="px-3 py-2 text-sm text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                My Bookings
+              </Link>
+            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Booking Details */}
-          <div className="p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Booking Details</h2>
+      {/* Main Content */}
+      <div className="relative px-3 py-6 sm:px-6 sm:py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Status Card */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 mb-6 sm:mb-8">
+            <div className={`p-4 sm:p-8 text-center rounded-t-2xl ${
+              paymentStatus === 'success' ? 'bg-gradient-to-r from-green-600/30 to-green-700/30 border-green-400/40' :
+              paymentStatus === 'failed' ? 'bg-gradient-to-r from-red-600/30 to-red-700/30 border-red-400/40' :
+              'bg-gradient-to-r from-blue-600/30 to-blue-700/30 border-blue-400/40'
+            } border-b`}>
+              <div className="flex justify-center mb-4 sm:mb-6">
+                {getStatusIcon()}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-white">{getStatusTitle()}</h1>
+              <p className="text-base sm:text-lg text-gray-200 max-w-2xl mx-auto leading-relaxed px-2">{getStatusMessage()}</p>
+            </div>
+
+            {/* Booking Details */}
+            <div className="p-4 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8">Booking Details</h2>
             
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
               {/* Left Column */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Guest Information</h3>
-                  <div className="space-y-2">
-                    <p className="text-gray-600"><span className="font-medium">Name:</span> {booking.guest_name}</p>
-                    <p className="text-gray-600"><span className="font-medium">Email:</span> {booking.guest_email || 'Not provided'}</p>
-                    <p className="text-gray-600"><span className="font-medium">Phone:</span> {booking.guest_phone || 'Not provided'}</p>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/30 rounded-lg flex items-center justify-center">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
+                    </div>
+                    Guest Information
+                  </h3>
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-black/20 rounded-lg">
+                      <span className="text-gray-300 text-xs sm:text-sm min-w-[50px] sm:min-w-[60px]">Name:</span>
+                      <span className="text-white font-medium text-sm sm:text-base">{booking.guest_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-black/20 rounded-lg">
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-300 flex-shrink-0" />
+                      <span className="text-white text-xs sm:text-sm break-all">{booking.guest_email || 'Not provided'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-black/20 rounded-lg">
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-300 flex-shrink-0" />
+                      <span className="text-white text-xs sm:text-sm">{booking.guest_phone || 'Not provided'}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Stay Details</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="w-5 h-5 mr-3 text-blue-500" />
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/30 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
+                    </div>
+                    Stay Details
+                  </h3>
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-black/20 rounded-lg border border-white/10">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-300" />
+                      </div>
                       <div>
-                        <p className="font-medium">Check-in</p>
-                        <p>{formatDate(booking.check_in_date)}</p>
+                        <p className="text-gray-300 text-xs sm:text-sm">Check-in</p>
+                        <p className="text-white font-semibold text-sm sm:text-base">{formatDate(booking.check_in_date)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="w-5 h-5 mr-3 text-red-500" />
+                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-black/20 rounded-lg border border-white/10">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-red-300" />
+                      </div>
                       <div>
-                        <p className="font-medium">Check-out</p>
-                        <p>{formatDate(booking.check_out_date)}</p>
+                        <p className="text-gray-300 text-xs sm:text-sm">Check-out</p>
+                        <p className="text-white font-semibold text-sm sm:text-base">{formatDate(booking.check_out_date)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <Users className="w-5 h-5 mr-3 text-green-500" />
+                    <div className="flex items-center gap-4 p-4 bg-gray-800/40 rounded-lg border border-gray-600/20">
+                      <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-blue-400" />
+                      </div>
                       <div>
-                        <p className="font-medium">Guests</p>
-                        <p>{booking.number_of_guests} {booking.number_of_guests === 1 ? 'guest' : 'guests'}</p>
+                        <p className="text-gray-400 text-sm">Total Guests</p>
+                        <p className="text-white font-semibold">{booking.number_of_guests} {booking.number_of_guests === 1 ? 'guest' : 'guests'}</p>
                       </div>
                     </div>
                   </div>
@@ -255,45 +344,50 @@ function BookingConfirmationContent() {
 
               {/* Right Column */}
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Information</h3>
+                <div className="bg-gray-700/30 backdrop-blur-sm rounded-xl p-6 border border-gray-600/30">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-red-600/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-red-400" />
+                    </div>
+                    Payment Information
+                  </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Booking ID:</span>
-                      <span className="font-semibold">#{booking.id}</span>
+                    <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
+                      <span className="text-gray-400 text-sm">Booking ID:</span>
+                      <span className="font-semibold text-white">#{booking.id}</span>
                     </div>
                     {booking.payment_intent_id && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Payment ID:</span>
-                        <span className="font-mono text-sm">{booking.payment_intent_id.slice(-8)}</span>
+                      <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
+                        <span className="text-gray-400 text-sm">Payment ID:</span>
+                        <span className="font-mono text-sm text-white">{booking.payment_intent_id.slice(-8)}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Status:</span>
+                    <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
+                      <span className="text-gray-400 text-sm">Status:</span>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
+                        booking.status === 'confirmed' ? 'bg-green-600/20 text-green-400 border border-green-500/30' :
+                        booking.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400 border border-yellow-500/30' :
+                        'bg-gray-600/20 text-gray-400 border border-gray-500/30'
                       }`}>
                         {booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Pending'}
                       </span>
                     </div>
-                    <div className="border-t pt-3 mt-3">
-                      <div className="flex items-center justify-between text-xl font-bold">
-                        <span>Total Amount:</span>
-                        <span className="text-green-600">₱{booking.total_amount.toLocaleString()}</span>
+                    <div className="border-t border-gray-600/30 pt-4 mt-4">
+                      <div className="flex items-center justify-between text-xl font-bold p-4 bg-gradient-to-r from-red-600/10 to-red-700/10 rounded-lg border border-red-500/20">
+                        <span className="text-white">Total Amount:</span>
+                        <span className="text-red-400">₱{booking.total_amount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {paymentStatus === 'success' && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="bg-green-600/10 border border-green-500/30 rounded-xl p-4">
                     <div className="flex items-center mb-2">
-                      <CreditCard className="w-5 h-5 text-green-600 mr-2" />
-                      <span className="font-semibold text-green-800">Payment Confirmed</span>
+                      <CreditCard className="w-5 h-5 text-green-400 mr-2" />
+                      <span className="font-semibold text-green-400">Payment Confirmed</span>
                     </div>
-                    <p className="text-green-700 text-sm">
+                    <p className="text-green-300 text-sm">
                       Your payment has been successfully processed. You will receive a confirmation email shortly.
                     </p>
                   </div>
@@ -301,29 +395,30 @@ function BookingConfirmationContent() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => router.push('/bookings')}
-                  className="flex items-center justify-center px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  View My Bookings
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
-                
-                {paymentStatus === 'failed' && (
+              {/* Action Buttons */}
+              <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/20">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                   <button
-                    onClick={() => router.push('/book')}
-                    className="flex items-center justify-center px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors"
+                    onClick={() => router.push('/bookings')}
+                    className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg text-sm sm:text-base"
                   >
-                    Try Again
+                    View My Bookings
+                    <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
                   </button>
-                )}
+                  
+                  {paymentStatus === 'failed' && (
+                    <button
+                      onClick={() => router.push('/book')}
+                      className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg font-semibold hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg text-sm sm:text-base"
+                    >
+                      Try Again
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
@@ -332,13 +427,21 @@ function BookingConfirmationContent() {
 export default function BookingConfirmationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading booking details...</span>
-            </div>
+      <div className="min-h-screen relative">
+        <div className="fixed inset-0 z-0">
+          <Image
+            src="/pool.jpg"
+            alt="Kampo Ibayo Pool"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4b0f12]/90 via-[#7c1f23]/85 to-[#2c0a0c]/90"></div>
+        </div>
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="w-16 h-16 animate-spin text-red-500 mx-auto mb-4 drop-shadow-lg" />
+            <p className="text-white text-xl font-semibold drop-shadow">Loading booking details...</p>
           </div>
         </div>
       </div>
