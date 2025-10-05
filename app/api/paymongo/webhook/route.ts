@@ -49,6 +49,23 @@ export async function POST(request: NextRequest) {
       
       case 'payment_intent.processing':
         console.log('⏳ Processing payment_intent.processing event');
+        break;
+      
+      case 'payment_intent.cancelled':
+      case 'payment_intent.canceled':
+        console.log('🚫 Processing payment_intent.cancelled event');
+        await handlePaymentFailure(paymentIntentData);
+        break;
+      
+      case 'source.expired':
+        console.log('⏰ Processing source.expired event');
+        await handlePaymentFailure(paymentIntentData);
+        break;
+      
+      case 'source.failed':
+        console.log('❌ Processing source.failed event');
+        await handlePaymentFailure(paymentIntentData);
+        break;
         await handlePaymentProcessing(paymentIntentData);
         break;
         

@@ -9,123 +9,178 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_dates: {
+        Row: {
+          id: number
+          booking_id: number | null
+          date: string
+          status: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          booking_id?: number | null
+          date: string
+          status?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          booking_id?: number | null
+          date?: string
+          status?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_dates_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       bookings: {
         Row: {
+          id: number
+          user_id: string
+          guest_name: string
+          guest_email: string
+          guest_phone: string | null
           check_in_date: string
           check_out_date: string
-          created_at: string | null
-          guest_name: string
-          guest_email: string | null
-          guest_phone: string | null
-          id: number
           number_of_guests: number
-          phone: string | null
-          special_requests: string | null
-          status: string | null
           total_amount: number
-          user_id: string | null
+          special_requests: string | null
+          brings_pet: boolean | null
+          status: string | null
+          created_at: string | null
+          updated_at: string | null
+          cancelled_by: string | null
+          cancelled_at: string | null
+          cancellation_reason: string | null
           payment_intent_id: string | null
           payment_status: string | null
         }
         Insert: {
+          id?: number
+          user_id: string
+          guest_name: string
+          guest_email: string
+          guest_phone?: string | null
           check_in_date: string
           check_out_date: string
-          created_at?: string | null
-          guest_name: string
-          guest_email?: string | null
-          guest_phone?: string | null
-          id?: number
           number_of_guests: number
-          phone?: string | null
-          special_requests?: string | null
-          status?: string | null
           total_amount: number
-          user_id?: string | null
+          special_requests?: string | null
+          brings_pet?: boolean | null
+          status?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          cancelled_by?: string | null
+          cancelled_at?: string | null
+          cancellation_reason?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
         }
         Update: {
+          id?: number
+          user_id?: string
+          guest_name?: string
+          guest_email?: string
+          guest_phone?: string | null
           check_in_date?: string
           check_out_date?: string
-          created_at?: string | null
-          guest_name?: string
-          guest_email?: string | null
-          guest_phone?: string | null
-          id?: number
           number_of_guests?: number
-          phone?: string | null
-          special_requests?: string | null
-          status?: string | null
           total_amount?: number
-          user_id?: string | null
+          special_requests?: string | null
+          brings_pet?: boolean | null
+          status?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          cancelled_by?: string | null
+          cancelled_at?: string | null
+          cancellation_reason?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       guest_reviews: {
         Row: {
-          amenities_rating: number | null
-          anonymous: boolean | null
-          approved: boolean | null
-          booking_id: number | null
-          cleanliness_rating: number | null
-          created_at: string
-          guest_location: string | null
-          guest_name: string
           id: string
-          location_rating: number | null
-          original_submission_date: string | null
+          user_id: string
+          booking_id: number | null
+          guest_name: string
+          guest_location: string | null
           rating: number
+          review_text: string
+          approved: boolean | null
+          created_at: string
+          updated_at: string
+          cleanliness_rating: number | null
+          service_rating: number | null
+          location_rating: number | null
+          value_rating: number | null
+          amenities_rating: number | null
+          stay_dates: string | null
+          anonymous: boolean | null
           rejection_reason: string | null
           resubmission_count: number | null
-          review_text: string
-          service_rating: number | null
-          stay_dates: string | null
-          user_id: string
-          value_rating: number | null
+          original_submission_date: string | null
         }
         Insert: {
-          amenities_rating?: number | null
-          anonymous?: boolean | null
-          approved?: boolean | null
-          booking_id?: number | null
-          cleanliness_rating?: number | null
-          created_at?: string
-          guest_location?: string | null
-          guest_name: string
           id?: string
-          location_rating?: number | null
-          original_submission_date?: string | null
+          user_id: string
+          booking_id?: number | null
+          guest_name: string
+          guest_location?: string | null
           rating: number
+          review_text: string
+          approved?: boolean | null
+          created_at?: string
+          updated_at?: string
+          cleanliness_rating?: number | null
+          service_rating?: number | null
+          location_rating?: number | null
+          value_rating?: number | null
+          amenities_rating?: number | null
+          stay_dates?: string | null
+          anonymous?: boolean | null
           rejection_reason?: string | null
           resubmission_count?: number | null
-          review_text: string
-          service_rating?: number | null
-          stay_dates?: string | null
-          user_id: string
-          value_rating?: number | null
+          original_submission_date?: string | null
         }
         Update: {
-          amenities_rating?: number | null
-          anonymous?: boolean | null
-          approved?: boolean | null
-          booking_id?: number | null
-          cleanliness_rating?: number | null
-          created_at?: string
-          guest_location?: string | null
-          guest_name?: string
           id?: string
-          location_rating?: number | null
-          original_submission_date?: string | null
+          user_id?: string
+          booking_id?: number | null
+          guest_name?: string
+          guest_location?: string | null
           rating?: number
+          review_text?: string
+          approved?: boolean | null
+          created_at?: string
+          updated_at?: string
+          cleanliness_rating?: number | null
+          service_rating?: number | null
+          location_rating?: number | null
+          value_rating?: number | null
+          amenities_rating?: number | null
+          stay_dates?: string | null
+          anonymous?: boolean | null
           rejection_reason?: string | null
           resubmission_count?: number | null
-          review_text?: string
-          service_rating?: number | null
-          stay_dates?: string | null
-          user_id?: string
-          value_rating?: number | null
+          original_submission_date?: string | null
         }
         Relationships: [
           {
@@ -140,7 +195,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["auth_id"]
+            referencedColumns: ["id"]
           }
         ]
       }
@@ -150,7 +205,7 @@ export type Database = {
           is_active: boolean
           message: string
           enabled_at: string | null
-          updated_at: string
+          updated_at: string | null
           updated_by: string | null
         }
         Insert: {
@@ -158,7 +213,7 @@ export type Database = {
           is_active?: boolean
           message?: string
           enabled_at?: string | null
-          updated_at?: string
+          updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
@@ -166,7 +221,7 @@ export type Database = {
           is_active?: boolean
           message?: string
           enabled_at?: string | null
-          updated_at?: string
+          updated_at?: string | null
           updated_by?: string | null
         }
         Relationships: [
@@ -175,34 +230,34 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["auth_id"]
+            referencedColumns: ["id"]
           }
         ]
       }
       review_photos: {
         Row: {
-          id: number
+          id: string
           review_id: string
           photo_url: string
           caption: string | null
-          display_order: number
           created_at: string
+          display_order: number | null
         }
         Insert: {
-          id?: number
+          id?: string
           review_id: string
           photo_url: string
           caption?: string | null
-          display_order?: number
           created_at?: string
+          display_order?: number | null
         }
         Update: {
-          id?: number
+          id?: string
           review_id?: string
           photo_url?: string
           caption?: string | null
-          display_order?: number
           created_at?: string
+          display_order?: number | null
         }
         Relationships: [
           {
@@ -216,34 +271,124 @@ export type Database = {
       }
       users: {
         Row: {
+          id: string
+          instance_id: string | null
           auth_id: string | null
-          created_at: string | null
-          email: string
-          id: number
           name: string
-          phone: string | null
+          aud: string | null
+          email: string
           role: string | null
+          phone: string | null
+          encrypted_password: string | null
+          created_at: string | null
+          email_confirmed_at: string | null
+          invited_at: string | null
           paymongo_id: string | null
+          confirmation_token: string | null
+          confirmation_sent_at: string | null
+          recovery_token: string | null
+          recovery_sent_at: string | null
+          email_change_token_new: string | null
+          email_change: string | null
+          email_change_sent_at: string | null
+          last_sign_in_at: string | null
+          raw_app_meta_data: Json | null
+          raw_user_meta_data: Json | null
+          is_super_admin: boolean | null
+          updated_at: string | null
+          phone_confirmed_at: string | null
+          phone_change: string | null
+          phone_change_token: string | null
+          phone_change_sent_at: string | null
+          confirmed_at: string | null
+          email_change_token_current: string | null
+          email_change_confirm_status: number | null
+          banned_until: string | null
+          reauthentication_token: string | null
+          reauthentication_sent_at: string | null
+          is_sso_user: boolean
+          deleted_at: string | null
+          is_anonymous: boolean
         }
         Insert: {
+          id?: string
+          instance_id?: string | null
           auth_id?: string | null
-          created_at?: string | null
-          email: string
-          id?: number
           name: string
-          phone?: string | null
+          aud?: string | null
+          email: string
           role?: string | null
+          phone?: string | null
+          encrypted_password?: string | null
+          created_at?: string | null
+          email_confirmed_at?: string | null
+          invited_at?: string | null
           paymongo_id?: string | null
+          confirmation_token?: string | null
+          confirmation_sent_at?: string | null
+          recovery_token?: string | null
+          recovery_sent_at?: string | null
+          email_change_token_new?: string | null
+          email_change?: string | null
+          email_change_sent_at?: string | null
+          last_sign_in_at?: string | null
+          raw_app_meta_data?: Json | null
+          raw_user_meta_data?: Json | null
+          is_super_admin?: boolean | null
+          updated_at?: string | null
+          phone_confirmed_at?: string | null
+          phone_change?: string | null
+          phone_change_token?: string | null
+          phone_change_sent_at?: string | null
+          confirmed_at?: string | null
+          email_change_token_current?: string | null
+          email_change_confirm_status?: number | null
+          banned_until?: string | null
+          reauthentication_token?: string | null
+          reauthentication_sent_at?: string | null
+          is_sso_user?: boolean
+          deleted_at?: string | null
+          is_anonymous?: boolean
         }
         Update: {
+          id?: string
+          instance_id?: string | null
           auth_id?: string | null
-          created_at?: string | null
-          email?: string
-          id?: number
           name?: string
-          phone?: string | null
+          aud?: string | null
+          email?: string
           role?: string | null
+          phone?: string | null
+          encrypted_password?: string | null
+          created_at?: string | null
+          email_confirmed_at?: string | null
+          invited_at?: string | null
           paymongo_id?: string | null
+          confirmation_token?: string | null
+          confirmation_sent_at?: string | null
+          recovery_token?: string | null
+          recovery_sent_at?: string | null
+          email_change_token_new?: string | null
+          email_change?: string | null
+          email_change_sent_at?: string | null
+          last_sign_in_at?: string | null
+          raw_app_meta_data?: Json | null
+          raw_user_meta_data?: Json | null
+          is_super_admin?: boolean | null
+          updated_at?: string | null
+          phone_confirmed_at?: string | null
+          phone_change?: string | null
+          phone_change_token?: string | null
+          phone_change_sent_at?: string | null
+          confirmed_at?: string | null
+          email_change_token_current?: string | null
+          email_change_confirm_status?: number | null
+          banned_until?: string | null
+          reauthentication_token?: string | null
+          reauthentication_sent_at?: string | null
+          is_sso_user?: boolean
+          deleted_at?: string | null
+          is_anonymous?: boolean
         }
         Relationships: []
       }

@@ -1,4 +1,4 @@
-﻿"use client";
+﻿    "use client";
 
 import Link from "next/link";
 import { ArrowLeft, Phone, Mail, MessageCircle, AlertTriangle, Clock, MapPin, Shield, Users, Wifi } from "lucide-react";
@@ -194,6 +194,8 @@ export default function HelpPage() {
             </div>
           </div>
         </div>
+
+
 
         {/* Contact Methods */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">

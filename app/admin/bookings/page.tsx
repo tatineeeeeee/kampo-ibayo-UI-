@@ -4,19 +4,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Tables } from "../../../database.types";
 
-interface Booking {
-  id: number;
-  user_id: string | null;
-  guest_name: string;
-  phone: string | null;
-  check_in_date: string;
-  check_out_date: string;
-  number_of_guests: number;
-  total_amount: number;
-  status: string | null;
-  special_requests: string | null;
-  created_at: string | null;
+interface Booking extends Tables<'bookings'> {
   // Add user info to track if user still exists
   user_exists?: boolean;
 }
@@ -464,14 +454,25 @@ export default function BookingsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="p-3 text-black text-sm">No email</td>
                     <td className="p-3 text-black text-sm">
-                      {booking.phone ? (
+                      {booking.guest_email ? (
                         <a 
-                          href={`tel:${booking.phone}`}
+                          href={`mailto:${booking.guest_email}`}
                           className="text-blue-600 hover:text-blue-800 hover:underline"
                         >
-                          {booking.phone}
+                          {booking.guest_email}
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">No email</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-black text-sm">
+                      {booking.guest_phone ? (
+                        <a
+                          href={`tel:${booking.guest_phone}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          {booking.guest_phone}
                         </a>
                       ) : (
                         <span className="text-gray-400">No phone</span>
@@ -668,16 +669,24 @@ export default function BookingsPage() {
                 {/* Contact Information */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-3">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">Contact Information</h4>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Guest Name</p>
                       <p className="text-gray-800 font-medium">{selectedBooking.guest_name}</p>
                     </div>
-                    {selectedBooking.phone && (
+                    {selectedBooking.guest_email && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Email</p>
+                        <a href={`mailto:${selectedBooking.guest_email}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                          {selectedBooking.guest_email}
+                        </a>
+                      </div>
+                    )}
+                    {selectedBooking.guest_phone && (
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Phone</p>
-                        <a href={`tel:${selectedBooking.phone}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
-                          {selectedBooking.phone}
+                        <a href={`tel:${selectedBooking.guest_phone}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                          {selectedBooking.guest_phone}
                         </a>
                       </div>
                     )}

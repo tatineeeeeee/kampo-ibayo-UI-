@@ -28,6 +28,9 @@ interface SimpleBooking {
   status: string | null;
   created_at: string | null;
   number_of_guests: number;
+  cancelled_by: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
 }
 
 const REPORT_TYPES = [
@@ -67,7 +70,9 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  );
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedReport, setSelectedReport] = useState(REPORT_TYPES[0]);
@@ -78,10 +83,10 @@ export default function ReportsPage() {
     try {
       let query = supabase
         .from('bookings')
-        .select('id, guest_name, guest_email, guest_phone, check_in_date, check_out_date, total_amount, status, created_at, number_of_guests')
-        .gte('check_in_date', startDate)
-        .lte('check_out_date', endDate + 'T23:59:59')
-        .order('check_in_date', { ascending: false });
+        .select('id, guest_name, guest_email, guest_phone, check_in_date, check_out_date, total_amount, status, created_at, number_of_guests, cancelled_by, cancelled_at, cancellation_reason')
+        .gte('created_at', startDate + 'T00:00:00')
+        .lte('created_at', endDate + 'T23:59:59')
+        .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -290,6 +295,7 @@ export default function ReportsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Business Reports</h1>
             <p className="text-gray-800 mt-1">Real-world reports for resort operations</p>
+            <p className="text-sm text-gray-600 mt-1">📅 Filtering by booking creation date (when guests made their reservations)</p>
           </div>
           <button
             onClick={fetchBookings}
@@ -381,7 +387,7 @@ export default function ReportsPage() {
         {/* Simple Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Booking Start Date</label>
             <input
               type="date"
               value={startDate}
@@ -390,7 +396,7 @@ export default function ReportsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Booking End Date</label>
             <input
               type="date"
               value={endDate}
@@ -711,6 +717,7 @@ export default function ReportsPage() {
                   <th className="px-4 py-3 text-left font-medium text-gray-700">Check Out</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">Amount</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-700">Cancelled By</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">Booked</th>
                 </tr>
               </thead>
@@ -730,6 +737,21 @@ export default function ReportsPage() {
                       }`}>
                         {booking.status || 'Unknown'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-900">
+                      {booking.status === 'cancelled' && booking.cancelled_by ? (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          booking.cancelled_by === 'user' ? 'bg-orange-100 text-orange-800' :
+                          booking.cancelled_by === 'admin' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {booking.cancelled_by === 'user' ? 'Guest' : 
+                           booking.cancelled_by === 'admin' ? 'Admin' : 
+                           booking.cancelled_by}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-900">
                       {booking.created_at ? new Date(booking.created_at).toLocaleDateString() : 'Unknown'}

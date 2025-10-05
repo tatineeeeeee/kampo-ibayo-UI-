@@ -119,7 +119,7 @@ function BookingConfirmationContent() {
                     const { error: updateError } = await supabase
                       .from('bookings')
                       .update({
-                        status: 'payment_failed',
+                        status: 'cancelled',  // ✅ Use 'cancelled' instead of 'payment_failed'
                         payment_status: 'failed',
                         updated_at: new Date().toISOString()
                       })
@@ -206,7 +206,7 @@ function BookingConfirmationContent() {
       case 'checking':
         return 'Please wait while we verify your payment status...';
       case 'pending':
-        return 'Your payment is still being processed. We will update you once it\'s complete.';
+        return 'Your payment is still being processed. If you got stuck during checkout or need to verify your payment status, use our payment checker below.';
       default:
         return 'Processing your request...';
     }

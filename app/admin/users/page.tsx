@@ -3,36 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
+import { Tables } from "../../../database.types";
 
-interface User {
-  id: number;
-  auth_id: string | null;
-  email: string;
-  name: string;
-  phone: string | null;
-  role: string | null;
-  created_at: string | null;
-}
-
-interface Booking {
-  id: number;
-  guest_name: string;
-  guest_email: string | null;
-  guest_phone: string | null;
-  check_in_date: string;
-  check_out_date: string;
-  number_of_guests: number;
-  total_amount: number;
-  status: string | null;
-  brings_pet?: boolean | null;
-  special_requests: string | null;
-  created_at: string | null;
-  user_id: string | null;
-  phone: string | null;
-  updated_at?: string | null;
-  payment_intent_id: string | null;
-  payment_status: string | null;
-}
+type User = Tables<'users'>;
+type Booking = Tables<'bookings'>;
 
 interface UserBookingsModalProps {
   user: User;
@@ -287,7 +261,7 @@ export default function UsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const updateUserRole = async (userId: number, newRole: string) => {
+  const updateUserRole = async (userId: string, newRole: string) => {
     if (!userId || !newRole) {
       warning('Invalid user data');
       return;
@@ -320,7 +294,7 @@ export default function UsersPage() {
     }
   };
 
-  const deleteUser = async (userId: number) => {
+  const deleteUser = async (userId: string) => {
     if (!userId) {
       warning('Invalid user ID');
       return;

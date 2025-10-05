@@ -18,15 +18,7 @@ import { useToast } from "../components/Toast";
 import { Tables } from '../../database.types';
 import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaCommentDots } from "react-icons/fa";
 
-type DatabaseBooking = Tables<'bookings'>;
-
-interface Booking extends DatabaseBooking {
-  // Add any additional properties that might exist in the local interface
-  brings_pet?: boolean | null;
-  cancelled_by?: string | null;
-  cancelled_at?: string | null;
-  cancellation_reason?: string | null;
-}
+type Booking = Tables<'bookings'>;
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
