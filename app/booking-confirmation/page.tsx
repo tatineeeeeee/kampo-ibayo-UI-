@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Calendar, Users, CreditCard, ArrowRight } from 'lucide-react';
 import { supabase } from '@/app/supabaseClient';
@@ -19,7 +19,7 @@ interface BookingDetails {
   payment_intent_id: string | null;
 }
 
-export default function BookingConfirmationPage() {
+function BookingConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
@@ -29,13 +29,18 @@ export default function BookingConfirmationPage() {
 
   // Get URL parameters
   const bookingId = searchParams.get('booking_id');
-  const paymentIntentId = searchParams.get('payment_intent_id');
+  const paymentIntentId = searchParams.get('payment_intent_id'); // For future webhook validation
 
   useEffect(() => {
     if (!bookingId) {
       setError('No booking ID provided');
       setLoading(false);
       return;
+    }
+
+    // Log payment intent ID for debugging
+    if (paymentIntentId) {
+      console.log('Payment Intent ID:', paymentIntentId);
     }
 
     const fetchBookingDetails = async () => {
@@ -103,7 +108,7 @@ export default function BookingConfirmationPage() {
     };
 
     fetchBookingDetails();
-  }, [bookingId]);
+  }, [bookingId, paymentIntentId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -321,5 +326,24 @@ export default function BookingConfirmationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Loading booking details...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <BookingConfirmationContent />
+    </Suspense>
   );
 }
