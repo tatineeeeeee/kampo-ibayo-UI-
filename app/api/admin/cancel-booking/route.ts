@@ -41,43 +41,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare email data
-    const emailBookingDetails: BookingDetails = {
-      bookingId: booking.id.toString(),
-      guestName: booking.guest_name,
-      checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      guests: booking.number_of_guests,
-      totalAmount: booking.total_amount,
-      email: booking.guest_email,
-    };
+    // Send cancellation email to guest (only if email exists)
+    if (booking.guest_email) {
+      const emailBookingDetails: BookingDetails = {
+        bookingId: booking.id.toString(),
+        guestName: booking.guest_name,
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        guests: booking.number_of_guests,
+        totalAmount: booking.total_amount,
+        email: booking.guest_email,
+      };
 
-    // Send cancellation email to guest
-    const cancellationEmail = createBookingCancelledEmail(emailBookingDetails);
-    const emailResult = await sendEmail(cancellationEmail);
+      const cancellationEmail = createBookingCancelledEmail(emailBookingDetails);
+      const emailResult = await sendEmail(cancellationEmail);
 
-    if (emailResult.success) {
+      if (emailResult.success) {
+        return NextResponse.json({
+          success: true,
+          message: 'Booking cancelled and notification email sent',
+          messageId: emailResult.messageId,
+        });
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: 'Booking cancelled but email failed to send',
+          emailError: emailResult.error,
+        }, { status: 500 });
+      }
+    } else {
+      // No email available, but booking was still cancelled successfully
       return NextResponse.json({
         success: true,
-        message: 'Booking cancelled and notification email sent',
-        messageId: emailResult.messageId,
+        message: 'Booking cancelled successfully (no email on file)',
       });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: 'Booking cancelled but email failed to send',
-        emailError: emailResult.error,
-      }, { status: 500 });
     }
 
   } catch (error) {
