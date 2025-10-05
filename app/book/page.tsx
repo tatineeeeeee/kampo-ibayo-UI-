@@ -543,14 +543,110 @@ function BookingPage() {
         setIsSubmitting(false);
         showError('Booking Failed', `Error creating booking: ${error.message || 'Unknown error'}. Please try again.`);
       } else {
-        // Show immediate success - don't wait for email
-        setIsSubmitting(false);
-        success('Reservation Confirmed!', 'Your booking has been submitted successfully. Check-in: 2 PM, Check-out: 12 PM');
+        // Booking created successfully, now process payment with PayMongo
+        console.log('Booking created successfully:', data);
         
-        // Redirect to bookings page immediately
-        setTimeout(() => {
-          router.push('/bookings');
-        }, 1500);
+        try {
+          // Step 1: Create Payment Intent
+          const paymentIntentResponse = await fetch('/api/paymongo/create-payment-intent', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              amount: totalAmount * 100, // Convert to centavos
+              bookingId: data.id,
+            }),
+          });
+
+          const paymentIntentData = await paymentIntentResponse.json();
+          
+          if (!paymentIntentResponse.ok) {
+            throw new Error(paymentIntentData.error || 'Failed to create payment intent');
+          }
+
+          console.log('Payment intent created:', paymentIntentData);
+
+          // Step 2: Create Payment Method  
+          const paymentMethodResponse = await fetch('/api/paymongo/create-payment-method', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              type: 'gcash', // or 'card' depending on preference
+            }),
+          });
+
+          const paymentMethodData = await paymentMethodResponse.json();
+          
+          if (!paymentMethodResponse.ok) {
+            throw new Error(paymentMethodData.error || 'Failed to create payment method');
+          }
+
+          console.log('Payment method created:', paymentMethodData);
+
+          // Step 3: Attach Payment Method to Intent
+          const attachResponse = await fetch('/api/paymongo/attach-payment-intent', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              payment_intent_id: paymentIntentData.data.id,
+              payment_method_id: paymentMethodData.data.id,
+              bookingId: data.id,
+            }),
+          });
+
+          const attachData = await attachResponse.json();
+          
+          if (!attachResponse.ok) {
+            throw new Error(attachData.error || 'Failed to attach payment method');
+          }
+
+          console.log('Payment attached successfully:', attachData);
+
+          // Update booking with payment intent ID
+          const { error: updateError } = await supabase
+            .from('bookings')
+            .update({ 
+              payment_intent_id: paymentIntentData.data.id,
+              payment_status: 'processing'
+            })
+            .eq('id', data.id);
+
+          if (updateError) {
+            console.error('Error updating booking with payment info:', updateError);
+          }
+
+          // Redirect to PayMongo checkout URL
+          if (attachData.data.attributes.next_action?.redirect?.url) {
+            setIsSubmitting(false);
+            success('Redirecting to Payment', 'Please complete your payment to confirm the booking.');
+            
+            // Redirect to PayMongo checkout
+            window.location.href = attachData.data.attributes.next_action.redirect.url;
+          } else {
+            throw new Error('No checkout URL received from PayMongo');
+          }
+
+        } catch (paymentError) {
+          console.error('Payment processing error:', paymentError);
+          setIsSubmitting(false);
+          
+          // Show error but don't cancel the booking - user can try payment later
+          showError('Payment Error', 
+            `Booking created but payment failed: ${paymentError instanceof Error ? paymentError.message : 'Unknown error'}. ` + 
+            'Please contact us or try booking again.'
+          );
+          
+          // Still redirect to bookings page after a delay so user can see their booking
+          setTimeout(() => {
+            router.push('/bookings');
+          }, 3000);
+        }
 
         // Send confirmation emails in the background (non-blocking)
         const sendEmailInBackground = async () => {
