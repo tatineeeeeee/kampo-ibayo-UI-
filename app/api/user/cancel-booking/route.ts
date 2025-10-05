@@ -60,41 +60,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare email data
-    const emailBookingDetails: BookingDetails = {
-      bookingId: booking.id.toString(),
-      guestName: booking.guest_name,
-      checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      guests: booking.number_of_guests,
-      totalAmount: booking.total_amount,
-      email: booking.guest_email,
-    };
+    // Send email notifications only if guest has an email address
+    let guestEmailResult: { success: boolean; messageId?: string; error?: string } = { success: true };
+    let adminEmailResult: { success: boolean; messageId?: string; error?: string } = { success: true };
 
-    // Send confirmation email to guest
-    const guestEmail = createUserCancellationEmail(emailBookingDetails);
-    const guestEmailResult = await sendEmail(guestEmail);
+    if (booking.guest_email && booking.guest_email.trim()) {
+      // Prepare email data
+      const emailBookingDetails: BookingDetails = {
+        bookingId: booking.id.toString(),
+        guestName: booking.guest_name,
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        guests: booking.number_of_guests,
+        totalAmount: booking.total_amount,
+        email: booking.guest_email,
+      };
 
-    // Send notification email to admin with cancellation reason
-    const adminEmail = createUserCancellationAdminNotification(emailBookingDetails, cancellationReason);
-    const adminEmailResult = await sendEmail(adminEmail);
+      // Send confirmation email to guest
+      const guestEmail = createUserCancellationEmail(emailBookingDetails);
+      guestEmailResult = await sendEmail(guestEmail);
+
+      // Send notification email to admin with cancellation reason
+      const adminEmail = createUserCancellationAdminNotification(emailBookingDetails, cancellationReason);
+      adminEmailResult = await sendEmail(adminEmail);
+    }
 
     // Return success even if emails fail (booking cancellation is more important)
     const emailErrors = [];
-    if (!guestEmailResult.success) {
+    if (!guestEmailResult.success && guestEmailResult.error) {
       emailErrors.push(`Guest email failed: ${guestEmailResult.error}`);
     }
-    if (!adminEmailResult.success) {
+    if (!adminEmailResult.success && adminEmailResult.error) {
       emailErrors.push(`Admin email failed: ${adminEmailResult.error}`);
     }
 
