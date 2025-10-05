@@ -20,7 +20,7 @@ import { supabase } from '@/app/supabaseClient';
 interface SimpleBooking {
   id: number;
   guest_name: string;
-  guest_email: string;
+  guest_email: string | null;
   guest_phone: string | null;
   check_in_date: string;
   check_out_date: string;
@@ -152,11 +152,11 @@ export default function ReportsPage() {
         headers = ['Guest Name', 'Email', 'Phone', 'Last Visit', 'Total Stays', 'Total Spent'];
         const guestMap = new Map();
         bookings.forEach(booking => {
-          const email = booking.guest_email;
+          const email = booking.guest_email || 'No email';
           if (!guestMap.has(email)) {
             guestMap.set(email, {
               name: booking.guest_name,
-              email: booking.guest_email,
+              email: booking.guest_email || 'No email',
               phone: booking.guest_phone || 'No phone',
               lastVisit: booking.check_out_date,
               totalStays: 0,
@@ -496,7 +496,7 @@ export default function ReportsPage() {
                   <h3 className="text-gray-700 text-sm font-medium">Total Guests</h3>
                   <p className="text-3xl font-bold text-blue-600">
                     {isLoading ? '...' : (() => {
-                      const uniqueEmails = new Set(bookings.map(b => b.guest_email));
+                      const uniqueEmails = new Set(bookings.map(b => b.guest_email || 'No email'));
                       return uniqueEmails.size;
                     })()}
                   </p>
@@ -718,7 +718,7 @@ export default function ReportsPage() {
                 {currentBookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{booking.guest_name}</td>
-                    <td className="px-4 py-3 text-gray-900">{booking.guest_email}</td>
+                    <td className="px-4 py-3 text-gray-900">{booking.guest_email || 'No email'}</td>
                     <td className="px-4 py-3 text-gray-900">{new Date(booking.check_in_date).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-gray-900">{new Date(booking.check_out_date).toLocaleDateString()}</td>
                     <td className="px-4 py-3 font-medium text-gray-900">{formatCurrency(booking.total_amount)}</td>
