@@ -3,7 +3,7 @@ import { supabase } from "../supabaseClient";
 export interface BookingExpiration {
   id: number;
   guest_name: string;
-  guest_email: string;
+  guest_email: string | null;
   created_at: string | null;
   daysPending: number;
 }

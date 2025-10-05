@@ -597,7 +597,7 @@ export default function BookingsPage() {
                       </div>
                       <div className="px-2 sm:px-3">
                         <p className="text-gray-400 text-xs sm:text-sm">
-                          {booking.guest_name} • {booking.guest_email}
+                          {booking.guest_name} • {booking.guest_email || 'No email'}
                         </p>
                       </div>
                     </div>
@@ -939,7 +939,7 @@ export default function BookingsPage() {
                         Booking #{selectedBooking.id}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
-                        {selectedBooking.guest_name} • {selectedBooking.guest_email}
+                        {selectedBooking.guest_name} • {selectedBooking.guest_email || 'No email'}
                       </p>
                     </div>
                   </div>

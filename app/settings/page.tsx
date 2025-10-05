@@ -478,7 +478,7 @@ export default function SettingsPage() {
         const csvRows = bookings?.map(booking => [
           booking.id,
           booking.guest_name,
-          booking.guest_email,
+          booking.guest_email || 'No email',
           booking.guest_phone || '',
           booking.check_in_date,
           booking.check_out_date,
