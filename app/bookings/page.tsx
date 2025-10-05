@@ -22,10 +22,7 @@ type DatabaseBooking = Tables<'bookings'>;
 
 interface Booking extends DatabaseBooking {
   // Add any additional properties that might exist in the local interface
-  guest_email?: string;
-  guest_phone?: string | null;
   brings_pet?: boolean | null;
-  updated_at?: string | null;
   cancelled_by?: string | null;
   cancelled_at?: string | null;
   cancellation_reason?: string | null;
