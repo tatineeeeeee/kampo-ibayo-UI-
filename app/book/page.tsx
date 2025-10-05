@@ -9,6 +9,7 @@ import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
 import { useToastHelpers } from "../components/Toast";
+import { isMaintenanceMode } from "../utils/maintenanceMode";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -54,6 +55,37 @@ function BookingPage() {
       router.push("/auth");
     }
   }, [user, loading, router]);
+
+  // Maintenance mode check useEffect
+  useEffect(() => {
+    let hasShownWarning = false; // Prevent multiple warnings
+    
+    const checkMaintenanceMode = async () => {
+      try {
+        const isActive = await isMaintenanceMode();
+        
+        // Redirect to home if maintenance is active (only show warning once)
+        if (isActive && !hasShownWarning) {
+          hasShownWarning = true;
+          warning("Booking is currently disabled due to maintenance");
+          setTimeout(() => {
+            router.push("/");
+          }, 2000); // Small delay to show the warning
+        }
+      } catch (error) {
+        console.error('Error checking maintenance mode:', error);
+      }
+    };
+
+    checkMaintenanceMode();
+    
+    // Check every 3 seconds but don't show multiple warnings
+    const interval = setInterval(() => {
+      checkMaintenanceMode();
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [router, warning]);
 
   // Calculate price based on check-in date (weekday vs weekend/holiday) and guest count
   const calculatePrice = (checkInDate: Date, guestCount: number = 15) => {

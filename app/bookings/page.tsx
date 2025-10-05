@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
+import { isMaintenanceMode } from "../utils/maintenanceMode";
 import { 
   checkAndExpirePendingBookings, 
   getDaysPending, 
@@ -40,6 +41,7 @@ export default function BookingsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
   const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
+  const [maintenanceActive, setMaintenanceActive] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,6 +56,37 @@ export default function BookingsPage() {
       router.push("/auth");
     }
   }, [user, authLoading, router]);
+
+  // Load maintenance mode settings
+  useEffect(() => {
+    const checkMaintenanceMode = async () => {
+      try {
+        const isActive = await isMaintenanceMode();
+        setMaintenanceActive(isActive);
+      } catch (error) {
+        console.error('Error checking maintenance mode:', error);
+        setMaintenanceActive(false);
+      }
+    };
+
+    checkMaintenanceMode();
+    
+    // Listen for settings changes from admin panel
+    const handleSettingsChange = () => {
+      checkMaintenanceMode();
+    };
+    
+    // Check every 5 seconds for maintenance mode changes
+    const interval = setInterval(checkMaintenanceMode, 5000);
+    
+    // Listen for custom events from admin settings
+    window.addEventListener('maintenanceSettingsChanged', handleSettingsChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('maintenanceSettingsChanged', handleSettingsChange);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadBookings() {
@@ -389,12 +422,22 @@ export default function BookingsPage() {
                 <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Manage your reservations</p>
               </div>
             </div>
-            <Link href="/book" className="flex-shrink-0" prefetch={true}>
-              <button className="flex items-center gap-1 sm:gap-2 bg-red-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition">
-                <FaPlus className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">New </span>Book
-              </button>
-            </Link>
+            {maintenanceActive ? (
+              <div className="flex-shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed">
+                  <FaPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">New </span>Book
+                  <span className="text-xs">(Disabled)</span>
+                </div>
+              </div>
+            ) : (
+              <Link href="/book" className="flex-shrink-0" prefetch={true}>
+                <button className="flex items-center gap-1 sm:gap-2 bg-red-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition">
+                  <FaPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">New </span>Book
+                </button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -489,11 +532,22 @@ export default function BookingsPage() {
               You haven&apos;t made any reservations yet. Start planning your perfect getaway at Kampo Ibayo!
             </p>
             <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-              <Link href="/book">
-                <button className="bg-red-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-red-700 transition w-full sm:w-auto">
-                  Make Your First Booking
-                </button>
-              </Link>
+              {maintenanceActive ? (
+                <div className="bg-gray-500 text-gray-300 px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed w-full sm:w-auto text-center">
+                  Booking Temporarily Disabled
+                </div>
+              ) : (
+                <Link href="/book">
+                  <button className="bg-red-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-red-700 transition w-full sm:w-auto">
+                    Make Your First Booking
+                  </button>
+                </Link>
+              )}
+              {maintenanceActive && (
+                <p className="text-gray-400 text-xs sm:text-sm text-center">
+                  Resort is temporarily closed for maintenance. Call <a href="tel:+639452779541" className="text-orange-400 hover:text-orange-300">+63 945 277 9541</a> for assistance.
+                </p>
+              )}
               <div className="text-center">
                 <Link href="/" className="text-gray-400 hover:text-white transition text-xs sm:text-sm">
                   ← Back to Home

@@ -3,21 +3,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
+import { saveMaintenanceSettings, getMaintenanceSettings } from "../../utils/maintenanceMode";
 import type { User } from "@supabase/supabase-js";
 import { 
   User as UserIcon, 
   Mail, 
   Phone, 
-  Users, 
-  Clock, 
-  Calendar,
-  FileText,
   Settings,
-  Bell,
-  CreditCard,
-  Moon,
   Save,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -27,6 +22,10 @@ export default function SettingsPage() {
     email: "",
     phone: "",
   });
+  const [resortSettings, setResortSettings] = useState({
+    maintenance_mode: false,
+    emergency_contact: "+63 945 277 9541"
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -34,7 +33,7 @@ export default function SettingsPage() {
   const { success, error: showError } = useToastHelpers();
 
   useEffect(() => {
-    const loadAdminData = async () => {
+    const loadData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) return;
@@ -54,15 +53,36 @@ export default function SettingsPage() {
           email: userData.email || session.user.email || "",
           phone: userData.phone || "",
         });
+
+        // Load maintenance settings from database
+        const loadMaintenanceSettings = async () => {
+          try {
+            const maintenanceSettings = await getMaintenanceSettings();
+            setResortSettings(prev => ({
+              ...prev,
+              maintenance_mode: maintenanceSettings.isActive || false,
+              emergency_contact: "+63 945 277 9541" // Always provide default value
+            }));
+          } catch (error) {
+            console.error('Error loading maintenance settings:', error);
+            setResortSettings(prev => ({
+              ...prev,
+              maintenance_mode: false,
+              emergency_contact: "+63 945 277 9541"
+            }));
+          }
+        };
+        
+        loadMaintenanceSettings();
       }
       
       setLoading(false);
     };
 
-    loadAdminData();
+    loadData();
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     
@@ -98,6 +118,35 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveResortSettings = async () => {
+    setSaving(true);
+    try {
+      console.log('⚙️ Admin saving settings:', {
+        maintenance_mode: resortSettings.maintenance_mode,
+        emergency_contact: resortSettings.emergency_contact
+      }); // Debug log
+      
+      // Save maintenance settings to database (cross-device)
+      await saveMaintenanceSettings({
+        isActive: resortSettings.maintenance_mode,
+        message: "Kampo Ibayo is temporarily closed for maintenance. Please call for assistance."
+      });
+      
+      success("Resort status updated successfully! Changes are now live across all devices.");
+      
+      // Dispatch a custom event to notify other components in same session
+      if (typeof window !== 'undefined') {
+        console.log('⚙️ Dispatching maintenanceSettingsChanged event'); // Debug log
+        window.dispatchEvent(new CustomEvent('maintenanceSettingsChanged'));
+      }
+    } catch (error) {
+      console.error('⚙️ Error saving settings:', error); // Debug log
+      showError("Error updating resort status.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -107,7 +156,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-6xl mx-auto">
       {/* Page Header */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-8 text-white shadow-2xl">
         <div className="flex items-center gap-4 mb-4">
@@ -115,336 +164,156 @@ export default function SettingsPage() {
             <Settings className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Settings & Configuration</h1>
-            <p className="text-blue-100 mt-1">Manage your admin preferences and system settings</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
-            <UserIcon className="w-4 h-4" />
-            <span>Last updated: {new Date().toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
-            <Clock className="w-4 h-4" />
-            <span>{adminData.name || 'Administrator'}</span>
+            <h1 className="text-3xl font-bold">Admin Settings</h1>
+            <p className="text-blue-100 mt-1">Essential settings for Kampo Ibayo operations</p>
           </div>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Profile Settings */}
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full group">
+        {/* Admin Profile */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white shadow-lg">
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Profile Settings</h3>
-              <p className="text-sm text-gray-500">Update your personal information</p>
+              <h3 className="text-xl font-bold text-gray-900">Admin Profile</h3>
+              <p className="text-sm text-gray-700">Your administrator information</p>
             </div>
           </div>
-          <form onSubmit={handleSave} className="flex flex-col flex-1">
-            <div className="space-y-6 flex-1">
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                    <UserIcon className="w-4 h-4 text-blue-600" />
-                  </div>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={adminData.name}
-                  onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300 placeholder-gray-400"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-              
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                    <Mail className="w-4 h-4 text-blue-600" />
-                  </div>
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={adminData.email}
-                  onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300 placeholder-gray-400"
-                  placeholder="admin@example.com"
-                  required
-                />
-              </div>
-              
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                    <Phone className="w-4 h-4 text-blue-600" />
-                  </div>
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={adminData.phone}
-                  onChange={(e) => setAdminData({ ...adminData, phone: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300 placeholder-gray-400"
-                  placeholder="+63 xxx xxx xxxx"
-                />
-              </div>
+          
+          <form onSubmit={handleSaveProfile} className="space-y-6">
+            <div>
+              <label className="flex items-center gap-3 text-sm font-semibold text-gray-800 mb-3">
+                <UserIcon className="w-4 h-4 text-blue-600" />
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={adminData.name}
+                onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white text-gray-900 placeholder-gray-400"
+                placeholder="Enter your full name"
+                required
+              />
             </div>
             
-            <div className="pt-8 mt-auto">
-              <button 
-                type="submit"
-                disabled={saving}
-                className="w-full group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
-              >
-                <div className="flex items-center justify-center gap-3">
-                  {saving ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      <span>Save Profile</span>
-                    </>
-                  )}
-                </div>
-              </button>
+            <div>
+              <label className="flex items-center gap-3 text-sm font-semibold text-gray-800 mb-3">
+                <Mail className="w-4 h-4 text-blue-600" />
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={adminData.email}
+                onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white text-gray-900 placeholder-gray-400"
+                placeholder="admin@example.com"
+                required
+              />
+              <p className="text-xs text-gray-600 mt-2">
+                This is your login email. 
+                <span className="text-blue-600 font-medium"> Password changes are handled through Supabase Auth</span> - contact support if needed.
+              </p>
             </div>
+            
+            <div>
+              <label className="flex items-center gap-3 text-sm font-semibold text-gray-800 mb-3">
+                <Phone className="w-4 h-4 text-blue-600" />
+                Phone Number
+                <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+              </label>
+              <input
+                type="tel"
+                value={adminData.phone}
+                onChange={(e) => setAdminData({ ...adminData, phone: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white text-gray-900 placeholder-gray-400"
+                placeholder="+63 xxx xxx xxxx"
+              />
+              <p className="text-xs text-gray-600 mt-2">Contact number for resort operations (optional)</p>
+            </div>
+            
+            <button 
+              type="submit"
+              disabled={saving}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Profile
+                </>
+              )}
+            </button>
           </form>
         </div>
 
-        {/* System Preferences */}
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full group">
+        {/* Resort Operations */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
-              <Settings className="w-6 h-6" />
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl text-white shadow-lg">
+              <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800">System Preferences</h3>
-              <p className="text-sm text-gray-500">Configure system-wide settings</p>
+              <h3 className="text-xl font-bold text-gray-900">Resort Operations</h3>
+              <p className="text-sm text-gray-700">Temporarily close resort for maintenance or repairs</p>
             </div>
           </div>
-          <div className="flex flex-col flex-1">
-            <div className="space-y-5 flex-1">
-              <div className="group/item">
-                <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-purple-200">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-50 rounded-lg group-hover/item:bg-purple-100 transition-colors">
-                      <Bell className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800">Enable Notifications</span>
-                      <p className="text-xs text-gray-500 mt-1">Receive system alerts and updates</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      defaultChecked 
-                      aria-label="Enable notifications to receive system alerts and updates"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                  </label>
+          
+          <div className="space-y-6">
+            <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="text-sm font-semibold text-gray-900">Close Resort Temporarily</span>
+                  <p className="text-xs text-gray-700 mt-1">Stops new bookings and shows maintenance notice to visitors</p>
                 </div>
-              </div>
-              
-              <div className="group/item">
-                <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-purple-200">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-50 rounded-lg group-hover/item:bg-purple-100 transition-colors">
-                      <CreditCard className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800">Allow Online Payments</span>
-                      <p className="text-xs text-gray-500 mt-1">Enable payment processing</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      aria-label="Allow online payments and enable payment processing"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="group/item">
-                <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-purple-200">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-50 rounded-lg group-hover/item:bg-purple-100 transition-colors">
-                      <Moon className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800">Enable Dark Mode</span>
-                      <p className="text-xs text-gray-500 mt-1">Switch to dark theme</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      aria-label="Enable dark mode to switch to dark theme"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-8 mt-auto">
-              <button className="w-full group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl text-sm font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                <div className="flex items-center justify-center gap-3">
-                  <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>Save Preferences</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Booking Rules */}
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full group">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
-              <Calendar className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Booking Rules</h3>
-              <p className="text-sm text-gray-500">Configure booking limitations and policies</p>
-            </div>
-          </div>
-          <div className="flex flex-col flex-1">
-            <div className="space-y-6 flex-1">
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
-                    <Users className="w-4 h-4 text-green-600" />
-                  </div>
-                  Maximum Guests Per Booking
-                </label>
-                <input
-                  type="number"
-                  className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-green-100 focus:border-green-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300"
-                  defaultValue={10}
-                  min="1"
-                  max="50"
-                />
-              </div>
-              
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
-                    <Clock className="w-4 h-4 text-green-600" />
-                  </div>
-                  Booking Cutoff Time (hours before)
-                </label>
-                <input
-                  type="number"
-                  className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-green-100 focus:border-green-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300"
-                  defaultValue={2}
-                  min="1"
-                  max="48"
-                />
-              </div>
-              
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
-                    <Calendar className="w-4 h-4 text-green-600" />
-                  </div>
-                  Advanced Booking Days
-                </label>
-                <input
-                  type="number"
-                  className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-green-100 focus:border-green-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300"
-                  defaultValue={30}
-                  min="1"
-                  max="365"
-                />
-              </div>
-            </div>
-            
-            <div className="pt-8 mt-auto">
-              <button className="w-full group relative px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl text-sm font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                <div className="flex items-center justify-center gap-3">
-                  <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>Save Rules</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Policies */}
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full group">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Policies</h3>
-              <p className="text-sm text-gray-500">Manage terms and conditions</p>
-            </div>
-          </div>
-          <div className="flex flex-col flex-1">
-            <div className="space-y-6 flex-1">
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
-                    <FileText className="w-4 h-4 text-orange-600" />
-                  </div>
-                  Cancellation Policy
-                </label>
-                <div className="relative">
-                  <textarea
-                    className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300 resize-none placeholder-gray-400"
-                    rows={3}
-                    defaultValue="Cancellations must be made at least 24 hours before the booking date."
-                    placeholder="Enter your cancellation policy..."
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={!!resortSettings.maintenance_mode}
+                    onChange={(e) => setResortSettings({ ...resortSettings, maintenance_mode: e.target.checked })}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent rounded-xl pointer-events-none"></div>
-                </div>
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-orange-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                </label>
               </div>
               
-              <div className="group">
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
-                    <FileText className="w-4 h-4 text-orange-600" />
-                  </div>
-                  Pet Policy
-                </label>
-                <div className="relative">
-                  <textarea
-                    className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-700 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 bg-gray-50 hover:bg-white focus:bg-white transition-all duration-300 resize-none placeholder-gray-400"
-                    rows={3}
-                    defaultValue="Pets are welcome with prior notice and additional fee."
-                    placeholder="Enter your pet policy..."
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent rounded-xl pointer-events-none"></div>
+              {resortSettings.maintenance_mode && (
+                <div className="mt-3 p-3 bg-white rounded-lg border border-orange-200">
+                  <p className="text-xs text-orange-700 font-medium mb-2">⚠️ Resort is temporarily closed</p>
+                  <p className="text-xs text-gray-600">New bookings are disabled. Existing reservations remain active. Visitors will see a notice with your contact number.</p>
                 </div>
-              </div>
+              )}
             </div>
             
-            <div className="pt-8 mt-auto">
-              <button className="w-full group relative px-8 py-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-xl text-sm font-semibold hover:from-orange-700 hover:to-orange-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                <div className="flex items-center justify-center gap-3">
-                  <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>Save Policies</span>
-                </div>
-              </button>
+            <div>
+              <label className="text-sm font-semibold text-gray-800 mb-3 block">
+                Emergency Contact Number
+              </label>
+              <input
+                type="tel"
+                value={resortSettings.emergency_contact || "+63 945 277 9541"}
+                onChange={(e) => setResortSettings({ ...resortSettings, emergency_contact: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all bg-white text-gray-900 placeholder-gray-400"
+                placeholder="+63 xxx xxx xxxx"
+              />
+              <p className="text-xs text-gray-600 mt-2">This number will be shown to visitors during maintenance</p>
             </div>
+            
+            <button 
+              onClick={handleSaveResortSettings}
+              disabled={saving}
+              className="w-full px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {resortSettings.maintenance_mode ? 'Update Resort Status' : 'Save Settings'}
+            </button>
           </div>
         </div>
       </div>

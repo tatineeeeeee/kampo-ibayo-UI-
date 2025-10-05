@@ -132,6 +132,41 @@ export type Database = {
           }
         ]
       }
+      maintenance_settings: {
+        Row: {
+          id: number
+          is_active: boolean
+          message: string
+          enabled_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          is_active?: boolean
+          message?: string
+          enabled_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          is_active?: boolean
+          message?: string
+          enabled_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["auth_id"]
+          }
+        ]
+      }
       review_photos: {
         Row: {
           id: number
@@ -208,7 +243,18 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_maintenance_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      update_maintenance_status: {
+        Args: {
+          new_is_active: boolean
+          new_message: string
+          user_id?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import { useBookingStats } from "../hooks/useBookingStats";
 import { useAuth } from "../contexts/AuthContext";
+import { isMaintenanceMode } from "../utils/maintenanceMode";
 import type { User } from "@supabase/supabase-js";
 import { FaUser, FaEnvelope, FaUserTag, FaEdit, FaSignOutAlt, FaHome, FaCalendarAlt, FaClock, FaChartLine, FaStar, FaCalendarPlus, FaHistory, FaCog, FaSpinner, FaPhone } from "react-icons/fa";
 import { useToastHelpers } from "../components/Toast";
@@ -66,6 +67,7 @@ function ProfilePageContent({ user }: { user: User }) {
   const [updating, setUpdating] = useState(false);
   const [updatingPhone, setUpdatingPhone] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [maintenanceActive, setMaintenanceActive] = useState(false);
   
   // Standardized toast helpers
   const { success, error: showError, warning, info } = useToastHelpers();
@@ -98,6 +100,25 @@ function ProfilePageContent({ user }: { user: User }) {
     }
     return limited;
   };
+
+  // Maintenance mode checking
+  useEffect(() => {
+    const checkMaintenanceMode = async () => {
+      try {
+        const isActive = await isMaintenanceMode();
+        setMaintenanceActive(isActive);
+      } catch (error) {
+        console.error('Error checking maintenance mode:', error);
+      }
+    };
+
+    checkMaintenanceMode();
+    
+    // Check every 3 seconds for maintenance mode changes
+    const interval = setInterval(checkMaintenanceMode, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Removed auth state listener - it was causing tab switching issues
 
@@ -593,13 +614,23 @@ function ProfilePageContent({ user }: { user: User }) {
             Quick Actions
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <Link href="/book" className="flex items-center gap-3 p-3 sm:p-4 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-all duration-200 border border-red-600/30 group">
-              <FaCalendarPlus className="w-5 h-5 text-red-400 group-hover:text-red-300 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-white font-semibold text-sm sm:text-base">New Booking</p>
-                <p className="text-gray-400 text-xs sm:text-sm">Reserve your stay</p>
+            {maintenanceActive ? (
+              <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-600/20 rounded-lg border border-gray-600/30 opacity-50 cursor-not-allowed">
+                <FaCalendarPlus className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-gray-400 font-semibold text-sm sm:text-base">New Booking</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">Temporarily disabled</p>
+                </div>
               </div>
-            </Link>
+            ) : (
+              <Link href="/book" className="flex items-center gap-3 p-3 sm:p-4 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-all duration-200 border border-red-600/30 group">
+                <FaCalendarPlus className="w-5 h-5 text-red-400 group-hover:text-red-300 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm sm:text-base">New Booking</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">Reserve your stay</p>
+                </div>
+              </Link>
+            )}
             <Link href="/bookings" className="flex items-center gap-3 p-3 sm:p-4 bg-blue-600/20 hover:bg-blue-600/30 rounded-lg transition-all duration-200 border border-blue-600/30 group">
               <FaHistory className="w-5 h-5 text-blue-400 group-hover:text-blue-300 flex-shrink-0" />
               <div className="min-w-0">
@@ -701,12 +732,6 @@ function ProfilePageContent({ user }: { user: User }) {
                           <span className="hidden sm:inline">{booking.number_of_guests} guest{booking.number_of_guests > 1 ? 's' : ''}</span>
                           <span className="sm:hidden">{booking.number_of_guests}</span>
                         </span>
-                        {booking.brings_pet && (
-                          <span className="bg-amber-600/20 text-amber-400 px-2 py-1 rounded flex items-center gap-1">
-                            <span>🐕</span>
-                            <span className="hidden sm:inline">Pet</span>
-                          </span>
-                        )}
                       </div>
                       <p className="text-white font-bold text-xs sm:text-sm">
                         ₱{booking.total_amount.toLocaleString()}

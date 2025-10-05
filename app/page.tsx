@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { isMaintenanceMode } from "./utils/maintenanceMode";
 import { 
   ChevronUp,
   Menu, 
@@ -365,6 +366,7 @@ function Home() {
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [availabilityGuideOpen, setAvailabilityGuideOpen] = useState(true); // Open by default on desktop
+  const [maintenanceActive, setMaintenanceActive] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     console.log('🗓️ Initializing currentMonth to:', now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
@@ -698,6 +700,55 @@ function Home() {
     };
     window.addEventListener("scroll", handleBackToTopScroll);
     return () => window.removeEventListener("scroll", handleBackToTopScroll);
+  }, []);
+
+  // Load maintenance mode settings
+  useEffect(() => {
+    // Clean up old localStorage keys from testing
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('maintenanceSettings');
+      localStorage.removeItem('maintenance_settings');
+    }
+
+    let lastKnownState: boolean = false;
+
+    const checkMaintenanceMode = async () => {
+      try {
+        const isActive = await isMaintenanceMode();
+        console.log('🏠 Homepage maintenance check:', isActive, 'Previous:', lastKnownState); // Debug log
+        
+        // Only update if state actually changed
+        if (isActive !== lastKnownState) {
+          console.log('🏠 Maintenance state changed from', lastKnownState, 'to', isActive);
+          setMaintenanceActive(isActive);
+          lastKnownState = isActive;
+        }
+      } catch (error) {
+        console.error('Error checking maintenance mode:', error);
+        // Keep previous state on error
+      }
+    };
+
+    // Initial check
+    checkMaintenanceMode();
+    
+    // Listen for settings changes from admin panel (same session only)
+    const handleSettingsChange = () => {
+      console.log('🏠 Homepage received maintenance settings change event'); // Debug log
+      checkMaintenanceMode();
+    };
+    
+    // Frequent polling for cross-device updates
+    // Check every 3 seconds for database changes
+    const interval = setInterval(checkMaintenanceMode, 3000);
+    
+    // Listen for custom events from admin settings (same session only)
+    window.addEventListener('maintenanceSettingsChanged', handleSettingsChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('maintenanceSettingsChanged', handleSettingsChange);
+    };
   }, []);
 
   return (
@@ -1379,6 +1430,21 @@ function Home() {
     <div>
       <Navbar />
 
+      {/* Simple Maintenance Banner - Resort Style */}
+      {maintenanceActive && (
+        <div className="bg-orange-600 text-white py-3 px-4 shadow-lg border-b-2 border-orange-500 relative z-50">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-lg">⚠️</span>
+              <p className="font-semibold">Kampo Ibayo is temporarily closed for maintenance</p>
+            </div>
+            <p className="text-sm mt-1 text-orange-100">
+              For assistance, please call <a href="tel:+639452779541" className="font-bold text-white hover:underline">+63 945 277 9541</a> or message us on Facebook
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section
         id="home"
@@ -1412,21 +1478,38 @@ function Home() {
             
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mt-6 sm:mt-8 lg:mt-10 px-4 sm:px-0">
               <button
-                onClick={() => setShowAvailabilityModal(true)}
-                className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-green-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-green-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
+                onClick={() => !maintenanceActive && setShowAvailabilityModal(true)}
+                disabled={maintenanceActive}
+                className={`group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 rounded-full font-bold text-xs sm:text-sm lg:text-base transition-all duration-300 transform shadow-xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation ${
+                  maintenanceActive 
+                    ? 'bg-gray-500 text-gray-300 cursor-not-allowed opacity-50' 
+                    : 'bg-green-600 hover:bg-green-700 hover:scale-105 hover:shadow-2xl'
+                }`}
               >
                 <CalendarDays className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                <span className="whitespace-nowrap">Check Availability</span>
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
+                <span className="whitespace-nowrap">
+                  {maintenanceActive ? 'Temporarily Unavailable' : 'Check Availability'}
+                </span>
+                {!maintenanceActive && (
+                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
+                )}
               </button>
-              <Link
-                href="/book"
-                className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-red-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
-              >
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                <span className="whitespace-nowrap">Book Your Stay</span>
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              
+              {maintenanceActive ? (
+                <div className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-gray-500 rounded-full font-bold text-xs sm:text-sm lg:text-base text-gray-300 cursor-not-allowed opacity-50 flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation">
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  <span className="whitespace-nowrap">Booking Disabled</span>
+                </div>
+              ) : (
+                <Link
+                  href="/book"
+                  className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-red-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
+                >
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  <span className="whitespace-nowrap">Book Your Stay</span>
+                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -1558,9 +1641,15 @@ function Home() {
                   <p className="text-red-100 text-sm">22hrs • Up to 15 pax • Mon-Thu</p>
                 </div>
                 <div className="text-right">
-                  <Link href="/book" className="bg-white/90 backdrop-blur text-red-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-white transition-colors shadow-lg hover:shadow-xl transform hover:scale-105">
-                    Book Now
-                  </Link>
+                  {maintenanceActive ? (
+                    <div className="bg-gray-500 text-gray-300 px-4 py-2 rounded-xl font-bold text-sm cursor-not-allowed opacity-50">
+                      Booking Disabled
+                    </div>
+                  ) : (
+                    <Link href="/book" className="bg-white/90 backdrop-blur text-red-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-white transition-colors shadow-lg hover:shadow-xl transform hover:scale-105">
+                      Book Now
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -1575,9 +1664,15 @@ function Home() {
                   <p className="text-gray-300 text-sm">22hrs • Up to 15 pax • Fri-Sun</p>
                 </div>
                 <div className="text-right">
-                  <Link href="/book" className="bg-yellow-400/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105">
-                    Book Now
-                  </Link>
+                  {maintenanceActive ? (
+                    <div className="bg-gray-500 text-gray-300 px-4 py-2 rounded-xl font-bold text-sm cursor-not-allowed opacity-50">
+                      Booking Disabled
+                    </div>
+                  ) : (
+                    <Link href="/book" className="bg-yellow-400/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105">
+                      Book Now
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -2270,6 +2365,7 @@ function Home() {
           </div>
         </div>
       )}
+
     </div>
     </>
   );
