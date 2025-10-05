@@ -68,6 +68,13 @@ function ProfilePageContent({ user }: { user: User }) {
   const [updatingPhone, setUpdatingPhone] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [maintenanceActive, setMaintenanceActive] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+  } | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   
   // Standardized toast helpers
   const { success, error: showError, warning, info } = useToastHelpers();
@@ -100,6 +107,52 @@ function ProfilePageContent({ user }: { user: User }) {
     }
     return limited;
   };
+
+  // Fetch user profile from database
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('name, email, phone, role')
+          .eq('auth_id', user.id)
+          .single();
+          
+        if (!error && data) {
+          setUserProfile({
+            name: data.name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            role: data.role || 'user'
+          });
+        } else {
+          console.error('Error fetching user profile:', error);
+          // Fallback to auth metadata
+          setUserProfile({
+            name: user.user_metadata?.name || '',
+            email: user.email || '',
+            phone: user.user_metadata?.phone || '',
+            role: user.user_metadata?.role || 'user'
+          });
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching profile:', err);
+        // Fallback to auth metadata
+        setUserProfile({
+          name: user.user_metadata?.name || '',
+          email: user.email || '',
+          phone: user.user_metadata?.phone || '',
+          role: user.user_metadata?.role || 'user'
+        });
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   // Maintenance mode checking
   useEffect(() => {
@@ -205,6 +258,14 @@ function ProfilePageContent({ user }: { user: User }) {
       setEditingName(false);
       setNewName("");
       
+      // Update local profile state
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          name: newName.trim()
+        });
+      }
+      
       // Refresh user data
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
@@ -225,7 +286,7 @@ function ProfilePageContent({ user }: { user: User }) {
   };
 
   const handleStartEdit = () => {
-    setNewName(user?.user_metadata?.name || "");
+    setNewName(userProfile?.name || user?.user_metadata?.name || "");
     setEditingName(true);
   };
 
@@ -274,6 +335,14 @@ function ProfilePageContent({ user }: { user: User }) {
       setEditingPhone(false);
       setNewPhone("");
       
+      // Update local profile state
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          phone: newPhone.trim()
+        });
+      }
+      
       // Refresh user data
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
@@ -294,7 +363,7 @@ function ProfilePageContent({ user }: { user: User }) {
   };
 
   const handleStartPhoneEdit = () => {
-    const currentPhone = user?.user_metadata?.phone || "";
+    const currentPhone = userProfile?.phone || user?.user_metadata?.phone || "";
     const formatted = formatPhoneNumber(currentPhone);
     setNewPhone(formatted);
     setEditingPhone(true);
@@ -361,7 +430,7 @@ function ProfilePageContent({ user }: { user: User }) {
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-xl sm:text-2xl font-bold text-white truncate">
-                {user.user_metadata?.name || "User"}
+                {loadingProfile ? "Loading..." : (userProfile?.name || user.user_metadata?.name || "User")}
               </h2>
               <p className="text-sm sm:text-base text-gray-400">
                 Member since {bookingStats.memberSince || new Date(user.created_at).toLocaleDateString()}
@@ -408,11 +477,12 @@ function ProfilePageContent({ user }: { user: User }) {
                 ) : (
                   <div className="flex items-center justify-between">
                     <p className="text-white font-semibold text-sm sm:text-base truncate">
-                      {user.user_metadata?.name || "Not provided"}
+                      {loadingProfile ? "Loading..." : (userProfile?.name || user.user_metadata?.name || "Not provided")}
                     </p>
                     <button 
                       onClick={handleStartEdit}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      disabled={loadingProfile}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FaEdit className="w-4 h-4" />
                     </button>
@@ -462,11 +532,12 @@ function ProfilePageContent({ user }: { user: User }) {
                 ) : (
                   <div className="flex items-center justify-between">
                     <p className="text-white font-semibold text-sm sm:text-base truncate">
-                      {user.user_metadata?.phone || "Not provided"}
+                      {loadingProfile ? "Loading..." : (userProfile?.phone || "Not provided")}
                     </p>
                     <button 
                       onClick={handleStartPhoneEdit}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      disabled={loadingProfile}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FaEdit className="w-4 h-4" />
                     </button>
@@ -494,7 +565,7 @@ function ProfilePageContent({ user }: { user: User }) {
                   Account Type
                 </label>
                 <span className="inline-block bg-red-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shadow-md">
-                  {user.user_metadata?.role || "Guest"}
+                  {loadingProfile ? "Loading..." : (userProfile?.role || user.user_metadata?.role || "Guest")}
                 </span>
               </div>
             </div>

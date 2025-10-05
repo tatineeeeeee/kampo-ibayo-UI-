@@ -161,21 +161,60 @@ function BookingPage() {
         // Handle user data result
         if (userData.status === 'fulfilled' && userData.value.data?.user) {
           const user = userData.value.data.user;
-          const phoneNumber = user.user_metadata?.phone || 
-                             user.user_metadata?.mobile || 
-                             user.user_metadata?.phone_number || 
-                             user.phone || 
-                             "";
           
-          const userName = user.user_metadata?.name || "";
-          const userEmail = user.email || "";
-          
-          setFormData(prevData => ({
-            ...prevData,
-            name: userName || prevData.name,
-            email: userEmail || prevData.email,
-            phone: phoneNumber || prevData.phone,
-          }));
+          // Get user profile from database to get the correct phone number
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('users')
+              .select('name, email, phone')
+              .eq('auth_id', user.id)
+              .single();
+              
+            if (!profileError && profileData) {
+              // Use database data (more reliable)
+              setFormData(prevData => ({
+                ...prevData,
+                name: profileData.name || prevData.name,
+                email: profileData.email || user.email || prevData.email,
+                phone: profileData.phone || prevData.phone,
+              }));
+            } else {
+              // Fallback to auth metadata
+              const phoneNumber = user.user_metadata?.phone || 
+                                 user.user_metadata?.mobile || 
+                                 user.user_metadata?.phone_number || 
+                                 user.phone || 
+                                 "";
+              
+              const userName = user.user_metadata?.name || "";
+              const userEmail = user.email || "";
+              
+              setFormData(prevData => ({
+                ...prevData,
+                name: userName || prevData.name,
+                email: userEmail || prevData.email,
+                phone: phoneNumber || prevData.phone,
+              }));
+            }
+          } catch (err) {
+            console.error('Error fetching user profile:', err);
+            // Fallback to auth metadata
+            const phoneNumber = user.user_metadata?.phone || 
+                               user.user_metadata?.mobile || 
+                               user.user_metadata?.phone_number || 
+                               user.phone || 
+                               "";
+            
+            const userName = user.user_metadata?.name || "";
+            const userEmail = user.email || "";
+            
+            setFormData(prevData => ({
+              ...prevData,
+              name: userName || prevData.name,
+              email: userEmail || prevData.email,
+              phone: phoneNumber || prevData.phone,
+            }));
+          }
         } else {
           console.error('Error loading user data:', userData.status === 'rejected' ? userData.reason : 'No user data');
         }
@@ -379,10 +418,19 @@ function BookingPage() {
       
       // TRUE overlap: dates where guests would be there at the same time
       // Same-day turnover is allowed (checkout 12pm, new checkin 2pm same day)
+      
+      // Allow same-day turnover: if new check-in is on same day as existing check-out, it's allowed
+      const newCheckInDateStr = formatLocalDate(checkInDate);
+      const existingCheckOutDateStr = formatLocalDate(existingCheckOut);
+      
+      if (newCheckInDateStr === existingCheckOutDateStr) {
+        continue; // Skip this booking, same-day turnover is allowed
+      }
+      
       const hasOverlap = (
-        // New booking starts BEFORE existing booking ends (but not on same day)
+        // New booking starts BEFORE existing booking ends (and not same-day turnover)
         (newCheckInTime >= existingCheckInTime && newCheckInTime < existingCheckOutTime) ||
-        // New booking ends AFTER existing booking starts (but not on same day)  
+        // New booking ends AFTER existing booking starts (and not same-day turnover)  
         (newCheckOutTime > existingCheckInTime && newCheckOutTime <= existingCheckOutTime) ||
         // New booking completely encompasses existing booking
         (newCheckInTime < existingCheckInTime && newCheckOutTime > existingCheckOutTime)
