@@ -41,43 +41,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare email data
-    const emailBookingDetails: BookingDetails = {
-      bookingId: booking.id.toString(),
-      guestName: booking.guest_name,
-      checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      guests: booking.number_of_guests,
-      totalAmount: booking.total_amount,
-      email: booking.guest_email,
-    };
+    // Send confirmation email to guest (only if email exists)
+    if (booking.guest_email) {
+      const emailBookingDetails: BookingDetails = {
+        bookingId: booking.id.toString(),
+        guestName: booking.guest_name,
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        guests: booking.number_of_guests,
+        totalAmount: booking.total_amount,
+        email: booking.guest_email,
+      };
 
-    // Send confirmation email to guest
-    const confirmationEmail = createBookingConfirmedEmail(emailBookingDetails);
-    const emailResult = await sendEmail(confirmationEmail);
+      const confirmationEmail = createBookingConfirmedEmail(emailBookingDetails);
+      const emailResult = await sendEmail(confirmationEmail);
 
-    if (emailResult.success) {
+      if (emailResult.success) {
+        return NextResponse.json({
+          success: true,
+          message: 'Booking confirmed and notification email sent',
+          messageId: emailResult.messageId,
+        });
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: 'Booking confirmed but email failed to send',
+          emailError: emailResult.error,
+        }, { status: 500 });
+      }
+    } else {
+      // No email available, but booking was still confirmed successfully
       return NextResponse.json({
         success: true,
-        message: 'Booking confirmed and notification email sent',
-        messageId: emailResult.messageId,
+        message: 'Booking confirmed successfully (no email on file)',
       });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: 'Booking confirmed but email failed to send',
-        emailError: emailResult.error,
-      }, { status: 500 });
     }
 
   } catch (error) {
