@@ -68,9 +68,9 @@ function BookingConfirmationContent() {
         } else {
           setPaymentStatus('pending');
           
-          // Poll for payment status updates for up to 30 seconds
+          // Poll for payment status updates for up to 20 seconds (faster for test mode)
           let pollCount = 0;
-          const maxPolls = 15; // 30 seconds with 2-second intervals
+          const maxPolls = 10; // 20 seconds with 2-second intervals
           
           const pollPaymentStatus = setInterval(async () => {
             pollCount++;
@@ -91,8 +91,54 @@ function BookingConfirmationContent() {
                 setPaymentStatus('failed');
                 clearInterval(pollPaymentStatus);
               } else if (pollCount >= maxPolls) {
-                // Stop polling after 30 seconds
-                setPaymentStatus('pending');
+                // After 30 seconds, check PayMongo directly
+                console.log('⏰ Payment timeout - checking PayMongo directly');
+                
+                try {
+                  const statusResponse = await fetch('/api/paymongo/check-payment-status', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      payment_intent_id: updatedData?.payment_intent_id
+                    }),
+                  });
+
+                  if (statusResponse.ok) {
+                    const statusData = await statusResponse.json();
+                    console.log('✅ Got direct PayMongo status:', statusData);
+                    
+                    if (statusData.booking) {
+                      setBooking(statusData.booking);
+                      setPaymentStatus(statusData.payment_status === 'paid' ? 'success' : 
+                                     statusData.payment_status === 'failed' ? 'failed' : 'pending');
+                    }
+                  } else {
+                    // If direct check fails, mark as failed due to timeout
+                    const { error: updateError } = await supabase
+                      .from('bookings')
+                      .update({
+                        status: 'payment_failed',
+                        payment_status: 'failed',
+                        updated_at: new Date().toISOString()
+                      })
+                      .eq('id', parseInt(bookingId));
+                    
+                    if (!updateError) {
+                      setPaymentStatus('failed');
+                      setBooking(prev => prev ? {
+                        ...prev,
+                        status: 'payment_failed',
+                        payment_status: 'failed'
+                      } : null);
+                    }
+                  }
+                } catch (statusError) {
+                  console.error('❌ Status check error:', statusError);
+                  setPaymentStatus('failed');
+                }
+                
                 clearInterval(pollPaymentStatus);
               }
             }

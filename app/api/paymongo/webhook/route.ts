@@ -4,44 +4,73 @@ import { supabase } from '../../../supabaseClient';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('PayMongo Webhook received:', body);
+    console.log('🔔 PayMongo Webhook received:', JSON.stringify(body, null, 2));
 
     const { data: webhookData } = body;
     
     if (!webhookData || !webhookData.attributes) {
+      console.error('❌ Invalid webhook data structure:', body);
       return NextResponse.json({ error: 'Invalid webhook data' }, { status: 400 });
     }
 
     const eventType = webhookData.attributes.type;
     const paymentIntentData = webhookData.attributes.data;
     
-    console.log('Webhook event type:', eventType);
-    console.log('Payment Intent ID:', paymentIntentData?.id);
+    console.log('🎯 Webhook event type:', eventType);
+    console.log('💳 Payment Intent ID:', paymentIntentData?.id);
+    console.log('📊 Full payment data:', JSON.stringify(paymentIntentData, null, 2));
 
     // Handle different webhook events
     switch (eventType) {
       case 'payment.paid':
+        console.log('✅ Processing payment.paid event');
         await handlePaymentSuccess(paymentIntentData);
         break;
       
       case 'payment.failed':
+        console.log('❌ Processing payment.failed event');
         await handlePaymentFailure(paymentIntentData);
         break;
       
+      case 'source.chargeable':
+        console.log('🔄 Processing source.chargeable event');
+        // Handle when payment source becomes chargeable
+        break;
+      
       case 'payment_intent.succeeded':
+        console.log('✅ Processing payment_intent.succeeded event');
         await handlePaymentSuccess(paymentIntentData);
         break;
       
       case 'payment_intent.payment_failed':
+        console.log('❌ Processing payment_intent.payment_failed event');
         await handlePaymentFailure(paymentIntentData);
         break;
       
       case 'payment_intent.processing':
+        console.log('⏳ Processing payment_intent.processing event');
         await handlePaymentProcessing(paymentIntentData);
+        break;
+        
+      // Handle source events (for test payments that expire)
+      case 'source.failed':
+        console.log('❌ Processing source.failed event');
+        await handlePaymentFailure(paymentIntentData);
+        break;
+        
+      case 'source.cancelled':
+        console.log('❌ Processing source.cancelled event');
+        await handlePaymentFailure(paymentIntentData);
+        break;
+        
+      case 'source.expired':
+        console.log('❌ Processing source.expired event');
+        await handlePaymentFailure(paymentIntentData);
         break;
       
       default:
-        console.log('Unhandled webhook event:', eventType);
+        console.log('⚠️ Unhandled webhook event:', eventType);
+        console.log('📝 Available handlers: payment.paid, payment.failed, payment_intent.succeeded, payment_intent.payment_failed, payment_intent.processing, source.failed, source.cancelled, source.expired');
     }
 
     return NextResponse.json({ success: true });
@@ -89,26 +118,44 @@ async function handlePaymentSuccess(paymentData: { id: string; [key: string]: un
 async function handlePaymentFailure(paymentData: { id: string; [key: string]: unknown }) {
   try {
     const paymentIntentId = paymentData.id;
+    console.log('🔍 Looking for booking with payment_intent_id:', paymentIntentId);
+    
+    // First check if booking exists
+    const { data: existingBooking, error: findError } = await supabase
+      .from('bookings')
+      .select('id, status, payment_intent_id')
+      .eq('payment_intent_id', paymentIntentId)
+      .single();
+      
+    if (findError) {
+      console.error('❌ Error finding booking for payment failure:', findError);
+      console.log('🔍 Searched for payment_intent_id:', paymentIntentId);
+      return;
+    }
+    
+    console.log('📋 Found booking to update:', existingBooking);
     
     // Update booking status to payment failed
-    const { error } = await supabase
+    const { data: updatedBooking, error } = await supabase
       .from('bookings')
       .update({
         status: 'payment_failed',
         payment_status: 'failed',
         updated_at: new Date().toISOString()
       })
-      .eq('payment_intent_id', paymentIntentId);
+      .eq('payment_intent_id', paymentIntentId)
+      .select('*')
+      .single();
 
     if (error) {
-      console.error('Error updating booking on payment failure:', error);
+      console.error('❌ Error updating booking on payment failure:', error);
       return;
     }
 
-    console.log('❌ Payment failed for payment intent:', paymentIntentId);
+    console.log('✅ Successfully updated booking to payment_failed:', updatedBooking);
     
   } catch (error) {
-    console.error('Error handling payment failure:', error);
+    console.error('💥 Exception in handlePaymentFailure:', error);
   }
 }
 
