@@ -567,6 +567,12 @@ function BookingPage() {
 
           console.log('Payment intent created:', paymentIntentData);
 
+          // Validate payment intent data structure
+          if (!paymentIntentData.success || !paymentIntentData.payment_intent || !paymentIntentData.payment_intent.id) {
+            console.error('Invalid payment intent response:', paymentIntentData);
+            throw new Error('Invalid payment intent response from server');
+          }
+
           // Step 2: Create Payment Method  
           const paymentMethodResponse = await fetch('/api/paymongo/create-payment-method', {
             method: 'POST',
