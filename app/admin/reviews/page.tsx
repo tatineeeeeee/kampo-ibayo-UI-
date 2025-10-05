@@ -331,7 +331,7 @@ export default function AdminReviewsPage() {
                           </h5>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                             {review.review_photos
-                              .sort((a, b) => a.display_order - b.display_order)
+                              .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
                               .map((photo) => (
                                 <div 
                                   key={photo.id} 
@@ -340,7 +340,7 @@ export default function AdminReviewsPage() {
                                 >
                                   <Image
                                     src={photo.photo_url}
-                                    alt={photo.caption || `Review photo ${photo.display_order}`}
+                                    alt={photo.caption || `Review photo ${photo.display_order || 1}`}
                                     fill
                                     className="object-cover transition-transform group-hover:scale-105"
                                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"

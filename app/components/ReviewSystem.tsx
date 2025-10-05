@@ -335,7 +335,7 @@ const ReviewSystem = ({
               <div className="mb-4 sm:mb-6">
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {review.review_photos
-                    .sort((a, b) => a.display_order - b.display_order)
+                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
                     .slice(0, 3)
                     .map((photo) => (
                       <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg">
