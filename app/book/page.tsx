@@ -554,7 +554,7 @@ function BookingPage() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              amount: totalAmount * 100, // Convert to centavos
+              amount: totalAmount, // Send in pesos, API will convert to centavos
               bookingId: data.id,
             }),
           });

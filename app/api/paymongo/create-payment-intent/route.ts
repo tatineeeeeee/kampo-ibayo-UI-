@@ -11,6 +11,17 @@ export async function POST(request: NextRequest) {
       description = 'Kampo Ibayo Booking'
     } = body;
 
+    // Check if PayMongo secret key is available
+    if (!process.env.PAYMONGO_SECRET_KEY) {
+      console.error('PAYMONGO_SECRET_KEY environment variable is not set');
+      return NextResponse.json(
+        { error: 'PayMongo configuration error. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Creating payment intent for amount:', amount);
+
     // Create Payment Intent with PayMongo
     const response = await fetch('https://api.paymongo.com/v1/payment_intents', {
       method: 'POST',
