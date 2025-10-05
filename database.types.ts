@@ -22,6 +22,8 @@ export type Database = {
           status: string | null
           total_amount: number
           user_id: string | null
+          payment_intent_id: string | null
+          payment_status: string | null
         }
         Insert: {
           check_in_date: string
@@ -35,6 +37,8 @@ export type Database = {
           status?: string | null
           total_amount: number
           user_id?: string | null
+          payment_intent_id?: string | null
+          payment_status?: string | null
         }
         Update: {
           check_in_date?: string
@@ -48,6 +52,8 @@ export type Database = {
           status?: string | null
           total_amount?: number
           user_id?: string | null
+          payment_intent_id?: string | null
+          payment_status?: string | null
         }
         Relationships: []
       }
@@ -211,6 +217,7 @@ export type Database = {
           name: string
           phone: string | null
           role: string | null
+          paymongo_id: string | null
         }
         Insert: {
           auth_id?: string | null
@@ -220,6 +227,7 @@ export type Database = {
           name: string
           phone?: string | null
           role?: string | null
+          paymongo_id?: string | null
         }
         Update: {
           auth_id?: string | null
@@ -229,6 +237,7 @@ export type Database = {
           name?: string
           phone?: string | null
           role?: string | null
+          paymongo_id?: string | null
         }
         Relationships: []
       }
