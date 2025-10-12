@@ -62,6 +62,12 @@ export type Database = {
           cancellation_reason: string | null
           payment_intent_id: string | null
           payment_status: string | null
+          refund_id: string | null
+          refund_amount: number | null
+          refund_status: string | null
+          refund_reason: string | null
+          refund_processed_by: string | null
+          refund_processed_at: string | null
         }
         Insert: {
           id?: number
@@ -83,6 +89,12 @@ export type Database = {
           cancellation_reason?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
+          refund_id?: string | null
+          refund_amount?: number | null
+          refund_status?: string | null
+          refund_reason?: string | null
+          refund_processed_by?: string | null
+          refund_processed_at?: string | null
         }
         Update: {
           id?: number
@@ -104,6 +116,12 @@ export type Database = {
           cancellation_reason?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
+          refund_id?: string | null
+          refund_amount?: number | null
+          refund_status?: string | null
+          refund_reason?: string | null
+          refund_processed_by?: string | null
+          refund_processed_at?: string | null
         }
         Relationships: [
           {

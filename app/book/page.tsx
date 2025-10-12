@@ -595,15 +595,17 @@ function BookingPage() {
         console.log('Booking created successfully:', data);
         
         try {
-          // Step 1: Create Payment Intent
+          // Step 1: Create Payment Intent (50% down payment only)
+          const downPaymentAmount = totalAmount * 0.5; // 50% down payment
           const paymentIntentResponse = await fetch('/api/paymongo/create-payment-intent', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              amount: totalAmount, // Send in pesos, API will convert to centavos
+              amount: downPaymentAmount, // Send down payment only in pesos, API will convert to centavos
               bookingId: data.id,
+              description: `Down Payment (50%) for Kampo Ibayo Booking #${data.id} - Remaining ₱${(totalAmount - downPaymentAmount).toLocaleString()} to be paid on arrival`
             }),
           });
 
@@ -1544,11 +1546,27 @@ function BookingPage() {
                         }
                       </span>
                     </div>
-                    <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-gray-700">
-                      <span className="text-lg font-bold text-white">Total:</span>
-                      <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                        ₱{estimatedPrice.toLocaleString()}
-                      </span>
+                    <div className="pt-3 mt-2 border-t-2 border-gray-700 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold text-white">Total Amount:</span>
+                        <span className="text-xl font-bold text-gray-300">
+                          ₱{estimatedPrice.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-blue-300">Down Payment (Pay Now):</span>
+                          <span className="text-lg font-bold text-blue-300">
+                            ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-blue-200">Pay on Arrival:</span>
+                          <span className="text-sm text-blue-200">
+                            ₱{(estimatedPrice - Math.round(estimatedPrice * 0.5)).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -1578,7 +1596,7 @@ function BookingPage() {
                 </div>
               ) : canCreateBooking ? (
                 estimatedPrice 
-                  ? `🎉 Reserve Now - ₱${estimatedPrice.toLocaleString()}`
+                  ? `💳 Pay Down Payment - ₱${Math.round(estimatedPrice * 0.5).toLocaleString()}`
                   : '📅 Complete Booking Details'
               ) : (
                 '⚠️ Booking Limit Reached'

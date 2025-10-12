@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail, createBookingCancelledEmail, BookingDetails } from '@/app/utils/emailService';
+import { sendEmail, createAdminCancellationGuestEmail, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
 import { supabase } from '@/app/supabaseClient';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bookingId } = body;
+    const { bookingId, refundProcessed = false, refundAmount = 0 } = body;
 
     if (!bookingId) {
       return NextResponse.json(
@@ -28,10 +28,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update booking status to cancelled
+    // Update booking status to cancelled with additional details
+    const now = new Date();
+    const utcTime = now.getTime();
+    const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const philippinesTime = new Date(utcTime + philippinesOffset);
+
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ status: 'cancelled' })
+      .update({ 
+        status: 'cancelled',
+        cancelled_by: 'admin',
+        cancelled_at: philippinesTime.toISOString(),
+        cancellation_reason: 'Cancelled by administrator'
+      })
       .eq('id', bookingId);
 
     if (updateError) {
@@ -41,9 +51,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send cancellation email to guest (only if email exists)
+    // Send enhanced cancellation email to guest (only if email exists)
     if (booking.guest_email) {
-      const emailBookingDetails: BookingDetails = {
+      // Prepare refund details if refund was processed
+      let refundDetails: RefundDetails | undefined = undefined;
+      
+      if (refundProcessed && refundAmount > 0) {
+        const downPayment = booking.total_amount * 0.5;
+        refundDetails = {
+          refundAmount: refundAmount,
+          downPayment: downPayment,
+          refundPercentage: Math.round((refundAmount / downPayment) * 100),
+          processingDays: '5-10 business days',
+          refundReason: 'Admin cancellation'
+        };
+      }
+
+      const cancellationData: CancellationEmailData = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
         checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
@@ -61,29 +85,36 @@ export async function POST(request: NextRequest) {
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
         email: booking.guest_email,
+        cancelledBy: 'admin',
+        cancellationReason: 'Cancelled by resort administration',
+        refundDetails: refundDetails
       };
 
-      const cancellationEmail = createBookingCancelledEmail(emailBookingDetails);
+      const cancellationEmail = createAdminCancellationGuestEmail(cancellationData);
       const emailResult = await sendEmail(cancellationEmail);
 
       if (emailResult.success) {
         return NextResponse.json({
           success: true,
-          message: 'Booking cancelled and notification email sent',
+          message: refundProcessed 
+            ? `Booking cancelled and refund notification sent (₱${refundAmount.toLocaleString()})`
+            : 'Booking cancelled and notification email sent',
           messageId: emailResult.messageId,
         });
       } else {
         return NextResponse.json({
-          success: false,
-          error: 'Booking cancelled but email failed to send',
+          success: true, // Still success since booking was cancelled
+          message: 'Booking cancelled but email failed to send',
           emailError: emailResult.error,
-        }, { status: 500 });
+        });
       }
     } else {
       // No email available, but booking was still cancelled successfully
       return NextResponse.json({
         success: true,
-        message: 'Booking cancelled successfully (no email on file)',
+        message: refundProcessed 
+          ? `Booking cancelled and refund processed (₱${refundAmount.toLocaleString()}) - no email on file`
+          : 'Booking cancelled successfully (no email on file)',
       });
     }
 

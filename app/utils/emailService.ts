@@ -34,6 +34,20 @@ export interface BookingDetails {
   email: string;
 }
 
+export interface RefundDetails {
+  refundAmount: number;
+  downPayment: number;
+  refundPercentage: number;
+  processingDays: string;
+  refundReason: string;
+}
+
+export interface CancellationEmailData extends BookingDetails {
+  cancellationReason?: string;
+  cancelledBy: 'user' | 'admin';
+  refundDetails?: RefundDetails;
+}
+
 // Email sending function
 export const sendEmail = async (emailData: EmailTemplate) => {
   try {
@@ -2030,6 +2044,460 @@ export const createUserCancellationAdminNotification = (
   return {
     to: (process.env.ADMIN_EMAIL || process.env.EMAIL_FROM) as string,
     subject: `🚫 Guest Cancellation Alert: ${bookingDetails.bookingId} - ${bookingDetails.guestName}`,
+    html,
+  };
+};
+
+// Enhanced Admin-Initiated Cancellation Email (Guest Notification)
+export const createAdminCancellationGuestEmail = (cancellationData: CancellationEmailData): EmailTemplate => {
+  const { refundDetails } = cancellationData;
+  const hasRefund = refundDetails && refundDetails.refundAmount > 0;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Booking Cancellation Notice - Kampo Ibayo Resort</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #1f2937;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background: #f9fafb;
+        }
+        .container {
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e5e7eb;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 32px;
+          padding-bottom: 24px;
+          border-bottom: 2px solid #ef4444;
+        }
+        .logo {
+          font-size: 32px;
+          font-weight: 800;
+          color: #ef4444;
+          margin-bottom: 16px;
+        }
+        .cancelled-badge {
+          background: #ef4444;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 25px;
+          font-size: 16px;
+          font-weight: 700;
+          margin: 16px 0;
+          display: inline-block;
+        }
+        .refund-section {
+          background: linear-gradient(135deg, #10b981, #059669);
+          color: white;
+          padding: 24px;
+          border-radius: 12px;
+          margin: 24px 0;
+          text-align: center;
+        }
+        .refund-amount {
+          font-size: 36px;
+          font-weight: 800;
+          margin: 8px 0;
+        }
+        .refund-details {
+          background: #f0fdf4;
+          border: 2px solid #22c55e;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 16px 0;
+        }
+        .booking-details {
+          background: #f8fafc;
+          padding: 24px;
+          border-radius: 12px;
+          margin: 24px 0;
+          border: 1px solid #e2e8f0;
+        }
+        .detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin: 16px 0;
+        }
+        .detail-card {
+          background: white;
+          padding: 16px;
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+        }
+        .detail-label {
+          color: #6b7280;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+        .detail-value {
+          color: #1f2937;
+          font-weight: 600;
+          font-size: 16px;
+        }
+        .contact-section {
+          background: #fef3c7;
+          border: 2px solid #f59e0b;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 24px 0;
+          text-align: center;
+        }
+        .btn {
+          display: inline-block;
+          background: #3b82f6;
+          color: white;
+          padding: 12px 24px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          margin: 8px;
+        }
+        .btn-green { background: #10b981; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">🏖️ Kampo Ibayo Resort</div>
+          <div class="cancelled-badge">❌ BOOKING CANCELLED</div>
+          <h1 style="color: #1f2937; font-size: 28px; margin: 16px 0 8px 0;">Booking Cancellation Notice</h1>
+          <p style="color: #6b7280; margin: 0;">We regret to inform you about this cancellation</p>
+        </div>
+
+        <p style="margin-bottom: 24px;">
+          Dear ${cancellationData.guestName},
+        </p>
+        
+        <p>
+          We regret to inform you that your booking has been cancelled due to unforeseen circumstances on our end. 
+          We sincerely apologize for any inconvenience this may cause and understand how disappointing this news must be.
+        </p>
+        
+        ${cancellationData.cancellationReason ? `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <p style="margin: 0; color: #991b1b;"><strong>Reason:</strong> ${cancellationData.cancellationReason}</p>
+          </div>
+        ` : ''}
+
+        ${hasRefund ? `
+          <div class="refund-section">
+            <h3 style="margin: 0 0 8px 0; font-size: 18px;">💰 Refund Processed</h3>
+            <div class="refund-amount">₱${refundDetails!.refundAmount.toLocaleString()}</div>
+            <p style="margin: 8px 0 0 0; opacity: 0.9;">Full refund of your down payment</p>
+          </div>
+          
+          <div class="refund-details">
+            <h4 style="color: #166534; margin: 0 0 12px 0;">✅ Refund Details</h4>
+            <div style="color: #166534;">
+              <p><strong>Down Payment Paid:</strong> ₱${refundDetails!.downPayment.toLocaleString()}</p>
+              <p><strong>Refund Amount:</strong> ₱${refundDetails!.refundAmount.toLocaleString()} (${refundDetails!.refundPercentage}%)</p>
+              <p><strong>Processing Time:</strong> ${refundDetails!.processingDays}</p>
+              <p><strong>Refund Method:</strong> Original payment method (GCash/Card)</p>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="booking-details">
+          <h3 style="color: #1f2937; margin: 0 0 16px 0;">📋 Cancelled Booking Details</h3>
+          <div class="detail-grid">
+            <div class="detail-card">
+              <div class="detail-label">Booking ID</div>
+              <div class="detail-value">#${cancellationData.bookingId}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Guest Name</div>
+              <div class="detail-value">${cancellationData.guestName}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Check-in Date</div>
+              <div class="detail-value">${cancellationData.checkIn}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Check-out Date</div>
+              <div class="detail-value">${cancellationData.checkOut}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Number of Guests</div>
+              <div class="detail-value">${cancellationData.guests} guests</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Original Amount</div>
+              <div class="detail-value">₱${cancellationData.totalAmount.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-section">
+          <h4 style="color: #92400e; margin: 0 0 12px 0;">🤝 We're Here to Help</h4>
+          <p style="color: #92400e; margin: 0 0 16px 0;">
+            We would love to help you reschedule for another date or assist with alternative arrangements.
+          </p>
+          <a href="tel:+639452779541" class="btn btn-green">📞 Call Us: +63 945 277 9541</a>
+          <a href="mailto:kampoibayo@gmail.com" class="btn">📧 Email Us</a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; margin: 0;"><strong>Kampo Ibayo Resort</strong></p>
+          <p style="color: #9ca3af; font-size: 14px; margin: 4px 0 0 0;">Thank you for your understanding. We hope to welcome you in the future.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: cancellationData.email,
+    subject: `Booking Cancellation Notice - Kampo Ibayo Resort (Booking #${cancellationData.bookingId})`,
+    html,
+  };
+};
+
+// Enhanced User-Initiated Cancellation Email (User Confirmation)
+export const createUserCancellationConfirmationEmail = (cancellationData: CancellationEmailData): EmailTemplate => {
+  const { refundDetails } = cancellationData;
+  const hasRefund = refundDetails && refundDetails.refundAmount > 0;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Cancellation Confirmation - Kampo Ibayo Resort</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #1f2937;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background: #f9fafb;
+        }
+        .container {
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e5e7eb;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 32px;
+          padding-bottom: 24px;
+          border-bottom: 2px solid #3b82f6;
+        }
+        .logo {
+          font-size: 32px;
+          font-weight: 800;
+          color: #3b82f6;
+          margin-bottom: 16px;
+        }
+        .confirmed-badge {
+          background: #3b82f6;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 25px;
+          font-size: 16px;
+          font-weight: 700;
+          margin: 16px 0;
+          display: inline-block;
+        }
+        .refund-section {
+          background: linear-gradient(135deg, #10b981, #059669);
+          color: white;
+          padding: 24px;
+          border-radius: 12px;
+          margin: 24px 0;
+          text-align: center;
+        }
+        .refund-amount {
+          font-size: 36px;
+          font-weight: 800;
+          margin: 8px 0;
+        }
+        .payment-breakdown {
+          background: #f0f9ff;
+          border: 2px solid #3b82f6;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 16px 0;
+        }
+        .breakdown-row {
+          display: flex;
+          justify-content: space-between;
+          margin: 8px 0;
+          padding: 8px 0;
+        }
+        .breakdown-total {
+          border-top: 2px solid #3b82f6;
+          font-weight: 700;
+          font-size: 18px;
+        }
+        .booking-details {
+          background: #f8fafc;
+          padding: 24px;
+          border-radius: 12px;
+          margin: 24px 0;
+          border: 1px solid #e2e8f0;
+        }
+        .detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin: 16px 0;
+        }
+        .detail-card {
+          background: white;
+          padding: 16px;
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+        }
+        .detail-label {
+          color: #6b7280;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+        .detail-value {
+          color: #1f2937;
+          font-weight: 600;
+          font-size: 16px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">🏖️ Kampo Ibayo Resort</div>
+          <div class="confirmed-badge">✅ CANCELLATION CONFIRMED</div>
+          <h1 style="color: #1f2937; font-size: 28px; margin: 16px 0 8px 0;">Booking Successfully Cancelled</h1>
+          <p style="color: #6b7280; margin: 0;">Your cancellation has been processed</p>
+        </div>
+
+        <p style="margin-bottom: 24px;">
+          Dear ${cancellationData.guestName},
+        </p>
+        
+        <p>
+          Thank you for letting us know about your cancellation. Your booking has been successfully cancelled 
+          and processed according to our cancellation policy.
+        </p>
+        
+        ${cancellationData.cancellationReason ? `
+          <div style="background: #f0f9ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <p style="margin: 0; color: #1e40af;"><strong>Your Reason:</strong> ${cancellationData.cancellationReason}</p>
+          </div>
+        ` : ''}
+
+        ${hasRefund ? `
+          <div class="refund-section">
+            <h3 style="margin: 0 0 8px 0; font-size: 18px;">💰 Refund Processed</h3>
+            <div class="refund-amount">₱${refundDetails!.refundAmount.toLocaleString()}</div>
+            <p style="margin: 8px 0 0 0; opacity: 0.9;">Refund of your down payment (${refundDetails!.refundPercentage}%)</p>
+          </div>
+          
+          <div class="payment-breakdown">
+            <h4 style="color: #1e40af; margin: 0 0 16px 0;">💳 Payment Breakdown</h4>
+            <div class="breakdown-row">
+              <span>Original Booking Total:</span>
+              <span>₱${cancellationData.totalAmount.toLocaleString()}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Down Payment (Paid):</span>
+              <span>₱${refundDetails!.downPayment.toLocaleString()}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Balance (Pay on Arrival):</span>
+              <span>₱${(cancellationData.totalAmount - refundDetails!.downPayment).toLocaleString()}</span>
+            </div>
+            <div class="breakdown-row breakdown-total">
+              <span>Refund Amount (${refundDetails!.refundPercentage}%):</span>
+              <span style="color: #059669;">₱${refundDetails!.refundAmount.toLocaleString()}</span>
+            </div>
+            <p style="color: #1e40af; font-size: 14px; margin: 12px 0 0 0;">
+              <strong>Processing Time:</strong> ${refundDetails!.processingDays} to your original payment method
+            </p>
+          </div>
+        ` : `
+          <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <h4 style="color: #92400e; margin: 0 0 8px 0;">ℹ️ No Refund Applicable</h4>
+            <p style="color: #92400e; margin: 0;">
+              Based on our cancellation policy and timing, no refund is applicable for this cancellation.
+            </p>
+          </div>
+        `}
+
+        <div class="booking-details">
+          <h3 style="color: #1f2937; margin: 0 0 16px 0;">📋 Cancelled Booking Details</h3>
+          <div class="detail-grid">
+            <div class="detail-card">
+              <div class="detail-label">Booking ID</div>
+              <div class="detail-value">#${cancellationData.bookingId}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Guest Name</div>
+              <div class="detail-value">${cancellationData.guestName}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Check-in Date</div>
+              <div class="detail-value">${cancellationData.checkIn}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Check-out Date</div>
+              <div class="detail-value">${cancellationData.checkOut}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Number of Guests</div>
+              <div class="detail-value">${cancellationData.guests} guests</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Cancellation Date</div>
+              <div class="detail-value">${new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">
+          <h4 style="color: #166534; margin: 0 0 12px 0;">🌟 We Hope to See You Again!</h4>
+          <p style="color: #166534; margin: 0 0 16px 0;">
+            While we're sorry to see this booking cancelled, we'd love to welcome you to Kampo Ibayo in the future.
+          </p>
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/book" 
+             style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 8px;">
+            🏖️ Book Again
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; margin: 0;"><strong>Kampo Ibayo Resort</strong></p>
+          <p style="color: #9ca3af; font-size: 14px; margin: 4px 0 0 0;">Thank you for your understanding.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: cancellationData.email,
+    subject: `Cancellation Confirmed - Kampo Ibayo Resort (Booking #${cancellationData.bookingId})`,
     html,
   };
 };

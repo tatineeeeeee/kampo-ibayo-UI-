@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail, createUserCancellationEmail, createUserCancellationAdminNotification, BookingDetails } from '@/app/utils/emailService';
+import { sendEmail, createUserCancellationConfirmationEmail, createUserCancellationAdminNotification, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
 import { supabase } from '@/app/supabaseClient';
 
 export async function POST(request: NextRequest) {
@@ -37,6 +37,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if cancellation is allowed based on time (no cancellation within 24 hours)
+    const checkInDate = new Date(booking.check_in_date);
+    const currentTime = new Date();
+    const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursUntilCheckIn < 24) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Cancellation is not allowed within 24 hours of check-in. Please contact the resort directly for assistance.',
+          canCancel: false
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if refund should be processed (only if payment was made)
+    let refundResponse = null;
+    
+    if (booking.payment_status === 'paid' && booking.payment_intent_id) {
+      console.log('💰 Processing automatic refund for user cancellation');
+      
+      try {
+        const refundApiResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/paymongo/process-refund`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bookingId: booking.id,
+            reason: cancellationReason || 'Cancelled by guest',
+            refundType: 'partial', // Use cancellation policy
+            processedBy: 'user'
+          }),
+        });
+
+        if (refundApiResponse.ok) {
+          refundResponse = await refundApiResponse.json();
+          console.log('✅ Refund processed successfully:', refundResponse.refund_amount);
+        } else {
+          const refundError = await refundApiResponse.text();
+          console.error('❌ Refund processing failed:', refundError);
+          // Continue with cancellation even if refund fails - admin can process manually
+        }
+      } catch (refundError) {
+        console.error('❌ Refund API error:', refundError);
+        // Continue with cancellation even if refund fails
+      }
+    }
+
     // Update booking status to cancelled with user details
     const now = new Date();
     const utcTime = now.getTime();
@@ -65,8 +115,33 @@ export async function POST(request: NextRequest) {
     let adminEmailResult: { success: boolean; messageId?: string; error?: string } = { success: true };
 
     if (booking.guest_email && booking.guest_email.trim()) {
-      // Prepare email data
-      const emailBookingDetails: BookingDetails = {
+      // Prepare refund details if refund was processed
+      let refundDetails: RefundDetails | undefined = undefined;
+      
+      if (refundResponse && refundResponse.refund_amount > 0) {
+        const downPayment = booking.total_amount * 0.5;
+        const checkInDate = new Date(booking.check_in_date);
+        const currentTime = new Date();
+        const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+        
+        let refundPercentage = 0;
+        if (hoursUntilCheckIn >= 48) {
+          refundPercentage = 100;
+        } else if (hoursUntilCheckIn >= 24) {
+          refundPercentage = 50;
+        }
+
+        refundDetails = {
+          refundAmount: refundResponse.refund_amount,
+          downPayment: downPayment,
+          refundPercentage: refundPercentage,
+          processingDays: '5-10 business days',
+          refundReason: 'User cancellation'
+        };
+      }
+
+      // Prepare enhanced email data
+      const cancellationData: CancellationEmailData = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
         checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
@@ -84,14 +159,17 @@ export async function POST(request: NextRequest) {
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
         email: booking.guest_email,
+        cancelledBy: 'user',
+        cancellationReason: cancellationReason,
+        refundDetails: refundDetails
       };
 
-      // Send confirmation email to guest
-      const guestEmail = createUserCancellationEmail(emailBookingDetails);
+      // Send enhanced confirmation email to guest
+      const guestEmail = createUserCancellationConfirmationEmail(cancellationData);
       guestEmailResult = await sendEmail(guestEmail);
 
-      // Send notification email to admin with cancellation reason
-      const adminEmail = createUserCancellationAdminNotification(emailBookingDetails, cancellationReason);
+      // Send notification email to admin with cancellation reason  
+      const adminEmail = createUserCancellationAdminNotification(cancellationData, cancellationReason);
       adminEmailResult = await sendEmail(adminEmail);
     }
 
@@ -104,22 +182,38 @@ export async function POST(request: NextRequest) {
       emailErrors.push(`Admin email failed: ${adminEmailResult.error}`);
     }
 
+    // Prepare response based on refund status
+    const responseData = {
+      success: true,
+      message: 'Booking cancelled successfully',
+      refund: refundResponse ? {
+        processed: true,
+        amount: refundResponse.refund_amount,
+        message: refundResponse.message
+      } : null,
+      guestEmailSent: guestEmailResult.success,
+      adminEmailSent: adminEmailResult.success,
+    };
+
     if (guestEmailResult.success && adminEmailResult.success) {
-      return NextResponse.json({
-        success: true,
-        message: 'Booking cancelled successfully and notifications sent',
-        guestMessageId: guestEmailResult.messageId,
-        adminMessageId: adminEmailResult.messageId,
-      });
+      responseData.message = refundResponse 
+        ? `Booking cancelled and refund of ₱${refundResponse.refund_amount.toLocaleString()} processed. Notifications sent.`
+        : 'Booking cancelled successfully and notifications sent';
+      return NextResponse.json(responseData);
     } else {
-      return NextResponse.json({
-        success: true,
-        message: 'Booking cancelled successfully',
-        warning: 'Some email notifications failed to send',
-        emailErrors,
-        guestEmailSent: guestEmailResult.success,
-        adminEmailSent: adminEmailResult.success,
-      });
+      responseData.message = refundResponse 
+        ? `Booking cancelled and refund of ₱${refundResponse.refund_amount.toLocaleString()} processed.`
+        : 'Booking cancelled successfully';
+      
+      if (emailErrors.length > 0) {
+        return NextResponse.json({
+          ...responseData,
+          warning: 'Some email notifications failed to send',
+          emailErrors,
+        });
+      }
+      
+      return NextResponse.json(responseData);
     }
 
   } catch (error) {

@@ -7,6 +7,7 @@ import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/app/supabaseClient';
 import Image from 'next/image';
 import Link from 'next/link';
+import { CancellationPolicy } from '@/app/components/CancellationPolicy';
 
 interface BookingDetails {
   id: number;
@@ -491,6 +492,33 @@ function BookingConfirmationContent() {
                 )}
               </div>
             </div>
+
+              {/* Cancellation Policy - Only show for successful payments */}
+              {(paymentStatus === 'success' || paymentStatus === 'pending') && booking && (
+                <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/20">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/10">
+                    <h3 className="text-lg sm:text-xl font-semibold text-white mb-4 flex items-center gap-3">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/30 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
+                      </div>
+                      Cancellation Policy
+                    </h3>
+                    <div className="bg-white rounded-xl p-4 sm:p-6">
+                      <CancellationPolicy
+                        checkInDate={booking.check_in_date}
+                        totalAmount={booking.total_amount}
+                      />
+                    </div>
+                    <div className="mt-4 p-3 sm:p-4 bg-blue-900/30 rounded-lg border border-blue-400/30">
+                      <p className="text-blue-200 text-xs sm:text-sm leading-relaxed">
+                        <strong>Good to know:</strong> You can cancel your booking anytime from your bookings page. 
+                        Refunds are automatically processed based on the timing shown above, and you&apos;ll receive 
+                        confirmation via email once processed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/20">

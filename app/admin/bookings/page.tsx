@@ -21,6 +21,7 @@ export default function BookingsPage() {
   const [adminCancellationReason, setAdminCancellationReason] = useState("");
   const [showDeletedUsers, setShowDeletedUsers] = useState(true);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [shouldRefund, setShouldRefund] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
@@ -286,7 +287,7 @@ export default function BookingsPage() {
     }
   };
 
-  const handleAdminCancelBooking = async (bookingId: number) => {
+  const handleAdminCancelBooking = async (bookingId: number, shouldRefund: boolean = false) => {
     if (!adminCancellationReason.trim()) {
       warning('Please provide a reason for cancellation');
       return;
@@ -300,19 +301,61 @@ export default function BookingsPage() {
 
     setIsProcessing(true);
     try {
-      // Use the new API route that sends email notifications
+      // Process refund first if requested and payment exists
+      let refundResponse = null;
+      const booking = bookings.find(b => b.id === bookingId);
+      
+      if (shouldRefund && booking?.payment_status === 'paid' && booking?.payment_intent_id) {
+        console.log('💰 Processing admin-initiated refund');
+        
+        try {
+          const refundApiResponse = await fetch('/api/paymongo/process-refund', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              bookingId: booking.id,
+              reason: adminCancellationReason || 'Cancelled by administrator',
+              refundType: 'full', // Admin can give full refund
+              processedBy: 'admin'
+            }),
+          });
+
+          if (refundApiResponse.ok) {
+            refundResponse = await refundApiResponse.json();
+            console.log('✅ Admin refund processed successfully:', refundResponse.refund_amount);
+          } else {
+            const refundError = await refundApiResponse.text();
+            console.error('❌ Refund processing failed:', refundError);
+            warning('Booking will be cancelled but refund failed. Please process manually.');
+          }
+        } catch (refundError) {
+          console.error('❌ Refund API error:', refundError);
+          warning('Booking will be cancelled but refund failed. Please process manually.');
+        }
+      }
+
+      // Cancel the booking
       const response = await fetch('/api/admin/cancel-booking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ bookingId }),
+        body: JSON.stringify({ 
+          bookingId,
+          refundProcessed: refundResponse ? true : false,
+          refundAmount: refundResponse?.refund_amount || 0
+        }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        success('Booking cancelled and guest notified via email');
+        const message = refundResponse 
+          ? `Booking cancelled and ₱${refundResponse.refund_amount.toLocaleString()} refund processed. Guest notified via email.`
+          : 'Booking cancelled and guest notified via email';
+        success(message);
         fetchBookings(); // Refresh the list
         closeModal();
       } else {
@@ -337,6 +380,7 @@ export default function BookingsPage() {
     setShowCancelModal(false);
     setAdminCancellationReason("");
     setShowConfirmCancel(false);
+    setShouldRefund(false);
     setIsProcessing(false);
   };
 
@@ -781,15 +825,54 @@ export default function BookingsPage() {
                           <span className="text-red-500">⚠️</span>
                           <h4 className="text-red-800 font-medium">Confirm Cancellation</h4>
                         </div>
-                        <p className="text-red-700 text-sm">
+                        <p className="text-red-700 text-sm mb-3">
                           This will permanently cancel the booking for <strong>{selectedBooking.guest_name}</strong>. 
-                          The guest will be notified.
+                          The guest will be notified via email.
                         </p>
+                        
+                        {/* Refund Option - Only show if payment was made */}
+                        {selectedBooking.payment_status === 'paid' && selectedBooking.payment_intent_id && (
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-blue-500">💰</span>
+                              <h5 className="text-blue-800 font-medium text-sm">Refund Options</h5>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="refundOption"
+                                  value="none"
+                                  checked={!shouldRefund}
+                                  onChange={() => setShouldRefund(false)}
+                                  className="text-blue-600"
+                                />
+                                <span className="text-blue-700 text-sm">Cancel without refund</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="refundOption"
+                                  value="full"
+                                  checked={shouldRefund}
+                                  onChange={() => setShouldRefund(true)}
+                                  className="text-blue-600"
+                                />
+                                <span className="text-blue-700 text-sm">
+                                  Cancel with full refund (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()})
+                                </span>
+                              </label>
+                            </div>
+                            <p className="text-blue-600 text-xs mt-2">
+                              * Refund amount is based on down payment (50% of total booking)
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-3">
                         <button 
-                          onClick={() => handleAdminCancelBooking(selectedBooking.id)}
+                          onClick={() => handleAdminCancelBooking(selectedBooking.id, shouldRefund)}
                           disabled={isProcessing}
                           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${
                             isProcessing 
@@ -800,15 +883,16 @@ export default function BookingsPage() {
                           {isProcessing ? (
                             <span className="flex items-center justify-center gap-2">
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              Cancelling...
+                              {shouldRefund ? 'Cancelling & Refunding...' : 'Cancelling...'}
                             </span>
                           ) : (
-                            'Yes, Cancel Booking'
+                            shouldRefund ? 'Cancel & Process Refund' : 'Cancel Booking Only'
                           )}
                         </button>
                         <button
                           onClick={() => {
                             setShowConfirmCancel(false);
+                            setShouldRefund(false);
                             warning('Cancellation cancelled');
                           }}
                           disabled={isProcessing}

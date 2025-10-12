@@ -769,10 +769,10 @@ export default function BookingsPage() {
           </div>
         )}
 
-      {/* Modern Cancellation Modal - Matches Confirmation Design */}
+      {/* Enhanced Cancellation Modal - Familiar Design + Policy Info */}
       {showCancelModal && selectedBooking && (
         <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-start justify-center pt-20 z-[60] p-4">
-          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/50 dark:border-gray-700/50 transform animate-in slide-in-from-top-4 fade-in duration-300">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/50 dark:border-gray-700/50 transform animate-in slide-in-from-top-4 fade-in duration-300 max-h-[90vh] overflow-y-auto">
             
             {/* Header with Icon */}
             <div className="flex items-center gap-3 p-5 pb-4">
@@ -804,28 +804,68 @@ export default function BookingsPage() {
                     }) : 'N/A'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Check-out</span>
-                  <span className="text-sm text-gray-900 dark:text-white">
-                    {selectedBooking.check_out_date ? new Date(selectedBooking.check_out_date).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric',
-                      year: 'numeric'
-                    }) : 'N/A'}
-                  </span>
-                </div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</span>
                   <span className="text-lg font-bold text-green-600 dark:text-green-400">
                     ₱{selectedBooking.total_amount.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Guests</span>
-                  <span className="text-sm text-gray-900 dark:text-white">
-                    {selectedBooking.number_of_guests} guest(s)
-                  </span>
-                </div>
+              </div>
+            </div>
+
+            {/* Refund Information - Compact Policy Integration */}
+            <div className="mx-5 mb-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Your Refund</h4>
+                {(() => {
+                  const checkIn = new Date(selectedBooking.check_in_date);
+                  const now = new Date();
+                  const hoursUntilCheckIn = (checkIn.getTime() - now.getTime()) / (1000 * 60 * 60);
+                  const downPayment = selectedBooking.total_amount * 0.5;
+                  
+                  let percentage: number;
+                  let canCancel = true;
+                  
+                  if (hoursUntilCheckIn >= 48) {
+                    percentage = 100;
+                  } else if (hoursUntilCheckIn >= 24) {
+                    percentage = 50;
+                  } else {
+                    percentage = 0;
+                    canCancel = false;
+                  }
+                  
+                  const refundAmount = Math.round(downPayment * (percentage / 100));
+                  
+                  if (!canCancel) {
+                    return (
+                      <div className="text-center">
+                        <p className="text-red-600 dark:text-red-400 font-medium text-sm">
+                          Cancellation not allowed within 24 hours
+                        </p>
+                        <p className="text-red-500 dark:text-red-400 text-xs mt-1">
+                          Please contact resort directly for assistance
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-blue-600 dark:text-blue-400">Down Payment</span>
+                        <span className="font-medium text-blue-800 dark:text-blue-300">₱{downPayment.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-blue-600 dark:text-blue-400">Refund Amount ({percentage}%)</span>
+                        <span className="text-lg font-bold text-green-600 dark:text-green-400">₱{refundAmount.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                        Time until check-in: {Math.floor(hoursUntilCheckIn)} hours
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -850,20 +890,6 @@ export default function BookingsPage() {
               </div>
             </div>
 
-            {/* Warning Notice */}
-            <div className="mx-5 mb-5">
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-3">
-                <div className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center mt-0.5 flex-shrink-0">
-                    <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full"></div>
-                  </div>
-                  <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
-                    This action cannot be undone. Your reservation will be permanently cancelled and you&apos;ll receive a confirmation email.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Action Buttons */}
             <div className="flex gap-3 p-5 pt-0">
               <button
@@ -875,18 +901,39 @@ export default function BookingsPage() {
               >
                 Keep Booking
               </button>
-              <button
-                onClick={() => handleCancelBooking(selectedBooking.id)}
-                disabled={!cancellationReason.trim()}
-                className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${
-                  cancellationReason.trim()
-                    ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-red-600/25'
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <FaTimesCircle className="w-4 h-4" />
-                Cancel Booking
-              </button>
+              {(() => {
+                const checkIn = new Date(selectedBooking.check_in_date);
+                const now = new Date();
+                const hoursUntilCheckIn = (checkIn.getTime() - now.getTime()) / (1000 * 60 * 60);
+                const canCancel = hoursUntilCheckIn >= 24;
+                
+                if (!canCancel) {
+                  return (
+                    <button
+                      disabled
+                      className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 px-4 py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <FaTimesCircle className="w-4 h-4" />
+                      Cannot Cancel
+                    </button>
+                  );
+                }
+                
+                return (
+                  <button
+                    onClick={() => handleCancelBooking(selectedBooking.id)}
+                    disabled={!cancellationReason.trim()}
+                    className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${
+                      cancellationReason.trim()
+                        ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-red-600/25'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <FaTimesCircle className="w-4 h-4" />
+                    Cancel Booking
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
