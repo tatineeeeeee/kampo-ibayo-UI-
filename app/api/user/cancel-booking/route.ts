@@ -115,24 +115,35 @@ export async function POST(request: NextRequest) {
     let adminEmailResult: { success: boolean; messageId?: string; error?: string } = { success: true };
 
     if (booking.guest_email && booking.guest_email.trim()) {
-      // Prepare refund details if refund was processed
+      // Always prepare refund details for email (even if no actual refund was processed)
       let refundDetails: RefundDetails | undefined = undefined;
       
-      if (refundResponse && refundResponse.refund_amount > 0) {
-        const downPayment = booking.total_amount * 0.5;
-        const checkInDate = new Date(booking.check_in_date);
-        const currentTime = new Date();
-        const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
-        
-        let refundPercentage = 0;
-        if (hoursUntilCheckIn >= 48) {
-          refundPercentage = 100;
-        } else if (hoursUntilCheckIn >= 24) {
-          refundPercentage = 50;
-        }
+      // Calculate what the refund would be based on timing policy
+      const downPayment = booking.total_amount * 0.5;
+      const checkInDate = new Date(booking.check_in_date);
+      const currentTime = new Date();
+      const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+      
+      let refundPercentage = 0;
+      let refundAmount = 0;
+      
+      if (hoursUntilCheckIn >= 48) {
+        refundPercentage = 100;
+        refundAmount = downPayment;
+      } else if (hoursUntilCheckIn >= 24) {
+        refundPercentage = 50;
+        refundAmount = downPayment * 0.5;
+      }
 
+      // Use actual refund amount if processed, otherwise use calculated amount
+      if (refundResponse && refundResponse.refund_amount > 0) {
+        refundAmount = refundResponse.refund_amount;
+      }
+
+      // Only include refund details if there should be a refund
+      if (refundAmount > 0) {
         refundDetails = {
-          refundAmount: refundResponse.refund_amount,
+          refundAmount: refundAmount,
           downPayment: downPayment,
           refundPercentage: refundPercentage,
           processingDays: '5-10 business days',
@@ -165,12 +176,37 @@ export async function POST(request: NextRequest) {
       };
 
       // Send enhanced confirmation email to guest
+      console.log('📧 Sending cancellation confirmation email to:', booking.guest_email);
       const guestEmail = createUserCancellationConfirmationEmail(cancellationData);
       guestEmailResult = await sendEmail(guestEmail);
+      console.log('📤 Guest email result:', guestEmailResult);
 
       // Send notification email to admin with cancellation reason  
-      const adminEmail = createUserCancellationAdminNotification(cancellationData, cancellationReason);
+      console.log('🚨 Sending admin notification email');
+      const adminBookingDetails = {
+        bookingId: booking.id.toString(),
+        guestName: booking.guest_name,
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        guests: booking.number_of_guests,
+        totalAmount: booking.total_amount,
+        email: booking.guest_email
+      };
+      const adminEmail = createUserCancellationAdminNotification(adminBookingDetails, cancellationReason);
       adminEmailResult = await sendEmail(adminEmail);
+      console.log('📤 Admin email result:', adminEmailResult);
+    } else {
+      console.log('⚠️ No email sent - guest_email is missing or empty:', booking.guest_email);
     }
 
     // Return success even if emails fail (booking cancellation is more important)

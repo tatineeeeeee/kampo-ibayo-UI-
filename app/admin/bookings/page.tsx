@@ -526,7 +526,12 @@ export default function BookingsPage() {
                     <td className="p-3 text-black">{formatDate(booking.check_in_date)}</td>
                     <td className="p-3 text-black">{formatDate(booking.check_out_date)}</td>
                     <td className="p-3 text-black">{booking.number_of_guests}</td>
-                    <td className="p-3 text-black font-medium">₱{booking.total_amount.toLocaleString()}</td>
+                    <td className="p-3 text-black">
+                      <div className="font-medium">₱{booking.total_amount.toLocaleString()}</div>
+                      <div className="text-xs text-gray-600">
+                        ₱{Math.round(booking.total_amount * 0.5).toLocaleString()} paid • ₱{Math.round(booking.total_amount * 0.5).toLocaleString()} due
+                      </div>
+                    </td>
                     <td className="p-3">
                       <span className={`px-2 py-1 rounded-md text-xs text-white ${getStatusColor(booking.status || 'pending')}`}>
                         {booking.status || 'pending'}
@@ -706,8 +711,55 @@ export default function BookingsPage() {
                     <p className="font-semibold text-gray-800">{selectedBooking.number_of_guests} people</p>
                   </div>
                   <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <p className="text-xs text-yellow-600 font-medium mb-1">Total Amount</p>
+                    <p className="text-xs text-yellow-600 font-medium mb-1">Total Booking Value</p>
                     <p className="font-semibold text-green-600">₱{selectedBooking.total_amount.toLocaleString()}</p>
+                    <div className="mt-2 text-xs text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Down Payment:</span>
+                        <span className="font-medium text-green-700">₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Pay on Arrival:</span>
+                        <span className="font-medium text-orange-700">₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Status Information */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-3">
+                  <h4 className="text-sm font-semibold text-blue-700 mb-3">💳 Payment Information</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Payment Status:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedBooking.payment_status === 'paid' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {selectedBooking.payment_status || 'pending'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Amount Collected:</span>
+                      <span className="font-semibold text-green-700">
+                        {selectedBooking.payment_status === 'paid' 
+                          ? `₱${Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}` 
+                          : '₱0'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Balance Due (F2F):</span>
+                      <span className="font-semibold text-orange-700">
+                        ₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Revenue Value:</span>
+                      <span className="font-bold text-blue-700">
+                        ₱{selectedBooking.total_amount.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -859,12 +911,12 @@ export default function BookingsPage() {
                                   className="text-blue-600"
                                 />
                                 <span className="text-blue-700 text-sm">
-                                  Cancel with full refund (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()})
+                                  Cancel with full down payment refund (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()})
                                 </span>
                               </label>
                             </div>
                             <p className="text-blue-600 text-xs mt-2">
-                              * Refund amount is based on down payment (50% of total booking)
+                              * Only down payment (50%) is refundable. F2F balance (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}) was never charged.
                             </p>
                           </div>
                         )}
