@@ -142,41 +142,79 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
         </div>
       )}
 
-      {/* Policy Details */}
-      <div className="bg-gray-50 rounded-lg p-4">
+      {/* Policy Details - Enhanced Professional UI */}
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <button
           onClick={() => setShowPolicy(!showPolicy)}
-          className="flex items-center gap-2 text-gray-900 hover:text-black transition-colors"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+          type="button"
         >
-          <Info className="w-4 h-4" />
-          <span className="text-sm font-medium">View Cancellation Policy</span>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Info className="w-4 h-4 text-blue-600" />
+            </div>
+            <span className="text-sm font-semibold text-gray-900">Cancellation Policy Details</span>
+          </div>
+          <div className={`transform transition-transform duration-200 ${showPolicy ? 'rotate-180' : 'rotate-0'}`}>
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </button>
         
-        {showPolicy && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <h4 className="text-sm font-semibold text-gray-900 mb-2">Refund Policy (Down Payment Only):</h4>
-            <div className="space-y-2 text-sm text-gray-900">
-              <div className="flex justify-between">
-                <span>48+ hours before check-in:</span>
-                <span className="font-medium text-green-800">100% down payment refund</span>
+        <div className={`transition-all duration-300 ease-in-out ${showPolicy ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+          <div className="px-4 pb-4">
+            <div className="pt-2 border-t border-gray-100">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Refund Policy Structure</h4>
+              
+              {/* Policy Table */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-green-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-700">48+ hours before check-in</span>
+                    </div>
+                    <span className="text-sm font-semibold text-green-700">100% refund</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-yellow-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span className="text-sm text-gray-700">24-48 hours before</span>
+                    </div>
+                    <span className="text-sm font-semibold text-yellow-700">50% refund</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-red-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span className="text-sm text-gray-700">Less than 24 hours</span>
+                    </div>
+                    <span className="text-sm font-semibold text-red-700">No refund</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>24-48 hours before:</span>
-                <span className="font-medium text-yellow-800">50% down payment refund</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Less than 24 hours:</span>
-                <span className="font-medium text-red-800">No refund - Contact resort</span>
+              
+              {/* Important Notes */}
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Info className="w-3 h-3 text-blue-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-blue-900">Important Information:</p>
+                    <p className="text-xs text-blue-800">
+                      • Only the down payment (50% of total booking) is refundable<br/>
+                      • Remaining 50% is paid upon arrival at the resort<br/>
+                      • Refunds processed within 5-10 business days to original payment method
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
-              <strong>Note:</strong> Only the down payment (50% of total) is refundable. The remaining 50% is paid on arrival at the resort.
-            </div>
-            <p className="text-xs text-gray-800 mt-2">
-              Refunds will be processed within 5-10 business days to your original payment method.
-            </p>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Confirm Button */}
