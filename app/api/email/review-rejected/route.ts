@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
               <!-- Call to Action -->
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://kampoibayo.com'}/review" 
+                <a href="${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://kampoibayo.com'}/review" 
                    style="background-color: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
                   Update My Review
                 </a>

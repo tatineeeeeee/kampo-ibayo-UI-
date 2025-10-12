@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../supabaseClient';
+import { getApiBaseUrl } from '@/app/utils/config';
 
 export async function POST(request: NextRequest) {
   try {
@@ -240,7 +241,7 @@ async function sendConfirmationEmail(booking: { id: number; guest_name: string; 
       email: guestEmail,
     };
 
-    const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/email/booking-confirmation`, {
+    const emailResponse = await fetch(`${getApiBaseUrl()}/api/email/booking-confirmation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

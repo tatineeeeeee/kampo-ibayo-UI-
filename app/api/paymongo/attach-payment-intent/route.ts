@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBaseUrl } from '@/app/utils/config';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { payment_intent_id, payment_method_id, bookingId } = body;
     
-    // Create return URL with booking ID
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Create return URL with booking ID - use consistent base URL helper
+    const baseUrl = getBaseUrl();
     const return_url = `${baseUrl}/booking-confirmation?booking_id=${bookingId}&payment_intent_id=${payment_intent_id}`;
 
     if (!payment_intent_id || !payment_method_id) {
