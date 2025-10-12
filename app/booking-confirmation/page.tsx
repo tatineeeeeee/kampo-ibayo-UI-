@@ -213,7 +213,11 @@ function BookingConfirmationContent() {
   const getStatusTitle = () => {
     switch (paymentStatus) {
       case 'success':
-        return 'Payment Successful!';
+        if (booking?.status === 'confirmed') {
+          return 'Booking Confirmed!';
+        } else {
+          return 'Payment Successful - Pending Approval';
+        }
       case 'failed':
         return 'Payment Failed';
       case 'checking':
@@ -228,7 +232,11 @@ function BookingConfirmationContent() {
   const getStatusMessage = () => {
     switch (paymentStatus) {
       case 'success':
-        return 'Your booking has been confirmed and payment processed successfully. You will receive a confirmation email shortly.';
+        if (booking?.status === 'confirmed') {
+          return 'Your booking has been confirmed by our admin team and payment processed successfully. You will receive a confirmation email shortly.';
+        } else {
+          return 'Payment successful! Your booking is now pending admin approval. You will be notified once confirmed.';
+        }
       case 'failed':
         return 'Your payment could not be processed. This might be due to insufficient funds, expired test card, or payment timeout. Please try booking again.';
       case 'checking':
@@ -456,13 +464,28 @@ function BookingConfirmationContent() {
                 </div>
 
                 {paymentStatus === 'success' && (
-                  <div className="bg-green-600/10 border border-green-500/30 rounded-xl p-4">
+                  <div className={`border rounded-xl p-4 ${
+                    booking?.status === 'confirmed' 
+                      ? 'bg-green-600/10 border-green-500/30' 
+                      : 'bg-yellow-600/10 border-yellow-500/30'
+                  }`}>
                     <div className="flex items-center mb-2">
-                      <CreditCard className="w-5 h-5 text-green-400 mr-2" />
-                      <span className="font-semibold text-green-400">Payment Confirmed</span>
+                      <CreditCard className={`w-5 h-5 mr-2 ${
+                        booking?.status === 'confirmed' ? 'text-green-400' : 'text-yellow-400'
+                      }`} />
+                      <span className={`font-semibold ${
+                        booking?.status === 'confirmed' ? 'text-green-400' : 'text-yellow-400'
+                      }`}>
+                        {booking?.status === 'confirmed' ? 'Booking Confirmed' : 'Payment Confirmed - Awaiting Approval'}
+                      </span>
                     </div>
-                    <p className="text-green-300 text-sm">
-                      Your payment has been successfully processed. You will receive a confirmation email shortly.
+                    <p className={`text-sm ${
+                      booking?.status === 'confirmed' ? 'text-green-300' : 'text-yellow-300'
+                    }`}>
+                      {booking?.status === 'confirmed' 
+                        ? 'Your booking has been approved and payment processed. You will receive a confirmation email shortly.'
+                        : 'Your payment has been successfully processed. Your booking is now pending admin approval. You will be notified once confirmed.'
+                      }
                     </p>
                   </div>
                 )}

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       // Map PayMongo statuses to our booking statuses
       switch (paymentStatus) {
         case 'succeeded':
-          newBookingStatus = 'confirmed';
+          newBookingStatus = 'pending';  // Payment successful, but awaiting admin approval
           newPaymentStatus = 'paid';
           break;
         case 'processing':

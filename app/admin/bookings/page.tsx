@@ -50,6 +50,7 @@ export default function BookingsPage() {
           
           // Optimistic update for faster UI response
           if (payload.eventType === 'UPDATE' && payload.new) {
+            console.log('🔄 Real-time booking update received:', payload.new.id, 'Status:', payload.new.status);
             setBookings(prevBookings => 
               prevBookings.map(booking => 
                 booking.id === payload.new.id 

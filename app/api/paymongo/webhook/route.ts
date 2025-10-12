@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../supabaseClient';
-import { getApiBaseUrl } from '@/app/utils/config';
 
 export async function POST(request: NextRequest) {
   try {
@@ -107,27 +106,24 @@ async function handlePaymentSuccess(paymentData: { id: string; [key: string]: un
   try {
     const paymentIntentId = paymentData.id;
     
-    // Update booking status to confirmed and payment status to paid
-    const { data, error } = await supabase
+    // Update payment status to paid, but keep booking as pending for admin approval
+    const { error } = await supabase
       .from('bookings')
       .update({
-        status: 'confirmed',
+        status: 'pending',  // Keep as pending until admin confirms
         payment_status: 'paid',
         updated_at: new Date().toISOString()
       })
-      .eq('payment_intent_id', paymentIntentId)
-      .select('*')
-      .single();
+      .eq('payment_intent_id', paymentIntentId);
 
     if (error) {
       console.error('Error updating booking on payment success:', error);
       return;
     }
 
-    console.log('✅ Booking confirmed for payment intent:', paymentIntentId);
+    console.log('✅ Payment confirmed for payment intent:', paymentIntentId, '- Awaiting admin approval');
     
-    // Send confirmation email in background
-    sendConfirmationEmail(data);
+    // Confirmation email will be sent when admin approves the booking
     
   } catch (error) {
     console.error('Error handling payment success:', error);
@@ -203,59 +199,5 @@ async function handlePaymentProcessing(paymentData: { id: string; [key: string]:
   }
 }
 
-async function sendConfirmationEmail(booking: { id: number; guest_name: string; user_id: string | null; check_in_date: string; check_out_date: string; number_of_guests: number; total_amount: number }) {
-  try {
-    // Get the user's email from the users table
-    let guestEmail = '';
-    if (booking.user_id) {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('email')
-        .eq('auth_id', booking.user_id)
-        .single();
-      
-      guestEmail = userData?.email || '';
-    }
-
-    if (!guestEmail) {
-      console.warn('No email found for booking:', booking.id);
-      return;
-    }
-
-    const emailBookingDetails = {
-      bookingId: booking.id.toString(),
-      guestName: booking.guest_name,
-      checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      guests: booking.number_of_guests,
-      totalAmount: booking.total_amount,
-      email: guestEmail,
-    };
-
-    const emailResponse = await fetch(`${getApiBaseUrl()}/api/email/booking-confirmation`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ bookingDetails: emailBookingDetails }),
-    });
-
-    if (!emailResponse.ok) {
-      console.warn('Email sending failed after payment confirmation');
-    } else {
-      console.log('✅ Confirmation email sent for booking:', booking.id);
-    }
-  } catch (emailError) {
-    console.warn('Email service error after payment confirmation:', emailError);
-  }
-}
+// Note: Confirmation email sending has been moved to the admin confirmation process
+// in /api/admin/confirm-booking to ensure emails are only sent after admin approval
