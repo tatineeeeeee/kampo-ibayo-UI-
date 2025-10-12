@@ -66,11 +66,52 @@ function BookingConfirmationContent() {
         } else if (data.payment_status === 'failed') {
           setPaymentStatus('failed');
         } else {
+          // If payment is pending, immediately check PayMongo status
+          setPaymentStatus('checking');
+          
+          // First, try to get fresh status from PayMongo if we have payment_intent_id
+          if (data.payment_intent_id || paymentIntentId) {
+            const checkPaymentIntentId = data.payment_intent_id || paymentIntentId;
+            
+            console.log('🔍 Immediately checking PayMongo status for:', checkPaymentIntentId);
+            
+            try {
+              const statusResponse = await fetch('/api/paymongo/check-payment-status', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  payment_intent_id: checkPaymentIntentId
+                }),
+              });
+
+              if (statusResponse.ok) {
+                const statusData = await statusResponse.json();
+                console.log('✅ Initial PayMongo status check:', statusData);
+                
+                if (statusData.booking) {
+                  setBooking(statusData.booking);
+                  
+                  if (statusData.payment_status === 'paid') {
+                    setPaymentStatus('success');
+                    return; // Exit early - payment is confirmed
+                  } else if (statusData.payment_status === 'failed') {
+                    setPaymentStatus('failed');
+                    return; // Exit early - payment failed
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('❌ Initial status check failed:', error);
+            }
+          }
+          
           setPaymentStatus('pending');
           
-          // Poll for payment status updates for up to 20 seconds (faster for test mode)
+          // Poll for payment status updates - longer timeout for test payments
           let pollCount = 0;
-          const maxPolls = 10; // 20 seconds with 2-second intervals
+          const maxPolls = 30; // 60 seconds with 2-second intervals (better for test payments)
           
           const pollPaymentStatus = setInterval(async () => {
             pollCount++;
@@ -91,7 +132,7 @@ function BookingConfirmationContent() {
                 setPaymentStatus('failed');
                 clearInterval(pollPaymentStatus);
               } else if (pollCount >= maxPolls) {
-                // After 30 seconds, check PayMongo directly
+                // After timeout, check PayMongo directly before giving up
                 console.log('⏰ Payment timeout - checking PayMongo directly');
                 
                 try {
@@ -112,31 +153,18 @@ function BookingConfirmationContent() {
                     if (statusData.booking) {
                       setBooking(statusData.booking);
                       setPaymentStatus(statusData.payment_status === 'paid' ? 'success' : 
-                                     statusData.payment_status === 'failed' ? 'failed' : 'pending');
+                                     statusData.payment_status === 'failed' ? 'failed' : 
+                                     statusData.payment_status === 'processing' ? 'pending' : 'pending');
                     }
                   } else {
-                    // If direct check fails, mark as failed due to timeout
-                    const { error: updateError } = await supabase
-                      .from('bookings')
-                      .update({
-                        status: 'cancelled',  // ✅ Use 'cancelled' instead of 'payment_failed'
-                        payment_status: 'failed',
-                        updated_at: new Date().toISOString()
-                      })
-                      .eq('id', parseInt(bookingId));
-                    
-                    if (!updateError) {
-                      setPaymentStatus('failed');
-                      setBooking(prev => prev ? {
-                        ...prev,
-                        status: 'payment_failed',
-                        payment_status: 'failed'
-                      } : null);
-                    }
+                    console.warn('⚠️ PayMongo status check failed, keeping current status');
+                    // Don't automatically fail - let user check manually or wait longer
+                    setPaymentStatus('pending');
                   }
                 } catch (statusError) {
                   console.error('❌ Status check error:', statusError);
-                  setPaymentStatus('failed');
+                  // Don't automatically fail on error - keep as pending
+                  setPaymentStatus('pending');
                 }
                 
                 clearInterval(pollPaymentStatus);
@@ -202,11 +230,11 @@ function BookingConfirmationContent() {
       case 'success':
         return 'Your booking has been confirmed and payment processed successfully. You will receive a confirmation email shortly.';
       case 'failed':
-        return 'Your payment could not be processed. Please try booking again or contact support.';
+        return 'Your payment could not be processed. This might be due to insufficient funds, expired test card, or payment timeout. Please try booking again.';
       case 'checking':
-        return 'Please wait while we verify your payment status...';
+        return 'Please wait while we verify your payment status with PayMongo...';
       case 'pending':
-        return 'Your payment is still being processed. If you got stuck during checkout or need to verify your payment status, use our payment checker below.';
+        return 'Your payment is still being processed. For test payments, this may take a bit longer. Please wait while we check the status or refresh the page.';
       default:
         return 'Processing your request...';
     }
@@ -451,6 +479,15 @@ function BookingConfirmationContent() {
                     View My Bookings
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
                   </button>
+                  
+                  {paymentStatus === 'pending' && (
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg text-sm sm:text-base"
+                    >
+                      Check Payment Status
+                    </button>
+                  )}
                   
                   {paymentStatus === 'failed' && (
                     <button
