@@ -745,7 +745,10 @@ function BookingPage() {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ bookingDetails: emailBookingDetails }),
+              body: JSON.stringify({ 
+                bookingDetails: emailBookingDetails,
+                phoneNumber: bookingData.guest_phone // Add phone for SMS
+              }),
             });
 
             if (!emailResponse.ok) {
