@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createBookingConfirmedEmail, BookingDetails } from '@/app/utils/emailService';
+import { sendSMS, createBookingApprovalSMS } from '@/app/utils/smsService';
 import { supabase } from '@/app/supabaseClient';
 
 export async function POST(request: NextRequest) {
@@ -66,17 +67,40 @@ export async function POST(request: NextRequest) {
       const confirmationEmail = createBookingConfirmedEmail(emailBookingDetails);
       const emailResult = await sendEmail(confirmationEmail);
 
+      // Send SMS confirmation if phone number is available
+      let smsResult = null;
+      if (booking.guest_phone) {
+        try {
+          console.log('📱 Sending confirmation SMS to:', booking.guest_phone);
+          // Create approval SMS message
+          const smsMessage = createBookingApprovalSMS(
+            booking.id.toString(),
+            booking.guest_name,
+            emailBookingDetails.checkIn
+          );
+          smsResult = await sendSMS({ phone: booking.guest_phone, message: smsMessage });
+          console.log('📱 SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
+        } catch (smsError) {
+          console.error('📱 SMS Error (non-critical):', smsError);
+          smsResult = { success: false, error: 'SMS service temporarily unavailable' };
+        }
+      }
+
       if (emailResult.success) {
         return NextResponse.json({
           success: true,
-          message: 'Booking confirmed and notification email sent',
+          message: booking.guest_phone 
+            ? `Booking confirmed with email${smsResult?.success ? ' and SMS' : ' (SMS failed)'} notifications`
+            : 'Booking confirmed and notification email sent',
           messageId: emailResult.messageId,
+          smsResult: smsResult
         });
       } else {
         return NextResponse.json({
           success: false,
           error: 'Booking confirmed but email failed to send',
           emailError: emailResult.error,
+          smsResult: smsResult
         }, { status: 500 });
       }
     } else {

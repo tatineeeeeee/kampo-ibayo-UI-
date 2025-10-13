@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import type { User } from "@supabase/supabase-js";
+import { formatPhoneForDisplay, validatePhilippinePhone, cleanPhoneForDatabase } from "../utils/phoneUtils";
 import { 
   FaHome, 
   FaUser, 
@@ -90,26 +91,12 @@ export default function SettingsPage() {
 
   // Phone number validation function
   const validatePhoneNumber = (phone: string): boolean => {
-    // Remove all non-digit characters
-    const digitsOnly = phone.replace(/\D/g, '');
-    return digitsOnly.length === 11;
+    return validatePhilippinePhone(phone);
   };
 
   // Format phone number as user types
   const formatPhoneNumber = (value: string): string => {
-    // Remove all non-digit characters
-    const digitsOnly = value.replace(/\D/g, '');
-    
-    // Limit to 11 digits
-    const limited = digitsOnly.slice(0, 11);
-    
-    // Format as 09XX-XXX-XXXX
-    if (limited.length >= 8) {
-      return `${limited.slice(0, 4)}-${limited.slice(4, 7)}-${limited.slice(7)}`;
-    } else if (limited.length >= 4) {
-      return `${limited.slice(0, 4)}-${limited.slice(4)}`;
-    }
-    return limited;
+    return formatPhoneForDisplay(value);
   };
 
   // Form states
@@ -283,10 +270,13 @@ export default function SettingsPage() {
       // Validate session with retry logic
       await validateAndRefreshSession();
       
+      // Clean phone number for database storage (convert to international format)
+      const cleanedPhone = profileData.phone ? cleanPhoneForDatabase(profileData.phone) : '';
+      
       const { error: authError } = await supabase.auth.updateUser({
         data: {
           name: profileData.name,
-          phone: profileData.phone
+          phone: cleanedPhone
         }
       });
 
@@ -301,7 +291,7 @@ export default function SettingsPage() {
           .from('users')
           .update({ 
             name: profileData.name,
-            phone: profileData.phone 
+            phone: cleanedPhone 
           })
           .eq('auth_id', user.id);
 

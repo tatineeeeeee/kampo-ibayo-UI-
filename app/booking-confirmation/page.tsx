@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Calendar, Users, CreditCard, ArrowRight, Phone, Mail } from 'lucide-react';
 import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/app/supabaseClient';
+import { displayPhoneNumber } from '@/app/utils/phoneUtils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CancellationPolicy } from '@/app/components/CancellationPolicy';
@@ -381,7 +382,7 @@ function BookingConfirmationContent() {
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-black/20 rounded-lg">
                       <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-300 flex-shrink-0" />
-                      <span className="text-white text-xs sm:text-sm">{booking.guest_phone || 'Not provided'}</span>
+                      <span className="text-white text-xs sm:text-sm">{displayPhoneNumber(booking.guest_phone) || 'Not provided'}</span>
                     </div>
                   </div>
                 </div>

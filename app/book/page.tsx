@@ -10,6 +10,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
 import { useToastHelpers } from "../components/Toast";
 import { isMaintenanceMode } from "../utils/maintenanceMode";
+import { cleanPhoneForDatabase } from "../utils/phoneUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -563,7 +564,7 @@ function BookingPage() {
       user_id: user.id,
       guest_name: formData.name.trim(),
       guest_email: formData.email.trim(),
-      guest_phone: formData.phone.trim() || null,
+      guest_phone: formData.phone.trim() ? cleanPhoneForDatabase(formData.phone.trim()) : null,
       number_of_guests: parseInt(formData.guests),
       check_in_date: checkInDateTime,
       check_out_date: checkOutDateTime,

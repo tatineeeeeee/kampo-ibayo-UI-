@@ -9,6 +9,7 @@ import { isMaintenanceMode } from "../utils/maintenanceMode";
 import type { User } from "@supabase/supabase-js";
 import { FaUser, FaEnvelope, FaUserTag, FaEdit, FaSignOutAlt, FaHome, FaCalendarAlt, FaClock, FaChartLine, FaStar, FaCalendarPlus, FaHistory, FaCog, FaSpinner, FaPhone } from "react-icons/fa";
 import { useToastHelpers } from "../components/Toast";
+import { formatPhoneForDisplay, validatePhilippinePhone, cleanPhoneForDatabase } from "../utils/phoneUtils";
 
 // Robust session validation helper
 const validateAndRefreshSession = async (maxRetries = 3) => {
@@ -86,13 +87,12 @@ function ProfilePageContent({ user }: { user: User }) {
 
   // Phone number validation function
   const validatePhoneNumber = (phone: string): boolean => {
-    // Remove all non-digit characters
-    const digitsOnly = phone.replace(/\D/g, '');
-    return digitsOnly.length === 11;
+    return validatePhilippinePhone(phone);
   };
 
   // Format phone number as user types
   const formatPhoneNumber = (value: string): string => {
+    return formatPhoneForDisplay(value);
     // Remove all non-digit characters
     const digitsOnly = value.replace(/\D/g, '');
     
@@ -308,9 +308,12 @@ function ProfilePageContent({ user }: { user: User }) {
       // Validate session with retry logic
       await validateAndRefreshSession();
       
+      // Clean phone number for database storage (convert to international format)
+      const cleanedPhone = cleanPhoneForDatabase(newPhone.trim());
+      
       // Update both auth metadata and users table
       const { error: authError } = await supabase.auth.updateUser({
-        data: { phone: newPhone.trim() }
+        data: { phone: cleanedPhone }
       });
 
       if (authError) {
@@ -322,7 +325,7 @@ function ProfilePageContent({ user }: { user: User }) {
       // Also update the users table so admin panel shows the change
       const { error: dbError } = await supabase
         .from('users')
-        .update({ phone: newPhone.trim() })
+        .update({ phone: cleanedPhone })
         .eq('auth_id', user.id);
 
       if (dbError) {

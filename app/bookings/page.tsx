@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { isMaintenanceMode } from "../utils/maintenanceMode";
+import { displayPhoneNumber } from "../utils/phoneUtils";
 import { 
   checkAndExpirePendingBookings, 
   getDaysPending, 
@@ -651,7 +652,7 @@ export default function BookingsPage() {
                     {booking.guest_phone && (
                       <div className="mb-3 sm:mb-4 p-2 bg-gray-600/30 rounded">
                         <p className="text-gray-400 text-xs sm:text-sm">
-                          📞 Contact: <a href={`tel:${booking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline font-medium">{booking.guest_phone}</a>
+                          📞 Contact: <a href={`tel:${booking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline font-medium">{displayPhoneNumber(booking.guest_phone)}</a>
                         </p>
                       </div>
                     )}
@@ -1034,7 +1035,7 @@ export default function BookingsPage() {
                 {selectedBooking.guest_phone && (
                   <div className="border-t border-gray-600 pt-3 sm:pt-4">
                     <p className="text-gray-400 text-xs sm:text-sm">
-                      Phone: <a href={`tel:${selectedBooking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline font-medium">{selectedBooking.guest_phone}</a>
+                      Phone: <a href={`tel:${selectedBooking.guest_phone}`} className="text-blue-400 hover:text-blue-300 hover:underline font-medium">{displayPhoneNumber(selectedBooking.guest_phone)}</a>
                     </p>
                   </div>
                 )}

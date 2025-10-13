@@ -5,6 +5,7 @@ import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Tables } from "../../../database.types";
+import { displayPhoneNumber } from "../../utils/phoneUtils";
 
 interface Booking extends Tables<'bookings'> {
   // Add user info to track if user still exists
@@ -517,7 +518,7 @@ export default function BookingsPage() {
                           href={`tel:${booking.guest_phone}`}
                           className="text-blue-600 hover:text-blue-800 hover:underline"
                         >
-                          {booking.guest_phone}
+                          {displayPhoneNumber(booking.guest_phone)}
                         </a>
                       ) : (
                         <span className="text-gray-400">No phone</span>
@@ -783,7 +784,7 @@ export default function BookingsPage() {
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Phone</p>
                         <a href={`tel:${selectedBooking.guest_phone}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
-                          {selectedBooking.guest_phone}
+                          {displayPhoneNumber(selectedBooking.guest_phone)}
                         </a>
                       </div>
                     )}

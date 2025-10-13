@@ -8,6 +8,7 @@ import {
   Mountain
 } from "lucide-react";
 import { useToastHelpers } from "../components/Toast";
+import { cleanPhoneForDatabase, formatPhoneForDisplay, validatePhilippinePhone } from "../utils/phoneUtils";
 import Image from "next/image";
 
 export default function AuthPage() {
@@ -216,10 +217,13 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     return;
   }
 
-  if (!validatePhoneNumber(phone)) {
+  if (!validatePhilippinePhone(phone)) {
     showError("Invalid Phone Number", "Phone number must be exactly 11 digits long!");
     return;
   }
+
+  // Clean and format phone number for database storage (international format)
+  const cleanedPhone = cleanPhoneForDatabase(phone);
 
   if (!termsAccepted) {
     setTermsError(true);
@@ -277,7 +281,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               first_name: firstName,
               last_name: lastName,
               email: email,
-              phone: phone
+              phone: cleanedPhone
             }),
           });
 
@@ -299,7 +303,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           auth_id: data.user.id,
           name: `${firstName} ${lastName}`,
           email: email,
-          phone: phone,
+          phone: cleanedPhone, // Store in international format (+63XXXXXXXXXX)
           role: "user", // Regular users are always "user" role
           paymongo_id: paymongoCustomerId, // Store PayMongo customer ID
           created_at: new Date().toISOString(), // Convert to ISO string
@@ -371,28 +375,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     }
   }
 
-  // Phone number validation function
-  const validatePhoneNumber = (phone: string): boolean => {
-    // Remove all non-digit characters
-    const digitsOnly = phone.replace(/\D/g, '');
-    return digitsOnly.length === 11;
-  };
-
   // Format phone number as user types
   const formatPhoneNumber = (value: string): string => {
-    // Remove all non-digit characters
-    const digitsOnly = value.replace(/\D/g, '');
-    
-    // Limit to 11 digits
-    const limited = digitsOnly.slice(0, 11);
-    
-    // Format as 09XX-XXX-XXXX
-    if (limited.length >= 8) {
-      return `${limited.slice(0, 4)}-${limited.slice(4, 7)}-${limited.slice(7)}`;
-    } else if (limited.length >= 4) {
-      return `${limited.slice(0, 4)}-${limited.slice(4)}`;
-    }
-    return limited;
+    return formatPhoneForDisplay(value);
   };
 
   // Password strength validation
@@ -676,9 +661,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                     e.target.value = formatted;
                   }}
                   onBlur={(e) => {
-                    const phone = e.target.value.replace(/\D/g, '');
-                    if (phone.length > 0 && !validatePhoneNumber(e.target.value)) {
-                      e.target.setCustomValidity('Phone number must be exactly 11 digits');
+                    if (e.target.value && !validatePhilippinePhone(e.target.value)) {
+                      e.target.setCustomValidity('Phone number must be exactly 11 digits (09XX-XXX-XXXX)');
                     } else {
                       e.target.setCustomValidity('');
                     }
