@@ -26,152 +26,135 @@ export default function AuthPage() {
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [forcePasswordReset, setForcePasswordReset] = useState(false);
-  const [recoveryProcessed, setRecoveryProcessed] = useState(false);
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
 
-  // IMMEDIATE check for recovery mode on every render
+  // Establish a Supabase session when returning from the password reset email
   useEffect(() => {
-    const checkRecoveryMode = () => {
-      if (typeof window !== 'undefined') {
-        const hashParams = new URLSearchParams(window.location.hash.slice(1));
-        const hasRecoveryToken = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
-        
-        if (hasRecoveryToken && !forcePasswordReset) {
-          console.log("🚨 IMMEDIATE RECOVERY DETECTION - Stopping all auto-login");
+    const captureRecoverySession = async () => {
+      if (typeof window === 'undefined') return;
+
+      const hash = window.location.hash.slice(1);
+      if (!hash) return;
+
+      const params = new URLSearchParams(hash);
+      const type = params.get('type');
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+
+      if (type === 'recovery' && access_token && refresh_token && !forcePasswordReset) {
+        try {
+          console.log('� Recovery tokens detected - establishing Supabase session');
           setForcePasswordReset(true);
           setIsPasswordReset(true);
+
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (error) {
+            console.error('Failed to set Supabase recovery session:', error);
+            showError('Session Error', 'We could not validate the reset link. Please try sending a new reset email.');
+            return;
+          }
+
+          info('Password Reset', 'Please set a new password to complete the reset process.');
+        } catch (error) {
+          console.error('Unexpected error while handling recovery session:', error);
+          showError('Reset Error', 'Something went wrong while preparing your password reset. Please request a new link.');
+        } finally {
           setIsLoading(false);
-          
-          // Immediately sign out to prevent auto-login
-          supabase.auth.signOut({ scope: 'local' });
-          info("Password Reset Required", "You must set a new password to continue.");
+          // Clean the URL so tokens are not visible after establishing the session
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
     };
-    
-    checkRecoveryMode();
-  }, [forcePasswordReset, info]); // Run when these change
+
+    captureRecoverySession();
+  }, [forcePasswordReset, info, showError]);
 
   // Handle session recovery and cleanup on component mount
   useEffect(() => {
     const handleSessionRecovery = async () => {
       try {
-        // If already in forced password reset mode, don't do anything else
         if (forcePasswordReset) {
           setIsLoading(false);
           return;
         }
-        
-        // Check for recovery mode
-        if (true) {
-          const urlParams = new URLSearchParams(window.location.search);
-          const hashParams = new URLSearchParams(window.location.hash.slice(1));
-          const mode = urlParams.get('mode');
-          const hasRecoveryToken = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
-          
-          // Only enter password reset mode if we have a recovery token
-          if (hasRecoveryToken) {
-            console.log("🔄 User returning from password reset email - MUST set new password");
-            setIsPasswordReset(true);
-            setRecoveryProcessed(true);
-            info("Password Reset", "You must enter a new password to complete the reset process.");
-            setIsLoading(false);
-            return; // Exit early for password reset flow - MUST complete password reset
-          } else if (mode === 'recovery') {
-            // If mode=recovery but no hash, clear it and continue to normal login
-            console.log("⚠️ Recovery mode detected but no token - clearing URL");
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+
+        if (mode === 'recovery') {
+          console.log('ℹ️ Recovery mode without tokens detected');
+          setIsPasswordReset(true);
+          info('Check Your Email', 'Please use the reset link sent to your email to set a new password.');
         }
-        
-        // Get current session
+
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
-          console.log("Session error:", error.message);
-          // Clear any corrupted session data
+          console.log('Session error:', error.message);
           await supabase.auth.signOut();
           localStorage.removeItem('supabase.auth.token');
         }
-        
-        // Check for recovery mode more strictly
-        const hashParams = new URLSearchParams(window.location.hash.slice(1));
-        const isRecoverySession = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
-        
-        // If in recovery mode, NEVER auto-login regardless of session
-        if (isRecoverySession) {
-          console.log("🔒 RECOVERY MODE - Blocking all auto-login, user MUST set new password");
-          // Force password reset mode and exit early
-          if (!recoveryProcessed) {
-            setIsPasswordReset(true);
-            setRecoveryProcessed(true);
-            info("Password Reset Required", "You must enter a new password to complete the reset process.");
-          }
-          setIsLoading(false);
-          return; // Exit early - NO auto-login allowed
-        }
-        
+
         if (session?.user) {
-          // Only auto-login if NOT in recovery mode
           const { data: userData } = await supabase
-            .from("users")
-            .select("role")
-            .eq("auth_id", session.user.id)
+            .from('users')
+            .select('role')
+            .eq('auth_id', session.user.id)
             .single();
-            
-          if (userData?.role === "admin") {
-            router.push("/admin");
+
+          if (userData?.role === 'admin') {
+            router.push('/admin');
           } else {
-            router.push("/");
+            router.push('/');
           }
           return;
         }
       } catch (error) {
-        console.log("Session recovery error:", error);
-        // Clear any corrupted data
+        console.log('Session recovery error:', error);
         await supabase.auth.signOut();
       }
-      
+
       setIsLoading(false);
     };
 
     handleSessionRecovery();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event);
-      
-      // Check if we're in recovery mode from URL hash
+      console.log('Auth state change:', event);
+
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const isInRecoveryMode = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
-      
+      const inRecoveryMode = hashParams.get('type') === 'recovery';
+
       if (event === 'SIGNED_OUT') {
-        // Clear any remaining session data
         localStorage.removeItem('supabase.auth.token');
-      } else if (event === 'PASSWORD_RECOVERY' && !recoveryProcessed) {
-        // User clicked password reset link - they have a temporary session
-        console.log("🔒 Password recovery event - user must set new password");
-        setRecoveryProcessed(true);
+      } else if (event === 'PASSWORD_RECOVERY') {
+        console.log('🔒 Password recovery event - enforcing password reset');
+        setForcePasswordReset(true);
         setIsPasswordReset(true);
-        info("Security Required", "You must enter a new password to complete the reset process.");
+        info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // BLOCK auto-redirect if in recovery mode
-        if (isInRecoveryMode || window.location.hash.includes('type=recovery')) {
-          console.log("🚫 BLOCKING auto-redirect - user in recovery mode must set password first");
-          // Force password reset mode
-          if (!isPasswordReset) {
-            setIsPasswordReset(true);
-            setRecoveryProcessed(true);
-            info("Password Reset Required", "You must set a new password before continuing.");
-          }
-          return; // Block any auto-redirect
+        if (forcePasswordReset || inRecoveryMode) {
+          console.log('🚫 Blocking auto-redirect during recovery');
+          return;
+        }
+
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('auth_id', session.user.id)
+          .single();
+
+        if (userData?.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/');
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, info, isPasswordReset, forcePasswordReset, recoveryProcessed]);
+  }, [router, info, forcePasswordReset]);
 
   // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -499,9 +482,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       // Sign out the user after password reset to force re-login with new password
       await supabase.auth.signOut();
       
-      info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
-      setIsPasswordReset(false);
-      setRecoveryProcessed(false);
+  info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
+  setIsPasswordReset(false);
+  setForcePasswordReset(false);
       setIsLogin(true);
       setPasswordValue('');
       setConfirmPasswordValue('');
@@ -571,67 +554,6 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c]">
         <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-
-  // If in recovery mode, show ONLY password reset form
-  if (forcePasswordReset) {
-    console.log("🔒 IMMEDIATE RECOVERY MODE DETECTION - forcing password reset");
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-2 sm:p-4">
-        <div className="w-full max-w-md bg-white rounded-xl p-6 shadow-2xl">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Password Reset Required</h2>
-            <p className="text-gray-600 mt-2">You must set a new password to continue</p>
-          </div>
-          <form onSubmit={handlePasswordUpdate} className="space-y-4">
-            <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-              <FaLock className="text-gray-400 mr-3" />
-              <input
-                type={showPassword ? "text" : "password"}
-                name="newPassword"
-                placeholder="New Password"
-                className="w-full outline-none bg-transparent text-gray-700"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="ml-3 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            <div className="flex items-center border border-gray-300 p-3 rounded-lg">
-              <FaLock className="text-gray-400 mr-3" />
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmNewPassword"
-                placeholder="Confirm New Password"
-                className="w-full outline-none bg-transparent text-gray-700"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="ml-3 text-gray-400 hover:text-gray-600"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            <button
-              type="submit"
-              disabled={isUpdatingPassword}
-              className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 disabled:opacity-50"
-            >
-              {isUpdatingPassword ? "Updating..." : "Set New Password"}
-            </button>
-            <p className="text-center text-sm text-gray-500">
-              🔒 For security, you must complete this step
-            </p>
-          </form>
-        </div>
       </div>
     );
   }
