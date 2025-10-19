@@ -25,6 +25,7 @@ export default function AuthPage() {
   const [termsError, setTermsError] = useState(false);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [recoveryProcessed, setRecoveryProcessed] = useState(false);
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
 
@@ -32,14 +33,26 @@ export default function AuthPage() {
   useEffect(() => {
     const handleSessionRecovery = async () => {
       try {
-        // Check if user is returning from password reset email
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('mode');
-        
-        if (mode === 'recovery') {
-          console.log("🔄 User returning from password reset email");
-          setIsPasswordReset(true);
-          info("Password Reset", "Please enter your new password below.");
+        // Only check for recovery mode if not already processed
+        if (!recoveryProcessed) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.slice(1));
+          const mode = urlParams.get('mode');
+          const hasRecoveryToken = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
+          
+          // Only enter password reset mode if we have a recovery token or proper recovery URL
+          if (hasRecoveryToken || (mode === 'recovery' && window.location.hash)) {
+            console.log("🔄 User returning from password reset email");
+            setIsPasswordReset(true);
+            setRecoveryProcessed(true);
+            info("Password Reset", "Please enter your new password below.");
+            setIsLoading(false);
+            return; // Exit early for password reset flow
+          } else if (mode === 'recovery') {
+            // If mode=recovery but no hash, clear it and continue to normal login
+            console.log("⚠️ Recovery mode detected but no token - clearing URL");
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         }
         
         // Get current session
@@ -80,16 +93,21 @@ export default function AuthPage() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        if (event === 'SIGNED_OUT') {
-          // Clear any remaining session data
-          localStorage.removeItem('supabase.auth.token');
-        }
+      console.log("Auth state change:", event);
+      
+      if (event === 'SIGNED_OUT') {
+        // Clear any remaining session data
+        localStorage.removeItem('supabase.auth.token');
+      } else if (event === 'PASSWORD_RECOVERY' && !recoveryProcessed) {
+        // User clicked password reset link - they have a temporary session
+        setRecoveryProcessed(true);
+        setIsPasswordReset(true);
+        info("Password Reset", "Please enter your new password below.");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, info]);
+  }, [router, info, recoveryProcessed]);
 
   // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -416,9 +434,12 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
       info("Password Updated", "Your password has been successfully updated. You can now log in with your new password.");
       setIsPasswordReset(false);
+      setRecoveryProcessed(false);
       setIsLogin(true);
       setPasswordValue('');
       setConfirmPasswordValue('');
+      // Clear URL completely
+      window.history.replaceState({}, document.title, window.location.pathname);
       console.log("✅ Password updated successfully");
     } catch (error: unknown) {
       console.error("Unexpected password update error:", error);
@@ -680,7 +701,10 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   type="button"
                   onClick={() => {
                     setIsPasswordReset(false);
+                    setRecoveryProcessed(false);
                     setIsLogin(true);
+                    // Clear URL completely
+                    window.history.replaceState({}, document.title, window.location.pathname);
                   }}
                   className="text-gray-500 hover:text-gray-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
                 >
