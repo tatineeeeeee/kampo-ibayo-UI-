@@ -23,6 +23,8 @@ export default function AuthPage() {
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
 
@@ -36,7 +38,8 @@ export default function AuthPage() {
         
         if (mode === 'recovery') {
           console.log("🔄 User returning from password reset email");
-          info("Password Reset Ready", "You can now set a new password. Please log in with your new password after setting it.");
+          setIsPasswordReset(true);
+          info("Password Reset", "Please enter your new password below.");
         }
         
         // Get current session
@@ -375,6 +378,56 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     }
   }
 
+  // 🔹 Handle password update (for password reset)
+  async function handlePasswordUpdate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newPassword = formData.get("newPassword") as string;
+    const confirmNewPassword = formData.get("confirmNewPassword") as string;
+
+    if (!newPassword.trim()) {
+      showError("Missing Password", "Please enter a new password");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      showError("Password Mismatch", "Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showError("Weak Password", "Password must be at least 6 characters long");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      });
+
+      if (error) {
+        console.error("Password update error:", error);
+        showError("Update Failed", error.message);
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      info("Password Updated", "Your password has been successfully updated. You can now log in with your new password.");
+      setIsPasswordReset(false);
+      setIsLogin(true);
+      setPasswordValue('');
+      setConfirmPasswordValue('');
+      console.log("✅ Password updated successfully");
+    } catch (error: unknown) {
+      console.error("Unexpected password update error:", error);
+      showError("Update Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  }
+
   // Format phone number as user types
   const formatPhoneNumber = (value: string): string => {
     return formatPhoneForDisplay(value);
@@ -540,27 +593,103 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             <p className="text-gray-600 text-xs sm:text-sm">Where adventure meets comfort</p>
           </div>
 
-          <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
-                isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
-                !isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
-              }`}
-            >
-              Create Account
-            </button>
-          </div>
+          {/* Tab buttons - hide during password reset */}
+          {!isPasswordReset && (
+            <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
+              <button
+                onClick={() => setIsLogin(true)}
+                className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
+                  isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => setIsLogin(false)}
+                className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
+                  !isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
+                }`}
+              >
+                Create Account
+              </button>
+            </div>
+          )}
 
-          {/* Sign In Form */}
-          {isLogin ? (
+          {/* Password Reset Form */}
+          {isPasswordReset ? (
+            <form onSubmit={handlePasswordUpdate} className="space-y-3 sm:space-y-4 lg:space-y-5">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Reset Your Password</h3>
+                <p className="text-sm text-gray-600 mt-1">Enter your new password below</p>
+              </div>
+
+              <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="newPassword"
+                  placeholder="New Password"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  ) : (
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmNewPassword"
+                  placeholder="Confirm New Password"
+                  className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  ) : (
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  )}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isUpdatingPassword}
+                className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUpdatingPassword ? "Updating..." : "Update Password"}
+              </button>
+
+              <div className="text-center mt-3 sm:mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPasswordReset(false);
+                    setIsLogin(true);
+                  }}
+                  className="text-gray-500 hover:text-gray-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          ) : /* Sign In Form */
+          isLogin ? (
             <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4 lg:space-y-5">
               <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
                 <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
