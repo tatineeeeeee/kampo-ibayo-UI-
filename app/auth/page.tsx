@@ -42,7 +42,16 @@ export default function AuthPage() {
       const access_token = params.get('access_token');
       const refresh_token = params.get('refresh_token');
 
-      if (type === 'recovery' && access_token && refresh_token && !forcePasswordReset) {
+      // IMMEDIATELY set flags if this is ANY recovery to prevent auto-login
+      if (type === 'recovery') {
+        console.log('🔒 RECOVERY TYPE DETECTED - Blocking auto-login immediately');
+        setForcePasswordReset(true);
+        setIsPasswordReset(true);
+        // Clear any previous recovery info notifications
+        sessionStorage.removeItem('recovery-info-shown');
+      }
+
+      if (type === 'recovery' && access_token && refresh_token) {
         try {
           console.log('� Recovery tokens detected - establishing Supabase session');
           setForcePasswordReset(true);
@@ -83,9 +92,13 @@ export default function AuthPage() {
         const mode = urlParams.get('mode');
 
         if (mode === 'recovery') {
-          console.log('ℹ️ Recovery mode without tokens detected');
+          console.log('ℹ️ Recovery mode without tokens detected - showing one-time message');
           setIsPasswordReset(true);
-          info('Check Your Email', 'Please use the reset link sent to your email to set a new password.');
+          // Only show this message once, not repeatedly
+          if (!sessionStorage.getItem('recovery-info-shown')) {
+            info('Check Your Email', 'Please use the reset link sent to your email to set a new password.');
+            sessionStorage.setItem('recovery-info-shown', 'true');
+          }
         }
 
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -133,6 +146,7 @@ export default function AuthPage() {
 
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const inRecoveryMode = hashParams.get('type') === 'recovery';
+      const hasRecoveryTokens = hashParams.get('access_token') && hashParams.get('refresh_token');
 
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('supabase.auth.token');
@@ -142,8 +156,11 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        if (forcePasswordReset || inRecoveryMode) {
-          console.log('🚫 Blocking auto-redirect during recovery');
+        // Check MULTIPLE conditions to prevent auto-login during password reset
+        if (forcePasswordReset || inRecoveryMode || hasRecoveryTokens) {
+          console.log('🚫 BLOCKING auto-redirect - Password reset in progress!');
+          console.log('� Conditions: Recovery mode:', inRecoveryMode, 'Force reset:', forcePasswordReset, 'Has tokens:', hasRecoveryTokens);
+          // Absolutely no navigation allowed during password reset
           return;
         }
 
@@ -161,8 +178,14 @@ export default function AuthPage() {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [router, info, forcePasswordReset]);
+    return () => {
+      subscription.unsubscribe();
+      // Clean up recovery info when component unmounts
+      if (!isPasswordReset && !forcePasswordReset) {
+        sessionStorage.removeItem('recovery-info-shown');
+      }
+    };
+  }, [router, info, forcePasswordReset, isPasswordReset]);
 
   // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -490,9 +513,12 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       // Sign out the user after password reset to force re-login with new password
       await supabase.auth.signOut();
       
-  info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
-  setIsPasswordReset(false);
-  setForcePasswordReset(false);
+      // Clear the recovery info flag
+      sessionStorage.removeItem('recovery-info-shown');
+      
+      info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
+      setIsPasswordReset(false);
+      setForcePasswordReset(false);
       setIsLogin(true);
       setPasswordValue('');
       setConfirmPasswordValue('');
