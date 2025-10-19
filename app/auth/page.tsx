@@ -12,11 +12,6 @@ import { cleanPhoneForDatabase, formatPhoneForDisplay, validatePhilippinePhone }
 import Image from "next/image";
 
 export default function AuthPage() {
-  // Check for recovery mode immediately
-  const isInRecoveryMode = typeof window !== 'undefined' && 
-    window.location.hash.includes('type=recovery') && 
-    window.location.hash.includes('access_token');
-
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -28,18 +23,48 @@ export default function AuthPage() {
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
-  const [isPasswordReset, setIsPasswordReset] = useState(isInRecoveryMode); // Set immediately if in recovery
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [forcePasswordReset, setForcePasswordReset] = useState(false);
   const [recoveryProcessed, setRecoveryProcessed] = useState(false);
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
+
+  // IMMEDIATE check for recovery mode on every render
+  useEffect(() => {
+    const checkRecoveryMode = () => {
+      if (typeof window !== 'undefined') {
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const hasRecoveryToken = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
+        
+        if (hasRecoveryToken && !forcePasswordReset) {
+          console.log("🚨 IMMEDIATE RECOVERY DETECTION - Stopping all auto-login");
+          setForcePasswordReset(true);
+          setIsPasswordReset(true);
+          setIsLoading(false);
+          
+          // Immediately sign out to prevent auto-login
+          supabase.auth.signOut({ scope: 'local' });
+          info("Password Reset Required", "You must set a new password to continue.");
+        }
+      }
+    };
+    
+    checkRecoveryMode();
+  }, [forcePasswordReset, info]); // Run when these change
 
   // Handle session recovery and cleanup on component mount
   useEffect(() => {
     const handleSessionRecovery = async () => {
       try {
-        // Only check for recovery mode if not already processed
-        if (!recoveryProcessed) {
+        // If already in forced password reset mode, don't do anything else
+        if (forcePasswordReset) {
+          setIsLoading(false);
+          return;
+        }
+        
+        // Check for recovery mode
+        if (true) {
           const urlParams = new URLSearchParams(window.location.search);
           const hashParams = new URLSearchParams(window.location.hash.slice(1));
           const mode = urlParams.get('mode');
@@ -146,7 +171,7 @@ export default function AuthPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [router, info, recoveryProcessed, isPasswordReset]);
+  }, [router, info, isPasswordReset, forcePasswordReset, recoveryProcessed]);
 
   // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -551,7 +576,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 
   // If in recovery mode, show ONLY password reset form
-  if (isInRecoveryMode && !recoveryProcessed) {
+  if (forcePasswordReset) {
     console.log("🔒 IMMEDIATE RECOVERY MODE DETECTION - forcing password reset");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-2 sm:p-4">
