@@ -60,7 +60,17 @@ export default function AuthPage() {
           // STORE tokens but DON'T create session - prevents auto-login
           sessionStorage.setItem('recovery_access_token', access_token);
           sessionStorage.setItem('recovery_refresh_token', refresh_token);
+          
+          console.log('💾 Storing recovery tokens:');
+          console.log('  - Access token length:', access_token.length);
+          console.log('  - Refresh token length:', refresh_token.length);
           console.log('✅ Tokens stored - NO SESSION = NO AUTO-LOGIN');
+          
+          // Verify tokens were stored
+          const verifyAccess = sessionStorage.getItem('recovery_access_token');
+          const verifyRefresh = sessionStorage.getItem('recovery_refresh_token');
+          console.log('🔍 Verification - Access token stored:', !!verifyAccess);
+          console.log('🔍 Verification - Refresh token stored:', !!verifyRefresh);
 
           info('Password Reset', 'Please set a new password to complete the reset process.');
         } catch (error) {
@@ -89,7 +99,11 @@ export default function AuthPage() {
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get('mode');
 
-        if (mode === 'recovery') {
+        // Check if we already have recovery tokens stored (from the first useEffect)
+        const hasStoredTokens = sessionStorage.getItem('recovery_access_token') && 
+                               sessionStorage.getItem('recovery_refresh_token');
+
+        if (mode === 'recovery' && !hasStoredTokens) {
           console.log('ℹ️ Recovery mode without tokens detected - showing one-time message');
           setIsPasswordReset(true);
           // Only show this message once, not repeatedly
@@ -97,6 +111,9 @@ export default function AuthPage() {
             info('Check Your Email', 'Please use the reset link sent to your email to set a new password.');
             sessionStorage.setItem('recovery-info-shown', 'true');
           }
+        } else if (hasStoredTokens) {
+          console.log('✅ Recovery tokens found in storage - password reset flow ready');
+          setIsPasswordReset(true);
         }
 
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -498,10 +515,26 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
     try {
       // First, establish session with stored recovery tokens
+      console.log('🔍 Looking for recovery tokens in sessionStorage...');
+      
+      // Debug: Check all sessionStorage keys
+      console.log('📋 All sessionStorage keys:', Object.keys(sessionStorage));
+      
       const storedAccessToken = sessionStorage.getItem('recovery_access_token');
       const storedRefreshToken = sessionStorage.getItem('recovery_refresh_token');
+      
+      console.log('🔑 Access token found:', !!storedAccessToken);
+      console.log('🔑 Refresh token found:', !!storedRefreshToken);
+      
+      if (storedAccessToken) {
+        console.log('✅ Access token length:', storedAccessToken.length);
+      }
+      if (storedRefreshToken) {
+        console.log('✅ Refresh token length:', storedRefreshToken.length);
+      }
 
       if (!storedAccessToken || !storedRefreshToken) {
+        console.error('❌ Missing recovery tokens!');
         showError("Session Error", "Recovery tokens not found. Please request a new password reset link.");
         setIsUpdatingPassword(false);
         return;
