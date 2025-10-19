@@ -761,9 +761,9 @@ function Home() {
           font-family: inherit !important;
           border-radius: 0.5rem !important;
           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
-          min-height: 300px !important;
-          max-height: 420px !important;
-          height: auto !important;
+          height: 320px !important;
+          min-height: 320px !important;
+          max-height: 320px !important;
           overflow: hidden !important;
           width: 100% !important;
         }
@@ -771,16 +771,22 @@ function Home() {
         /* Ultra-small screens (320px phones) optimizations */
         @media (max-width: 374px) {
           .react-datepicker {
-            min-height: 280px !important;
+            height: 300px !important;
+            min-height: 300px !important;
+            max-height: 300px !important;
             border-radius: 0.375rem !important;
           }
           
           .react-datepicker__month-container {
-            min-height: 220px !important;
+            height: 240px !important;
+            min-height: 240px !important;
+            max-height: 240px !important;
           }
           
           .react-datepicker__month {
+            height: 180px !important;
             min-height: 180px !important;
+            max-height: 180px !important;
           }
           
           .react-datepicker__week {
@@ -829,68 +835,80 @@ function Home() {
         
         @media (min-width: 480px) {
           .react-datepicker {
-            min-height: 350px !important;
+            height: 380px !important;
+            min-height: 380px !important;
+            max-height: 380px !important;
             border-radius: 0.75rem !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker {
-            min-height: 380px !important;
+            height: 420px !important;
+            min-height: 420px !important;
+            max-height: 420px !important;
             border-radius: 1rem !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker {
-            min-height: 480px !important;
-            max-height: 550px !important;
+            height: 520px !important;
+            min-height: 520px !important;
+            max-height: 520px !important;
           }
         }
         
         @media (min-width: 1024px) {
           .react-datepicker {
-            min-height: 520px !important;
-            max-height: 600px !important;
+            height: 560px !important;
+            min-height: 560px !important;
+            max-height: 560px !important;
           }
         }
         .react-datepicker__month-container {
-          min-height: 240px !important;
-          max-height: 360px !important;
-          height: auto !important;
+          height: 260px !important;
+          min-height: 260px !important;
+          max-height: 260px !important;
           width: 100% !important;
         }
         
         @media (min-width: 480px) {
           .react-datepicker__month-container {
-            min-height: 290px !important;
+            height: 320px !important;
+            min-height: 320px !important;
+            max-height: 320px !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker__month-container {
-            min-height: 320px !important;
+            height: 360px !important;
+            min-height: 360px !important;
+            max-height: 360px !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker__month-container {
-            min-height: 420px !important;
-            max-height: 500px !important;
+            height: 460px !important;
+            min-height: 460px !important;
+            max-height: 460px !important;
           }
         }
         
         @media (min-width: 1024px) {
           .react-datepicker__month-container {
-            min-height: 460px !important;
-            max-height: 540px !important;
+            height: 500px !important;
+            min-height: 500px !important;
+            max-height: 500px !important;
           }
         }
         
         .react-datepicker__month {
+          height: 200px !important;
           min-height: 200px !important;
-          max-height: 300px !important;
-          height: auto !important;
+          max-height: 200px !important;
           display: flex !important;
           flex-direction: column !important;
           width: 100% !important;
@@ -898,34 +916,41 @@ function Home() {
         
         @media (min-width: 480px) {
           .react-datepicker__month {
-            min-height: 250px !important;
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker__month {
-            min-height: 280px !important;
+            height: 320px !important;
+            min-height: 320px !important;
+            max-height: 320px !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker__month {
-            min-height: 360px !important;
-            max-height: 440px !important;
+            height: 420px !important;
+            min-height: 420px !important;
+            max-height: 420px !important;
           }
         }
         
         @media (min-width: 1024px) {
           .react-datepicker__month {
-            min-height: 400px !important;
-            max-height: 480px !important;
+            height: 460px !important;
+            min-height: 460px !important;
+            max-height: 460px !important;
           }
         }
         .react-datepicker__week {
           display: flex !important;
           justify-content: space-between !important;
           align-items: center !important;
-          height: 2.5rem !important;
+          height: 2.2rem !important;
+          flex: 1 !important;
           width: 100% !important;
           margin: 0 !important;
           padding: 0 0.25rem !important;
@@ -947,7 +972,7 @@ function Home() {
         
         @media (min-width: 768px) {
           .react-datepicker__week {
-            height: 4rem !important;
+            height: 4.5rem !important;
             padding: 0 0.75rem !important;
           }
         }
