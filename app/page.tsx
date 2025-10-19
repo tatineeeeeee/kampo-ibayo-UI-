@@ -794,6 +794,15 @@ function Home() {
             line-height: 2rem !important;
             font-size: 0.625rem !important;
             margin: 0.0625rem !important;
+            flex: 1 !important;
+          }
+          
+          .react-datepicker__day-names {
+            padding: 0 0.0625rem !important;
+          }
+          
+          .react-datepicker__week {
+            padding: 0 0.0625rem !important;
           }
           
           .react-datepicker__current-month {
@@ -891,21 +900,25 @@ function Home() {
         }
         .react-datepicker__week {
           display: flex !important;
-          justify-content: space-around !important;
+          justify-content: space-evenly !important;
           align-items: center !important;
           height: 2.5rem !important;
           width: 100% !important;
+          margin: 0 !important;
+          padding: 0 0.125rem !important;
         }
         
         @media (min-width: 480px) {
           .react-datepicker__week {
             height: 3rem !important;
+            padding: 0 0.1875rem !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker__week {
             height: 3.5rem !important;
+            padding: 0 0.25rem !important;
           }
         }
         .react-datepicker__header {
@@ -915,10 +928,23 @@ function Home() {
           padding: 0.75rem 0 !important;
         }
         
+        .react-datepicker__day-names {
+          display: flex !important;
+          justify-content: space-evenly !important;
+          align-items: center !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 0.125rem !important;
+        }
+        
         @media (min-width: 480px) {
           .react-datepicker__header {
             padding: 1rem 0 !important;
             border-radius: 0.75rem 0.75rem 0 0 !important;
+          }
+          
+          .react-datepicker__day-names {
+            padding: 0 0.1875rem !important;
           }
         }
         
@@ -926,6 +952,10 @@ function Home() {
           .react-datepicker__header {
             padding: 1.25rem 0 !important;
             border-radius: 1rem 1rem 0 0 !important;
+          }
+          
+          .react-datepicker__day-names {
+            padding: 0 0.25rem !important;
           }
         }
         
@@ -965,6 +995,7 @@ function Home() {
           margin: 0.125rem !important;
           display: inline-block !important;
           text-align: center !important;
+          flex: 1 !important;
         }
         
         @media (min-width: 480px) {
@@ -998,6 +1029,7 @@ function Home() {
           font-size: 0.75rem !important;
           transition: all 0.2s ease !important;
           display: inline-block !important;
+          flex: 1 !important;
           text-align: center !important;
           touch-action: manipulation !important;
         }
@@ -1212,15 +1244,17 @@ function Home() {
           white-space: nowrap !important;
         }
         
-        /* Mobile responsive text sizing */
+        /* Mobile responsive text sizing - IMPROVED READABILITY */
         @media (max-width: 479px) {
           .react-datepicker__day--same-day::after,
           .react-datepicker__day--checkin::after,
           .react-datepicker__day--checkout::after,
           .react-datepicker__day--occupied::after {
-            font-size: 4px !important;
-            padding: 0.5px 1px !important;
-            border-radius: 1px !important;
+            font-size: 6px !important;
+            padding: 1px 2px !important;
+            border-radius: 2px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.2px !important;
           }
         }
         
@@ -1229,9 +1263,10 @@ function Home() {
           .react-datepicker__day--checkin::after,
           .react-datepicker__day--checkout::after,
           .react-datepicker__day--occupied::after {
-            font-size: 5px !important;
-            padding: 1px 1.5px !important;
-            border-radius: 1.5px !important;
+            font-size: 7px !important;
+            padding: 1px 2px !important;
+            border-radius: 2px !important;
+            font-weight: 700 !important;
           }
         }
         
@@ -1240,9 +1275,10 @@ function Home() {
           .react-datepicker__day--checkin::after,
           .react-datepicker__day--checkout::after,
           .react-datepicker__day--occupied::after {
-            font-size: 6px !important;
+            font-size: 8px !important;
             padding: 1px 2px !important;
             border-radius: 2px !important;
+            font-weight: 600 !important;
           }
         }
         
@@ -2139,28 +2175,28 @@ function Home() {
 
       {/* Availability Modal */}
       {showAvailabilityModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-1 xs:p-2 sm:p-3 md:p-4 lg:p-6">
-          <div className="bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl shadow-2xl w-full max-w-[98vw] xs:max-w-[95vw] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl border border-gray-700 max-h-[95vh] xs:max-h-[90vh] sm:max-h-[85vh] md:max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:p-6">
+          <div className="bg-gray-900 rounded-xl md:rounded-2xl shadow-2xl w-full max-w-[96vw] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl border border-gray-700 max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 lg:p-6 border-b border-gray-700 bg-gray-900">
-              <h2 className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white flex items-center gap-1 sm:gap-2 md:gap-3">
-                <CalendarDays className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-green-400 flex-shrink-0" />
-                <span className="hidden xs:inline">Check Availability</span>
-                <span className="xs:hidden">Availability</span>
+            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-gray-700 bg-gray-900 flex-shrink-0">
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
+                <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-green-400 flex-shrink-0" />
+                <span className="hidden sm:inline">Check Availability</span>
+                <span className="sm:hidden">Availability</span>
               </h2>
               <button
                 onClick={() => setShowAvailabilityModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1 sm:p-2 md:p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-800"
+                className="text-gray-400 hover:text-white transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-800"
               >
-                <X className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                <X className="w-6 h-6 sm:w-7 sm:h-7" />
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="overflow-y-auto max-h-[calc(95vh-50px)] xs:max-h-[calc(90vh-60px)] sm:max-h-[calc(85vh-80px)] md:max-h-[calc(90vh-100px)] lg:max-h-[calc(90vh-120px)]">
-              <div className="p-2 xs:p-3 sm:p-4 md:p-5 lg:p-6 space-y-2 xs:space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
+            {/* Modal Content - Scrollable Body */}
+            <div className="overflow-y-auto flex-1 min-h-0">
+              <div className="p-4 sm:p-5 md:p-6 space-y-4 md:space-y-5 lg:space-y-6">
                 {/* Calendar View - React DatePicker (Read-only for availability display) */}
-                <div className="bg-gray-800/50 rounded-md sm:rounded-lg md:rounded-xl p-1 xs:p-2 sm:p-3 md:p-4 lg:p-5 border border-gray-600">
+                <div className="bg-gray-800/50 rounded-lg md:rounded-xl p-3 sm:p-4 md:p-5 border border-gray-600">
                   <DatePicker
                     selected={null}
                     onChange={() => {}} // Read-only - no interaction needed
@@ -2187,44 +2223,44 @@ function Home() {
                     disabled={false}
                   />
                   
-                  {/* Legend - EXACT same as booking page */}
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
+                  {/* Legend - Mobile Responsive */}
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center justify-center gap-3 sm:gap-4">
                     <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 rounded bg-green-600"></span>
-                      <span className="text-gray-300">Check-in</span>
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-green-600 flex-shrink-0"></span>
+                      <span className="text-gray-300 text-sm sm:text-base">Check-in</span>
                     </span>
                     <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 rounded bg-red-600"></span>
-                      <span className="text-gray-300">Check-out</span>
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-red-600 flex-shrink-0"></span>
+                      <span className="text-gray-300 text-sm sm:text-base">Check-out</span>
                     </span>
                     <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 rounded bg-yellow-600"></span>
-                      <span className="text-gray-300">Occupied</span>
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-yellow-600 flex-shrink-0"></span>
+                      <span className="text-gray-300 text-sm sm:text-base">Occupied</span>
                     </span>
                     <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 rounded bg-purple-600"></span>
-                      <span className="text-gray-300">Full Day</span>
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-purple-600 flex-shrink-0"></span>
+                      <span className="text-gray-300 text-sm sm:text-base">Full Day</span>
                     </span>
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 rounded bg-gray-700 border border-gray-600"></span>
-                      <span className="text-gray-300">Available</span>
+                    <span className="flex items-center gap-2 col-span-2 sm:col-span-1">
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-gray-700 border border-gray-600 flex-shrink-0"></span>
+                      <span className="text-gray-300 text-sm sm:text-base">Available</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Mobile-Responsive Availability Guide */}
-                <div className="bg-blue-900/20 border border-blue-600/30 rounded-md sm:rounded-lg md:rounded-xl overflow-hidden">
+                <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg md:rounded-xl overflow-hidden">
                   {/* Collapsible Header - Only on Mobile/Small Tablet */}
                   <button 
                     onClick={() => setAvailabilityGuideOpen(!availabilityGuideOpen)}
-                    className="w-full p-2 xs:p-2.5 sm:p-3 md:hidden flex items-center justify-between hover:bg-blue-800/10 transition-colors touch-manipulation"
+                    className="w-full p-3 sm:p-4 md:hidden flex items-center justify-between hover:bg-blue-800/10 transition-colors touch-manipulation min-h-[48px]"
                   >
-                    <div className="flex items-center gap-1.5 xs:gap-2">
-                      <div className="w-4 h-4 xs:w-5 xs:h-5 text-blue-400 text-sm xs:text-base">ℹ️</div>
-                      <h4 className="text-blue-200 text-xs xs:text-sm sm:text-base font-semibold">How to Read Availability</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 text-blue-400 text-base">ℹ️</div>
+                      <h4 className="text-blue-200 text-sm sm:text-base font-semibold">How to Read Availability</h4>
                     </div>
                     <div 
-                      className="w-4 h-4 xs:w-5 xs:h-5 text-blue-300 transition-transform duration-200 text-xs xs:text-sm"
+                      className="w-5 h-5 text-blue-300 transition-transform duration-200 text-sm"
                       style={{ transform: availabilityGuideOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                     >
                       ▼
@@ -2239,62 +2275,62 @@ function Home() {
 
                   {/* Content - Collapsible on mobile/tablet, always visible on desktop */}
                   <div className={`${availabilityGuideOpen ? 'block' : 'hidden'} md:block`}>
-                    <div className="px-2 pb-2 xs:px-2.5 xs:pb-2.5 sm:px-3 sm:pb-3 md:px-4 md:pb-4 lg:px-5 lg:pb-5">
+                    <div className="px-3 pb-3 sm:px-4 sm:pb-4 md:px-5 md:pb-5">
                       {/* Responsive Grid Layout */}
-                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 mt-2 xs:mt-2.5 sm:mt-3 md:mt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 gap-3 sm:gap-4 md:gap-4 lg:gap-4 mt-3 sm:mt-4">
                         {/* Check-in */}
-                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-green-900/20 border border-green-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
-                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-green-600 flex-shrink-0 mt-0.5"></span>
+                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-green-900/20 border border-green-600/30 rounded-lg">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-green-600 flex-shrink-0 mt-0.5"></span>
                           <div className="min-w-0">
-                            <div className="text-green-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Check-in Day</div>
-                            <div className="text-green-100/80 text-xs sm:text-xs md:text-sm leading-tight">You can check-out here (guests arrive 2 PM)</div>
+                            <div className="text-green-200 text-sm sm:text-base md:text-lg font-medium">Check-in Day</div>
+                            <div className="text-green-100/80 text-xs sm:text-sm md:text-base leading-tight">Guests arrive 2 PM</div>
                           </div>
                         </div>
 
                         {/* Check-out */}
-                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-red-900/20 border border-red-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
-                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-red-600 flex-shrink-0 mt-0.5"></span>
+                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-red-900/20 border border-red-600/30 rounded-lg">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-red-600 flex-shrink-0 mt-0.5"></span>
                           <div className="min-w-0">
-                            <div className="text-red-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Check-out Day</div>
-                            <div className="text-red-100/80 text-xs sm:text-xs md:text-sm leading-tight">You can check-in here (guests leave 12 PM)</div>
+                            <div className="text-red-200 text-sm sm:text-base md:text-lg font-medium">Check-out Day</div>
+                            <div className="text-red-100/80 text-xs sm:text-sm md:text-base leading-tight">You can check-in here (guests leave 12 PM)</div>
                           </div>
                         </div>
 
                         {/* Occupied */}
-                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
-                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-yellow-600 flex-shrink-0 mt-0.5"></span>
+                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-yellow-600 flex-shrink-0 mt-0.5"></span>
                           <div className="min-w-0">
-                            <div className="text-yellow-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Occupied</div>
-                            <div className="text-yellow-100/80 text-xs sm:text-xs md:text-sm leading-tight">Resort fully occupied (no availability)</div>
+                            <div className="text-yellow-200 text-sm sm:text-base md:text-lg font-medium">Occupied</div>
+                            <div className="text-yellow-100/80 text-xs sm:text-sm md:text-base leading-tight">Resort fully occupied (no availability)</div>
                           </div>
                         </div>
 
                         {/* Full Day */}
-                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-purple-900/20 border border-purple-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
-                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-purple-600 flex-shrink-0 mt-0.5"></span>
+                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-purple-900/20 border border-purple-600/30 rounded-lg">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-purple-600 flex-shrink-0 mt-0.5"></span>
                           <div className="min-w-0">
-                            <div className="text-purple-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Full Day</div>
-                            <div className="text-purple-100/80 text-xs sm:text-xs md:text-sm leading-tight">Same-day check-in & check-out</div>
+                            <div className="text-purple-200 text-sm sm:text-base md:text-lg font-medium">Full Day</div>
+                            <div className="text-purple-100/80 text-xs sm:text-sm md:text-base leading-tight">Same-day check-in & check-out</div>
                           </div>
                         </div>
 
                         {/* Available - Full width on smaller screens */}
-                        <div className="flex items-start gap-1.5 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 md:p-3 bg-gray-800/20 border border-gray-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg xs:col-span-2 lg:col-span-4 xl:col-span-2">
-                          <span className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded border border-green-500/50 bg-gray-700 flex-shrink-0 mt-0.5"></span>
+                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-gray-800/20 border border-gray-600/30 rounded-lg xs:col-span-2 lg:col-span-4 xl:col-span-2">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded border border-green-500/50 bg-gray-700 flex-shrink-0 mt-0.5"></span>
                           <div className="min-w-0">
-                            <div className="text-gray-200 text-xs xs:text-xs sm:text-sm md:text-base font-medium">Available</div>
-                            <div className="text-gray-100/80 text-xs sm:text-xs md:text-sm leading-tight">Free for both check-in and check-out</div>
+                            <div className="text-gray-200 text-sm sm:text-base md:text-lg font-medium">Available</div>
+                            <div className="text-gray-100/80 text-xs sm:text-sm md:text-base leading-tight">Free for both check-in and check-out</div>
                           </div>
                         </div>
                       </div>
 
                       {/* Pro Tip - Enhanced Responsiveness */}
-                      <div className="mt-2 xs:mt-2.5 sm:mt-3 md:mt-4 p-1.5 xs:p-2 sm:p-2.5 md:p-3 lg:p-4 bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-600/30 rounded-sm xs:rounded sm:rounded-md md:rounded-lg">
-                        <div className="flex items-start gap-1.5 xs:gap-2">
-                          <div className="text-green-400 text-sm xs:text-base sm:text-lg md:text-xl flex-shrink-0">💡</div>
+                      <div className="mt-4 p-4 bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-600/30 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <div className="text-green-400 text-lg flex-shrink-0">💡</div>
                           <div>
-                            <div className="text-green-200 text-xs xs:text-sm sm:text-base md:text-lg font-medium mb-0.5 xs:mb-1">Same-Day Turnover Available!</div>
-                            <div className="text-green-100/90 text-xs xs:text-sm sm:text-base md:text-base leading-relaxed">
+                            <div className="text-green-200 text-sm sm:text-base md:text-lg font-medium mb-1">Same-Day Turnover Available!</div>
+                            <div className="text-green-100/90 text-xs sm:text-sm md:text-base leading-relaxed">
                               You can check-in on red (check-out) days since guests leave at 12 PM and new arrivals start at 2 PM.
                             </div>
                           </div>
@@ -2351,16 +2387,17 @@ function Home() {
                   </div>
                 </div>
 
-                {/* Action Button */}
-                <div className="flex justify-center pt-1.5 xs:pt-2 sm:pt-2.5 md:pt-3">
-                  <button
-                    onClick={() => setShowAvailabilityModal(false)}
-                    className="w-full xs:w-auto xs:px-6 sm:px-8 md:px-10 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2.5 xs:py-2.5 sm:py-3 md:py-3.5 rounded-md sm:rounded-lg md:rounded-xl font-semibold text-xs xs:text-sm sm:text-base md:text-lg transition-colors min-h-[44px] touch-manipulation"
-                  >
-                    Close
-                  </button>
-                </div>
               </div>
+            </div>
+
+            {/* Modal Footer - Fixed at Bottom */}
+            <div className="border-t border-gray-700 bg-gray-900 p-4 sm:p-5 md:p-6 flex-shrink-0">
+              <button
+                onClick={() => setShowAvailabilityModal(false)}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 sm:py-3.5 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm sm:text-base md:text-lg transition-colors min-h-[48px] touch-manipulation shadow-lg"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

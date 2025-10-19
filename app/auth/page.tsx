@@ -60,17 +60,7 @@ export default function AuthPage() {
           // STORE tokens but DON'T create session - prevents auto-login
           sessionStorage.setItem('recovery_access_token', access_token);
           sessionStorage.setItem('recovery_refresh_token', refresh_token);
-          
-          console.log('💾 Storing recovery tokens:');
-          console.log('  - Access token length:', access_token.length);
-          console.log('  - Refresh token length:', refresh_token.length);
-          console.log('✅ Tokens stored - NO SESSION = NO AUTO-LOGIN');
-          
-          // Verify tokens were stored
-          const verifyAccess = sessionStorage.getItem('recovery_access_token');
-          const verifyRefresh = sessionStorage.getItem('recovery_refresh_token');
-          console.log('🔍 Verification - Access token stored:', !!verifyAccess);
-          console.log('🔍 Verification - Refresh token stored:', !!verifyRefresh);
+          console.log('✅ Recovery tokens stored securely - Password reset ready');
 
           info('Password Reset', 'Please set a new password to complete the reset process.');
         } catch (error) {
@@ -514,27 +504,11 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     setIsUpdatingPassword(true);
 
     try {
-      // First, establish session with stored recovery tokens
-      console.log('🔍 Looking for recovery tokens in sessionStorage...');
-      
-      // Debug: Check all sessionStorage keys
-      console.log('📋 All sessionStorage keys:', Object.keys(sessionStorage));
-      
+      // Retrieve stored recovery tokens for password update
       const storedAccessToken = sessionStorage.getItem('recovery_access_token');
       const storedRefreshToken = sessionStorage.getItem('recovery_refresh_token');
-      
-      console.log('🔑 Access token found:', !!storedAccessToken);
-      console.log('🔑 Refresh token found:', !!storedRefreshToken);
-      
-      if (storedAccessToken) {
-        console.log('✅ Access token length:', storedAccessToken.length);
-      }
-      if (storedRefreshToken) {
-        console.log('✅ Refresh token length:', storedRefreshToken.length);
-      }
 
       if (!storedAccessToken || !storedRefreshToken) {
-        console.error('❌ Missing recovery tokens!');
         showError("Session Error", "Recovery tokens not found. Please request a new password reset link.");
         setIsUpdatingPassword(false);
         return;
