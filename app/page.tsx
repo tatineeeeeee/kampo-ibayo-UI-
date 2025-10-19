@@ -761,9 +761,9 @@ function Home() {
           font-family: inherit !important;
           border-radius: 0.5rem !important;
           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
-          height: 320px !important;
-          min-height: 320px !important;
-          max-height: 320px !important;
+          height: 420px !important;
+          min-height: 420px !important;
+          max-height: 420px !important;
           overflow: hidden !important;
           width: 100% !important;
         }
@@ -771,22 +771,22 @@ function Home() {
         /* Ultra-small screens (320px phones) optimizations */
         @media (max-width: 374px) {
           .react-datepicker {
-            height: 300px !important;
-            min-height: 300px !important;
-            max-height: 300px !important;
+            height: 360px !important;
+            min-height: 360px !important;
+            max-height: 360px !important;
             border-radius: 0.375rem !important;
           }
           
           .react-datepicker__month-container {
-            height: 240px !important;
-            min-height: 240px !important;
-            max-height: 240px !important;
+            height: 300px !important;
+            min-height: 300px !important;
+            max-height: 300px !important;
           }
           
           .react-datepicker__month {
-            height: 180px !important;
-            min-height: 180px !important;
-            max-height: 180px !important;
+            height: 240px !important;
+            min-height: 240px !important;
+            max-height: 240px !important;
           }
           
           .react-datepicker__week {
@@ -835,80 +835,80 @@ function Home() {
         
         @media (min-width: 480px) {
           .react-datepicker {
-            height: 380px !important;
-            min-height: 380px !important;
-            max-height: 380px !important;
+            height: 331px !important;
+            min-height: 331px !important;
+            max-height: 331px !important;
             border-radius: 0.75rem !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker {
-            height: 420px !important;
-            min-height: 420px !important;
-            max-height: 420px !important;
+            height: 373px !important;
+            min-height: 373px !important;
+            max-height: 373px !important;
             border-radius: 1rem !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker {
-            height: 520px !important;
-            min-height: 520px !important;
-            max-height: 520px !important;
+            height: 436px !important;
+            min-height: 436px !important;
+            max-height: 436px !important;
           }
         }
         
         @media (min-width: 1024px) {
           .react-datepicker {
-            height: 560px !important;
-            min-height: 560px !important;
-            max-height: 560px !important;
+            height: 472px !important;
+            min-height: 472px !important;
+            max-height: 472px !important;
           }
         }
         .react-datepicker__month-container {
-          height: 260px !important;
-          min-height: 260px !important;
-          max-height: 260px !important;
+          height: 208px !important;
+          min-height: 208px !important;
+          max-height: 208px !important;
           width: 100% !important;
         }
         
         @media (min-width: 480px) {
           .react-datepicker__month-container {
-            height: 320px !important;
-            min-height: 320px !important;
-            max-height: 320px !important;
+            height: 271px !important;
+            min-height: 271px !important;
+            max-height: 271px !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker__month-container {
-            height: 360px !important;
-            min-height: 360px !important;
-            max-height: 360px !important;
+            height: 313px !important;
+            min-height: 313px !important;
+            max-height: 313px !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker__month-container {
-            height: 460px !important;
-            min-height: 460px !important;
-            max-height: 460px !important;
+            height: 376px !important;
+            min-height: 376px !important;
+            max-height: 376px !important;
           }
         }
         
         @media (min-width: 1024px) {
           .react-datepicker__month-container {
-            height: 500px !important;
-            min-height: 500px !important;
-            max-height: 500px !important;
+            height: 412px !important;
+            min-height: 412px !important;
+            max-height: 412px !important;
           }
         }
         
         .react-datepicker__month {
-          height: 200px !important;
-          min-height: 200px !important;
-          max-height: 200px !important;
+          height: 168px !important;
+          min-height: 168px !important;
+          max-height: 168px !important;
           display: flex !important;
           flex-direction: column !important;
           width: 100% !important;
@@ -916,40 +916,40 @@ function Home() {
         
         @media (min-width: 480px) {
           .react-datepicker__month {
-            height: 280px !important;
-            min-height: 280px !important;
-            max-height: 280px !important;
+            height: 231px !important;
+            min-height: 231px !important;
+            max-height: 231px !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker__month {
-            height: 320px !important;
-            min-height: 320px !important;
-            max-height: 320px !important;
+            height: 273px !important;
+            min-height: 273px !important;
+            max-height: 273px !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker__month {
-            height: 420px !important;
-            min-height: 420px !important;
-            max-height: 420px !important;
+            height: 336px !important;
+            min-height: 336px !important;
+            max-height: 336px !important;
           }
         }
         
         @media (min-width: 1024px) {
           .react-datepicker__month {
-            height: 460px !important;
-            min-height: 460px !important;
-            max-height: 460px !important;
+            height: 372px !important;
+            min-height: 372px !important;
+            max-height: 372px !important;
           }
         }
         .react-datepicker__week {
           display: flex !important;
           justify-content: space-between !important;
           align-items: center !important;
-          height: 2.2rem !important;
+          height: 2rem !important;
           flex: 1 !important;
           width: 100% !important;
           margin: 0 !important;
@@ -958,21 +958,21 @@ function Home() {
         
         @media (min-width: 480px) {
           .react-datepicker__week {
-            height: 3rem !important;
+            height: 2.75rem !important;
             padding: 0 0.375rem !important;
           }
         }
         
         @media (min-width: 640px) {
           .react-datepicker__week {
-            height: 3.5rem !important;
+            height: 3.25rem !important;
             padding: 0 0.5rem !important;
           }
         }
         
         @media (min-width: 768px) {
           .react-datepicker__week {
-            height: 4.5rem !important;
+            height: 4rem !important;
             padding: 0 0.75rem !important;
           }
         }
@@ -2301,6 +2301,7 @@ function Home() {
                     })()}
                     readOnly
                     disabled={false}
+                    fixedHeight
                   />
                   
                   {/* Legend - Mobile Responsive */}
