@@ -12,6 +12,11 @@ import { cleanPhoneForDatabase, formatPhoneForDisplay, validatePhilippinePhone }
 import Image from "next/image";
 
 export default function AuthPage() {
+  // Check for recovery mode immediately
+  const isInRecoveryMode = typeof window !== 'undefined' && 
+    window.location.hash.includes('type=recovery') && 
+    window.location.hash.includes('access_token');
+
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +28,7 @@ export default function AuthPage() {
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
-  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(isInRecoveryMode); // Set immediately if in recovery
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [recoveryProcessed, setRecoveryProcessed] = useState(false);
   const router = useRouter();
@@ -65,12 +70,25 @@ export default function AuthPage() {
           localStorage.removeItem('supabase.auth.token');
         }
         
-        // Don't auto-login if user is in password recovery mode
+        // Check for recovery mode more strictly
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
         const isRecoverySession = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
         
-        if (session?.user && !isRecoverySession) {
-          // User is already logged in, redirect appropriately (but not during password reset)
+        // If in recovery mode, NEVER auto-login regardless of session
+        if (isRecoverySession) {
+          console.log("🔒 RECOVERY MODE - Blocking all auto-login, user MUST set new password");
+          // Force password reset mode and exit early
+          if (!recoveryProcessed) {
+            setIsPasswordReset(true);
+            setRecoveryProcessed(true);
+            info("Password Reset Required", "You must enter a new password to complete the reset process.");
+          }
+          setIsLoading(false);
+          return; // Exit early - NO auto-login allowed
+        }
+        
+        if (session?.user) {
+          // Only auto-login if NOT in recovery mode
           const { data: userData } = await supabase
             .from("users")
             .select("role")
@@ -83,9 +101,6 @@ export default function AuthPage() {
             router.push("/");
           }
           return;
-        } else if (isRecoverySession) {
-          console.log("🔒 Recovery session detected - user must set new password before login");
-          // Don't redirect, force password reset
         }
       } catch (error) {
         console.log("Session recovery error:", error);
@@ -102,6 +117,10 @@ export default function AuthPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change:", event);
       
+      // Check if we're in recovery mode from URL hash
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const isInRecoveryMode = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
+      
       if (event === 'SIGNED_OUT') {
         // Clear any remaining session data
         localStorage.removeItem('supabase.auth.token');
@@ -112,21 +131,22 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info("Security Required", "You must enter a new password to complete the reset process.");
       } else if (event === 'SIGNED_IN' && session) {
-        // Check if this is a recovery session
-        const isRecoverySession = session.user?.aud === 'authenticated' && 
-                                 session.user?.app_metadata?.provider === 'email' &&
-                                 window.location.hash.includes('type=recovery');
-        
-        if (isRecoverySession) {
-          console.log("🔒 Recovery sign-in detected - blocking auto-redirect");
-          // Don't auto-redirect during password reset
-          return;
+        // BLOCK auto-redirect if in recovery mode
+        if (isInRecoveryMode || window.location.hash.includes('type=recovery')) {
+          console.log("🚫 BLOCKING auto-redirect - user in recovery mode must set password first");
+          // Force password reset mode
+          if (!isPasswordReset) {
+            setIsPasswordReset(true);
+            setRecoveryProcessed(true);
+            info("Password Reset Required", "You must set a new password before continuing.");
+          }
+          return; // Block any auto-redirect
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, info, recoveryProcessed]);
+  }, [router, info, recoveryProcessed, isPasswordReset]);
 
   // 🔹 Handle login with Supabase Auth
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -526,6 +546,67 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c]">
         <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // If in recovery mode, show ONLY password reset form
+  if (isInRecoveryMode && !recoveryProcessed) {
+    console.log("🔒 IMMEDIATE RECOVERY MODE DETECTION - forcing password reset");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-2 sm:p-4">
+        <div className="w-full max-w-md bg-white rounded-xl p-6 shadow-2xl">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Password Reset Required</h2>
+            <p className="text-gray-600 mt-2">You must set a new password to continue</p>
+          </div>
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div className="flex items-center border border-gray-300 p-3 rounded-lg">
+              <FaLock className="text-gray-400 mr-3" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="newPassword"
+                placeholder="New Password"
+                className="w-full outline-none bg-transparent text-gray-700"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="ml-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className="flex items-center border border-gray-300 p-3 rounded-lg">
+              <FaLock className="text-gray-400 mr-3" />
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmNewPassword"
+                placeholder="Confirm New Password"
+                className="w-full outline-none bg-transparent text-gray-700"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="ml-3 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={isUpdatingPassword}
+              className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 disabled:opacity-50"
+            >
+              {isUpdatingPassword ? "Updating..." : "Set New Password"}
+            </button>
+            <p className="text-center text-sm text-gray-500">
+              🔒 For security, you must complete this step
+            </p>
+          </form>
+        </div>
       </div>
     );
   }
