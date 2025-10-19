@@ -181,8 +181,6 @@ export default function AuthPage() {
       // Clean up recovery info when component unmounts
       if (!isPasswordReset && !forcePasswordReset) {
         sessionStorage.removeItem('recovery-info-shown');
-        sessionStorage.removeItem('recovery_access_token');
-        sessionStorage.removeItem('recovery_refresh_token');
       }
     };
   }, [router, info, forcePasswordReset, isPasswordReset]);
@@ -509,6 +507,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         return;
       }
 
+      console.log('🔑 Using stored recovery tokens to create session for password update');
+      
       // Create session to allow password update
       const { error: sessionError } = await supabase.auth.setSession({ 
         access_token: storedAccessToken, 
@@ -521,6 +521,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         setIsUpdatingPassword(false);
         return;
       }
+
+      console.log('✅ Session created successfully, now updating password');
 
       // Now update the password
       const { error } = await supabase.auth.updateUser({ 
@@ -541,6 +543,8 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       sessionStorage.removeItem('recovery-info-shown');
       sessionStorage.removeItem('recovery_access_token');
       sessionStorage.removeItem('recovery_refresh_token');
+      
+      console.log('🧹 Cleared all recovery tokens and session data');
       
       info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
       setIsPasswordReset(false);
