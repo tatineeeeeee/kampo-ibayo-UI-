@@ -40,14 +40,14 @@ export default function AuthPage() {
           const mode = urlParams.get('mode');
           const hasRecoveryToken = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
           
-          // Only enter password reset mode if we have a recovery token or proper recovery URL
-          if (hasRecoveryToken || (mode === 'recovery' && window.location.hash)) {
-            console.log("🔄 User returning from password reset email");
+          // Only enter password reset mode if we have a recovery token
+          if (hasRecoveryToken) {
+            console.log("🔄 User returning from password reset email - MUST set new password");
             setIsPasswordReset(true);
             setRecoveryProcessed(true);
-            info("Password Reset", "Please enter your new password below.");
+            info("Password Reset", "You must enter a new password to complete the reset process.");
             setIsLoading(false);
-            return; // Exit early for password reset flow
+            return; // Exit early for password reset flow - MUST complete password reset
           } else if (mode === 'recovery') {
             // If mode=recovery but no hash, clear it and continue to normal login
             console.log("⚠️ Recovery mode detected but no token - clearing URL");
@@ -65,8 +65,12 @@ export default function AuthPage() {
           localStorage.removeItem('supabase.auth.token');
         }
         
-        if (session?.user) {
-          // User is already logged in, redirect appropriately
+        // Don't auto-login if user is in password recovery mode
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const isRecoverySession = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
+        
+        if (session?.user && !isRecoverySession) {
+          // User is already logged in, redirect appropriately (but not during password reset)
           const { data: userData } = await supabase
             .from("users")
             .select("role")
@@ -79,6 +83,9 @@ export default function AuthPage() {
             router.push("/");
           }
           return;
+        } else if (isRecoverySession) {
+          console.log("🔒 Recovery session detected - user must set new password before login");
+          // Don't redirect, force password reset
         }
       } catch (error) {
         console.log("Session recovery error:", error);
@@ -92,7 +99,7 @@ export default function AuthPage() {
     handleSessionRecovery();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change:", event);
       
       if (event === 'SIGNED_OUT') {
@@ -100,9 +107,21 @@ export default function AuthPage() {
         localStorage.removeItem('supabase.auth.token');
       } else if (event === 'PASSWORD_RECOVERY' && !recoveryProcessed) {
         // User clicked password reset link - they have a temporary session
+        console.log("🔒 Password recovery event - user must set new password");
         setRecoveryProcessed(true);
         setIsPasswordReset(true);
-        info("Password Reset", "Please enter your new password below.");
+        info("Security Required", "You must enter a new password to complete the reset process.");
+      } else if (event === 'SIGNED_IN' && session) {
+        // Check if this is a recovery session
+        const isRecoverySession = session.user?.aud === 'authenticated' && 
+                                 session.user?.app_metadata?.provider === 'email' &&
+                                 window.location.hash.includes('type=recovery');
+        
+        if (isRecoverySession) {
+          console.log("🔒 Recovery sign-in detected - blocking auto-redirect");
+          // Don't auto-redirect during password reset
+          return;
+        }
       }
     });
 
@@ -432,7 +451,10 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         return;
       }
 
-      info("Password Updated", "Your password has been successfully updated. You can now log in with your new password.");
+      // Sign out the user after password reset to force re-login with new password
+      await supabase.auth.signOut();
+      
+      info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
       setIsPasswordReset(false);
       setRecoveryProcessed(false);
       setIsLogin(true);
@@ -440,7 +462,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       setConfirmPasswordValue('');
       // Clear URL completely
       window.history.replaceState({}, document.title, window.location.pathname);
-      console.log("✅ Password updated successfully");
+      console.log("✅ Password updated successfully - user must re-login");
     } catch (error: unknown) {
       console.error("Unexpected password update error:", error);
       showError("Update Error", "An unexpected error occurred. Please try again.");
@@ -697,19 +719,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
               </button>
 
               <div className="text-center mt-3 sm:mt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPasswordReset(false);
-                    setRecoveryProcessed(false);
-                    setIsLogin(true);
-                    // Clear URL completely
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                  }}
-                  className="text-gray-500 hover:text-gray-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
-                >
-                  Back to Sign In
-                </button>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  🔒 For security, you must set a new password to continue
+                </p>
               </div>
             </form>
           ) : /* Sign In Form */
