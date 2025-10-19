@@ -57,12 +57,10 @@ export default function AuthPage() {
           setForcePasswordReset(true);
           setIsPasswordReset(true);
 
-          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-          if (error) {
-            console.error('Failed to set Supabase recovery session:', error);
-            showError('Session Error', 'We could not validate the reset link. Please try sending a new reset email.');
-            return;
-          }
+          // STORE tokens but DON'T create session - prevents auto-login
+          sessionStorage.setItem('recovery_access_token', access_token);
+          sessionStorage.setItem('recovery_refresh_token', refresh_token);
+          console.log('✅ Tokens stored - NO SESSION = NO AUTO-LOGIN');
 
           info('Password Reset', 'Please set a new password to complete the reset process.');
         } catch (error) {
@@ -183,6 +181,8 @@ export default function AuthPage() {
       // Clean up recovery info when component unmounts
       if (!isPasswordReset && !forcePasswordReset) {
         sessionStorage.removeItem('recovery-info-shown');
+        sessionStorage.removeItem('recovery_access_token');
+        sessionStorage.removeItem('recovery_refresh_token');
       }
     };
   }, [router, info, forcePasswordReset, isPasswordReset]);
@@ -499,6 +499,30 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     setIsUpdatingPassword(true);
 
     try {
+      // First, establish session with stored recovery tokens
+      const storedAccessToken = sessionStorage.getItem('recovery_access_token');
+      const storedRefreshToken = sessionStorage.getItem('recovery_refresh_token');
+
+      if (!storedAccessToken || !storedRefreshToken) {
+        showError("Session Error", "Recovery tokens not found. Please request a new password reset link.");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      // Create session to allow password update
+      const { error: sessionError } = await supabase.auth.setSession({ 
+        access_token: storedAccessToken, 
+        refresh_token: storedRefreshToken 
+      });
+
+      if (sessionError) {
+        console.error("Session creation error:", sessionError);
+        showError("Session Error", "Could not establish session for password update. Please try again.");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      // Now update the password
       const { error } = await supabase.auth.updateUser({ 
         password: newPassword 
       });
@@ -513,8 +537,10 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       // Sign out the user after password reset to force re-login with new password
       await supabase.auth.signOut();
       
-      // Clear the recovery info flag
+      // Clear ALL recovery data
       sessionStorage.removeItem('recovery-info-shown');
+      sessionStorage.removeItem('recovery_access_token');
+      sessionStorage.removeItem('recovery_refresh_token');
       
       info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
       setIsPasswordReset(false);
