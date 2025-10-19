@@ -97,6 +97,14 @@ export default function AuthPage() {
         }
 
         if (session?.user) {
+          const hashParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.hash.slice(1)) : null;
+          const inRecoveryMode = forcePasswordReset || (hashParams?.get('type') === 'recovery');
+
+          if (inRecoveryMode) {
+            setIsLoading(false);
+            return; // stay on reset flow
+          }
+
           const { data: userData } = await supabase
             .from('users')
             .select('role')
