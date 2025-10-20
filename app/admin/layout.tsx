@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Calendar, Users, FileText, LogOut, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "../supabaseClient";
 import type { User } from "@supabase/supabase-js";
 import { NotificationDropdown } from "../components/NotificationDropdown";
@@ -14,34 +14,60 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminName, setAdminName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const { error: showError } = useToastHelpers();
+
+  // Helper function to check if link is active
+  const isActive = (href: string) => {
+    if (href === '/admin') {
+      return pathname === '/admin';
+    }
+    return pathname.startsWith(href);
+  };
 
   useEffect(() => {
     let isMounted = true;
     
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Authentication timeout')), 10000)
+        );
+
+        const authPromise = supabase.auth.getSession();
+        
+        const authResult = await Promise.race([authPromise, timeoutPromise]);
+        const { data: { session } } = authResult as Awaited<typeof authPromise>;
         
         if (!isMounted) return;
         
         if (!session?.user) {
+          console.log("No session found, redirecting to auth");
           router.push("/auth");
           return;
         }
 
+        console.log("Session found, setting user:", session.user.email);
         setUser(session.user);
 
-        // Get user role from database
-        const { data: userData, error } = await supabase
+        // Get user role from database with timeout
+        const dbTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database query timeout')), 8000)
+        );
+
+        const dbPromise = supabase
           .from("users")
           .select("role, name")
           .eq("auth_id", session.user.id);
 
+        const dbResult = await Promise.race([dbPromise, dbTimeoutPromise]);
+        const { data: userData, error } = dbResult as Awaited<typeof dbPromise>;
+
         if (!isMounted) return;
 
-        const user = userData?.[0];
+        console.log("Database query result:", { userData, error });
 
         if (error) {
           console.error("Admin layout - database error:", error);
@@ -50,25 +76,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return;
         }
 
+        const user = userData?.[0];
+
         if (!user) {
+          console.log("User not found in database");
           showError("User not found. Access denied.");
           router.push("/");
           return;
         }
 
         if (user.role !== "admin") {
+          console.log("User role is not admin:", user.role);
           showError("Access denied. Admin privileges required.");
           router.push("/");
           return;
         }
 
+        console.log("Admin authenticated successfully:", user.name);
         setAdminName(user.name);
         setLoading(false);
       } catch (error) {
         if (isMounted) {
           console.error("Admin layout - unexpected error:", error);
-          showError("An unexpected error occurred. Please refresh the page.");
+          showError(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
           setLoading(false);
+          
+          // On timeout or critical error, redirect to auth
+          if (error instanceof Error && error.message.includes('timeout')) {
+            setTimeout(() => router.push("/auth"), 2000);
+          }
         }
       }
     };
@@ -79,6 +115,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
+        console.log("Auth state change:", event, session?.user?.email);
         if (!session?.user) {
           router.push("/auth");
         }
@@ -155,28 +192,84 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+          <Link 
+            href="/admin" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <Calendar className="w-5 h-5" /> Dashboard
           </Link>
-          <Link href="/admin/bookings" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+          <Link 
+            href="/admin/bookings" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin/bookings') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <FileText className="w-5 h-5" /> Bookings
           </Link>
-          <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+          <Link 
+            href="/admin/users" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin/users') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <Users className="w-5 h-5" /> Users
           </Link>
-          <Link href="/admin/reviews" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+          <Link 
+            href="/admin/reviews" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin/reviews') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <FileText className="w-5 h-5" /> Reviews
           </Link>
-          <Link href="/admin/reports" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+          <Link 
+            href="/admin/reports" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin/reports') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <FileText className="w-5 h-5" /> Reports
           </Link>
-        <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        <Link 
+          href="/admin/settings" 
+          className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+            isActive('/admin/settings') 
+              ? 'bg-blue-600 text-white shadow-md' 
+              : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+          }`}
+        >
             <FileText className="w-5 h-5" /> Settings
           </Link>
-                  <Link href="/admin/payments" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                  <Link 
+            href="/admin/payments" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin/payments') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <FileText className="w-5 h-5" /> Payments
           </Link>
-                  <Link href="/admin/help" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                  <Link 
+            href="/admin/help" 
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              isActive('/admin/help') 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+            }`}
+          >
             <FileText className="w-5 h-5" /> Help/FAQs
           </Link>
         </nav>
