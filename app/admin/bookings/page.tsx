@@ -327,9 +327,28 @@ export default function BookingsPage() {
             refundResponse = await refundApiResponse.json();
             console.log('✅ Admin refund processed successfully:', refundResponse.refund_amount);
           } else {
-            const refundError = await refundApiResponse.text();
-            console.error('❌ Refund processing failed:', refundError);
-            warning('Booking will be cancelled but refund failed. Please process manually.');
+            const refundErrorText = await refundApiResponse.text();
+            console.error('❌ Refund processing failed:', refundErrorText);
+            
+            try {
+              const refundErrorData = JSON.parse(refundErrorText);
+              
+              if (refundErrorData.requires_manual_processing) {
+                // Show a more user-friendly message for amount limits
+                const { refund_amount, max_amount } = refundErrorData;
+                warning(
+                  `PayMongo Test Mode Limit`, 
+                  `Booking amount: ₱${refund_amount.toLocaleString()} exceeds PayMongo TEST MODE limit of ₱${max_amount.toLocaleString()}. For ₱9K-₱12K bookings, switch to LIVE MODE or process refund manually. This limit only applies to test mode.`
+                );
+                console.log('ℹ️ Manual refund required due to PayMongo TEST MODE limits');
+              } else if (refundErrorData.error && refundErrorData.error.includes('payment_id')) {
+                warning('Payment Processing Error', 'Unable to process automatic refund. Please handle the refund manually through PayMongo dashboard.');
+              } else {
+                warning('Refund Failed', 'Booking will be cancelled but automatic refund failed. Please process the refund manually.');
+              }
+            } catch {
+              warning('Refund Failed', 'Booking will be cancelled but automatic refund failed. Please process the refund manually.');
+            }
           }
         } catch (refundError) {
           console.error('❌ Refund API error:', refundError);
@@ -919,6 +938,17 @@ export default function BookingsPage() {
                             <p className="text-blue-600 text-xs mt-2">
                               * Only down payment (50%) is refundable. F2F balance (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}) was never charged.
                             </p>
+                            
+                            {/* PayMongo Test Mode Limit Warning */}
+                            {Math.round(selectedBooking.total_amount * 0.5) > 4500 && (
+                              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                                <p className="text-amber-700 text-xs">
+                                  ⚠️ <strong>PayMongo Test Mode Limit:</strong> Refund amount exceeds ₱4,500 test mode limit. 
+                                  For ₱9K-₱12K bookings, switch to <strong>LIVE MODE</strong> or process refund manually. 
+                                  Live mode supports full booking amounts.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

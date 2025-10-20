@@ -123,18 +123,28 @@ interface AdminOnlyProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   action?: string;
+  asFragment?: boolean; // New prop for table elements
 }
 
-export function AdminOnly({ children, fallback, action = "This action" }: AdminOnlyProps) {
+export function AdminOnly({ children, fallback, action = "This action", asFragment = false }: AdminOnlyProps) {
   const { isAdmin, loading } = useRoleAccess();
 
   if (loading) {
+    // For table elements, return fragment to avoid div wrapper
+    if (asFragment) {
+      return <>{children}</>;
+    }
     // Return invisible placeholder to prevent layout shift
     return <div className="opacity-0 pointer-events-none">{children}</div>;
   }
 
   if (!isAdmin) {
     return fallback || <AdminRequired action={action} />;
+  }
+
+  // For table elements, return fragment to avoid div wrapper
+  if (asFragment) {
+    return <>{children}</>;
   }
 
   return <>{children}</>;
