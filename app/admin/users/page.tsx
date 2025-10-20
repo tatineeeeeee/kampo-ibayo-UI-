@@ -221,6 +221,7 @@ export default function UsersPage() {
   const [editRole, setEditRole] = useState("");
   const [showBookingsModal, setShowBookingsModal] = useState(false);
   const [selectedUserBookings, setSelectedUserBookings] = useState<User | null>(null);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   // Standardized toast helpers
   const { success, error: showError, warning } = useToastHelpers();
@@ -229,7 +230,19 @@ export default function UsersPage() {
     try {
       console.log('🔍 Fetching users...');
       
-      // First, let's see what columns exist in the users table
+      // Get current user role first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: currentUserData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('auth_id', session.user.id)
+          .single();
+        
+        setIsCurrentUserAdmin(currentUserData?.role === 'admin');
+      }
+      
+      // Then fetch all users
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -255,7 +268,8 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Remove showError dependency to prevent infinite loop - showError is stable from useToastHelpers
 
   useEffect(() => {
     fetchUsers();
@@ -306,8 +320,8 @@ export default function UsersPage() {
       return;
     }
 
-    if (userToDelete.role === 'admin') {
-      warning('Cannot delete admin users');
+    if (userToDelete.role === 'admin' || userToDelete.role === 'staff') {
+      warning('Cannot delete admin or staff users');
       return;
     }
 
@@ -378,6 +392,8 @@ export default function UsersPage() {
     switch (role.toLowerCase()) {
       case 'admin':
         return 'bg-red-100 text-red-800';
+      case 'staff':
+        return 'bg-green-100 text-green-800';
       case 'user':
         return 'bg-blue-100 text-blue-800';
       default:
@@ -483,19 +499,31 @@ export default function UsersPage() {
                         >
                           View Bookings
                         </button>
-                        <button 
-                          onClick={() => openEditModal(user)}
-                          className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        {user.role !== 'admin' && (
+                        {isCurrentUserAdmin ? (
                           <button 
-                            onClick={() => deleteUser(user.id)}
-                            className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                            onClick={() => openEditModal(user)}
+                            className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
                           >
-                            Delete
+                            Edit
                           </button>
+                        ) : (
+                          <div className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs text-center">
+                            Admin Only
+                          </div>
+                        )}
+                        {isCurrentUserAdmin ? (
+                          user.role !== 'admin' && user.role !== 'staff' && (
+                            <button 
+                              onClick={() => deleteUser(user.id)}
+                              className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          )
+                        ) : (
+                          <div className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs text-center">
+                            Admin Only
+                          </div>
                         )}
                       </div>
                     </td>
@@ -543,6 +571,7 @@ export default function UsersPage() {
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="user">User</option>
+                  <option value="staff">Staff</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>

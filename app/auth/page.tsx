@@ -129,7 +129,7 @@ export default function AuthPage() {
             .eq('auth_id', session.user.id)
             .single();
 
-          if (userData?.role === 'admin') {
+          if (userData?.role === 'admin' || userData?.role === 'staff') {
             router.push('/admin');
           } else {
             router.push('/');
@@ -175,7 +175,7 @@ export default function AuthPage() {
           .eq('auth_id', session.user.id)
           .single();
 
-        if (userData?.role === 'admin') {
+        if (userData?.role === 'admin' || userData?.role === 'staff') {
           router.push('/admin');
         } else {
           router.push('/');
@@ -279,8 +279,8 @@ export default function AuthPage() {
           const userRole = userData?.role || "user";
           console.log("User role detected:", userRole);
           
-          if (userRole === "admin") {
-            loginSuccess("admin");
+          if (userRole === "admin" || userRole === "staff") {
+            loginSuccess(userRole);
             setTimeout(() => router.push("/admin"), 1500);
           } else {
             loginSuccess("user");

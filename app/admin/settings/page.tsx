@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
 import { saveMaintenanceSettings, getMaintenanceSettings } from "../../utils/maintenanceMode";
+import { AdminOnly } from "../../hooks/useRoleAccess";
 import type { User } from "@supabase/supabase-js";
 import { 
   User as UserIcon, 
@@ -156,12 +157,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Page Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-8 text-white shadow-2xl">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-            <Settings className="w-8 h-8 text-white" />
+    <AdminOnly action="Access system settings">
+      <div className="space-y-8 max-w-6xl mx-auto">
+        {/* Page Header */}
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-8 text-white shadow-2xl">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <Settings className="w-8 h-8 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-bold">Admin Settings</h1>
@@ -315,8 +317,9 @@ export default function SettingsPage() {
               {resortSettings.maintenance_mode ? 'Update Resort Status' : 'Save Settings'}
             </button>
           </div>
+          </div>
         </div>
       </div>
-    </div>
+    </AdminOnly>
   );
 }

@@ -8,6 +8,7 @@ import { supabase } from "../supabaseClient";
 import type { User } from "@supabase/supabase-js";
 import { NotificationDropdown } from "../components/NotificationDropdown";
 import { useToastHelpers } from "../components/Toast";
+import { useRoleAccess } from "../hooks/useRoleAccess";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -17,6 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   const { error: showError } = useToastHelpers();
+  const { role, isAdmin, isStaff } = useRoleAccess();
 
   // Helper function to check if link is active
   const isActive = (href: string) => {
@@ -85,9 +87,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return;
         }
 
-        if (user.role !== "admin") {
-          console.log("User role is not admin:", user.role);
-          showError("Access denied. Admin privileges required.");
+        if (user.role !== "admin" && user.role !== "staff") {
+          console.log("User role is not admin or staff:", user.role);
+          showError("Access denied. Admin or Staff privileges required.");
           router.push("/");
           return;
         }
@@ -284,9 +286,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Notification Dropdown */}
             <NotificationDropdown />
             {/* Admin Profile */}
-            <div className="flex items-center gap-2 text-gray-700 font-semibold bg-blue-50 px-3 py-1 rounded-full">
-              <ShieldCheck className="w-5 h-5 text-blue-600" />
-              {adminName || user?.email || "Admin User"}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-gray-700 font-semibold bg-blue-50 px-3 py-1 rounded-full">
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                {adminName || user?.email || "Admin User"}
+              </div>
+              {role && (
+                <div className={`text-xs px-3 py-1 rounded-full text-center ${
+                  isAdmin 
+                    ? 'bg-red-100 text-red-700' 
+                    : isStaff 
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </div>
+              )}
             </div>
             {/* Logout Button */}
             <button 

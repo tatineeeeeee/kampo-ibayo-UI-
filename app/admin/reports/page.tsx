@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { AdminOnly } from "../../hooks/useRoleAccess";
 import { 
   Calendar, 
   Download, 
@@ -567,7 +568,7 @@ export default function ReportsPage() {
         )}
         
         {selectedReport.id === 'revenue-summary' && (
-          <>
+          <AdminOnly action="View financial reports">
             <div className="bg-white p-6 rounded-xl shadow-md">
               <div className="flex items-center justify-between">
                 <div>
@@ -618,7 +619,7 @@ export default function ReportsPage() {
                 <Calendar className="w-8 h-8 text-orange-500" />
               </div>
             </div>
-          </>
+          </AdminOnly>
         )}
         
         {selectedReport.id === 'booking-calendar' && (

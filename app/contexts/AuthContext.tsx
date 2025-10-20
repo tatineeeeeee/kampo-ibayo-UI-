@@ -28,7 +28,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           setUser(session.user);
-          setUserRole("user"); // Default role for now
+          
+          // Fetch actual user role from database
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('auth_id', session.user.id)
+            .single();
+          
+          setUserRole(userData?.role || 'user');
         } else {
           setUser(null);
           setUserRole(null);
@@ -51,7 +59,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           setUser(session.user);
-          setUserRole("user"); // Default role for now
+          
+          // Fetch actual user role from database
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('auth_id', session.user.id)
+            .single();
+          
+          setUserRole(userData?.role || 'user');
         } else {
           setUser(null);
           setUserRole(null);

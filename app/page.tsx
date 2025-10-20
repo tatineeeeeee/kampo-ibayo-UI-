@@ -143,17 +143,17 @@ const Navbar = () => {
                 onClick={() => setProfileMenu(!profileMenu)}
                 className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 text-sm lg:text-base transition-colors"
               >
-                {userRole === "admin" ? "👑 Admin" : "☰"}
+                {userRole === "admin" ? "👑 Admin" : userRole === "staff" ? "👨‍💼 Staff" : "☰"}
               </button>
 
               {profileMenu && (
                 <div className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg overflow-hidden">
-                  {userRole === "admin" ? (
+                  {userRole === "admin" || userRole === "staff" ? (
                     <Link
                       href="/admin"
                       className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
                     >
-                      👑 Admin Panel
+                      {userRole === "admin" ? "👑 Admin Panel" : "👨‍💼 Staff Panel"}
                     </Link>
                   ) : (
                     <>
