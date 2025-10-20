@@ -349,6 +349,25 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     // Clear any existing session first
     await supabase.auth.signOut();
     
+    // Check if email already exists in the database first
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('email')
+      .eq('email', email.toLowerCase())
+      .single();
+    
+    // Only show error if user actually exists (ignore "not found" errors)
+    if (existingUser && !checkError) {
+      showError("Account Exists", "An account with this email already exists. Please try logging in instead.");
+      return;
+    }
+    
+    // If there's a database error other than "not found", log it but continue
+    if (checkError && !checkError.message.includes('not found') && checkError.code !== 'PGRST116') {
+      console.warn('Database check warning:', checkError);
+      // Continue anyway - we'll catch duplicates in Supabase Auth
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -360,11 +379,17 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     if (error) {
       console.error("Registration error:", error);
       
-      // Handle specific registration errors
-      if (error.message.includes("User already registered")) {
+      // Handle specific registration errors - enhanced duplicate detection
+      if (error.message.includes("User already registered") || 
+          error.message.includes("already been registered") ||
+          error.message.includes("already exists") ||
+          error.message.includes("duplicate") ||
+          error.code === "user_already_exists") {
         showError("Account Exists", "An account with this email already exists. Please try logging in instead.");
       } else if (error.message.includes("Password")) {
         showError("Password Issue", "Password is too weak. Please choose a stronger password.");
+      } else if (error.message.includes("email") && error.message.includes("valid")) {
+        showError("Invalid Email", "Please enter a valid email address.");
       } else {
         showError("Registration Failed", error.message);
       }
