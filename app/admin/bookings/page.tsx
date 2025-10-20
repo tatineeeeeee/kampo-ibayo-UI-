@@ -835,13 +835,13 @@ export default function BookingsPage() {
                     }}
                     className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md text-sm font-semibold hover:bg-green-600 transition"
                   >
-                    ✅ Confirm
+                    Confirm
                   </button>
                   <button 
                     onClick={() => setShowCancelModal(true)}
                     className="flex-1 bg-red-500 text-white py-2 px-4 rounded-md text-sm font-semibold hover:bg-red-600 transition"
                   >
-                    ❌ Cancel
+                    Cancel
                   </button>
                   <button
                     onClick={closeModal}
