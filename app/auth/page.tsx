@@ -143,11 +143,21 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // If we're in password reset mode, don't redirect but keep the session
-        if (forcePasswordReset || isPasswordReset) {
-          console.log('� Password reset mode - keeping session for password update');
-          // Clean the URL now that we have a valid session
-          window.history.replaceState({}, document.title, window.location.pathname);
+        // Check if we're in recovery mode from URL
+        const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+        const params = new URLSearchParams(hash);
+        const isRecoveryMode = params.get('type') === 'recovery';
+        
+        // If we're in password reset mode OR recovery mode, don't redirect but keep the session
+        if (forcePasswordReset || isPasswordReset || isRecoveryMode) {
+          console.log('🔒 Password reset mode - keeping session for password update');
+          // Clean the URL now that we have a valid session for recovery
+          if (isRecoveryMode) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Also set the password reset state to prevent auto-login
+            setForcePasswordReset(true);
+            setIsPasswordReset(true);
+          }
           return;
         }
 
