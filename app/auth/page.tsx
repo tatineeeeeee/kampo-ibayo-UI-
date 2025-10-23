@@ -54,8 +54,8 @@ export default function AuthPage() {
         // Show info message
         info('Password Reset', 'Please set a new password to complete the reset process.');
         
-        // Clean the URL after processing
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // DON'T clean the URL yet - let Supabase process the tokens first
+        // The URL will be cleaned after the session is established
       }
     };
 
@@ -142,9 +142,11 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // Only prevent auto-login if we're explicitly in password reset mode
+        // If we're in password reset mode, don't redirect but keep the session
         if (forcePasswordReset || isPasswordReset) {
-          console.log('🚫 BLOCKING auto-redirect - Password reset in progress!');
+          console.log('� Password reset mode - keeping session for password update');
+          // Clean the URL now that we have a valid session
+          window.history.replaceState({}, document.title, window.location.pathname);
           return;
         }
 
@@ -517,6 +519,16 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     setIsUpdatingPassword(true);
 
     try {
+      // Check if we have a valid session first
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        showError("Session Error", "No active session found. Please click the password reset link again.");
+        return;
+      }
+
+      console.log('✅ Valid session found, proceeding with password update');
+
       // Use Supabase's built-in updateUser method - no manual session needed
       // When user comes from recovery email, they already have a valid session
       const { error } = await supabase.auth.updateUser({ 
@@ -851,7 +863,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                 className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUpdatingPassword ? "Updating Password..." : "Update Password"}
-              </button>
+2               </button>
 
               <div className="text-center mt-3 sm:mt-4">
                 <p className="text-xs sm:text-sm text-gray-500">
