@@ -635,30 +635,41 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     try {
       console.log('🔄 Attempting password update...');
 
-      // Wait a moment to ensure recovery session is fully established
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Use Supabase's built-in updateUser method
-      // This works with recovery sessions even if getSession() returns null
-      const { error } = await supabase.auth.updateUser({ 
+      // Add timeout to prevent hanging
+      const updatePromise = supabase.auth.updateUser({ 
         password: newPassword 
       });
 
+      // Timeout after 10 seconds
+      const timeoutPromise = new Promise<{ error: Error }>((_, reject) => 
+        setTimeout(() => reject(new Error('Password update timeout')), 10000)
+      );
+
+      const result = await Promise.race([updatePromise, timeoutPromise]);
+      const { error } = result;
+
       if (error) {
-        console.error("Password update error:", error);
+        console.error("❌ Password update error:", error);
+        console.error("Error details:", {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
         
         // Handle specific error cases
         if (error.message.includes('session')) {
           showError("Session Expired", "Your password reset session has expired. Please request a new password reset link.");
         } else if (error.message.includes('weak')) {
           showError("Weak Password", "Please choose a stronger password with at least 6 characters.");
+        } else if (error.message.includes('timeout')) {
+          showError("Request Timeout", "The password update request timed out. Please try again.");
         } else {
           showError("Update Failed", error.message);
         }
         return;
       }
 
-      console.log('✅ Password updated successfully');
+      console.log('✅ Password updated successfully!');
 
       // Show success message first
       info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
