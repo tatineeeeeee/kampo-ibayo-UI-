@@ -54,9 +54,13 @@ export default function AuthPage() {
 
       if (type === 'recovery' && access_token && refresh_token) {
         try {
-          console.log('� Recovery tokens detected - establishing Supabase session');
+          console.log('🔒 Recovery tokens detected - establishing Supabase session');
           setForcePasswordReset(true);
           setIsPasswordReset(true);
+
+          // IMMEDIATELY sign out to prevent auto-login from recovery tokens
+          await supabase.auth.signOut();
+          console.log('🚫 Signed out to prevent auto-login');
 
           // STORE tokens but DON'T create session - prevents auto-login
           sessionStorage.setItem('recovery_access_token', access_token);
@@ -163,9 +167,16 @@ export default function AuthPage() {
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
         // Check MULTIPLE conditions to prevent auto-login during password reset
-        if (forcePasswordReset || inRecoveryMode || hasRecoveryTokens) {
+        if (forcePasswordReset || inRecoveryMode || hasRecoveryTokens || isPasswordReset) {
           console.log('🚫 BLOCKING auto-redirect - Password reset in progress!');
-          console.log('� Conditions: Recovery mode:', inRecoveryMode, 'Force reset:', forcePasswordReset, 'Has tokens:', hasRecoveryTokens);
+          console.log('🔒 Conditions: Recovery mode:', inRecoveryMode, 'Force reset:', forcePasswordReset, 'Has tokens:', hasRecoveryTokens, 'Is password reset:', isPasswordReset);
+          
+          // Force sign out during recovery to prevent auto-login
+          if (inRecoveryMode || hasRecoveryTokens) {
+            console.log('🚫 Force signing out due to recovery mode');
+            await supabase.auth.signOut();
+          }
+          
           // Absolutely no navigation allowed during password reset
           return;
         }
