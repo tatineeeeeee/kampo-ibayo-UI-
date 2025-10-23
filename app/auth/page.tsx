@@ -157,6 +157,23 @@ export default function AuthPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event);
 
+      // IMMEDIATE RECOVERY CHECK - Before processing any events
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash.slice(1);
+        const search = window.location.search;
+        const hashParams = new URLSearchParams(hash);
+        const searchParams = new URLSearchParams(search);
+        const hasRecoveryTokens = hashParams.get('access_token') || hashParams.get('type') === 'recovery' || searchParams.get('mode') === 'recovery';
+        
+        if (hasRecoveryTokens && event === 'SIGNED_IN') {
+          console.log('🚫 IMMEDIATE BLOCK: Recovery tokens detected - preventing auto-login');
+          setForcePasswordReset(true);
+          setIsPasswordReset(true);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+      }
+
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('supabase.auth.token');
       } else if (event === 'PASSWORD_RECOVERY') {
@@ -165,30 +182,36 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // Check if we're in recovery mode from URL (both hash and search)
+        // IMMEDIATELY check if we're in recovery mode to prevent auto-login
         const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
         const search = typeof window !== 'undefined' ? window.location.search : '';
         const hashParams = new URLSearchParams(hash);
         const searchParams = new URLSearchParams(search);
-        const isRecoveryMode = hashParams.get('type') === 'recovery' || searchParams.get('mode') === 'recovery';
+        const isRecoveryMode = hashParams.get('type') === 'recovery' || 
+                              searchParams.get('mode') === 'recovery' ||
+                              hashParams.get('access_token'); // Also check for recovery tokens
         
-        console.log('🔍 SIGNED_IN event - checking recovery mode');
+        console.log('🔍 SIGNED_IN event - IMMEDIATE recovery check');
         console.log('Hash:', hash);
         console.log('Search:', search);
+        console.log('Has access_token:', !!hashParams.get('access_token'));
         console.log('Is recovery mode:', isRecoveryMode);
         
-        // If we're in password reset mode OR recovery mode, don't redirect but keep the session
-        if (forcePasswordReset || isPasswordReset || isRecoveryMode) {
-          console.log('🔒 Password reset mode - keeping session for password update');
+        // PREVENT AUTO-LOGIN: If ANY recovery indicators are present, stay in password reset mode
+        if (isRecoveryMode || forcePasswordReset || isPasswordReset) {
+          console.log('🚫 BLOCKING AUTO-LOGIN - Recovery mode detected');
+          
+          // Immediately set password reset state to prevent auto-login
+          setForcePasswordReset(true);
+          setIsPasswordReset(true);
+          
           // Clean the URL now that we have a valid session for recovery
           if (isRecoveryMode) {
             window.history.replaceState({}, document.title, window.location.pathname);
-            // Also set the password reset state to prevent auto-login
-            setForcePasswordReset(true);
-            setIsPasswordReset(true);
-            console.log('✅ Recovery mode detected - password reset state set');
+            console.log('✅ URL cleaned and password reset state enforced');
           }
-          return;
+          
+          return; // CRITICAL: Exit here to prevent auto-login redirect
         }
 
         const { data: userData } = await supabase
