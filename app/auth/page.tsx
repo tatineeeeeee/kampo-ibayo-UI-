@@ -545,41 +545,57 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
       if (!storedAccessToken || !storedRefreshToken) {
         showError("Session Error", "Recovery tokens not found. Please request a new password reset link.");
-        setIsUpdatingPassword(false);
         return;
       }
 
       console.log('🔑 Using stored recovery tokens to create session for password update');
       
-      // Create session to allow password update
-      const { error: sessionError } = await supabase.auth.setSession({ 
+      // Create session to allow password update with timeout
+      const sessionPromise = supabase.auth.setSession({ 
         access_token: storedAccessToken, 
         refresh_token: storedRefreshToken 
       });
 
-      if (sessionError) {
-        console.error("Session creation error:", sessionError);
+      const sessionResult = await Promise.race([
+        sessionPromise,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Session creation timeout')), 10000)
+        )
+      ]);
+
+      if (sessionResult.error) {
+        console.error("Session creation error:", sessionResult.error);
         showError("Session Error", "Could not establish session for password update. Please try again.");
-        setIsUpdatingPassword(false);
         return;
       }
 
       console.log('✅ Session created successfully, now updating password');
 
-      // Now update the password
-      const { error } = await supabase.auth.updateUser({ 
-        password: newPassword 
-      });
+      // Now update the password with timeout
+      const updatePromise = supabase.auth.updateUser({ password: newPassword });
+      
+      const updateResult = await Promise.race([
+        updatePromise,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Password update timeout')), 10000)
+        )
+      ]);
 
-      if (error) {
-        console.error("Password update error:", error);
-        showError("Update Failed", error.message);
-        setIsUpdatingPassword(false);
+      if (updateResult.error) {
+        console.error("Password update error:", updateResult.error);
+        showError("Update Failed", updateResult.error.message);
         return;
       }
 
       // Sign out the user after password reset to force re-login with new password
-      await supabase.auth.signOut();
+      try {
+        await Promise.race([
+          supabase.auth.signOut(),
+          new Promise((resolve) => setTimeout(resolve, 3000)) // Max 3 seconds for signout
+        ]);
+      } catch (signOutError) {
+        console.warn("Sign out took too long, continuing anyway:", signOutError);
+      }
       
       // Clear ALL recovery data
       sessionStorage.removeItem('recovery-info-shown');
@@ -597,9 +613,16 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       // Clear URL completely
       window.history.replaceState({}, document.title, window.location.pathname);
       console.log("✅ Password updated successfully - user must re-login");
+      
     } catch (error: unknown) {
       console.error("Unexpected password update error:", error);
-      showError("Update Error", "An unexpected error occurred. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('timeout')) {
+        showError("Timeout Error", "The operation took too long. Please try again.");
+      } else {
+        showError("Update Error", "An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -897,7 +920,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                 disabled={isUpdatingPassword}
                 className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUpdatingPassword ? "Updating..." : "Update Password"}
+                {isUpdatingPassword ? "Updating Password..." : "Update Password"}
               </button>
 
               <div className="text-center mt-3 sm:mt-4">
