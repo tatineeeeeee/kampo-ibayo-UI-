@@ -1904,7 +1904,7 @@ function Home() {
                                 console.log('🚪 Footer: Logout initiated');
                                 
                                 // Sign out from Supabase
-                                const { error } = await supabase.auth.signOut();
+                                await supabase.auth.signOut();
                                 
                                 // Clear all storage
                                 if (typeof window !== 'undefined') {

@@ -24,10 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        // Check if we're in password reset mode - don't auto-login
+        // Check if we're in password reset mode - only block if explicitly set
         const inPasswordReset = typeof window !== 'undefined' && 
-          (localStorage.getItem('in_password_reset') === 'true' || 
-           window.location.pathname === '/auth');
+          localStorage.getItem('in_password_reset') === 'true';
         
         if (inPasswordReset) {
           console.log('🔒 AuthContext: In password reset mode, skipping auto-login');
