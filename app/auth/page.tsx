@@ -44,6 +44,10 @@ export default function AuthPage() {
       // Handle password recovery the correct way
       if (type === 'recovery') {
         console.log('🔒 Password recovery detected - setting up password reset form');
+        
+        // Clean URL immediately to prevent auto-login loops
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
         setForcePasswordReset(true);
         setIsPasswordReset(true);
         setIsLoading(false);
@@ -53,9 +57,6 @@ export default function AuthPage() {
         
         // Show info message
         info('Password Reset', 'Please set a new password to complete the reset process.');
-        
-        // DON'T clean the URL yet - let Supabase process the tokens first
-        // The URL will be cleaned after the session is established
       }
     };
 
@@ -543,11 +544,11 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
       console.log('✅ Password updated successfully');
 
+      // Show success message first
+      info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
+      
       // Clear recovery data
       sessionStorage.removeItem('recovery-info-shown');
-      
-      // Show success message
-      info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
       
       // Reset form states
       setIsPasswordReset(false);
@@ -556,10 +557,11 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       setPasswordValue('');
       setConfirmPasswordValue('');
       
-      // Sign out to force fresh login
-      await supabase.auth.signOut();
-      
-      console.log("✅ Password updated successfully - user must re-login");
+      // Wait a moment then sign out to force fresh login
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        console.log("✅ Password updated successfully - user must re-login");
+      }, 1000);
       
     } catch (error: unknown) {
       console.error("Unexpected password update error:", error);
