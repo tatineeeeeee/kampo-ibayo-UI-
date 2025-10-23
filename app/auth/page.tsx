@@ -30,9 +30,9 @@ export default function AuthPage() {
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
 
-  // Establish a Supabase session when returning from the password reset email
+  // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
-    const captureRecoverySession = async () => {
+    const handleRecovery = async () => {
       if (typeof window === 'undefined') return;
 
       const hash = window.location.hash.slice(1);
@@ -40,47 +40,27 @@ export default function AuthPage() {
 
       const params = new URLSearchParams(hash);
       const type = params.get('type');
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
 
-      // IMMEDIATELY set flags if this is ANY recovery to prevent auto-login
+      // Handle password recovery the correct way
       if (type === 'recovery') {
-        console.log('🔒 RECOVERY TYPE DETECTED - Blocking auto-login immediately');
+        console.log('🔒 Password recovery detected - setting up password reset form');
         setForcePasswordReset(true);
         setIsPasswordReset(true);
-        // Clear any previous recovery info notifications
+        setIsLoading(false);
+        
+        // Clear any previous recovery notifications
         sessionStorage.removeItem('recovery-info-shown');
-      }
-
-      if (type === 'recovery' && access_token && refresh_token) {
-        try {
-          console.log('🔒 Recovery tokens detected - establishing Supabase session');
-          setForcePasswordReset(true);
-          setIsPasswordReset(true);
-
-          // STORE tokens FIRST before any signOut operations
-          sessionStorage.setItem('recovery_access_token', access_token);
-          sessionStorage.setItem('recovery_refresh_token', refresh_token);
-          console.log('✅ Recovery tokens stored securely - Password reset ready');
-
-          // THEN sign out to prevent auto-login from recovery tokens
-          await supabase.auth.signOut();
-          console.log('🚫 Signed out to prevent auto-login');
-
-          info('Password Reset', 'Please set a new password to complete the reset process.');
-        } catch (error) {
-          console.error('Unexpected error while handling recovery session:', error);
-          showError('Reset Error', 'Something went wrong while preparing your password reset. Please request a new link.');
-        } finally {
-          setIsLoading(false);
-          // Clean the URL so tokens are not visible after establishing the session
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        
+        // Show info message
+        info('Password Reset', 'Please set a new password to complete the reset process.');
+        
+        // Clean the URL after processing
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
 
-    captureRecoverySession();
-  }, [forcePasswordReset, info, showError]);
+    handleRecovery();
+  }, [info]);
 
   // Handle session recovery and cleanup on component mount
   useEffect(() => {
@@ -154,10 +134,6 @@ export default function AuthPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event);
 
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const inRecoveryMode = hashParams.get('type') === 'recovery';
-      const hasRecoveryTokens = hashParams.get('access_token') && hashParams.get('refresh_token');
-
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('supabase.auth.token');
       } else if (event === 'PASSWORD_RECOVERY') {
@@ -166,18 +142,9 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // Check MULTIPLE conditions to prevent auto-login during password reset
-        if (forcePasswordReset || inRecoveryMode || hasRecoveryTokens || isPasswordReset) {
+        // Only prevent auto-login if we're explicitly in password reset mode
+        if (forcePasswordReset || isPasswordReset) {
           console.log('🚫 BLOCKING auto-redirect - Password reset in progress!');
-          console.log('🔒 Conditions: Recovery mode:', inRecoveryMode, 'Force reset:', forcePasswordReset, 'Has tokens:', hasRecoveryTokens, 'Is password reset:', isPasswordReset);
-          
-          // Force sign out during recovery to prevent auto-login
-          if (inRecoveryMode || hasRecoveryTokens) {
-            console.log('🚫 Force signing out due to recovery mode');
-            await supabase.auth.signOut();
-          }
-          
-          // Absolutely no navigation allowed during password reset
           return;
         }
 
@@ -525,7 +492,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     }
   }
 
-  // 🔹 Handle password update (for password reset)
+  // 🔹 Handle password update (for password reset) - PROPER SUPABASE WAY
   async function handlePasswordUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -550,90 +517,42 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     setIsUpdatingPassword(true);
 
     try {
-      // Retrieve stored recovery tokens for password update
-      const storedAccessToken = sessionStorage.getItem('recovery_access_token');
-      const storedRefreshToken = sessionStorage.getItem('recovery_refresh_token');
-
-      if (!storedAccessToken || !storedRefreshToken) {
-        showError("Session Error", "Recovery tokens not found. Please request a new password reset link.");
-        return;
-      }
-
-      console.log('🔑 Using stored recovery tokens to create session for password update');
-      
-      // Create session to allow password update with timeout
-      const sessionPromise = supabase.auth.setSession({ 
-        access_token: storedAccessToken, 
-        refresh_token: storedRefreshToken 
+      // Use Supabase's built-in updateUser method - no manual session needed
+      // When user comes from recovery email, they already have a valid session
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
       });
 
-      const sessionResult = await Promise.race([
-        sessionPromise,
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Session creation timeout')), 10000)
-        )
-      ]);
-
-      if (sessionResult.error) {
-        console.error("Session creation error:", sessionResult.error);
-        showError("Session Error", "Could not establish session for password update. Please try again.");
+      if (error) {
+        console.error("Password update error:", error);
+        showError("Update Failed", error.message);
         return;
       }
 
-      console.log('✅ Session created successfully, now updating password');
+      console.log('✅ Password updated successfully');
 
-      // Now update the password with timeout
-      const updatePromise = supabase.auth.updateUser({ password: newPassword });
-      
-      const updateResult = await Promise.race([
-        updatePromise,
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Password update timeout')), 10000)
-        )
-      ]);
-
-      if (updateResult.error) {
-        console.error("Password update error:", updateResult.error);
-        showError("Update Failed", updateResult.error.message);
-        return;
-      }
-
-      // Sign out the user after password reset to force re-login with new password
-      try {
-        await Promise.race([
-          supabase.auth.signOut(),
-          new Promise((resolve) => setTimeout(resolve, 3000)) // Max 3 seconds for signout
-        ]);
-      } catch (signOutError) {
-        console.warn("Sign out took too long, continuing anyway:", signOutError);
-      }
-      
-      // Clear ALL recovery data
+      // Clear recovery data
       sessionStorage.removeItem('recovery-info-shown');
-      sessionStorage.removeItem('recovery_access_token');
-      sessionStorage.removeItem('recovery_refresh_token');
       
-      console.log('🧹 Cleared all recovery tokens and session data');
-      
+      // Show success message
       info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
+      
+      // Reset form states
       setIsPasswordReset(false);
       setForcePasswordReset(false);
       setIsLogin(true);
       setPasswordValue('');
       setConfirmPasswordValue('');
-      // Clear URL completely
-      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Sign out to force fresh login
+      await supabase.auth.signOut();
+      
       console.log("✅ Password updated successfully - user must re-login");
       
     } catch (error: unknown) {
       console.error("Unexpected password update error:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      if (errorMessage.includes('timeout')) {
-        showError("Timeout Error", "The operation took too long. Please try again.");
-      } else {
-        showError("Update Error", "An unexpected error occurred. Please try again.");
-      }
+      showError("Update Error", `Failed to update password: ${errorMessage}`);
     } finally {
       setIsUpdatingPassword(false);
     }
