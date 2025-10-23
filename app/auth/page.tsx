@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../supabaseClient"; // adjust path if needed
 import {FaLock, FaEnvelope, FaUser, FaPhone, FaUserPlus } from "react-icons/fa";
@@ -29,11 +29,14 @@ export default function AuthPage() {
   const [forcePasswordReset, setForcePasswordReset] = useState(false);
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
+  
+  // Prevent infinite loops in recovery detection
+  const recoveryHandled = useRef(false);
 
   // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
     const handleRecovery = async () => {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined' || recoveryHandled.current) return;
 
       const hash = window.location.hash.slice(1);
       const search = window.location.search;
@@ -54,36 +57,38 @@ export default function AuthPage() {
 
       // Handle password recovery the correct way
       if (hashType === 'recovery' || searchMode === 'recovery') {
+        recoveryHandled.current = true; // Prevent infinite loops
+        
         console.log('🔒 Password recovery detected - setting up password reset form');
         console.log('Recovery method:', hashType === 'recovery' ? 'hash' : 'search');
         
-        // DON'T clean URL immediately - let Supabase establish the session first
-        // The URL will be cleaned after session is established
-        
-        setForcePasswordReset(true);
-        setIsPasswordReset(true);
-        setIsLoading(false);
-        
-        // Clear any previous recovery notifications
-        sessionStorage.removeItem('recovery-info-shown');
-        
-        // Show info message
-        info('Password Reset', 'Please set a new password to complete the reset process.');
-        
-        // Also check if we have recovery tokens in the hash
+        // Check if we have recovery tokens in the hash
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         
         if (accessToken && refreshToken) {
           console.log('✅ Recovery tokens found in URL hash');
+          
+          // Set recovery state
+          setForcePasswordReset(true);
+          setIsPasswordReset(true);
+          setIsLoading(false);
+          
+          // Clear any previous recovery notifications
+          sessionStorage.removeItem('recovery-info-shown');
+          
+          // Show info message
+          info('Password Reset', 'Please set a new password to complete the reset process.');
         } else {
-          console.log('⚠️ No recovery tokens in URL - might be an issue');
+          console.log('❌ No recovery tokens in URL - invalid reset link');
+          showError('Invalid Reset Link', 'This password reset link is invalid or expired. Please request a new password reset.');
+          setIsLoading(false);
         }
       }
     };
 
     handleRecovery();
-  }, [info]);
+  }, [info, showError]);
 
   // Handle session recovery and cleanup on component mount
   useEffect(() => {
@@ -534,7 +539,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=recovery`,
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
