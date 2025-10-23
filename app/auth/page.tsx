@@ -520,25 +520,25 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     setIsUpdatingPassword(true);
 
     try {
-      // Check if we have a valid session first
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        showError("Session Error", "No active session found. Please click the password reset link again.");
-        return;
-      }
+      console.log('🔄 Attempting password update...');
 
-      console.log('✅ Valid session found, proceeding with password update');
-
-      // Use Supabase's built-in updateUser method - no manual session needed
-      // When user comes from recovery email, they already have a valid session
+      // Use Supabase's built-in updateUser method
+      // This works with recovery sessions even if getSession() returns null
       const { error } = await supabase.auth.updateUser({ 
         password: newPassword 
       });
 
       if (error) {
         console.error("Password update error:", error);
-        showError("Update Failed", error.message);
+        
+        // Handle specific error cases
+        if (error.message.includes('session')) {
+          showError("Session Expired", "Your password reset session has expired. Please request a new password reset link.");
+        } else if (error.message.includes('weak')) {
+          showError("Weak Password", "Please choose a stronger password with at least 6 characters.");
+        } else {
+          showError("Update Failed", error.message);
+        }
         return;
       }
 
