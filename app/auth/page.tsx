@@ -36,14 +36,26 @@ export default function AuthPage() {
       if (typeof window === 'undefined') return;
 
       const hash = window.location.hash.slice(1);
-      if (!hash) return;
+      const search = window.location.search;
+      
+      console.log('🔍 Checking for recovery tokens...');
+      console.log('Hash:', hash);
+      console.log('Search:', search);
 
-      const params = new URLSearchParams(hash);
-      const type = params.get('type');
+      if (!hash && !search) return;
+
+      // Check hash parameters (new format)
+      const hashParams = new URLSearchParams(hash);
+      const hashType = hashParams.get('type');
+      
+      // Check search parameters (fallback)
+      const searchParams = new URLSearchParams(search);
+      const searchMode = searchParams.get('mode');
 
       // Handle password recovery the correct way
-      if (type === 'recovery') {
+      if (hashType === 'recovery' || searchMode === 'recovery') {
         console.log('🔒 Password recovery detected - setting up password reset form');
+        console.log('Recovery method:', hashType === 'recovery' ? 'hash' : 'search');
         
         // DON'T clean URL immediately - let Supabase establish the session first
         // The URL will be cleaned after session is established
@@ -57,6 +69,16 @@ export default function AuthPage() {
         
         // Show info message
         info('Password Reset', 'Please set a new password to complete the reset process.');
+        
+        // Also check if we have recovery tokens in the hash
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          console.log('✅ Recovery tokens found in URL hash');
+        } else {
+          console.log('⚠️ No recovery tokens in URL - might be an issue');
+        }
       }
     };
 
@@ -143,10 +165,17 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // Check if we're in recovery mode from URL
+        // Check if we're in recovery mode from URL (both hash and search)
         const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-        const params = new URLSearchParams(hash);
-        const isRecoveryMode = params.get('type') === 'recovery';
+        const search = typeof window !== 'undefined' ? window.location.search : '';
+        const hashParams = new URLSearchParams(hash);
+        const searchParams = new URLSearchParams(search);
+        const isRecoveryMode = hashParams.get('type') === 'recovery' || searchParams.get('mode') === 'recovery';
+        
+        console.log('🔍 SIGNED_IN event - checking recovery mode');
+        console.log('Hash:', hash);
+        console.log('Search:', search);
+        console.log('Is recovery mode:', isRecoveryMode);
         
         // If we're in password reset mode OR recovery mode, don't redirect but keep the session
         if (forcePasswordReset || isPasswordReset || isRecoveryMode) {
@@ -157,6 +186,7 @@ export default function AuthPage() {
             // Also set the password reset state to prevent auto-login
             setForcePasswordReset(true);
             setIsPasswordReset(true);
+            console.log('✅ Recovery mode detected - password reset state set');
           }
           return;
         }
