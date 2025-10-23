@@ -180,34 +180,32 @@ const Navbar = () => {
                   <button
                     onClick={async () => {
                       try {
-                        // Check if there's a session first
-                        const { data: { session } } = await supabase.auth.getSession();
+                        console.log('🚪 Navbar: Logout initiated');
                         
-                        if (session) {
-                          // Only try to sign out if there's a session
-                          const { error } = await supabase.auth.signOut();
-                          
-                          if (error) {
-                            console.error('Sign out error:', error);
-                            // Don't return on error, continue with cleanup
-                          }
-                        }
+                        // Force complete signout
+                        await supabase.auth.signOut();
                         
-                        // Clear local storage and session storage
-                        if (typeof window !== 'undefined') {
-                          localStorage.clear();
-                          sessionStorage.clear();
-                        }
+                        // Clear all storage immediately
+                        localStorage.clear();
+                        sessionStorage.clear();
                         
+                        // Close menu and refresh page to ensure clean state
                         setProfileMenu(false);
+                        
+                        // Force page refresh to clear all state
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 100);
+                        
                       } catch (error) {
                         console.error('Logout error:', error);
+                        // Force cleanup even on error
+                        localStorage.clear();
+                        sessionStorage.clear();
                         setProfileMenu(false);
-                        // Still clear storage even on error
-                        if (typeof window !== 'undefined') {
-                          localStorage.clear();
-                          sessionStorage.clear();
-                        }
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 100);
                       }
                     }}
                     className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
@@ -306,34 +304,32 @@ const Navbar = () => {
                 <button
                   onClick={async () => {
                     try {
-                      // Check if there's a session first
-                      const { data: { session } } = await supabase.auth.getSession();
+                      console.log('🚪 Mobile: Logout initiated');
                       
-                      if (session) {
-                        // Only try to sign out if there's a session
-                        const { error } = await supabase.auth.signOut();
-                        
-                        if (error) {
-                          console.error('Sign out error:', error);
-                          // Don't return on error, continue with cleanup
-                        }
-                      }
+                      // Force complete signout
+                      await supabase.auth.signOut();
                       
-                      // Clear local storage and session storage
-                      if (typeof window !== 'undefined') {
-                        localStorage.clear();
-                        sessionStorage.clear();
-                      }
+                      // Clear all storage immediately
+                      localStorage.clear();
+                      sessionStorage.clear();
                       
+                      // Close menu and refresh page to ensure clean state
                       setIsOpen(false);
+                      
+                      // Force page refresh to clear all state
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 100);
+                      
                     } catch (error) {
                       console.error('Logout error:', error);
+                      // Force cleanup even on error
+                      localStorage.clear();
+                      sessionStorage.clear();
                       setIsOpen(false);
-                      // Still clear storage even on error
-                      if (typeof window !== 'undefined') {
-                        localStorage.clear();
-                        sessionStorage.clear();
-                      }
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 100);
                     }
                   }}
                   className="flex items-center w-full text-left px-2 py-2 bg-gray-700 rounded hover:bg-gray-600 text-sm transition-colors"
@@ -1905,30 +1901,26 @@ function Home() {
                           <button 
                             onClick={async () => {
                               try {
-                                // Check if there's a session first
-                                const { data: { session } } = await supabase.auth.getSession();
+                                console.log('🚪 Footer: Logout initiated');
                                 
-                                if (session) {
-                                  // Only try to sign out if there's a session
-                                  const { error } = await supabase.auth.signOut();
-                                  
-                                  if (error) {
-                                    console.error('Sign out error:', error);
-                                    // Don't return on error, continue with cleanup
-                                  }
-                                }
+                                // Sign out from Supabase
+                                const { error } = await supabase.auth.signOut();
                                 
-                                // Clear local storage and session storage
+                                // Clear all storage
                                 if (typeof window !== 'undefined') {
                                   localStorage.clear();
                                   sessionStorage.clear();
                                 }
+                                
+                                // Force page refresh to clear any remaining state
+                                window.location.href = '/';
                               } catch (error) {
                                 console.error('Logout error:', error);
-                                // Still clear storage even on error
+                                // Still clear storage and redirect even on error
                                 if (typeof window !== 'undefined') {
                                   localStorage.clear();
                                   sessionStorage.clear();
+                                  window.location.href = '/';
                                 }
                               }
                             }}

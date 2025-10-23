@@ -77,12 +77,15 @@ export default function AuthPage() {
           console.log('✅ Recovery tokens found in URL hash');
           
           try {
-            // Set recovery state immediately for faster UI response
+            // Set recovery state immediately
             setForcePasswordReset(true);
             setIsPasswordReset(true);
             localStorage.setItem('in_password_reset', 'true');
             
-            // Try to set the session with the recovery tokens
+            // Clear the URL hash immediately to prevent reprocessing
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Set the session with recovery tokens
             const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken
@@ -90,7 +93,6 @@ export default function AuthPage() {
 
             if (sessionError) {
               console.error('❌ Failed to set recovery session:', sessionError);
-              // Reset states if session setup failed
               setForcePasswordReset(false);
               setIsPasswordReset(false);
               localStorage.removeItem('in_password_reset');
@@ -102,15 +104,9 @@ export default function AuthPage() {
             if (sessionData.session) {
               console.log('✅ Recovery session established successfully');
               setIsLoading(false);
-              
-              // Clear any previous recovery notifications
-              sessionStorage.removeItem('recovery-info-shown');
-              
-              // Show quick success message
               info('Ready!', 'Please set your new password below.');
             } else {
               console.error('❌ No session created from recovery tokens');
-              // Reset states if no session created
               setForcePasswordReset(false);
               setIsPasswordReset(false);
               localStorage.removeItem('in_password_reset');
@@ -668,7 +664,7 @@ export default function AuthPage() {
     }
   }
 
-  // 🔹 Handle password update (for password reset) - OPTIMIZED FOR SPEED
+  // 🔹 Handle password update (for password reset) - SIMPLE & ROBUST VERSION
   const handlePasswordUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -695,79 +691,42 @@ export default function AuthPage() {
     try {
       console.log('🔄 Attempting password update...');
 
-      // Create a timeout wrapper for faster response
-      const updatePasswordWithTimeout = async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
-        try {
-          const { error } = await supabase.auth.updateUser({ 
-            password: newPassword 
-          });
-          clearTimeout(timeoutId);
-          return { error };
-        } catch (err) {
-          clearTimeout(timeoutId);
-          if (controller.signal.aborted) {
-            throw new Error('Request timeout - please try again');
-          }
-          throw err;
-        }
-      };
-
-      const { error } = await updatePasswordWithTimeout();
+      // Simple password update
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      });
 
       if (error) {
         console.error("❌ Password update error:", error);
-        
-        // Handle specific error cases with simpler logic
-        if (error.message.includes('session') || error.message.includes('expired')) {
-          showError("Session Expired", "Please request a new password reset link.");
-        } else if (error.message.includes('weak') || error.message.includes('password')) {
-          showError("Weak Password", "Please choose a stronger password.");
-        } else {
-          showError("Update Failed", error.message || "Please try again.");
-        }
+        showError("Update Failed", error.message || "Please try again.");
+        setIsUpdatingPassword(false);
         return;
       }
 
       console.log('✅ Password updated successfully!');
 
-      // Immediate UI updates for faster perceived response
-      info("Success!", "Password updated successfully. Redirecting to login...");
+      // Show success message
+      info("Success!", "Password updated successfully! Redirecting to login...");
       
-      // Clear states immediately
-      setIsPasswordReset(false);
-      setForcePasswordReset(false);
-      setPasswordValue('');
-      setConfirmPasswordValue('');
-      
-      // Clean storage and URL immediately
+      // Clear all password reset states and storage
       localStorage.removeItem('in_password_reset');
-      sessionStorage.removeItem('recovery-info-shown');
-      window.history.replaceState({}, document.title, window.location.pathname);
+      sessionStorage.clear();
       
-      // Quick transition to login form
+      // Sign out completely to clear session
+      await supabase.auth.signOut();
+      
+      // Clear browser storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Redirect to fresh login page after a short delay
       setTimeout(() => {
-        setIsLogin(true);
-        // Sign out in background after UI update
-        supabase.auth.signOut().then(() => {
-          console.log("✅ Signed out - ready for fresh login");
-        });
-      }, 1000);
+        window.location.href = '/auth';
+      }, 2000);
       
     } catch (error: unknown) {
       console.error("Password update error:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      if (errorMessage.includes('timeout')) {
-        showError("Timeout", "Request timed out. Please try again.");
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        showError("Network Error", "Connection issue. Please check your internet.");
-      } else {
-        showError("Error", "Failed to update password. Please try again.");
-      }
-    } finally {
+      showError("Error", "Failed to update password. Please try again.");
       setIsUpdatingPassword(false);
     }
   }
