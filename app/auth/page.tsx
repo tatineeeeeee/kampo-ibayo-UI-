@@ -76,17 +76,44 @@ export default function AuthPage() {
         if (accessToken && refreshToken) {
           console.log('✅ Recovery tokens found in URL hash');
           
-          // Set recovery state and persist to localStorage
-          setForcePasswordReset(true);
-          setIsPasswordReset(true);
-          localStorage.setItem('in_password_reset', 'true');
-          setIsLoading(false);
-          
-          // Clear any previous recovery notifications
-          sessionStorage.removeItem('recovery-info-shown');
-          
-          // Show info message
-          info('Password Reset', 'Please set a new password to complete the reset process.');
+          try {
+            // Try to set the session with the recovery tokens first
+            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+
+            if (sessionError) {
+              console.error('❌ Failed to set recovery session:', sessionError);
+              showError('Invalid Reset Link', 'This password reset link is invalid or expired. Please request a new password reset.');
+              setIsLoading(false);
+              return;
+            }
+
+            if (sessionData.session) {
+              console.log('✅ Recovery session established successfully');
+              
+              // Set recovery state and persist to localStorage
+              setForcePasswordReset(true);
+              setIsPasswordReset(true);
+              localStorage.setItem('in_password_reset', 'true');
+              setIsLoading(false);
+              
+              // Clear any previous recovery notifications
+              sessionStorage.removeItem('recovery-info-shown');
+              
+              // Show info message
+              info('Password Reset', 'Please set a new password to complete the reset process.');
+            } else {
+              console.error('❌ No session created from recovery tokens');
+              showError('Invalid Reset Link', 'Failed to establish reset session. Please request a new password reset.');
+              setIsLoading(false);
+            }
+          } catch (error) {
+            console.error('❌ Error setting recovery session:', error);
+            showError('Reset Error', 'An error occurred while processing your reset link. Please try again.');
+            setIsLoading(false);
+          }
         } else {
           console.log('❌ No recovery tokens in URL - invalid reset link');
           showError('Invalid Reset Link', 'This password reset link is invalid or expired. Please request a new password reset.');
@@ -656,36 +683,39 @@ export default function AuthPage() {
     try {
       console.log('🔄 Attempting password update...');
 
-      // Add timeout to prevent hanging
-      const updatePromise = supabase.auth.updateUser({ 
+      // First, verify we have a valid session for password reset
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error("❌ No valid session for password reset:", sessionError);
+        showError("Session Expired", "Your password reset session has expired. Please request a new password reset link.");
+        return;
+      }
+
+      console.log('✅ Valid session found, proceeding with password update');
+
+      // Update the password using the current session
+      const { error } = await supabase.auth.updateUser({ 
         password: newPassword 
       });
-
-      // Timeout after 10 seconds
-      const timeoutPromise = new Promise<{ error: Error }>((_, reject) => 
-        setTimeout(() => reject(new Error('Password update timeout')), 10000)
-      );
-
-      const result = await Promise.race([updatePromise, timeoutPromise]);
-      const { error } = result;
 
       if (error) {
         console.error("❌ Password update error:", error);
         console.error("Error details:", {
           message: error.message,
           name: error.name,
-          stack: error.stack
+          code: error.status || 'unknown'
         });
         
         // Handle specific error cases
-        if (error.message.includes('session')) {
+        if (error.message.includes('session') || error.message.includes('expired') || error.status === 401) {
           showError("Session Expired", "Your password reset session has expired. Please request a new password reset link.");
-        } else if (error.message.includes('weak')) {
-          showError("Weak Password", "Please choose a stronger password with at least 6 characters.");
-        } else if (error.message.includes('timeout')) {
-          showError("Request Timeout", "The password update request timed out. Please try again.");
+        } else if (error.message.includes('weak') || error.message.includes('password')) {
+          showError("Weak Password", "Please choose a stronger password with at least 8 characters, including uppercase, lowercase, numbers, and special characters.");
+        } else if (error.message.includes('network') || error.message.includes('timeout')) {
+          showError("Network Error", "Network connection issue. Please check your internet and try again.");
         } else {
-          showError("Update Failed", error.message);
+          showError("Update Failed", error.message || "Failed to update password. Please try again.");
         }
         return;
       }
@@ -693,7 +723,7 @@ export default function AuthPage() {
       console.log('✅ Password updated successfully!');
 
       // Show success message first
-      info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
+      info("Password Updated", "Your password has been successfully updated. You can now log in with your new password.");
       
       // Clear recovery data and localStorage
       sessionStorage.removeItem('recovery-info-shown');
@@ -713,12 +743,18 @@ export default function AuthPage() {
       setTimeout(async () => {
         await supabase.auth.signOut();
         console.log("✅ Password updated successfully - user must re-login");
-      }, 1000);
+      }, 1500);
       
     } catch (error: unknown) {
       console.error("Unexpected password update error:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      showError("Update Error", `Failed to update password: ${errorMessage}`);
+      
+      // Handle timeout or network errors specifically
+      if (errorMessage.includes('timeout') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        showError("Connection Error", "Network timeout. Please check your internet connection and try again.");
+      } else {
+        showError("Update Error", `Failed to update password: ${errorMessage}`);
+      }
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -1017,7 +1053,7 @@ export default function AuthPage() {
                 className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUpdatingPassword ? "Updating Password..." : "Update Password"}
-2               </button>
+              </button>
 
               <div className="text-center mt-3 sm:mt-4">
                 <p className="text-xs sm:text-sm text-gray-500">
