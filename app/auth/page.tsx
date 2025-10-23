@@ -38,6 +38,7 @@ export default function AuthPage() {
   
   // Prevent infinite loops in recovery detection
   const recoveryHandled = useRef(false);
+  const authStateChangeDebounce = useRef<NodeJS.Timeout | null>(null);
 
   // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
@@ -179,8 +180,15 @@ export default function AuthPage() {
     handleSessionRecovery();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔔 Auth state change:', event);
+      // Debounce auth state changes to prevent conflicts
+      if (authStateChangeDebounce.current) {
+        clearTimeout(authStateChangeDebounce.current);
+      }
+      
+      authStateChangeDebounce.current = setTimeout(async () => {
+        console.log('🔔 Auth state change (debounced):', event);
 
+        try {
       // IMMEDIATE RECOVERY CHECK - Before processing any events
       if (typeof window !== 'undefined') {
         const hash = window.location.hash.slice(1);
@@ -275,7 +283,21 @@ export default function AuthPage() {
         } else {
           router.push('/');
         }
+        }
+      } catch (error: unknown) {
+        console.error("Auth state change error:", error);
+        // Handle authentication errors gracefully
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes("refresh") || errorMessage.includes("token")) {
+          console.log("Clearing corrupted session data...");
+          await supabase.auth.signOut();
+          localStorage.removeItem('supabase.auth.token');
+          warning("Session Expired", "Please try logging in again.");
+        } else {
+          showError("Unexpected Error", "An unexpected error occurred. Please try again.");
+        }
       }
+      }, 300); // 300ms debounce
     });
 
     return () => {
@@ -285,10 +307,10 @@ export default function AuthPage() {
         sessionStorage.removeItem('recovery-info-shown');
       }
     };
-  }, [router, info, forcePasswordReset, isPasswordReset]);
+  }, [router, info, forcePasswordReset, isPasswordReset, showError, warning]);
 
   // 🔹 Handle login with Supabase Auth
-  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -400,8 +422,7 @@ export default function AuthPage() {
   }
 
   // 🔹 Handle register with Supabase Auth
-// 🔹 Handle register with Supabase Auth
-async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   const formData = new FormData(e.currentTarget);
   const firstName = formData.get("firstName") as string;
@@ -572,7 +593,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 }
 
   // 🔹 Handle forgot password
-  async function handleForgotPassword(e: React.FormEvent<HTMLFormElement>) {
+  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const email = formData.get("resetEmail") as string;
@@ -609,7 +630,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 
   // 🔹 Handle password update (for password reset) - PROPER SUPABASE WAY
-  async function handlePasswordUpdate(e: React.FormEvent<HTMLFormElement>) {
+  const handlePasswordUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const newPassword = formData.get("newPassword") as string;
