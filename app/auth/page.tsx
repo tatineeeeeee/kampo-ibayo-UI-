@@ -101,7 +101,12 @@ export default function AuthPage() {
   useEffect(() => {
     const handleSessionRecovery = async () => {
       try {
-        if (forcePasswordReset) {
+        // FIRST PRIORITY: Check if we're in password reset mode from localStorage or state
+        const inPasswordReset = localStorage.getItem('in_password_reset') === 'true';
+        if (forcePasswordReset || inPasswordReset) {
+          console.log('🔒 Already in password reset mode - skipping session recovery');
+          setIsPasswordReset(true);
+          setForcePasswordReset(true);
           setIsLoading(false);
           return;
         }
@@ -134,15 +139,22 @@ export default function AuthPage() {
           localStorage.removeItem('supabase.auth.token');
         }
 
-        if (session?.user) {
+        // IMPORTANT: Only proceed with normal login flow if NOT in password reset mode
+        if (session?.user && !forcePasswordReset && !inPasswordReset) {
           const hashParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.hash.slice(1)) : null;
-          const inRecoveryMode = forcePasswordReset || (hashParams?.get('type') === 'recovery');
+          const inRecoveryMode = hashParams?.get('type') === 'recovery' || hashParams?.get('access_token');
 
+          // If URL indicates recovery mode, don't auto-login
           if (inRecoveryMode) {
+            console.log('🔒 Recovery tokens in URL - staying in password reset mode');
+            setIsPasswordReset(true);
+            setForcePasswordReset(true);
+            localStorage.setItem('in_password_reset', 'true');
             setIsLoading(false);
-            return; // stay on reset flow
+            return;
           }
 
+          // Normal login flow - only if no recovery indicators
           const { data: userData } = await supabase
             .from('users')
             .select('role')
@@ -167,7 +179,7 @@ export default function AuthPage() {
     handleSessionRecovery();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event);
+      console.log('🔔 Auth state change:', event);
 
       // IMMEDIATE RECOVERY CHECK - Before processing any events
       if (typeof window !== 'undefined') {
@@ -180,19 +192,26 @@ export default function AuthPage() {
                                 searchParams.get('mode') === 'recovery' ||
                                 hashParams.get('refresh_token');
         
-        if (hasRecoveryTokens && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-          console.log('🚫 IMMEDIATE BLOCK: Recovery tokens detected - preventing auto-login');
+        const inPasswordResetStorage = localStorage.getItem('in_password_reset') === 'true';
+        
+        if ((hasRecoveryTokens || inPasswordResetStorage) && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+          console.log('🚫 IMMEDIATE BLOCK: Recovery detected - preventing auto-login');
           console.log('Event:', event);
           console.log('Hash:', hash);
           console.log('Access token present:', !!hashParams.get('access_token'));
+          console.log('localStorage password reset:', inPasswordResetStorage);
           
           // Set state and persist to localStorage to prevent any auto-login
           setForcePasswordReset(true);
           setIsPasswordReset(true);
           localStorage.setItem('in_password_reset', 'true');
           
-          // Clean URL after setting state
-          window.history.replaceState({}, document.title, window.location.pathname);
+          // Clean URL after setting state (only if we have recovery tokens in URL)
+          if (hasRecoveryTokens) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log('✅ URL cleaned to prevent token exposure');
+          }
+          
           return; // Exit immediately to prevent any redirect
         }
       }
@@ -205,33 +224,37 @@ export default function AuthPage() {
         setIsPasswordReset(true);
         info('Password Reset', 'Please set a new password to continue.');
       } else if (event === 'SIGNED_IN' && session) {
-        // IMMEDIATELY check if we're in recovery mode to prevent auto-login
+        // COMPREHENSIVE AUTO-LOGIN PREVENTION CHECK
         const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
         const search = typeof window !== 'undefined' ? window.location.search : '';
         const hashParams = new URLSearchParams(hash);
         const searchParams = new URLSearchParams(search);
         const isRecoveryMode = hashParams.get('type') === 'recovery' || 
                               searchParams.get('mode') === 'recovery' ||
-                              hashParams.get('access_token'); // Also check for recovery tokens
+                              hashParams.get('access_token') ||
+                              hashParams.get('refresh_token');
         
-        console.log('🔍 SIGNED_IN event - IMMEDIATE recovery check');
+        console.log('🔍 SIGNED_IN event - comprehensive recovery check');
         console.log('Hash:', hash);
         console.log('Search:', search);
         console.log('Has access_token:', !!hashParams.get('access_token'));
         console.log('Is recovery mode:', isRecoveryMode);
         
-        // PREVENT AUTO-LOGIN: Check localStorage, recovery indicators, or state flags
+        // Check all possible password reset indicators
         const inPasswordReset = localStorage.getItem('in_password_reset') === 'true';
-        if (isRecoveryMode || forcePasswordReset || isPasswordReset || inPasswordReset) {
-          console.log('🚫 BLOCKING AUTO-LOGIN - Recovery mode detected');
+        const shouldBlockLogin = isRecoveryMode || forcePasswordReset || isPasswordReset || inPasswordReset;
+        
+        if (shouldBlockLogin) {
+          console.log('🚫 BLOCKING AUTO-LOGIN - Password reset mode active');
           console.log('Reasons - Recovery mode:', isRecoveryMode, 'Force reset:', forcePasswordReset, 'Is reset:', isPasswordReset, 'localStorage:', inPasswordReset);
           
-          // Immediately set password reset state to prevent auto-login
+          // Ensure password reset state is set
           setForcePasswordReset(true);
           setIsPasswordReset(true);
+          localStorage.setItem('in_password_reset', 'true');
           
-          // Clean the URL now that we have a valid session for recovery
-          if (isRecoveryMode) {
+          // Clean the URL if we have recovery tokens
+          if (isRecoveryMode && (hash || search.includes('recovery'))) {
             window.history.replaceState({}, document.title, window.location.pathname);
             console.log('✅ URL cleaned and password reset state enforced');
           }
@@ -239,6 +262,8 @@ export default function AuthPage() {
           return; // CRITICAL: Exit here to prevent auto-login redirect
         }
 
+        // Normal login flow - only proceed if no password reset indicators
+        console.log('✅ Proceeding with normal login flow');
         const { data: userData } = await supabase
           .from('users')
           .select('role')
