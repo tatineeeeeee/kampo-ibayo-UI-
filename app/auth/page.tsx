@@ -26,7 +26,13 @@ export default function AuthPage() {
   const [formKey, setFormKey] = useState(0); // Force form refresh
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [forcePasswordReset, setForcePasswordReset] = useState(false);
+  const [forcePasswordReset, setForcePasswordReset] = useState(() => {
+    // Check localStorage on initial load for password reset state
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('in_password_reset') === 'true';
+    }
+    return false;
+  });
   const router = useRouter();
   const { error: showError, warning, info, loginSuccess, registrationSuccess, passwordResetSent } = useToastHelpers();
   
@@ -69,9 +75,10 @@ export default function AuthPage() {
         if (accessToken && refreshToken) {
           console.log('✅ Recovery tokens found in URL hash');
           
-          // Set recovery state
+          // Set recovery state and persist to localStorage
           setForcePasswordReset(true);
           setIsPasswordReset(true);
+          localStorage.setItem('in_password_reset', 'true');
           setIsLoading(false);
           
           // Clear any previous recovery notifications
@@ -168,14 +175,25 @@ export default function AuthPage() {
         const search = window.location.search;
         const hashParams = new URLSearchParams(hash);
         const searchParams = new URLSearchParams(search);
-        const hasRecoveryTokens = hashParams.get('access_token') || hashParams.get('type') === 'recovery' || searchParams.get('mode') === 'recovery';
+        const hasRecoveryTokens = hashParams.get('access_token') || 
+                                hashParams.get('type') === 'recovery' || 
+                                searchParams.get('mode') === 'recovery' ||
+                                hashParams.get('refresh_token');
         
-        if (hasRecoveryTokens && event === 'SIGNED_IN') {
+        if (hasRecoveryTokens && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
           console.log('🚫 IMMEDIATE BLOCK: Recovery tokens detected - preventing auto-login');
+          console.log('Event:', event);
+          console.log('Hash:', hash);
+          console.log('Access token present:', !!hashParams.get('access_token'));
+          
+          // Set state and persist to localStorage to prevent any auto-login
           setForcePasswordReset(true);
           setIsPasswordReset(true);
+          localStorage.setItem('in_password_reset', 'true');
+          
+          // Clean URL after setting state
           window.history.replaceState({}, document.title, window.location.pathname);
-          return;
+          return; // Exit immediately to prevent any redirect
         }
       }
 
@@ -202,9 +220,11 @@ export default function AuthPage() {
         console.log('Has access_token:', !!hashParams.get('access_token'));
         console.log('Is recovery mode:', isRecoveryMode);
         
-        // PREVENT AUTO-LOGIN: If ANY recovery indicators are present, stay in password reset mode
-        if (isRecoveryMode || forcePasswordReset || isPasswordReset) {
+        // PREVENT AUTO-LOGIN: Check localStorage, recovery indicators, or state flags
+        const inPasswordReset = localStorage.getItem('in_password_reset') === 'true';
+        if (isRecoveryMode || forcePasswordReset || isPasswordReset || inPasswordReset) {
           console.log('🚫 BLOCKING AUTO-LOGIN - Recovery mode detected');
+          console.log('Reasons - Recovery mode:', isRecoveryMode, 'Force reset:', forcePasswordReset, 'Is reset:', isPasswordReset, 'localStorage:', inPasswordReset);
           
           // Immediately set password reset state to prevent auto-login
           setForcePasswordReset(true);
@@ -618,8 +638,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       // Show success message first
       info("Password Updated", "Your password has been successfully updated. Please log in with your new password.");
       
-      // Clear recovery data
+      // Clear recovery data and localStorage
       sessionStorage.removeItem('recovery-info-shown');
+      localStorage.removeItem('in_password_reset');
       
       // Clean URL now that password update is complete
       window.history.replaceState({}, document.title, window.location.pathname);
