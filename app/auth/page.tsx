@@ -58,14 +58,14 @@ export default function AuthPage() {
           setForcePasswordReset(true);
           setIsPasswordReset(true);
 
-          // IMMEDIATELY sign out to prevent auto-login from recovery tokens
-          await supabase.auth.signOut();
-          console.log('🚫 Signed out to prevent auto-login');
-
-          // STORE tokens but DON'T create session - prevents auto-login
+          // STORE tokens FIRST before any signOut operations
           sessionStorage.setItem('recovery_access_token', access_token);
           sessionStorage.setItem('recovery_refresh_token', refresh_token);
           console.log('✅ Recovery tokens stored securely - Password reset ready');
+
+          // THEN sign out to prevent auto-login from recovery tokens
+          await supabase.auth.signOut();
+          console.log('🚫 Signed out to prevent auto-login');
 
           info('Password Reset', 'Please set a new password to complete the reset process.');
         } catch (error) {
