@@ -45,8 +45,8 @@ export default function AuthPage() {
       if (type === 'recovery') {
         console.log('🔒 Password recovery detected - setting up password reset form');
         
-        // Clean URL immediately to prevent auto-login loops
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // DON'T clean URL immediately - let Supabase establish the session first
+        // The URL will be cleaned after session is established
         
         setForcePasswordReset(true);
         setIsPasswordReset(true);
@@ -522,6 +522,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     try {
       console.log('🔄 Attempting password update...');
 
+      // Wait a moment to ensure recovery session is fully established
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Use Supabase's built-in updateUser method
       // This works with recovery sessions even if getSession() returns null
       const { error } = await supabase.auth.updateUser({ 
@@ -549,6 +552,9 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       
       // Clear recovery data
       sessionStorage.removeItem('recovery-info-shown');
+      
+      // Clean URL now that password update is complete
+      window.history.replaceState({}, document.title, window.location.pathname);
       
       // Reset form states
       setIsPasswordReset(false);
