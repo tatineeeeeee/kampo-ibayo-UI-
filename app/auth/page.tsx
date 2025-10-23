@@ -23,6 +23,7 @@ export default function AuthPage() {
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
+  const [formKey, setFormKey] = useState(0); // Force form refresh
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [forcePasswordReset, setForcePasswordReset] = useState(false);
@@ -450,6 +451,15 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
       registrationSuccess();
       // 🚀 Force logout so they must sign in manually
       await supabase.auth.signOut();
+      
+      // Clear all form data and force form refresh
+      setPasswordValue('');
+      setConfirmPasswordValue('');
+      setPasswordsMatch(null);
+      setTermsAccepted(false);
+      setTermsError(false);
+      setFormKey(prev => prev + 1); // Force form refresh to clear browser autofill
+      
       // Switch UI to login form instead of redirecting home
       setTimeout(() => setIsLogin(true), 2000);
     }
@@ -660,20 +670,34 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
         {/* Left Side - Hidden on mobile, shown on desktop */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 xl:p-12 flex-col justify-between">
           <div>
-            {/* Brand Header */}
-            <div className="flex items-center gap-3 mb-6 xl:mb-10">
-              <div className="w-12 h-12 xl:w-16 xl:h-16 relative">
-                <Image
-                  src="/logo.png"
-                  alt="Kampo Ibayo Logo"
-                  fill
-                  className="object-contain drop-shadow-lg rounded-lg"
-                  priority
-                />
+            {/* Brand Header with Home Button */}
+            <div className="flex items-center justify-between mb-6 xl:mb-10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 xl:w-16 xl:h-16 relative">
+                  <Image
+                    src="/logo.png"
+                    alt="Kampo Ibayo Logo"
+                    fill
+                    className="object-contain drop-shadow-lg rounded-lg"
+                    priority
+                  />
+                </div>
+                <h1 className="text-xl xl:text-3xl font-extrabold tracking-tight">
+                  <span className="text-red-500">Kampo</span> Ibayo
+                </h1>
               </div>
-              <h1 className="text-xl xl:text-3xl font-extrabold tracking-tight">
-                <span className="text-red-500">Kampo</span> Ibayo
-              </h1>
+              
+              {/* Home/Back Button - Desktop */}
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 xl:p-3 rounded-lg hover:bg-white/10 border border-white/20 hover:border-white/30"
+                title="Back to Home"
+              >
+                <svg className="w-4 h-4 xl:w-5 xl:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span className="text-sm xl:text-base font-medium">Home</span>
+              </button>
             </div>
 
             <p className="text-base xl:text-xl font-semibold mb-4 xl:mb-8 opacity-90">
@@ -743,19 +767,37 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           <div className="flex-1 flex flex-col justify-center min-h-0">
           {/* Mobile Header - Only shown on mobile */}
           <div className="lg:hidden text-center mb-4 sm:mb-6">
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 relative">
-                <Image
-                  src="/logo.png"
-                  alt="Kampo Ibayo Logo"
-                  fill
-                  className="object-contain drop-shadow-lg rounded-lg"
-                  priority
-                />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              {/* Home/Back Button - Mobile */}
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-800 transition-colors p-1 sm:p-2 rounded-lg hover:bg-gray-50"
+                title="Back to Home"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="text-xs sm:text-sm font-medium">Home</span>
+              </button>
+              
+              {/* Logo and Title */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 relative">
+                  <Image
+                    src="/logo.png"
+                    alt="Kampo Ibayo Logo"
+                    fill
+                    className="object-contain drop-shadow-lg rounded-lg"
+                    priority
+                  />
+                </div>
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                  <span className="text-red-500">Kampo</span> <span className="text-gray-700">Ibayo</span>
+                </h1>
               </div>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                <span className="text-red-500">Kampo</span> <span className="text-gray-700">Ibayo</span>
-              </h1>
+              
+              {/* Spacer to center the logo */}
+              <div className="w-12 sm:w-16"></div>
             </div>
             <p className="text-gray-600 text-xs sm:text-sm">Where adventure meets comfort</p>
           </div>
@@ -764,7 +806,16 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
           {!isPasswordReset && (
             <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
               <button
-                onClick={() => setIsLogin(true)}
+                onClick={() => {
+                  setIsLogin(true);
+                  // Clear form when switching to login
+                  setPasswordValue('');
+                  setConfirmPasswordValue('');
+                  setPasswordsMatch(null);
+                  setTermsAccepted(false);
+                  setTermsError(false);
+                  setFormKey(prev => prev + 1);
+                }}
                 className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
                   isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
                 }`}
@@ -772,7 +823,14 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                 Sign In
               </button>
               <button
-                onClick={() => setIsLogin(false)}
+                onClick={() => {
+                  setIsLogin(false);
+                  // Clear form when switching to register
+                  setPasswordValue('');
+                  setConfirmPasswordValue('');
+                  setPasswordsMatch(null);
+                  setFormKey(prev => prev + 1);
+                }}
                 className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
                   !isLogin ? "bg-gray-200 text-gray-900" : "bg-gray-50 text-gray-500"
                 }`}
@@ -850,7 +908,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             </form>
           ) : /* Sign In Form */
           isLogin ? (
-            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4 lg:space-y-5">
+            <form key={`login-${formKey}`} onSubmit={handleLogin} className="space-y-3 sm:space-y-4 lg:space-y-5" autoComplete="off">
               <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
                 <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                 <input
@@ -858,6 +916,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   name="email"
                   placeholder="your@email.com"
                   className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                  autoComplete="new-email"
                   required
                 />
               </div>
@@ -869,6 +928,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   name="password"
                   placeholder="Password"
                   className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                  autoComplete="new-password"
                   required
                 />
                 <button
@@ -903,7 +963,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
             </form>
           ) : (
             // Register Form
-            <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4 lg:space-y-5">
+            <form key={`register-${formKey}`} onSubmit={handleRegister} className="space-y-3 sm:space-y-4 lg:space-y-5" autoComplete="off">
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg w-full sm:w-1/2">
                   <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
@@ -912,6 +972,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                     name="firstName"
                     placeholder="First Name"
                     className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                    autoComplete="new-firstname"
                     required
                   />
                 </div>
@@ -922,6 +983,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                     name="lastName"
                     placeholder="Last Name"
                     className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                    autoComplete="new-lastname"
                     required
                   />
                 </div>
@@ -934,6 +996,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   name="email"
                   placeholder="your@email.com"
                   className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                  autoComplete="new-email"
                   required
                 />
               </div>
@@ -945,6 +1008,7 @@ async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
                   name="phone"
                   placeholder="09XX-XXX-XXXX (11 digits)"
                   className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                  autoComplete="new-phone"
                   onChange={(e) => {
                     const formatted = formatPhoneNumber(e.target.value);
                     e.target.value = formatted;

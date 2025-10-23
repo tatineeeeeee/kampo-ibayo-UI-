@@ -1303,7 +1303,7 @@ function Home() {
               <p className="font-semibold">Kampo Ibayo is temporarily closed for maintenance</p>
             </div>
             <p className="text-sm mt-1 text-orange-100">
-              For assistance, please call <a href="tel:+639452779541" className="font-bold text-white hover:underline">+63 945 277 9541</a> or message us on Facebook
+              For assistance, please call <a href="tel:+639452779541" className="font-bold text-white hover:underline">+63 945 277 9541</a> or message us on <a href="https://www.facebook.com/profile.php?id=61562942638753" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:underline">Facebook</a>
             </p>
           </div>
         </div>
@@ -1813,10 +1813,15 @@ function Home() {
                     <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                     kampoibayo@gmail.com
                   </a>
-                  <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg">
-                    <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+                  <a 
+                    href="https://www.facebook.com/profile.php?id=61562942638753"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group"
+                  >
+                    <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
                     Kampo Ibayo (Facebook)
-                  </div>
+                  </a>
                 </div>
               </div>
 
@@ -1842,7 +1847,9 @@ function Home() {
               </div>
 
               <a 
-                href="#" 
+                href="https://www.facebook.com/profile.php?id=61562942638753" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl"
               >
                 <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1970,7 +1977,12 @@ function Home() {
               <div className="flex items-center gap-3 sm:gap-4 order-1 sm:order-2">
                 <span className="text-gray-500 text-xs hidden sm:block">Follow us:</span>
                 <div className="flex items-center gap-3">
-                  <a href="#" className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all duration-300 group">
+                  <a 
+                    href="https://www.facebook.com/profile.php?id=61562942638753" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all duration-300 group"
+                  >
                     <Facebook className="w-4 h-4 text-gray-400 group-hover:text-white" />
                   </a>
                   <a href="#" className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-all duration-300 group">
