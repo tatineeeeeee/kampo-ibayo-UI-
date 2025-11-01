@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with retry logic
     const getInitialSession = async () => {
       try {
         // Check if we're in password reset mode - only block if explicitly set
@@ -36,25 +36,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
+        // 🛡️ SAFE FIX: Add retry logic with timeout
+        let session = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            console.log(`🔄 AuthContext: Session check attempt ${attempt}/3`);
+            
+              const sessionPromise = supabase.auth.getSession();
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Session timeout')), 5000)
+              );
+
+              const result = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: Session | null } };
+              session = result.data?.session;
+            break; // Success - exit retry loop
+            
+          } catch (retryError) {
+            console.log(`⚠️ AuthContext: Attempt ${attempt} failed:`, retryError);
+            if (attempt === 3) {
+              throw retryError; // Final attempt failed
+            }
+            // Wait 1 second before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
         
         if (session?.user) {
           setUser(session.user);
           
-          // Fetch actual user role from database
-          const { data: userData } = await supabase
-            .from('users')
-            .select('role')
-            .eq('auth_id', session.user.id)
-            .single();
-          
-          setUserRole(userData?.role || 'user');
+          // 🛡️ SAFE FIX: Add error recovery for role query
+          try {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('role')
+              .eq('auth_id', session.user.id)
+              .single();
+            
+            setUserRole(userData?.role || 'user');
+          } catch (roleError) {
+            console.warn('AuthContext: Role query failed, defaulting to user:', roleError);
+            setUserRole('user'); // Safe fallback
+          }
         } else {
           setUser(null);
           setUserRole(null);
         }
       } catch (error) {
-        console.error("Auth initialization error:", error);
+        console.error("AuthContext: All session attempts failed:", error);
         setUser(null);
         setUserRole(null);
       } finally {
@@ -64,10 +92,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes
+    // ✅ THROTTLED: Listen for auth changes (prevent navigation blocking)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("AuthContext: Auth state change:", event);
+        console.log("🔔 AuthContext: Auth state change:", event);
+        
+        // ✅ THROTTLE: Ignore rapid auth changes that can block navigation
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('🔄 AuthContext: Token refreshed (ignoring to prevent navigation hang)');
+          return;
+        }
         
         // Always handle SIGNED_OUT events
         if (event === 'SIGNED_OUT') {
@@ -92,19 +126,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('👤 AuthContext: User signed in');
           setUser(session.user);
           
-          // Fetch actual user role from database
-          try {
-            const { data: userData } = await supabase
+          // ✅ NON-BLOCKING: Fetch user role without blocking navigation
+          setTimeout(async () => {
+            try {
+              console.log('🔄 AuthContext: Fetching user role (non-blocking)...');
+              const { data: userData } = await supabase
               .from('users')
               .select('role')
               .eq('auth_id', session.user.id)
               .single();
             
-            setUserRole(userData?.role || 'user');
-          } catch (error) {
-            console.error('Failed to fetch user role:', error);
-            setUserRole('user');
-          }
+              setUserRole(userData?.role || 'user');
+              console.log('✅ AuthContext: User role fetched (non-blocking)');
+            } catch (error) {
+              console.error('❌ AuthContext: Failed to fetch user role:', error);
+              setUserRole('user');
+            }
+          }, 50); // 50ms delay to not block navigation
         }
       }
     );
@@ -114,55 +152,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // 🛡️ SAFE GRADUAL FIX: Handle window focus to refresh auth state after periods of inactivity  
-  // This prevents the "buttons not working after tab inactivity" issue
-  // TOGGLE: Set to false if any issues occur
+  // 🛡️ COMPLETELY DISABLED: Auto-refresh was causing 30-second navigation hanging
   useEffect(() => {
-    const ENABLE_AUTO_REFRESH = true; // 🔧 Set to false to disable if needed
-    
-    if (!ENABLE_AUTO_REFRESH) {
-      console.log('🔕 AuthContext: Auto-refresh disabled');
-      return;
-    }
-
-    const handleFocus = async () => {
-      try {
-        // Only refresh if we have a user AND it's been more than 5 minutes since last activity
-        if (user) {
-          const lastActivity = localStorage.getItem('lastActivity');
-          const now = Date.now();
-          const fiveMinutes = 5 * 60 * 1000;
-          
-          if (!lastActivity || (now - parseInt(lastActivity)) > fiveMinutes) {
-            console.log('🔄 AuthContext: Refreshing session on window focus (5+ min inactive)');
-            await supabase.auth.refreshSession();
-            localStorage.setItem('lastActivity', now.toString());
-          }
-        }
-      } catch (error) {
-        // Fail completely silently - never break existing functionality
-        console.log('AuthContext: Session refresh on focus failed (non-critical):', error);
-      }
-    };
-
-    // Update activity timestamp on any interaction
-    const updateActivity = () => {
-      localStorage.setItem('lastActivity', Date.now().toString());
-    };
-
-    // Only add listener if we have a window (client-side)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('focus', handleFocus);
-      window.addEventListener('click', updateActivity);
-      window.addEventListener('keydown', updateActivity);
-      
-      return () => {
-        window.removeEventListener('focus', handleFocus);
-        window.removeEventListener('click', updateActivity);
-        window.removeEventListener('keydown', updateActivity);
-      };
-    }
-  }, [user]); // Depend on user so it only runs when logged in
+    console.log('🔕 AuthContext: Auto-refresh COMPLETELY DISABLED to fix navigation hanging');
+    // All auto-refresh logic removed to prevent navigation issues
+  }, []); // Empty dependency array, no auto-refresh
 
   return (
     <AuthContext.Provider value={{ user, userRole, loading }}>

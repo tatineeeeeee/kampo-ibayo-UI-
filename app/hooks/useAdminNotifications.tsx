@@ -18,7 +18,7 @@ export function useAdminNotifications() {
     totalNotifications: 0,
     lastChecked: new Date().toISOString()
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Don't block UI while loading notifications
 
   const fetchNotifications = async () => {
     try {
@@ -73,35 +73,48 @@ export function useAdminNotifications() {
   };
 
   useEffect(() => {
-    fetchNotifications();
+    // Delayed initial fetch to not block navigation
+    const initialTimer = setTimeout(() => {
+      fetchNotifications();
+    }, 100);
     
-    // Set up real-time subscriptions for live updates
+    // Set up real-time subscriptions for live updates with debouncing
+    let fetchTimeout: NodeJS.Timeout | null = null;
+    const debouncedFetch = () => {
+      if (fetchTimeout) clearTimeout(fetchTimeout);
+      fetchTimeout = setTimeout(fetchNotifications, 500); // Debounce 500ms
+    };
+
     const bookingsSubscription = supabase
-      .channel('admin-notifications-bookings')
+      .channel(`admin-notifications-bookings-${Date.now()}`) // Unique channel names
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'bookings' },
-        () => {
-          fetchNotifications();
-        }
+        debouncedFetch
       )
       .subscribe();
 
     const usersSubscription = supabase
-      .channel('admin-notifications-users')
+      .channel(`admin-notifications-users-${Date.now()}`) // Unique channel names
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'users' },
-        () => {
-          fetchNotifications();
-        }
+        debouncedFetch
       )
       .subscribe();
 
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+    // Refresh every 5 minutes but don't block
+    const interval = setInterval(() => {
+      if (!document.hidden) { // Only fetch when tab is active
+        fetchNotifications();
+      }
+    }, 5 * 60 * 1000);
 
     return () => {
-      bookingsSubscription.unsubscribe();
-      usersSubscription.unsubscribe();
+      clearTimeout(initialTimer);
+      if (fetchTimeout) clearTimeout(fetchTimeout);
+      
+      // Properly cleanup subscriptions
+      supabase.removeChannel(bookingsSubscription);
+      supabase.removeChannel(usersSubscription);
       clearInterval(interval);
     };
   }, []);

@@ -619,7 +619,7 @@ function AdminDashboardSummary() {
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // ✅ Start false for instant UI
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -679,18 +679,20 @@ export default function BookingsPage() {
   // Toast helpers
   const { success, error: showError, warning } = useToastHelpers();
   useEffect(() => {
-    // Initial fetch
-    fetchBookings();
+    // ✅ OPTIMIZED: Delayed fetch to not block navigation
+    const timer = setTimeout(() => fetchBookings(), 100);
 
+    // ✅ RE-ENABLED: Real-time subscriptions (AuthContext navigation fixed!)
+    console.log('� Setting up real-time bookings subscriptions...');
+    
     // Set up real-time subscription for bookings
     const bookingsSubscription = supabase
-      .channel('bookings_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'bookings'
+      .channel('admin-bookings-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'bookings' 
         },
         (payload) => {
           console.log('🔄 Real-time booking change detected:', payload.eventType, payload);
@@ -746,6 +748,7 @@ export default function BookingsPage() {
     // Cleanup subscriptions on unmount
     return () => {
       console.log('🧹 Cleaning up real-time subscriptions...');
+      clearTimeout(timer); // ✅ Cleanup timer
       supabase.removeChannel(bookingsSubscription);
       supabase.removeChannel(usersSubscription);
     };

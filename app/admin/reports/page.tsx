@@ -17,6 +17,7 @@ import {
   Users
 } from 'lucide-react';
 import { supabase } from '@/app/supabaseClient';
+import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area } from 'recharts';
 
 interface SimpleBooking {
   id: number;
@@ -97,6 +98,7 @@ export default function ReportsPage() {
       if (error) throw error;
       
       setBookings(data || []);
+      console.log(`📊 Filtered bookings: ${data?.length || 0} bookings from ${startDate} to ${endDate}`);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {
@@ -108,6 +110,17 @@ export default function ReportsPage() {
     fetchBookings();
   }, [startDate, endDate, statusFilter, fetchBookings]);
 
+  // 🎯 FILTERED BOOKINGS FOR CHARTS (respects date filters)
+  const filteredBookings = bookings.filter(booking => {
+    if (!booking.created_at) return false;
+    
+    const bookingDate = booking.created_at.split('T')[0];
+    const isInDateRange = bookingDate >= startDate && bookingDate <= endDate;
+    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+    
+    return isInDateRange && matchesStatus;
+  });
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
@@ -115,14 +128,14 @@ export default function ReportsPage() {
     }).format(amount);
   };
 
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+  const confirmedBookings = filteredBookings.filter(b => b.status === 'confirmed');
   const totalRevenue = confirmedBookings.reduce((sum, b) => sum + b.total_amount, 0);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+  // Pagination calculations using filtered bookings
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentBookings = bookings.slice(startIndex, endIndex);
+  const currentBookings = filteredBookings.slice(startIndex, endIndex);
 
   // Reset page when filters change
   useEffect(() => {
@@ -138,7 +151,7 @@ export default function ReportsPage() {
       case 'daily-checklist':
         // Today's operational checklist
         const today = new Date().toISOString().split('T')[0];
-        const todaysActivity = bookings.filter(
+        const todaysActivity = filteredBookings.filter(
           b => b.check_in_date === today || b.check_out_date === today
         );
         headers = ['Time', 'Guest Name', 'Phone', 'Action Needed', 'Status', 'Notes'];
@@ -150,14 +163,14 @@ export default function ReportsPage() {
           booking.status || 'pending',
           `${booking.number_of_guests} guests`
         ]);
-        filename = `daily-checklist-${today}.csv`;
+        filename = `daily-checklist-${startDate}-to-${endDate}.csv`;
         break;
 
       case 'guest-registry':
         // Complete guest database for marketing/communication
         headers = ['Guest Name', 'Email', 'Phone', 'Last Visit', 'Total Stays', 'Total Spent'];
         const guestMap = new Map();
-        bookings.forEach(booking => {
+        filteredBookings.forEach(booking => {
           const email = booking.guest_email || 'No email';
           if (!guestMap.has(email)) {
             guestMap.set(email, {
@@ -186,12 +199,12 @@ export default function ReportsPage() {
           guest.totalStays.toString(),
           guest.totalSpent.toFixed(2)
         ]);
-        filename = `guest-registry-${new Date().toISOString().split('T')[0]}.csv`;
+        filename = `guest-registry-${startDate}-to-${endDate}.csv`;
         break;
 
       case 'revenue-summary':
         // Revenue report for accounting/taxes
-        const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+        const confirmedBookings = filteredBookings.filter(b => b.status === 'confirmed');
         headers = ['Booking Date', 'Guest Name', 'Check-in', 'Check-out', 'Nights', 'Amount', 'Payment Status'];
         rows = confirmedBookings.map(booking => {
           const checkIn = new Date(booking.check_in_date);
@@ -225,7 +238,7 @@ export default function ReportsPage() {
 
       case 'booking-calendar':
         // Upcoming reservations calendar
-        const futureBookings = bookings.filter(b => new Date(b.check_in_date) >= new Date());
+        const futureBookings = filteredBookings.filter(b => new Date(b.check_in_date) >= new Date());
         headers = ['Check-in Date', 'Check-out Date', 'Guest Name', 'Phone', 'Guests', 'Status'];
         rows = futureBookings
           .sort((a, b) => new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime())
@@ -432,6 +445,395 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* 📊 DYNAMIC CHARTS BASED ON REPORT TYPE */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <TrendingUp className="w-6 h-6 text-blue-600" />
+          {selectedReport.name} Analytics
+        </h2>
+        
+        {/* 📊 EXPLANATION PANEL */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="w-5 h-5 text-blue-600" />
+            <h3 className="font-semibold text-blue-800">Chart Data Explanation</h3>
+          </div>
+          <div className="text-sm text-blue-700">
+            <p><strong>📅 Date Range:</strong> All charts show data from <strong>{startDate}</strong> to <strong>{endDate}</strong></p>
+            <p><strong>🎯 Status Filter:</strong> {statusFilter === 'all' ? 'All booking statuses included' : `Only ${statusFilter} bookings shown`}</p>
+            <p><strong>📊 Total Filtered Bookings:</strong> {filteredBookings.length} bookings match your criteria</p>
+            {selectedReport.id === 'daily-checklist' && (
+              <p><strong>🏖️ Daily Check-in/out:</strong> Shows actual guest arrivals and departures within your selected date range</p>
+            )}
+          </div>
+        </div>
+
+        {/* Daily Checklist Charts */}
+        {selectedReport.id === 'daily-checklist' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                Daily Check-ins vs Check-outs
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={(() => {
+                    // 📅 REAL CHECK-IN/OUT DATA from filtered date range
+                    const dailyData = [];
+                    
+                    // Create date range from startDate to endDate
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    // Show up to 14 days to keep chart readable
+                    const daysToShow = Math.min(daysDiff, 14);
+                    
+                    for (let i = 0; i < daysToShow; i++) {
+                      const date = new Date(start);
+                      date.setDate(date.getDate() + i);
+                      const dateStr = date.toISOString().split('T')[0];
+                      
+                      const checkIns = filteredBookings.filter(b => b.check_in_date === dateStr).length;
+                      const checkOuts = filteredBookings.filter(b => b.check_out_date === dateStr).length;
+                      
+                      dailyData.push({
+                        date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                        checkIns,
+                        checkOuts
+                      });
+                    }
+                    return dailyData;
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="checkIns" fill="#10b981" name="Check-ins" />
+                    <Bar dataKey="checkOuts" fill="#f59e0b" name="Check-outs" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600" />
+                Guest Count by Day
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={(() => {
+                    const dailyData = [];
+                    for (let i = 0; i < 7; i++) {
+                      const date = new Date();
+                      date.setDate(date.getDate() + i);
+                      const dateStr = date.toISOString().split('T')[0];
+                      
+                      const totalGuests = filteredBookings
+                        .filter(b => b.check_in_date === dateStr)
+                        .reduce((sum, b) => sum + (b.number_of_guests || 0), 0);
+                      
+                      dailyData.push({
+                        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                        guests: totalGuests
+                      });
+                    }
+                    return dailyData;
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="guests" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} name="Total Guests" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Guest Registry Charts */}
+        {selectedReport.id === 'guest-registry' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                Guest Group Sizes
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={(() => {
+                        const guestSizes = filteredBookings.reduce((acc, booking) => {
+                          const size = booking.number_of_guests || 1;
+                          const category = size <= 2 ? '1-2 People' : 
+                                         size <= 5 ? '3-5 People' :
+                                         size <= 10 ? '6-10 People' : '11+ People';
+                          acc[category] = (acc[category] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>);
+
+                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+                        return Object.entries(guestSizes).map(([name, value], index) => ({
+                          name,
+                          value,
+                          color: colors[index % colors.length]
+                        }));
+                      })()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={true}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {filteredBookings.length > 0 && Object.entries(filteredBookings.reduce((acc, booking) => {
+                        const size = booking.number_of_guests || 1;
+                        const category = size <= 2 ? '1-2 People' : 
+                                       size <= 5 ? '3-5 People' :
+                                       size <= 10 ? '6-10 People' : '11+ People';
+                        acc[category] = (acc[category] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>)).map((_, index) => {
+                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+                        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                      })}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-green-600" />
+                Monthly Guest Registrations
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={(() => {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const monthlyGuests = new Map();
+                    
+                    months.forEach(month => monthlyGuests.set(month, 0));
+                    
+                    filteredBookings.forEach(booking => {
+                      if (booking.created_at) {
+                        const month = months[new Date(booking.created_at).getMonth()];
+                        monthlyGuests.set(month, monthlyGuests.get(month) + (booking.number_of_guests || 1));
+                      }
+                    });
+                    
+                    return months.map(month => ({
+                      month,
+                      guests: monthlyGuests.get(month)
+                    }));
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="guests" fill="#10b981" name="Total Guests" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Revenue Summary Charts */}
+        {selectedReport.id === 'revenue-summary' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-600" />
+                Monthly Revenue Breakdown
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={(() => {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const monthlyRevenue = new Map();
+                    
+                    months.forEach(month => monthlyRevenue.set(month, { confirmed: 0, pending: 0 }));
+                    
+                    filteredBookings.forEach(booking => {
+                      if (booking.created_at) {
+                        const month = months[new Date(booking.created_at).getMonth()];
+                        const current = monthlyRevenue.get(month);
+                        const amount = booking.total_amount || 0;
+                        
+                        if (booking.status === 'confirmed') current.confirmed += amount;
+                        else if (booking.status === 'pending') current.pending += amount;
+                      }
+                    });
+                    
+                    return months.map(month => ({
+                      month,
+                      confirmed: monthlyRevenue.get(month).confirmed,
+                      pending: monthlyRevenue.get(month).pending
+                    }));
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`₱${value.toLocaleString()}`, 'Revenue']} />
+                    <Legend />
+                    <Bar dataKey="confirmed" fill="#10b981" name="Confirmed Revenue" />
+                    <Bar dataKey="pending" fill="#f59e0b" name="Pending Revenue" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Revenue Trend Analysis
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={(() => {
+                    const last12Months = [];
+                    for (let i = 11; i >= 0; i--) {
+                      const date = new Date();
+                      date.setMonth(date.getMonth() - i);
+                      const monthKey = date.toLocaleDateString('en-US', { month: 'short' });
+                      
+                      const monthRevenue = bookings
+                        .filter(b => {
+                          if (!b.created_at || b.status !== 'confirmed') return false;
+                          const bookingMonth = new Date(b.created_at).getMonth();
+                          return bookingMonth === date.getMonth();
+                        })
+                        .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+                      
+                      last12Months.push({ month: monthKey, revenue: monthRevenue });
+                    }
+                    return last12Months;
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`₱${value.toLocaleString()}`, 'Revenue']} />
+                    <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="#10b981" fillOpacity={0.3} name="Monthly Revenue" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Booking Calendar Charts */}
+        {selectedReport.id === 'booking-calendar' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                Upcoming Bookings Timeline
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={(() => {
+                    const next30Days = [];
+                    for (let i = 0; i < 30; i += 5) { // Show every 5 days
+                      const date = new Date();
+                      date.setDate(date.getDate() + i);
+                      const dateStr = date.toISOString().split('T')[0];
+                      
+                      const dayBookings = filteredBookings.filter(b => 
+                        b.check_in_date >= dateStr && 
+                        b.check_in_date < new Date(date.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                      ).length;
+                      
+                      next30Days.push({
+                        period: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        bookings: dayBookings
+                      });
+                    }
+                    return next30Days;
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="bookings" fill="#3b82f6" name="Bookings" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-orange-600" />
+                Booking Status Distribution
+              </h3>
+              {isLoading ? (
+                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={(() => {
+                        const statusCounts = filteredBookings.reduce((acc, booking) => {
+                          const status = booking.status || 'unknown';
+                          acc[status] = (acc[status] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>);
+
+                        const colors = { confirmed: '#10b981', pending: '#f59e0b', cancelled: '#ef4444', unknown: '#6b7280' };
+                        return Object.entries(statusCounts).map(([status, count]) => ({
+                          name: status.charAt(0).toUpperCase() + status.slice(1),
+                          value: count,
+                          color: colors[status as keyof typeof colors] || '#6b7280'
+                        }));
+                      })()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={true}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {filteredBookings.length > 0 && Object.entries(filteredBookings.reduce((acc, booking) => {
+                        const status = booking.status || 'unknown';
+                        acc[status] = (acc[status] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>)).map((_, index) => {
+                        const colors = ['#10b981', '#f59e0b', '#ef4444', '#6b7280'];
+                        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                      })}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Report-Specific Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {selectedReport.id === 'daily-checklist' && (
@@ -443,7 +845,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-blue-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date().toISOString().split('T')[0];
-                      return bookings.filter(b => b.check_in_date === today).length;
+                      return filteredBookings.filter(b => b.check_in_date === today).length;
                     })()}
                   </p>
                 </div>
@@ -457,7 +859,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-orange-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date().toISOString().split('T')[0];
-                      return bookings.filter(b => b.check_out_date === today).length;
+                      return filteredBookings.filter(b => b.check_out_date === today).length;
                     })()}
                   </p>
                 </div>
@@ -471,7 +873,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-green-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date().toISOString().split('T')[0];
-                      return bookings.filter(b => b.check_in_date === today).length;
+                      return filteredBookings.filter(b => b.check_in_date === today).length;
                     })()}
                   </p>
                 </div>
@@ -485,7 +887,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-purple-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date().toISOString().split('T')[0];
-                      return bookings.filter(b => b.check_out_date === today).length;
+                      return filteredBookings.filter(b => b.check_out_date === today).length;
                     })()}
                   </p>
                 </div>
@@ -503,7 +905,7 @@ export default function ReportsPage() {
                   <h3 className="text-gray-700 text-sm font-medium">Total Guests</h3>
                   <p className="text-3xl font-bold text-blue-600">
                     {isLoading ? '...' : (() => {
-                      const uniqueEmails = new Set(bookings.map(b => b.guest_email || 'No email'));
+                      const uniqueEmails = new Set(filteredBookings.map(b => b.guest_email || 'No email'));
                       return uniqueEmails.size;
                     })()}
                   </p>
@@ -631,7 +1033,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-blue-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date();
-                      return bookings.filter(b => new Date(b.check_in_date) >= today).length;
+                      return filteredBookings.filter(b => new Date(b.check_in_date) >= today).length;
                     })()}
                   </p>
                 </div>
@@ -646,7 +1048,7 @@ export default function ReportsPage() {
                     {isLoading ? '...' : (() => {
                       const today = new Date();
                       const next30 = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-                      return bookings.filter(b => {
+                      return filteredBookings.filter(b => {
                         const checkIn = new Date(b.check_in_date);
                         return checkIn >= today && checkIn <= next30;
                       }).length;
@@ -663,7 +1065,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-purple-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date();
-                      return bookings.filter(b => 
+                      return filteredBookings.filter(b => 
                         new Date(b.check_in_date) >= today && b.status === 'confirmed'
                       ).length;
                     })()}
@@ -679,7 +1081,7 @@ export default function ReportsPage() {
                   <p className="text-3xl font-bold text-orange-600">
                     {isLoading ? '...' : (() => {
                       const today = new Date();
-                      return bookings.filter(b => 
+                      return filteredBookings.filter(b => 
                         new Date(b.check_in_date) >= today && b.status === 'pending'
                       ).length;
                     })()}

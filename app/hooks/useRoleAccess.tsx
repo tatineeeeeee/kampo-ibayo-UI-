@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UserRole {
   role: string | null;
@@ -14,83 +13,18 @@ interface UserRole {
 /**
  * Hook to manage role-based access control
  * Returns user role information and helper functions
+ * Now uses AuthContext for consistency
  */
 export function useRoleAccess(): UserRole {
-  const [userRole, setUserRole] = useState<UserRole>({
-    role: null,
-    isAdmin: false,
-    isStaff: false,
-    isUser: false,
-    loading: true
-  });
+  const { userRole, loading } = useAuth();
 
-  useEffect(() => {
-    const getCurrentUserRole = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session?.user) {
-          setUserRole({
-            role: null,
-            isAdmin: false,
-            isStaff: false,
-            isUser: false,
-            loading: false
-          });
-          return;
-        }
-
-        // Get user role from database
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('role')
-          .eq('auth_id', session.user.id)
-          .single();
-
-        if (userError || !userData) {
-          console.error('Error fetching user role:', userError);
-          setUserRole({
-            role: null,
-            isAdmin: false,
-            isStaff: false,
-            isUser: false,
-            loading: false
-          });
-          return;
-        }
-
-        const role = userData.role;
-        setUserRole({
-          role,
-          isAdmin: role === 'admin',
-          isStaff: role === 'staff',
-          isUser: role === 'user',
-          loading: false
-        });
-
-      } catch (error) {
-        console.error('Error in useRoleAccess:', error);
-        setUserRole({
-          role: null,
-          isAdmin: false,
-          isStaff: false,
-          isUser: false,
-          loading: false
-        });
-      }
-    };
-
-    getCurrentUserRole();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      getCurrentUserRole();
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  return userRole;
+  return {
+    role: userRole,
+    isAdmin: userRole === 'admin',
+    isStaff: userRole === 'staff', 
+    isUser: userRole === 'user',
+    loading
+  };
 }
 
 /**

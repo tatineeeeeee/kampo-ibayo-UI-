@@ -224,11 +224,23 @@ export const useAdminBookingStats = () => {
   };
 
   useEffect(() => {
-    fetchAdminBookingStats();
+    // Delayed fetch to not block initial page render
+    const initialTimer = setTimeout(() => {
+      fetchAdminBookingStats();
+    }, 50);
 
-    // Set up real-time subscription for bookings changes
+    // Set up real-time subscription for bookings changes with debouncing
+    let refreshTimeout: NodeJS.Timeout | null = null;
+    const debouncedRefresh = () => {
+      if (refreshTimeout) clearTimeout(refreshTimeout);
+      refreshTimeout = setTimeout(() => {
+        console.log('🔄 Booking change detected, refreshing admin stats...');
+        fetchAdminBookingStats();
+      }, 1000); // Debounce 1 second
+    };
+
     const subscription = supabase
-      .channel('admin_booking_stats_changes')
+      .channel(`admin_booking_stats_changes_${Date.now()}`) // Unique channel name
       .on(
         'postgres_changes',
         {
@@ -236,14 +248,13 @@ export const useAdminBookingStats = () => {
           schema: 'public',
           table: 'bookings'
         },
-        () => {
-          console.log('🔄 Booking change detected, refreshing admin stats...');
-          fetchAdminBookingStats();
-        }
+        debouncedRefresh
       )
       .subscribe();
 
     return () => {
+      clearTimeout(initialTimer);
+      if (refreshTimeout) clearTimeout(refreshTimeout);
       supabase.removeChannel(subscription);
     };
   }, []);

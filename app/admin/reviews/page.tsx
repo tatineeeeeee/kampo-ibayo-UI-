@@ -17,7 +17,7 @@ interface ReviewWithPhotos extends Review {
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<ReviewWithPhotos[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<ReviewWithPhotos[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // ✅ Start false for instant UI
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [updating, setUpdating] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,6 +35,8 @@ export default function AdminReviewsPage() {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
       
+      console.log('🔍 Fetching reviews...');
+      
       const { data, error } = await supabase
         .from('guest_reviews')
         .select(`
@@ -51,17 +53,20 @@ export default function AdminReviewsPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('✅ Successfully fetched reviews:', data?.length || 0);
       setReviews(data || []);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      console.error('❌ Error fetching reviews:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
+  // ✅ OPTIMIZED: Delayed fetch to not block navigation
   useEffect(() => {
-    fetchReviews();
+    const timer = setTimeout(() => fetchReviews(), 100);
+    return () => clearTimeout(timer);
   }, [fetchReviews]);
 
   useEffect(() => {
@@ -176,20 +181,14 @@ export default function AdminReviewsPage() {
     pending: reviews.filter(r => !r.approved).length,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // ✅ REMOVED BLOCKING LOADING SCREEN - UI renders instantly
 
   return (
     <div>
       <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
           <h3 className="text-lg sm:text-xl font-semibold text-gray-700">
-            All Reviews ({filteredReviews.length})
+            All Reviews ({loading ? '...' : filteredReviews.length})
           </h3>
           <div className="flex flex-col sm:flex-row gap-2">
             <button 

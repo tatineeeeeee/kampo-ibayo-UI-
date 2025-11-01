@@ -182,28 +182,29 @@ const Navbar = () => {
                       try {
                         console.log('🚪 Navbar: Logout initiated');
                         
-                        // Import safe logout utility for private tab compatibility
-                        const { safeLogout } = await import('./utils/apiTimeout');
+                        // Force complete signout
+                        await supabase.auth.signOut();
                         
-                        // Use safe logout that never hangs (especially in private tabs)
-                        await safeLogout(supabase, 2000);
+                        // Clear all storage immediately
+                        localStorage.clear();
+                        sessionStorage.clear();
                         
-                        // Close menu immediately
+                        // Close menu and refresh page to ensure clean state
                         setProfileMenu(false);
                         
                         // Force page refresh to clear all state
                         setTimeout(() => {
-                          window.location.href = "/";
+                          window.location.reload();
                         }, 100);
                         
                       } catch (error) {
-                        console.error('Navbar logout error:', error);
+                        console.error('Logout error:', error);
                         // Force cleanup even on error
                         localStorage.clear();
                         sessionStorage.clear();
                         setProfileMenu(false);
                         setTimeout(() => {
-                          window.location.href = "/";
+                          window.location.reload();
                         }, 100);
                       }
                     }}
@@ -305,28 +306,29 @@ const Navbar = () => {
                     try {
                       console.log('🚪 Mobile: Logout initiated');
                       
-                      // Import safe logout utility for private tab compatibility
-                      const { safeLogout } = await import('./utils/apiTimeout');
+                      // Force complete signout
+                      await supabase.auth.signOut();
                       
-                      // Use safe logout that never hangs (especially in private tabs)
-                      await safeLogout(supabase, 2000);
+                      // Clear all storage immediately
+                      localStorage.clear();
+                      sessionStorage.clear();
                       
-                      // Close menu immediately
+                      // Close menu and refresh page to ensure clean state
                       setIsOpen(false);
                       
                       // Force page refresh to clear all state
                       setTimeout(() => {
-                        window.location.href = "/";
+                        window.location.reload();
                       }, 100);
                       
                     } catch (error) {
-                      console.error('Mobile logout error:', error);
+                      console.error('Logout error:', error);
                       // Force cleanup even on error
                       localStorage.clear();
                       sessionStorage.clear();
                       setIsOpen(false);
                       setTimeout(() => {
-                        window.location.href = "/";
+                        window.location.reload();
                       }, 100);
                     }
                   }}
