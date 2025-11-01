@@ -152,6 +152,29 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
     };
 
     fetchPaymentProof();
+
+    // Set up real-time subscription for payment proof updates
+    const subscription = supabase
+      .channel(`payment_proof_${bookingId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_proofs',
+          filter: `booking_id=eq.${bookingId}`
+        },
+        (payload) => {
+          console.log('🔄 Payment proof real-time update:', payload);
+          // Refresh payment proof data when changes occur
+          fetchPaymentProof();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [bookingId]);
 
   if (loading) {
@@ -226,6 +249,29 @@ function SmartWorkflowStatusCell({ booking }: { booking: Booking }) {
     };
 
     fetchPaymentProof();
+
+    // Set up real-time subscription for payment proof updates
+    const subscription = supabase
+      .channel(`workflow_payment_proof_${booking.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_proofs',
+          filter: `booking_id=eq.${booking.id}`
+        },
+        (payload) => {
+          console.log('🔄 Workflow payment proof real-time update:', payload);
+          // Refresh payment proof data when changes occur
+          fetchPaymentProof();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [booking.id]);
 
   if (loading) {

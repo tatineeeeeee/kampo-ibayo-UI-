@@ -83,11 +83,11 @@ export async function POST(request: NextRequest) {
       let bookingStatusUpdate = null;
       
       if (action === 'approve') {
-        // When payment is approved, booking moves to 'pending_confirmation'
-        // Admin still needs to manually confirm the booking
+        // When payment is approved, keep booking as 'pending' but mark payment as verified
+        // Admin can then manually confirm the booking through separate action
         bookingStatusUpdate = {
           payment_status: 'verified',
-          status: 'pending_confirmation', // Ready for admin to confirm
+          // status remains 'pending' - admin will confirm separately
           updated_at: new Date().toISOString()
         };
       } else if (action === 'reject') {

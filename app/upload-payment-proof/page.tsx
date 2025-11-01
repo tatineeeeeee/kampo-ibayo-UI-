@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,7 +29,19 @@ interface ExistingPaymentProof {
   amount: number;
 }
 
-export default function UploadPaymentProof() {
+// Component that handles search params logic (wrapped in Suspense)
+function SearchParamsHandler({ onBookingIdChange }: { onBookingIdChange: (bookingId: string | null) => void }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const bookingId = searchParams.get('bookingId') || searchParams.get('booking_id');
+    onBookingIdChange(bookingId);
+  }, [searchParams, onBookingIdChange]);
+
+  return null;
+}
+
+function UploadPaymentProofContent() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -45,9 +57,8 @@ export default function UploadPaymentProof() {
   const [isResubmission, setIsResubmission] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const bookingId = searchParams.get('bookingId') || searchParams.get('booking_id'); // Support both parameter names
   const { user } = useAuth();
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   // Calculate down payment (50%)
   const downPaymentAmount = booking ? booking.total_amount * 0.5 : 0;
@@ -321,6 +332,11 @@ export default function UploadPaymentProof() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Search params handler */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler onBookingIdChange={setBookingId} />
+      </Suspense>
+      
       {/* Sticky Header - Match bookings page style */}
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
         <div className="px-4 py-3 sm:px-6">
@@ -734,5 +750,21 @@ export default function UploadPaymentProof() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function UploadPaymentProof() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="text-white text-xl font-semibold">Loading...</div>
+        </div>
+      </div>
+    }>
+      <UploadPaymentProofContent />
+    </Suspense>
   );
 }

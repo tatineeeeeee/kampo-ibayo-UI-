@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
@@ -20,6 +20,28 @@ import { Tables } from '../../database.types';
 import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaCommentDots } from "react-icons/fa";
 
 type Booking = Tables<'bookings'>;
+
+// Component that handles search params logic (wrapped in Suspense)
+function SearchParamsHandler({ onPaymentUploaded }: { onPaymentUploaded: () => void }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const hasShownSuccessRef = useRef(false);
+
+  useEffect(() => {
+    const paymentUploaded = searchParams.get('payment_uploaded');
+    if (paymentUploaded === 'true' && !hasShownSuccessRef.current) {
+      hasShownSuccessRef.current = true;
+      onPaymentUploaded();
+      
+      // Clean up the URL parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_uploaded');
+      router.replace(newUrl.pathname + newUrl.search);
+    }
+  }, [searchParams, onPaymentUploaded, router]);
+
+  return null;
+}
 
 // Component to show upload button based on payment proof status
 function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
@@ -254,7 +276,7 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
   );
 }
 
-export default function BookingsPage() {
+function BookingsPageContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
@@ -272,7 +294,6 @@ export default function BookingsPage() {
   const [paginatedBookings, setPaginatedBookings] = useState<Booking[]>([]);
   
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -283,28 +304,16 @@ export default function BookingsPage() {
     }
   }, [user, authLoading, router]);
 
-  // Handle payment upload success message - use ref to avoid infinite loop
-  const hasShownSuccessRef = useRef(false);
-  
-  useEffect(() => {
-    const paymentUploaded = searchParams.get('payment_uploaded');
-    if (paymentUploaded === 'true' && !hasShownSuccessRef.current) {
-      hasShownSuccessRef.current = true;
-      
-      showToast({
-        type: 'success',
-        title: '🎉 Payment Proof Uploaded!',
-        message: 'Your payment proof has been submitted successfully. We\'ll verify it within 24 hours.',
-        duration: 5000
-      });
-      
-      // Clean up the URL parameter and trigger refresh
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('payment_uploaded');
-      window.history.replaceState({}, '', newUrl.toString());
-      setRefreshTrigger(prev => prev + 1); // Force refresh bookings data
-    }
-  }, [searchParams, showToast]);
+  // Handle payment upload success message callback
+  const handlePaymentUploaded = () => {
+    showToast({
+      type: 'success',
+      title: '🎉 Payment Proof Uploaded!',
+      message: 'Your payment proof has been submitted successfully. We\'ll verify it within 24 hours.',
+      duration: 5000
+    });
+    setRefreshTrigger(prev => prev + 1); // Force refresh bookings data
+  };
 
   // Add window focus listener to refresh data when user returns to the page
   useEffect(() => {
@@ -641,8 +650,6 @@ export default function BookingsPage() {
         return <FaCheckCircle className="w-5 h-5 text-green-500" />;
       case "pending":
         return <FaHourglassHalf className="w-5 h-5 text-yellow-500" />;
-      case "pending_confirmation":
-        return <FaCheckCircle className="w-5 h-5 text-blue-500" />;
       case "cancelling":
         return <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>;
       case "cancelled":
@@ -658,8 +665,6 @@ export default function BookingsPage() {
         return "bg-green-600";
       case "pending":
         return "bg-yellow-600";
-      case "pending_confirmation":
-        return "bg-blue-600";
       case "cancelling":
         return "bg-orange-600";
       case "cancelled":
@@ -671,8 +676,6 @@ export default function BookingsPage() {
 
   const getStatusDisplayName = (status: string) => {
     switch (status.toLowerCase()) {
-      case "pending_confirmation":
-        return "Payment Verified";
       default:
         return status.charAt(0).toUpperCase() + status.slice(1);
     }
@@ -698,6 +701,11 @@ export default function BookingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Search params handler */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler onPaymentUploaded={handlePaymentUploaded} />
+      </Suspense>
+      
       {/* Mobile-First Sticky Header */}
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
         <div className="px-4 py-3 sm:px-6">
@@ -1004,28 +1012,9 @@ export default function BookingsPage() {
                       </div>
                     )}
 
-                    {/* Payment Proof Status - Show for pending and pending_confirmation */}
-                    {(booking.status === 'pending' || booking.status === 'pending_confirmation') && (
+                    {/* Payment Proof Status - Show for pending bookings only */}
+                    {booking.status === 'pending' && (
                       <UserPaymentProofStatus bookingId={booking.id} />
-                    )}
-
-                    {/* Pending Confirmation Message */}
-                    {booking.status === 'pending_confirmation' && (
-                      <div className="bg-blue-900/30 border border-blue-600/50 rounded-lg p-3 mb-3 sm:mb-4">
-                        <div className="flex items-start gap-2">
-                          <FaCheckCircle className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <h4 className="text-blue-300 font-medium text-sm">Payment Verified! ✅</h4>
-                            <p className="text-blue-200 text-xs mt-1">
-                              Your payment has been verified by our admin team. 
-                              Your booking will be confirmed shortly and you&apos;ll receive a confirmation email.
-                            </p>
-                            <p className="text-blue-300 text-xs mt-2 font-medium">
-                              📧 Check your email for updates • 📞 Contact us if you have questions
-                            </p>
-                          </div>
-                        </div>
-                      </div>
                     )}
 
                     {/* Actions Section - Mobile First */}
@@ -1043,7 +1032,7 @@ export default function BookingsPage() {
                           View Details
                         </button>
                         
-                        {/* Upload Payment Proof Button - Only show if pending (not pending_confirmation) */}
+                        {/* Upload Payment Proof Button - Only show if pending */}
                         {booking.status === 'pending' && (
                           <PaymentProofUploadButton bookingId={booking.id} />
                         )}
@@ -1559,5 +1548,21 @@ export default function BookingsPage() {
 
       </div> {/* Close main content container */}
     </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function BookingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="text-white text-xl font-semibold">Loading...</div>
+        </div>
+      </div>
+    }>
+      <BookingsPageContent />
+    </Suspense>
   );
 }
