@@ -260,7 +260,7 @@ export default function DashboardPage() {
         <div className="bg-white p-6 rounded-xl shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-gray-500 text-sm font-medium">Total Revenue (All-Time)</h3>
+              <h3 className="text-gray-500 text-sm font-medium">Total Revenue</h3>
               <div className="text-3xl font-bold text-green-600">
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
