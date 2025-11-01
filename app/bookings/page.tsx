@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
@@ -21,6 +21,239 @@ import { FaHome, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle, FaTimesCircle, 
 
 type Booking = Tables<'bookings'>;
 
+// Component to show upload button based on payment proof status
+function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
+  const [proofStatus, setProofStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkPaymentProof = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('payment_proofs')
+          .select('status')
+          .eq('booking_id', bookingId)
+          .order('uploaded_at', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+        setProofStatus(data && data.length > 0 ? data[0].status : null);
+      } catch (error) {
+        console.error('Error checking payment proof:', error);
+        setProofStatus(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkPaymentProof();
+
+    // Refresh every 10 seconds to catch new uploads
+    const interval = setInterval(checkPaymentProof, 10000);
+    return () => clearInterval(interval);
+  }, [bookingId]);
+
+  if (loading) {
+    return (
+      <div className="bg-gray-700 text-gray-400 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1">
+        <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
+        Checking...
+      </div>
+    );
+  }
+
+  // Show upload button only if no proof exists (rejected proofs handled by UserPaymentProofStatus)
+  if (!proofStatus) {
+    return (
+      <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
+        <button className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1">
+          📤 Upload Payment Proof
+        </button>
+      </Link>
+    );
+  }
+
+  // For rejected proofs, don't show button here (UserPaymentProofStatus will handle it)
+  if (proofStatus === 'rejected') {
+    return null; // No button, the rejection status will show the resubmit button
+  }
+
+  // Show status for pending or verified proofs
+  if (proofStatus === 'pending') {
+    return (
+      <div className="bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1">
+        ⏳ Under Review
+      </div>
+    );
+  }
+
+  if (proofStatus === 'verified') {
+    return (
+      <div className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1">
+        ✅ Payment Verified
+      </div>
+    );
+  }
+
+  // Fallback for unknown status
+  return (
+    <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
+      <button className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1">
+        Upload Payment Proof
+      </button>
+    </Link>
+  );
+}
+
+// Payment proof status component for user bookings
+function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
+  const [paymentProof, setPaymentProof] = useState<Tables<'payment_proofs'> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPaymentProof = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('payment_proofs')
+          .select('*')
+          .eq('booking_id', bookingId)
+          .order('uploaded_at', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+        setPaymentProof(data && data.length > 0 ? data[0] : null);
+      } catch (error) {
+        console.error('Error fetching payment proof:', error);
+        setPaymentProof(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaymentProof();
+  }, [bookingId]);
+
+  if (loading) {
+    return <span className="text-xs text-gray-400">Loading payment status...</span>;
+  }
+
+  if (!paymentProof) {
+    return (
+      <div className="bg-orange-900/30 border border-orange-600/50 rounded-lg p-3 mb-3">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-orange-500">⚠️</span>
+          <span className="text-sm font-medium text-orange-300">Payment Proof Required</span>
+        </div>
+        <p className="text-xs text-orange-200 mb-3">
+          Upload your payment proof to confirm this booking. Pay 50% down payment first, then upload the receipt.
+        </p>
+        <div className="flex gap-2">
+          <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
+            <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">
+              Upload Now
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return {
+          color: 'bg-yellow-900/30 border-yellow-600/50 text-yellow-300',
+          icon: '⏳',
+          title: 'Payment Under Review',
+          message: 'Admin is reviewing your payment proof',
+          messageColor: 'text-yellow-200'
+        };
+      case 'approved':
+      case 'verified':
+        return {
+          color: 'bg-green-900/30 border-green-600/50 text-green-300',
+          icon: '✅',
+          title: 'Payment Verified',
+          message: 'Your payment has been verified! Waiting for final booking confirmation.',
+          messageColor: 'text-green-200'
+        };
+      case 'rejected':
+        return {
+          color: 'bg-red-900/20 border-red-500/30 text-red-400',
+          icon: '❌',
+          title: 'Payment Rejected',
+          message: 'Upload a corrected payment proof',
+          messageColor: 'text-red-300'
+        };
+      default:
+        return {
+          color: 'bg-gray-800/50 border-gray-600/50 text-gray-300',
+          icon: '❓',
+          title: 'Unknown Status',
+          message: 'Contact admin for assistance',
+          messageColor: 'text-gray-400'
+        };
+    }
+  };
+
+  const statusInfo = getStatusInfo(paymentProof.status);
+
+  return (
+    <div className={`border rounded-lg p-3 mb-3 ${statusInfo.color}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span>{statusInfo.icon}</span>
+          <span className="text-sm font-medium">{statusInfo.title}</span>
+        </div>
+        {paymentProof.status === 'rejected' && (
+          <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
+            <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">
+              Upload New
+            </button>
+          </Link>
+        )}
+      </div>
+      
+      {paymentProof.admin_notes && paymentProof.status === 'rejected' && (
+        <div className="text-xs text-red-200 space-y-1">
+          {(() => {
+            const notes = paymentProof.admin_notes;
+            let rejectionReason = null;
+            let adminNotes = null;
+            
+            if (notes.includes('REJECTION REASON:')) {
+              const parts = notes.split('\n\nADMIN NOTES:');
+              rejectionReason = parts[0].replace('REJECTION REASON: ', '');
+              adminNotes = parts[1] ? parts[1].trim() : null;
+            } else {
+              rejectionReason = notes;
+            }
+            
+            return (
+              <>
+                <div className="bg-red-900/20 p-2 rounded">
+                  {rejectionReason}
+                </div>
+                {adminNotes && (
+                  <div className="bg-gray-800/30 p-2 rounded text-gray-400">
+                    <span className="font-medium">Admin notes: </span>{adminNotes}
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
+      
+      {paymentProof.admin_notes && paymentProof.status !== 'rejected' && (
+        <div className="text-xs text-gray-400 bg-gray-800/30 p-2 rounded mb-2">
+          {paymentProof.admin_notes}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const { user, loading: authLoading } = useAuth();
@@ -39,6 +272,9 @@ export default function BookingsPage() {
   const [paginatedBookings, setPaginatedBookings] = useState<Booking[]>([]);
   
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -46,6 +282,50 @@ export default function BookingsPage() {
       router.push("/auth");
     }
   }, [user, authLoading, router]);
+
+  // Handle payment upload success message - use ref to avoid infinite loop
+  const hasShownSuccessRef = useRef(false);
+  
+  useEffect(() => {
+    const paymentUploaded = searchParams.get('payment_uploaded');
+    if (paymentUploaded === 'true' && !hasShownSuccessRef.current) {
+      hasShownSuccessRef.current = true;
+      
+      showToast({
+        type: 'success',
+        title: '🎉 Payment Proof Uploaded!',
+        message: 'Your payment proof has been submitted successfully. We\'ll verify it within 24 hours.',
+        duration: 5000
+      });
+      
+      // Clean up the URL parameter and trigger refresh
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_uploaded');
+      window.history.replaceState({}, '', newUrl.toString());
+      setRefreshTrigger(prev => prev + 1); // Force refresh bookings data
+    }
+  }, [searchParams, showToast]);
+
+  // Add window focus listener to refresh data when user returns to the page
+  useEffect(() => {
+    let lastFocusTime = 0;
+    
+    const handleFocus = () => {
+      const now = Date.now();
+      // Throttle focus events to prevent rapid refreshes (min 2 seconds between refreshes)
+      if (now - lastFocusTime > 2000) {
+        console.log('🔄 Page focused - refreshing bookings...');
+        lastFocusTime = now;
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   // Load maintenance mode settings
   useEffect(() => {
@@ -81,6 +361,8 @@ export default function BookingsPage() {
   useEffect(() => {
     async function loadBookings() {
       if (!user) return;
+      
+      setIsRefreshing(true);
       
       // First, check and auto-cancel any pending bookings older than 7 days
       try {
@@ -120,12 +402,13 @@ export default function BookingsPage() {
         setBookings(data as Booking[] || []);
       }
       setLoading(false);
+      setIsRefreshing(false);
     }
     
     if (user) {
       loadBookings();
     }
-  }, [user]);
+  }, [user, refreshTrigger]);
 
   // Pagination logic
   useEffect(() => {
@@ -358,6 +641,8 @@ export default function BookingsPage() {
         return <FaCheckCircle className="w-5 h-5 text-green-500" />;
       case "pending":
         return <FaHourglassHalf className="w-5 h-5 text-yellow-500" />;
+      case "pending_confirmation":
+        return <FaCheckCircle className="w-5 h-5 text-blue-500" />;
       case "cancelling":
         return <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>;
       case "cancelled":
@@ -373,6 +658,8 @@ export default function BookingsPage() {
         return "bg-green-600";
       case "pending":
         return "bg-yellow-600";
+      case "pending_confirmation":
+        return "bg-blue-600";
       case "cancelling":
         return "bg-orange-600";
       case "cancelled":
@@ -382,10 +669,25 @@ export default function BookingsPage() {
     }
   };
 
+  const getStatusDisplayName = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending_confirmation":
+        return "Payment Verified";
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-lg">Loading your bookings...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="text-white text-xl font-semibold mb-2">Loading your bookings...</div>
+          <div className="text-gray-400 text-sm">
+            {authLoading ? 'Authenticating...' : 'Fetching booking data...'}
+          </div>
+        </div>
       </div>
     );
   }
@@ -411,6 +713,25 @@ export default function BookingsPage() {
                 <h1 className="text-lg sm:text-xl font-bold">My Bookings</h1>
                 <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Manage your reservations</p>
               </div>
+              <button
+                onClick={() => {
+                  if (!isRefreshing) { // Extra safety: don't allow click while already refreshing
+                    console.log('🔄 Manual refresh triggered');
+                    setRefreshTrigger(prev => prev + 1);
+                  }
+                }}
+                disabled={isRefreshing}
+                className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors ml-2 ${isRefreshing ? 'opacity-50' : ''}`}
+                title="Refresh Bookings"
+              >
+                {isRefreshing ? (
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-gray-300"></div>
+                ) : (
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+              </button>
             </div>
             {maintenanceActive ? (
               <div className="flex-shrink-0">
@@ -548,6 +869,24 @@ export default function BookingsPage() {
         ) : (
           // Bookings List - Mobile Optimized
           <div className="space-y-3 sm:space-y-4">
+            {/* Payment Process Info - Show if user has pending bookings */}
+            {bookings.some(b => b.status === 'pending') && (
+              <div className="bg-blue-800/50 border border-blue-600/50 rounded-lg p-3 sm:p-4">
+                <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                  💡 Complete Your Booking
+                </h3>
+                <p className="text-blue-200 text-xs sm:text-sm mb-2">
+                  Your bookings are <strong>pending</strong> until you upload payment proof. Here&apos;s how:
+                </p>
+                <div className="space-y-1 text-blue-100 text-xs">
+                  <p>1. 💳 Pay 50% down payment via GCash, Bank Transfer, or other methods</p>
+                  <p>2. 📱 Take a screenshot/photo of your payment receipt</p>
+                  <p>3. Click &quot;Upload Payment Proof&quot; on your booking</p>
+                  <p>4. ✅ Admin will review and confirm your booking within 24 hours</p>
+                </div>
+              </div>
+            )}
+            
             <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 lg:mb-6 gap-2">
                 <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white">
@@ -584,7 +923,7 @@ export default function BookingsPage() {
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           {getStatusIcon(booking.status || 'pending')}
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(booking.status || 'pending')}`}>
-                            {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
+                            {getStatusDisplayName(booking.status || 'pending')}
                           </span>
                         </div>
                       </div>
@@ -665,6 +1004,30 @@ export default function BookingsPage() {
                       </div>
                     )}
 
+                    {/* Payment Proof Status - Show for pending and pending_confirmation */}
+                    {(booking.status === 'pending' || booking.status === 'pending_confirmation') && (
+                      <UserPaymentProofStatus bookingId={booking.id} />
+                    )}
+
+                    {/* Pending Confirmation Message */}
+                    {booking.status === 'pending_confirmation' && (
+                      <div className="bg-blue-900/30 border border-blue-600/50 rounded-lg p-3 mb-3 sm:mb-4">
+                        <div className="flex items-start gap-2">
+                          <FaCheckCircle className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="text-blue-300 font-medium text-sm">Payment Verified! ✅</h4>
+                            <p className="text-blue-200 text-xs mt-1">
+                              Your payment has been verified by our admin team. 
+                              Your booking will be confirmed shortly and you&apos;ll receive a confirmation email.
+                            </p>
+                            <p className="text-blue-300 text-xs mt-2 font-medium">
+                              📧 Check your email for updates • 📞 Contact us if you have questions
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Actions Section - Mobile First */}
                     <div className="flex flex-col gap-2 sm:gap-3 pt-3 border-t border-gray-600">
                       <div className="flex items-center justify-between">
@@ -677,8 +1040,14 @@ export default function BookingsPage() {
                           onClick={() => openModal(booking)}
                           className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-500 transition flex items-center justify-center gap-1"
                         >
-                          👁️ View Details
+                          View Details
                         </button>
+                        
+                        {/* Upload Payment Proof Button - Only show if pending (not pending_confirmation) */}
+                        {booking.status === 'pending' && (
+                          <PaymentProofUploadButton bookingId={booking.id} />
+                        )}
+
                         {canCancelBooking(booking) ? (
                           <button 
                             onClick={() => {
@@ -688,7 +1057,7 @@ export default function BookingsPage() {
                             className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition flex items-center justify-center gap-1"
                             title={getCancellationMessage(booking)}
                           >
-                            ❌ Cancel
+                            Cancel
                           </button>
                         ) : booking.status?.toLowerCase() !== 'cancelled' && (
                           <button 
@@ -986,7 +1355,7 @@ export default function BookingsPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {getStatusIcon(selectedBooking.status || 'pending')}
                     <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(selectedBooking.status || 'pending')}`}>
-                      {(selectedBooking.status || 'pending').charAt(0).toUpperCase() + (selectedBooking.status || 'pending').slice(1)}
+                      {getStatusDisplayName(selectedBooking.status || 'pending')}
                     </span>
                   </div>
                 </div>

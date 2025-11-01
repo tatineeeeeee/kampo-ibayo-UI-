@@ -287,6 +287,65 @@ export type Database = {
           }
         ]
       }
+      payment_proofs: {
+        Row: {
+          id: number
+          booking_id: number
+          user_id: string
+          proof_image_url: string
+          reference_number: string | null
+          payment_method: string
+          amount: number
+          status: string
+          admin_notes: string | null
+          uploaded_at: string
+          verified_at: string | null
+          verified_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          booking_id: number
+          user_id: string
+          proof_image_url: string
+          reference_number?: string | null
+          payment_method: string
+          amount: number
+          status?: string
+          admin_notes?: string | null
+          uploaded_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          booking_id?: number
+          user_id?: string
+          proof_image_url?: string
+          reference_number?: string | null
+          payment_method?: string
+          amount?: number
+          status?: string
+          admin_notes?: string | null
+          uploaded_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_proofs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       users: {
         Row: {
           id: string

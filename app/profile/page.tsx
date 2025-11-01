@@ -80,8 +80,6 @@ function ProfilePageContent({ user }: { user: User }) {
   // Standardized toast helpers
   const { success, error: showError, warning, info } = useToastHelpers();
   
-  const router = useRouter();
-  
   // Use the booking stats hook
   const { stats: bookingStats, loading: statsLoading } = useBookingStats(user);
 
@@ -180,42 +178,31 @@ function ProfilePageContent({ user }: { user: User }) {
     warning('Signing out...');
     
     try {
-      // Check if there's a session first
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Only try to sign out if there's a session
-        const { error } = await supabase.auth.signOut();
-        
-        if (error) {
-          console.error('Sign out error:', error);
-          // Don't return on error, continue with cleanup
-        }
-      }
-      
-      // Clear local storage and session storage
-      if (typeof window !== 'undefined') {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
+      // Use safe logout utility to prevent hanging
+      const { safeLogout } = await import('../utils/apiTimeout');
+      await safeLogout(supabase, 3000);
       
       success('Successfully signed out!');
       
-      // Delay redirect to show success message
+      // Use window.location for reliable redirect
       setTimeout(() => {
-        router.push("/");
+        window.location.href = "/";
       }, 1000);
       
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
       showError('An unexpected error occurred during sign out.');
-      // Force redirect even if sign out fails
+      
+      // Force cleanup and redirect
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
       setTimeout(() => {
-        router.push("/");
-      }, 2000);
-    } finally {
-      setSigningOut(false);
+        window.location.href = "/";
+      }, 1500);
     }
+    // Don't set signingOut to false since we're redirecting
   };
 
   const handleUpdateName = async () => {

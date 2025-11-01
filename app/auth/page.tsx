@@ -549,35 +549,6 @@ export default function AuthPage() {
 
     if (data.user) {
       try {
-        // Create PayMongo customer first
-        let paymongoCustomerId = null;
-        try {
-          const paymongoResponse = await fetch('/api/paymongo/create-customer', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              first_name: firstName,
-              last_name: lastName,
-              email: email,
-              phone: cleanedPhone
-            }),
-          });
-
-          if (paymongoResponse.ok) {
-            const paymongoData = await paymongoResponse.json();
-            paymongoCustomerId = paymongoData.customer_id;
-            console.log('PayMongo customer created:', paymongoCustomerId);
-          } else {
-            const errorData = await paymongoResponse.json();
-            console.error('Failed to create PayMongo customer:', errorData);
-          }
-        } catch (paymongoError) {
-          console.error('PayMongo customer creation error:', paymongoError);
-          // Continue with registration even if PayMongo fails
-        }
-
         // Store extra user info in your "users" table
         const { error: insertError } = await supabase.from("users").insert({
           auth_id: data.user.id,
@@ -585,7 +556,6 @@ export default function AuthPage() {
           email: email,
           phone: cleanedPhone, // Store in international format (+63XXXXXXXXXX)
           role: "user", // Regular users are always "user" role
-          paymongo_id: paymongoCustomerId, // Store PayMongo customer ID
           created_at: new Date().toISOString(), // Convert to ISO string
         });
 

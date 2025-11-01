@@ -592,130 +592,17 @@ function BookingPage() {
         setIsSubmitting(false);
         showError('Booking Failed', `Error creating booking: ${error.message || 'Unknown error'}. Please try again.`);
       } else {
-        // Booking created successfully, now process payment with PayMongo
+        // Booking created successfully - redirect to manual payment upload
         console.log('Booking created successfully:', data);
+        setIsSubmitting(false);
         
-        try {
-          // Step 1: Create Payment Intent (50% down payment only)
-          const downPaymentAmount = totalAmount * 0.5; // 50% down payment
-          const paymentIntentResponse = await fetch('/api/paymongo/create-payment-intent', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              amount: downPaymentAmount, // Send down payment only in pesos, API will convert to centavos
-              bookingId: data.id,
-              description: `Down Payment (50%) for Kampo Ibayo Booking #${data.id} - Remaining ₱${(totalAmount - downPaymentAmount).toLocaleString()} to be paid on arrival`
-            }),
-          });
-
-          const paymentIntentData = await paymentIntentResponse.json();
-          
-          if (!paymentIntentResponse.ok) {
-            throw new Error(paymentIntentData.error || 'Failed to create payment intent');
-          }
-
-          console.log('Payment intent created:', paymentIntentData);
-
-          // Validate payment intent data structure
-          if (!paymentIntentData.success || !paymentIntentData.payment_intent || !paymentIntentData.payment_intent.id) {
-            console.error('Invalid payment intent response:', paymentIntentData);
-            throw new Error('Invalid payment intent response from server');
-          }
-
-          // Step 2: Create Payment Method  
-          const paymentMethodResponse = await fetch('/api/paymongo/create-payment-method', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: user.id,
-              type: 'gcash', // or 'card' depending on preference
-            }),
-          });
-
-          const paymentMethodData = await paymentMethodResponse.json();
-          
-          if (!paymentMethodResponse.ok) {
-            throw new Error(paymentMethodData.error || 'Failed to create payment method');
-          }
-
-          console.log('Payment method created:', paymentMethodData);
-
-          // Validate payment method data structure
-          if (!paymentMethodData.success || !paymentMethodData.payment_method || !paymentMethodData.payment_method.id) {
-            console.error('Invalid payment method response:', paymentMethodData);
-            throw new Error('Invalid payment method response from server');
-          }
-
-          // Step 3: Attach Payment Method to Intent
-          const attachResponse = await fetch('/api/paymongo/attach-payment-intent', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              payment_intent_id: paymentIntentData.payment_intent.id,
-              payment_method_id: paymentMethodData.payment_method.id,
-              bookingId: data.id,
-            }),
-          });
-
-          const attachData = await attachResponse.json();
-          
-          if (!attachResponse.ok) {
-            throw new Error(attachData.error || 'Failed to attach payment method');
-          }
-
-          console.log('Payment attached successfully:', attachData);
-
-          // Validate attach data structure
-          if (!attachData.success || !attachData.attached_payment) {
-            console.error('Invalid attach response:', attachData);
-            throw new Error('Invalid attach response from server');
-          }
-
-          // Update booking with payment intent ID
-          const { error: updateError } = await supabase
-            .from('bookings')
-            .update({ 
-              payment_intent_id: paymentIntentData.payment_intent.id,
-              payment_status: 'processing'
-            })
-            .eq('id', data.id);
-
-          if (updateError) {
-            console.error('Error updating booking with payment info:', updateError);
-          }
-
-          // Redirect to PayMongo checkout URL
-          if (attachData.checkout_url) {
-            setIsSubmitting(false);
-            success('Redirecting to Payment', 'Please complete your payment to confirm the booking.');
-            
-            // Redirect to PayMongo checkout
-            window.location.href = attachData.checkout_url;
-          } else {
-            throw new Error('No checkout URL received from PayMongo');
-          }
-
-        } catch (paymentError) {
-          console.error('Payment processing error:', paymentError);
-          setIsSubmitting(false);
-          
-          // Show error but don't cancel the booking - user can try payment later
-          showError('Payment Error', 
-            `Booking created but payment failed: ${paymentError instanceof Error ? paymentError.message : 'Unknown error'}. ` + 
-            'Please contact us or try booking again.'
-          );
-          
-          // Still redirect to bookings page after a delay so user can see their booking
-          setTimeout(() => {
-            router.push('/bookings');
-          }, 3000);
-        }
+        // Show success message
+        success('Booking Created!', 'Please upload payment proof to confirm your booking.');
+        
+        // Redirect to payment proof upload page
+        setTimeout(() => {
+          router.push(`/upload-payment-proof?bookingId=${data.id}`);
+        }, 2000);
 
         // Send confirmation emails in the background (non-blocking)
         const sendEmailInBackground = async () => {
@@ -1600,8 +1487,8 @@ function BookingPage() {
                 </div>
               ) : canCreateBooking ? (
                 estimatedPrice 
-                  ? `💳 Pay Down Payment - ₱${Math.round(estimatedPrice * 0.5).toLocaleString()}`
-                  : '📅 Complete Booking Details'
+                  ? ` Pay Down Payment - ₱${Math.round(estimatedPrice * 0.5).toLocaleString()}`
+                  : ' Complete Booking Details'
               ) : (
                 '⚠️ Booking Limit Reached'
               )}

@@ -133,30 +133,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     try {
-      // Check if there's a session first
-      const { data: { session } } = await supabase.auth.getSession();
+      // Use safe logout utility to prevent hanging
+      const { safeLogout } = await import('../utils/apiTimeout');
+      await safeLogout(supabase, 2000);
       
-      if (session) {
-        // Only try to sign out if there's a session
-        await supabase.auth.signOut();
-      }
-      
-      // Clear any local storage
-      if (typeof window !== 'undefined') {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-      
-      // Always redirect to home regardless of sign out success
-      router.push("/");
+      // Direct redirect for admin
+      window.location.href = "/";
     } catch (error) {
-      console.error('Logout error:', error);
-      // Even if logout fails, clear storage and redirect
+      console.error('Admin logout error:', error);
+      
+      // Force cleanup and redirect
       if (typeof window !== 'undefined') {
         localStorage.clear();
         sessionStorage.clear();
       }
-      router.push("/");
+      window.location.href = "/";
     }
   };
 
