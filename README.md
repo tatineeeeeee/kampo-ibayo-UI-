@@ -1,6 +1,12 @@
-# Kampo Ibayo Resort - Booking System
+# THE KAMPO WAY: Booking and Reservation System
+## Kampo Ibayo Resort - General Trias, Cavite
 
-A complete web-based booking management system built for Kampo Ibayo Resort, a small eco-friendly camping resort in General Trias, Cavite, Philippines. The system handles all aspects of resort operations from guest bookings to administrative management.
+A comprehensive web-based booking management system built for Kampo Ibayo Resort, an eco-friendly camping resort in General Trias, Cavite, Philippines. This system handles all aspects of resort operations from guest bookings to administrative management, featuring advanced payment processing, real-time notifications, and comprehensive analytics.
+
+**Team**: DAI REN B. DACASIN, JUSTINE CESAR L. OCAMPO, JOHN REIGN REYES  
+**Institution**: Cavite State University - Trece Martires City Campus  
+**Version**: 2.0 (November 2025)  
+**Technology Stack**: Next.js 15.5.2, React 19.1.0, TypeScript, Supabase
 
 ## Overview
 
@@ -8,30 +14,42 @@ This full-stack application provides a comprehensive booking solution for a 15-g
 
 ## Core Features
 
-### Guest Booking System
-- **Real-time availability checking** with visual calendar and conflict prevention
-- **Dynamic pricing** based on dates (₱9,000 weekdays / ₱12,000 weekends)
-- **PayMongo integration** for secure payment processing (GCash, Cards)
-- **Pet-friendly options** with no additional cost
-- **Guest information collection** with special requests handling
+### Advanced Guest Booking System
+- **Real-time availability checking** with intelligent calendar and conflict prevention
+- **Dynamic pricing engine** based on dates (₱9,000 weekdays / ₱12,000 weekends)
+- **Dual payment options**: PayMongo integration (GCash, Cards) + Manual payment proof upload
+- **Pet-friendly accommodations** with no additional charges
+- **Comprehensive guest profiling** with special requests and dietary needs
+- **Mobile-first responsive design** with Progressive Web App (PWA) capabilities
 
-### Administrative Dashboard
-- **Booking oversight** - view, confirm, cancel all reservations
-- **User management** - guest accounts and admin role controls
-- **Financial reporting** - revenue tracking and payment status monitoring
-- **Daily operations** - arrival/departure lists and operational tools
-- **Maintenance mode** - temporarily close resort for repairs
+### Enterprise Administrative Dashboard
+- **Complete booking oversight** - view, confirm, cancel, and manage all reservations
+- **Advanced user management** - guest accounts, admin roles, and access controls
+- **Comprehensive financial reporting** - revenue tracking, payment analytics, and export functionality
+- **Operational management** - daily checklists, arrival/departure coordination
+- **System maintenance controls** - graceful maintenance mode with custom messaging
+- **Real-time notifications** - instant alerts for bookings, payments, and system events
 
-### Communication System
-- **Automated email notifications** for all booking events
-- **Admin alerts** for new bookings and cancellations
-- **Professional email templates** with resort branding
-- **Intelligent chatbot** with 200+ FAQ responses for customer support
+### Multi-Channel Communication System
+- **Automated email workflows** for all booking lifecycle events
+- **SMS notification integration** for check-in reminders and urgent alerts
+- **AI-powered chatbot** with natural language processing and 200+ FAQ responses
+- **Professional email templates** with responsive design and resort branding
+- **Admin notification dashboard** with real-time updates and action items
 
-### Review System
-- **Post-stay review collection** with photo upload capability
-- **Admin moderation workflow** for review approval/rejection
-- **Public review display** on homepage for social proof
+### Comprehensive Review and Rating System
+- **Multi-category reviews** - overall, cleanliness, facilities, service, value, location
+- **Photo upload system** with automatic optimization and moderation
+- **Admin approval workflow** with quality control and response management
+- **Public display integration** on homepage and booking pages for social proof
+- **Anonymous review options** with privacy protection
+
+### Advanced Features (Version 2.0)
+- **Manual payment verification** - bank transfer proof upload and admin approval workflow
+- **Enhanced photo management** - high-resolution image support with cloud storage
+- **Legal compliance module** - complete policy management and user agreement tracking
+- **Analytics and reporting** - comprehensive business intelligence with exportable reports
+- **Security enhancements** - row-level security, input validation, and threat prevention
 
 ## Technical Stack
 

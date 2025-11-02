@@ -19,8 +19,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Fix hydration mismatch
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     // Get initial session with retry logic
     const getInitialSession = async () => {
       try {
@@ -150,13 +158,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [isHydrated]);
 
   // 🛡️ COMPLETELY DISABLED: Auto-refresh was causing 30-second navigation hanging
   useEffect(() => {
     console.log('🔕 AuthContext: Auto-refresh COMPLETELY DISABLED to fix navigation hanging');
     // All auto-refresh logic removed to prevent navigation issues
   }, []); // Empty dependency array, no auto-refresh
+
+  // Don't render anything until hydrated to prevent button issues
+  if (!isHydrated) {
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="text-white">Loading...</div>
+    </div>;
+  }
 
   return (
     <AuthContext.Provider value={{ user, userRole, loading }}>

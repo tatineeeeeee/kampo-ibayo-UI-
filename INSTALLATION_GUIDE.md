@@ -1,19 +1,56 @@
-# Kampo Ibayo Booking System - Installation & Deployment Guide
+# THE KAMPO WAY: Installation & Deployment Guide
+## Complete Setup Instructions for Kampo Ibayo Booking System
+
+**Project**: The Kampo Way - Booking and Reservation System for Kampo Ibayo in General Trias, Cavite  
+**Team**: DAI REN B. DACASIN, JUSTINE CESAR L. OCAMPO, JOHN REIGN REYES  
+**Institution**: Cavite State University - Trece Martires City Campus  
+**Version**: 2.0 (November 2025)  
+**Technology**: Next.js 15.5.2, React 19.1.0, Supabase, TypeScript
 
 ## Prerequisites
 
 ### Development Environment
-- **Node.js**: Version 18 or higher
-- **npm**: Version 8 or higher (comes with Node.js)
-- **Git**: For version control
-- **Code Editor**: VS Code recommended
+- **Node.js**: Version 18.17.0 or higher (LTS recommended)
+- **npm**: Version 9.0.0 or higher (or yarn 1.22.0+)
+- **Git**: Version 2.40.0 or higher for version control
+- **Code Editor**: VS Code with recommended extensions:
+  - TypeScript and JavaScript Language Features
+  - Tailwind CSS IntelliSense
+  - ES7+ React/Redux/React-Native snippets
+  - Prettier - Code formatter
+  - ESLint for code linting
+- **Browser**: Chrome/Firefox with developer tools for testing
 
-### Accounts Required
-1. **Supabase Account**: Database and authentication
-2. **PayMongo Account**: Payment processing (test mode)
-3. **Gmail Account**: Email notifications (with app password)
-4. **Vercel Account**: Hosting (recommended)
-5. **GitHub Account**: Code repository
+### Required External Accounts
+1. **Supabase Account** (supabase.com): 
+   - PostgreSQL database hosting
+   - Authentication service
+   - Row-level security (RLS)
+   - Real-time subscriptions
+   
+2. **PayMongo Account** (paymongo.com):
+   - Payment processing for Philippines
+   - GCash and card payment support
+   - Test and live API keys
+   
+3. **Gmail Account** with App Password:
+   - SMTP email service for notifications
+   - 2FA must be enabled for app passwords
+   - Secure email delivery system
+   
+4. **Vercel Account** (vercel.com):
+   - Recommended hosting platform
+   - Automatic deployments from Git
+   - Edge network and CDN
+   
+5. **GitHub Account** (github.com):
+   - Code repository hosting
+   - Version control and collaboration
+   - CI/CD integration with Vercel
+
+6. **Semaphore Account** (semaphore.co) - Optional:
+   - SMS notifications for Philippines
+   - Check-in reminders and alerts
 
 ## Local Development Setup
 

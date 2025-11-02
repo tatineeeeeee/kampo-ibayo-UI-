@@ -128,14 +128,10 @@ const Navbar = () => {
             </a>
           ))}
 
-          {/* Auth Buttons */}
-          {!isMounted ? (
-            <div className="px-3 lg:px-4 py-1 bg-red-500 rounded opacity-50 text-sm lg:text-base">
-              Login
-            </div>
-          ) : isLoadingAuth ? (
-            <div className="px-3 py-1 bg-gray-700 rounded animate-pulse">
-              <div className="w-12 h-4 bg-gray-600 rounded"></div>
+          {/* Auth Buttons - Fixed for hydration */}
+          {!isMounted || isLoadingAuth ? (
+            <div className="flex items-center">
+              <div className="w-20 h-8 bg-gray-700 animate-pulse rounded"></div>
             </div>
           ) : user ? (
             <div className="relative">
@@ -255,20 +251,12 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* User Account Section */}
-          {!isMounted ? (
+          {/* User Account Section - Fixed for mobile */}
+          {!isMounted || isLoadingAuth ? (
             <div className="border-t border-gray-700 pt-2">
               <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-2">Account</p>
-              <Link href="/auth" onClick={() => setIsOpen(false)}>
-                <button className="w-full text-left px-2 py-2 bg-red-500 rounded hover:bg-red-600 text-sm opacity-50">
-                  Sign In / Register
-                </button>
-              </Link>
-            </div>
-          ) : isLoadingAuth ? (
-            <div className="border-t border-gray-700 pt-2">
               <div className="px-2 py-2 bg-gray-700 rounded animate-pulse">
-                <div className="w-20 h-4 bg-gray-600 rounded"></div>
+                <div className="w-24 h-4 bg-gray-600 rounded"></div>
               </div>
             </div>
           ) : user ? (

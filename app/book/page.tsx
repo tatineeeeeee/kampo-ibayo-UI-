@@ -594,15 +594,36 @@ function BookingPage() {
       } else {
         // Booking created successfully - redirect to manual payment upload
         console.log('Booking created successfully:', data);
-        setIsSubmitting(false);
         
         // Show success message
-        success('Booking Created!', 'Please upload payment proof to confirm your booking.');
+        success('Booking Created!', 'Redirecting to payment upload...');
         
-        // Redirect to payment proof upload page
+        // Multiple redirect attempts to ensure reliability
+        const uploadUrl = `/upload-payment-proof?bookingId=${data.id}`;
+        console.log('Redirecting to upload page with booking ID:', data.id, 'URL:', uploadUrl);
+        
+        try {
+          // Primary redirect method
+          router.push(uploadUrl);
+        } catch (redirectError) {
+          console.error('Primary redirect failed:', redirectError);
+          
+          // Fallback redirect method
+          setTimeout(() => {
+            try {
+              router.replace(uploadUrl);
+            } catch (fallbackError) {
+              console.error('Fallback redirect failed:', fallbackError);
+              // Last resort - use window.location
+              window.location.href = uploadUrl;
+            }
+          }, 500);
+        }
+        
+        // Set submitting to false after redirect attempt
         setTimeout(() => {
-          router.push(`/upload-payment-proof?bookingId=${data.id}`);
-        }, 2000);
+          setIsSubmitting(false);
+        }, 1000);
 
         // Send confirmation emails in the background (non-blocking)
         const sendEmailInBackground = async () => {

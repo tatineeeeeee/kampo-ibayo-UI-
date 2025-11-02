@@ -1,4 +1,11 @@
-# Kampo Ibayo Booking System - Technical Documentation
+# THE KAMPO WAY: Technical Documentation
+## Comprehensive System Architecture and Development Guide
+
+**Project**: The Kampo Way - Booking and Reservation System for Kampo Ibayo in General Trias, Cavite  
+**Development Team**: DAI REN B. DACASIN, JUSTINE CESAR L. OCAMPO, JOHN REIGN REYES  
+**Institution**: Cavite State University - Trece Martires City Campus  
+**Version**: 2.0 (November 2025)  
+**Last Updated**: November 1, 2025
 
 ## System Architecture
 
@@ -23,11 +30,14 @@ The Kampo Ibayo Booking System follows a modern full-stack architecture using Ne
 ### Technology Stack
 
 #### Frontend Technologies
-- **Next.js 15**: React framework with App Router
-- **TypeScript**: Type-safe JavaScript development
-- **Tailwind CSS**: Utility-first CSS framework
-- **React Components**: Reusable UI components
-- **React Hooks**: State management and side effects
+- **Next.js 15.5.2**: React framework with App Router and Turbopack
+- **React 19.1.0**: Modern React with concurrent features and new hooks
+- **TypeScript 5.x**: Type-safe JavaScript with strict type checking
+- **Tailwind CSS 4.0**: Utility-first CSS framework with JIT compilation
+- **Lucide React**: Modern icon library with 1000+ icons
+- **React Icons**: Additional icon sets (FontAwesome, etc.)
+- **React Hooks**: Custom hooks for state management and business logic
+- **Recharts 3.3.0**: Data visualization library for analytics charts
 
 #### Backend Technologies
 - **Next.js API Routes**: RESTful API endpoints

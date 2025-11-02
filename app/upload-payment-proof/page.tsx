@@ -29,17 +29,7 @@ interface ExistingPaymentProof {
   amount: number;
 }
 
-// Component that handles search params logic (wrapped in Suspense)
-function SearchParamsHandler({ onBookingIdChange }: { onBookingIdChange: (bookingId: string | null) => void }) {
-  const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const bookingId = searchParams.get('bookingId') || searchParams.get('booking_id');
-    onBookingIdChange(bookingId);
-  }, [searchParams, onBookingIdChange]);
-
-  return null;
-}
 
 function UploadPaymentProofContent() {
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -58,7 +48,16 @@ function UploadPaymentProofContent() {
 
   const router = useRouter();
   const { user } = useAuth();
-  const [bookingId, setBookingId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  
+  // Get booking ID directly from search params
+  const bookingId = searchParams.get('bookingId') || searchParams.get('booking_id');
+  
+  // Debug logging
+  console.log('🔍 URL Parameter Check:');
+  console.log('  - bookingId parameter:', bookingId);
+  console.log('  - searchParams object:', searchParams);
+  console.log('  - All search params:', Object.fromEntries(searchParams.entries()));
 
   // Calculate down payment (50%)
   const downPaymentAmount = booking ? booking.total_amount * 0.5 : 0;
@@ -118,16 +117,18 @@ function UploadPaymentProofContent() {
     }
     
     if (bookingId) {
+      console.log('Booking ID found:', bookingId, '- Fetching details...');
       fetchBookingDetails();
     } else {
+      console.error('No booking ID found in URL parameters');
       setError('No booking ID provided');
       setIsLoading(false);
       
-      // Auto-redirect to bookings after 2 seconds if no booking ID
+      // Auto-redirect to bookings after 3 seconds if no booking ID
       setTimeout(() => {
         console.log('No booking ID found, redirecting to bookings...');
         router.replace('/bookings');
-      }, 2000);
+      }, 3000);
     }
   }, [bookingId, user, router]); // Remove downPaymentAmount to prevent circular dependency
 
@@ -332,11 +333,6 @@ function UploadPaymentProofContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Search params handler */}
-      <Suspense fallback={null}>
-        <SearchParamsHandler onBookingIdChange={setBookingId} />
-      </Suspense>
-      
       {/* Sticky Header - Match bookings page style */}
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
         <div className="px-4 py-3 sm:px-6">
@@ -760,7 +756,7 @@ export default function UploadPaymentProof() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <div className="text-white text-xl font-semibold">Loading...</div>
+          <div className="text-white text-xl font-semibent">Loading payment page...</div>
         </div>
       </div>
     }>
