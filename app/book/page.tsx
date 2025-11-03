@@ -45,6 +45,10 @@ function BookingPage() {
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  
+  // Track displayed month for calendar overflow fix
+  const [displayedMonth, setDisplayedMonth] = useState(new Date().getMonth());
+  const [displayedYear, setDisplayedYear] = useState(new Date().getFullYear());
 
   // Calculate 2 years from today for max booking date
   const maxBookingDate = new Date();
@@ -1034,6 +1038,72 @@ function BookingPage() {
           display: flex !important;
           justify-content: space-around !important;
         }
+        
+        /* Hide and disable outside month dates to prevent overflow clicking */
+        .react-datepicker__day--outside-month {
+          visibility: hidden !important;
+          pointer-events: none !important;
+          opacity: 0 !important;
+        }
+        
+        /* Ensure outside month dates can't be hovered */
+        .react-datepicker__day--outside-month:hover {
+          background-color: transparent !important;
+          transform: none !important;
+          box-shadow: none !important;
+        }
+        
+        /* Force consistent 6-row calendar layout */
+        .react-datepicker__month {
+          min-height: 330px !important;
+          max-height: 330px !important;
+          height: 330px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: space-between !important;
+        }
+        
+        /* Ensure 6 weeks are always shown */
+        .react-datepicker__week {
+          display: flex !important;
+          justify-content: space-around !important;
+          align-items: center !important;
+          height: 50px !important;
+          min-height: 50px !important;
+          flex: 1 !important;
+        }
+        
+        /* Force calendar container to maintain consistent height */
+        .react-datepicker {
+          min-height: 420px !important;
+          max-height: 420px !important;
+          height: 420px !important;
+        }
+        
+        /* Ensure month container maintains height */
+        .react-datepicker__month-container {
+          min-height: 360px !important;
+          max-height: 360px !important;
+          height: 360px !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        
+        /* Ensure day names row has consistent height */
+        .react-datepicker__day-names {
+          display: flex !important;
+          justify-content: space-around !important;
+          height: 40px !important;
+          min-height: 40px !important;
+          align-items: center !important;
+        }
+        
+        /* Force consistent spacing between all calendar elements */
+        .react-datepicker__header {
+          padding: 1rem 0 !important;
+          height: 60px !important;
+          min-height: 60px !important;
+        }
       `}</style>
       
       {/* Navigation Bar */}
@@ -1328,7 +1398,7 @@ function BookingPage() {
 
             {/* Inline Calendar - Larger */}
             <div>
-              <div className="bg-gray-800/50 rounded-xl border-2 border-gray-700 p-4 flex justify-center">
+              <div className="bg-gray-800/50 rounded-xl border-2 border-gray-700 p-4 flex justify-center min-h-[450px]">
                 <DatePicker
                   selected={formData.checkIn}
                   onChange={(dates) => {
@@ -1343,7 +1413,20 @@ function BookingPage() {
                   minDate={minDate}
                   maxDate={maxBookingDate}
                   excludeDates={getUnavailableDates()}
+                  // Track month changes to prevent overflow date selection
+                  onMonthChange={(date) => {
+                    setDisplayedMonth(date.getMonth());
+                    setDisplayedYear(date.getFullYear());
+                  }}
+                  // Force 6 weeks to be shown for consistent layout
+                  fixedHeight
+                  showWeekNumbers={false}
                   dayClassName={(date) => {
+                    // Hide dates from outside the displayed month
+                    if (date.getMonth() !== displayedMonth || date.getFullYear() !== displayedYear) {
+                      return 'react-datepicker__day--outside-month';
+                    }
+                    
                     // Check if this date is selected (check-in or check-out)
                     const isSelected = (formData.checkIn && date.toDateString() === formData.checkIn.toDateString()) ||
                                      (formData.checkOut && date.toDateString() === formData.checkOut.toDateString());
