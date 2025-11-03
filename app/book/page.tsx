@@ -811,16 +811,31 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--selected::after {
-          content: 'SELECTED' !important;
+          content: 'PICK' !important;
           position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 6px !important;
-          background: rgba(0,0,0,0.7) !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
+        }
+        
+        /* 📱 MOBILE: Shorter labels for better readability */
+        @media (max-width: 768px) {
+          .react-datepicker__day--selected::after {
+            content: '✓' !important;
+            font-size: 12px !important;
+            padding: 2px 3px !important;
+            bottom: 2px !important;
+          }
         }
         
         .react-datepicker__day--same-day {
@@ -834,16 +849,31 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--same-day::after {
-          content: 'FULL DAY' !important;
+          content: 'FULL' !important;
           position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 6px !important;
-          background: rgba(0,0,0,0.7) !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
+        }
+        
+        /* 📱 MOBILE: Shorter labels for better readability */
+        @media (max-width: 768px) {
+          .react-datepicker__day--same-day::after {
+            content: 'FULL' !important;
+            font-size: 11px !important;
+            padding: 2px 3px !important;
+            bottom: 2px !important;
+          }
         }
         
         /* Custom capacity indicator classes */
@@ -858,16 +888,31 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--checkin::after {
-          content: 'CHECK-IN' !important;
+          content: 'IN' !important;
           position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 6px !important;
-          background: rgba(0,0,0,0.7) !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
+        }
+        
+        /* 📱 MOBILE: Shorter labels for better readability */
+        @media (max-width: 768px) {
+          .react-datepicker__day--checkin::after {
+            content: 'IN' !important;
+            font-size: 11px !important;
+            padding: 2px 3px !important;
+            bottom: 2px !important;
+          }
         }
         
         .react-datepicker__day--checkout {
@@ -881,16 +926,31 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--checkout::after {
-          content: 'CHECK-OUT' !important;
+          content: 'OUT' !important;
           position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 5px !important;
-          background: rgba(0,0,0,0.7) !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
+        }
+        
+        /* 📱 MOBILE: Shorter labels for better readability */
+        @media (max-width: 768px) {
+          .react-datepicker__day--checkout::after {
+            content: 'OUT' !important;
+            font-size: 11px !important;
+            padding: 2px 3px !important;
+            bottom: 2px !important;
+          }
         }
         
         .react-datepicker__day--occupied {
@@ -904,16 +964,31 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--occupied::after {
-          content: 'OCCUPIED' !important;
+          content: 'BUSY' !important;
           position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 6px !important;
-          background: rgba(0,0,0,0.7) !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
+        }
+        
+        /* 📱 MOBILE: Shorter labels for better readability */
+        @media (max-width: 768px) {
+          .react-datepicker__day--occupied::after {
+            content: 'BUSY' !important;
+            font-size: 11px !important;
+            padding: 2px 3px !important;
+            bottom: 2px !important;
+          }
         }
         
         .react-datepicker__day--partial {
@@ -1039,18 +1114,37 @@ function BookingPage() {
           justify-content: space-around !important;
         }
         
-        /* Hide and disable outside month dates to prevent overflow clicking */
+        /* 🛡️ ENHANCED: Hide and disable outside month dates with maximum protection */
         .react-datepicker__day--outside-month {
           visibility: hidden !important;
           pointer-events: none !important;
           opacity: 0 !important;
+          user-select: none !important;
+          cursor: default !important;
+          position: relative !important;
         }
         
-        /* Ensure outside month dates can't be hovered */
-        .react-datepicker__day--outside-month:hover {
+        /* Ensure outside month dates can't be hovered or interacted with */
+        .react-datepicker__day--outside-month:hover,
+        .react-datepicker__day--outside-month:focus,
+        .react-datepicker__day--outside-month:active {
           background-color: transparent !important;
           transform: none !important;
           box-shadow: none !important;
+          cursor: default !important;
+          pointer-events: none !important;
+        }
+        
+        /* 🚀 PERFORMANCE: Block any potential click events on outside dates */
+        .react-datepicker__day--outside-month::before {
+          content: '' !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          z-index: 10 !important;
+          pointer-events: none !important;
         }
         
         /* Force consistent 6-row calendar layout */
@@ -1404,6 +1498,21 @@ function BookingPage() {
                   onChange={(dates) => {
                     if (Array.isArray(dates)) {
                       const [start, end] = dates;
+                      
+                      // 🛡️ SAFETY: Double protection against outside month date selection
+                      // Validate start date is within displayed month
+                      if (start && (start.getMonth() !== displayedMonth || start.getFullYear() !== displayedYear)) {
+                        console.warn('Prevented outside month date selection:', start);
+                        return; // Early return - don't update state
+                      }
+                      
+                      // Validate end date is within displayed month (if exists)
+                      if (end && (end.getMonth() !== displayedMonth || end.getFullYear() !== displayedYear)) {
+                        console.warn('Prevented outside month date selection:', end);
+                        return; // Early return - don't update state
+                      }
+                      
+                      // ✅ Safe to update - dates are within current month
                       setFormData({ ...formData, checkIn: start, checkOut: end });
                     }
                   }}
@@ -1422,10 +1531,21 @@ function BookingPage() {
                   fixedHeight
                   showWeekNumbers={false}
                   dayClassName={(date) => {
-                    // Hide dates from outside the displayed month
+                    // 🛡️ PRIORITY 1: Hide dates from outside the displayed month (HIGHEST PRIORITY)
                     if (date.getMonth() !== displayedMonth || date.getFullYear() !== displayedYear) {
                       return 'react-datepicker__day--outside-month';
                     }
+                    
+                    // 🔍 SAFETY CHECK: Validate date is actually within current month view
+                    const currentMonthStart = new Date(displayedYear, displayedMonth, 1);
+                    const currentMonthEnd = new Date(displayedYear, displayedMonth + 1, 0);
+                    
+                    if (date < currentMonthStart || date > currentMonthEnd) {
+                      console.warn('Date outside month range detected:', date);
+                      return 'react-datepicker__day--outside-month';
+                    }
+                    
+                    // ✅ SAFE ZONE: Date is confirmed within current month
                     
                     // Check if this date is selected (check-in or check-out)
                     const isSelected = (formData.checkIn && date.toDateString() === formData.checkIn.toDateString()) ||
@@ -1452,23 +1572,38 @@ function BookingPage() {
               <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-blue-600"></span>
-                  <span className="text-gray-300">Selected</span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Pick</span>
+                    <span className="sm:hidden">Pick ✓</span>
+                  </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-green-600"></span>
-                  <span className="text-gray-300">Check-in</span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Check-in</span>
+                    <span className="sm:hidden">In</span>
+                  </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-red-600"></span>
-                  <span className="text-gray-300">Check-out</span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Check-out</span>
+                    <span className="sm:hidden">Out</span>
+                  </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-yellow-600"></span>
-                  <span className="text-gray-300">Occupied</span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Occupied</span>
+                    <span className="sm:hidden">Busy</span>
+                  </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-purple-600"></span>
-                  <span className="text-gray-300">Full Day</span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Full Day</span>
+                    <span className="sm:hidden">Full</span>
+                  </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-gray-700 border border-gray-600"></span>
