@@ -62,6 +62,8 @@ export type Database = {
           cancellation_reason: string | null
           payment_intent_id: string | null
           payment_status: string | null
+          payment_type: string | null
+          payment_amount: number | null
           refund_id: string | null
           refund_amount: number | null
           refund_status: string | null
@@ -89,6 +91,8 @@ export type Database = {
           cancellation_reason?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
+          payment_type?: string | null
+          payment_amount?: number | null
           refund_id?: string | null
           refund_amount?: number | null
           refund_status?: string | null
@@ -116,6 +120,8 @@ export type Database = {
           cancellation_reason?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
+          payment_type?: string | null
+          payment_amount?: number | null
           refund_id?: string | null
           refund_amount?: number | null
           refund_status?: string | null

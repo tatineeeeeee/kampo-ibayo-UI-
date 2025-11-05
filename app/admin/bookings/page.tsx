@@ -1346,7 +1346,11 @@ export default function BookingsPage() {
                       <td className="p-3 text-black">
                       <div className="font-medium">₱{booking.total_amount.toLocaleString()}</div>
                       <div className="text-xs text-gray-600">
-                        ₱{Math.round(booking.total_amount * 0.5).toLocaleString()} paid • ₱{Math.round(booking.total_amount * 0.5).toLocaleString()} due
+                        {booking.payment_type === 'full' ? (
+                          `₱${booking.total_amount.toLocaleString()} due (Full Payment)`
+                        ) : (
+                          `₱${Math.round(booking.total_amount * 0.5).toLocaleString()} paid • ₱${Math.round(booking.total_amount * 0.5).toLocaleString()} due`
+                        )}
                       </div>
                     </td>
                     <td className="p-3">
@@ -1547,14 +1551,23 @@ export default function BookingsPage() {
                     <p className="text-xs text-yellow-600 font-medium mb-1">Total Booking Value</p>
                     <p className="font-semibold text-green-600">₱{selectedBooking.total_amount.toLocaleString()}</p>
                     <div className="mt-2 text-xs text-gray-600">
-                      <div className="flex justify-between">
-                        <span>Down Payment:</span>
-                        <span className="font-medium text-green-700">₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Pay on Arrival:</span>
-                        <span className="font-medium text-orange-700">₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}</span>
-                      </div>
+                      {selectedBooking.payment_type === 'full' ? (
+                        <div className="flex justify-between">
+                          <span>Full Payment Required:</span>
+                          <span className="font-medium text-blue-700">₱{selectedBooking.total_amount.toLocaleString()}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between">
+                            <span>Down Payment:</span>
+                            <span className="font-medium text-green-700">₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Pay on Arrival:</span>
+                            <span className="font-medium text-orange-700">₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1577,14 +1590,18 @@ export default function BookingsPage() {
                       <span className="text-sm text-gray-600">Amount Collected:</span>
                       <span className="font-semibold text-green-700">
                         {selectedBooking.payment_status === 'paid' 
-                          ? `₱${Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}` 
+                          ? (selectedBooking.payment_type === 'full' 
+                            ? `₱${selectedBooking.total_amount.toLocaleString()}` 
+                            : `₱${Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}`)
                           : '₱0'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Balance Due (F2F):</span>
                       <span className="font-semibold text-orange-700">
-                        ₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}
+                        {selectedBooking.payment_type === 'full' 
+                          ? (selectedBooking.payment_status === 'paid' ? '₱0' : `₱${selectedBooking.total_amount.toLocaleString()}`)
+                          : `₱${Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}`}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -1775,21 +1792,25 @@ export default function BookingsPage() {
                                   className="text-blue-600"
                                 />
                                 <span className="text-blue-700 text-sm">
-                                  Cancel with full down payment refund (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()})
+                                  {selectedBooking.payment_type === 'full' 
+                                    ? `Cancel with full payment refund (₱${selectedBooking.total_amount.toLocaleString()})`
+                                    : `Cancel with down payment refund (₱${Math.round(selectedBooking.total_amount * 0.5).toLocaleString()})`}
                                 </span>
                               </label>
                             </div>
                             <p className="text-blue-600 text-xs mt-2">
-                              * Only down payment (50%) is refundable. F2F balance (₱{Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}) was never charged.
+                              {selectedBooking.payment_type === 'full' 
+                                ? '* Full payment amount is refundable since guest paid the complete amount upfront.'
+                                : `* Only down payment (50%) is refundable. F2F balance (₱${Math.round(selectedBooking.total_amount * 0.5).toLocaleString()}) was never charged.`}
                             </p>
                             
-                            {/* PayMongo Test Mode Limit Warning */}
-                            {Math.round(selectedBooking.total_amount * 0.5) > 4500 && (
-                              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
-                                <p className="text-amber-700 text-xs">
-                                  ⚠️ <strong>PayMongo Test Mode Limit:</strong> Refund amount exceeds ₱4,500 test mode limit. 
-                                  For ₱9K-₱12K bookings, switch to <strong>LIVE MODE</strong> or process refund manually. 
-                                  Live mode supports full booking amounts.
+                            {/* Manual Refund Processing Note */}
+                            {((selectedBooking.payment_type === 'full' ? selectedBooking.total_amount : Math.round(selectedBooking.total_amount * 0.5)) > 5000) && (
+                              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                                <p className="text-blue-700 text-xs">
+                                  ℹ️ <strong>Manual Refund Processing:</strong> Since this is a manual payment proof system, 
+                                  refunds will need to be processed manually through your payment method (bank transfer, GCash, etc.). 
+                                  Please coordinate with the guest for refund details.
                                 </p>
                               </div>
                             )}

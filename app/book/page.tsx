@@ -45,6 +45,7 @@ function BookingPage() {
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [paymentType, setPaymentType] = useState<'half' | 'full'>('half'); // Default to half payment
   
   // Track displayed month for calendar overflow fix
   const [displayedMonth, setDisplayedMonth] = useState(new Date().getMonth());
@@ -117,8 +118,8 @@ function BookingPage() {
     // Base rate: weekend/holiday or weekday
     const baseRate = (isWeekend || isHoliday) ? 12000 : 9000;
     
-    // Add excess guest fee: ₱500 per person above 15
-    const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 500 : 0;
+    // Add excess guest fee: ₱300 per person above 15
+    const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 300 : 0;
     
     return baseRate + excessGuestFee;
   };
@@ -552,6 +553,7 @@ function BookingPage() {
     
     // Calculate dynamic price based on check-in date and guest count
     const totalAmount = calculatePrice(formData.checkIn!, parseInt(formData.guests));
+    const paymentAmount = paymentType === 'half' ? Math.round(totalAmount * 0.5) : totalAmount;
     
     // Fix timezone issue - use local date strings instead of UTC
     const formatLocalDate = (date: Date) => {
@@ -575,7 +577,9 @@ function BookingPage() {
       brings_pet: formData.pet,
       special_requests: formData.request.trim() || null,
       status: 'pending',
-      total_amount: totalAmount // Dynamic pricing based on date
+      total_amount: totalAmount, // Dynamic pricing based on date
+      payment_type: paymentType, // 'half' or 'full'
+      payment_amount: paymentAmount // Amount to be paid now
     };
     
     
@@ -1351,7 +1355,7 @@ function BookingPage() {
               </label>
               <div className="mb-3 p-3 bg-blue-900/20 border border-blue-600/40 rounded-lg">
                 <p className="text-xs text-blue-200">
-                  ℹ️ <span className="font-semibold">Standard:</span> 15 guests · ₱500/person for extras
+                  ℹ️ <span className="font-semibold">Standard:</span> 15 guests · ₱300/person for extras
                 </p>
               </div>
               
@@ -1478,6 +1482,79 @@ function BookingPage() {
                     : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
                 } placeholder-gray-500`}
               />
+            </div>
+
+            {/* Payment Type Selection */}
+            <div>
+              <label className="block text-sm font-semibold mb-3 text-gray-300">
+                Payment Option <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Half Payment Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('half')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                    paymentType === 'half'
+                      ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-500/30'
+                      : 'bg-gray-800/50 border-gray-600 hover:border-blue-500 hover:bg-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      paymentType === 'half' ? 'border-white bg-white' : 'border-gray-400'
+                    }`}>
+                      {paymentType === 'half' && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
+                    </div>
+                    <span className="font-bold text-white">50% Down Payment</span>
+                  </div>
+                  <div className="text-sm text-gray-300 ml-7">
+                    Pay half now, settle the balance on check-in
+                  </div>
+                  {estimatedPrice && (
+                    <div className="text-lg font-bold text-blue-400 ml-7 mt-1">
+                      ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
+                    </div>
+                  )}
+                </button>
+
+                {/* Full Payment Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('full')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                    paymentType === 'full'
+                      ? 'bg-green-600 border-green-500 shadow-lg shadow-green-500/30'
+                      : 'bg-gray-800/50 border-gray-600 hover:border-green-500 hover:bg-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      paymentType === 'full' ? 'border-white bg-white' : 'border-gray-400'
+                    }`}>
+                      {paymentType === 'full' && <div className="w-2 h-2 bg-green-600 rounded-full"></div>}
+                    </div>
+                    <span className="font-bold text-white">Full Payment</span>
+                  </div>
+                  <div className="text-sm text-gray-300 ml-7">
+                    Pay the complete amount upfront
+                  </div>
+                  {estimatedPrice && (
+                    <div className="text-lg font-bold text-green-400 ml-7 mt-1">
+                      ₱{estimatedPrice.toLocaleString()}
+                    </div>
+                  )}
+                </button>
+              </div>
+              
+              {/* Payment Benefits */}
+              <div className="mt-3 p-3 bg-gray-800/30 border border-gray-600 rounded-lg">
+                <p className="text-xs text-gray-400">
+                  💡 <span className="font-semibold">Tip:</span> {paymentType === 'half' 
+                    ? 'Down payment secures your booking. Pay remaining balance on arrival.' 
+                    : 'Full payment provides peace of mind - no additional payments needed!'}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1614,11 +1691,20 @@ function BookingPage() {
 
             {/* Pricing Info - Always Show with Dates */}
             <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border-2 border-gray-700 p-5 shadow-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">₱</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">₱</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Booking Summary</h3>
                 </div>
-                <h3 className="text-lg font-bold text-white">Booking Summary</h3>
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  paymentType === 'half' 
+                    ? 'bg-blue-900/40 text-blue-300 border border-blue-600/30' 
+                    : 'bg-green-900/40 text-green-300 border border-green-600/30'
+                }`}>
+                  {paymentType === 'half' ? '50% Payment' : 'Full Payment'}
+                </div>
               </div>
               <div className="space-y-2">
                 {/* Check-in and Check-out Dates */}
@@ -1671,7 +1757,7 @@ function BookingPage() {
                           : 'text-white'
                       }`}>
                         {formData.guests && parseInt(formData.guests) > 15 
-                          ? `+₱${((parseInt(formData.guests) - 15) * 500).toLocaleString()}`
+                          ? `+₱${((parseInt(formData.guests) - 15) * 300).toLocaleString()}`
                           : '₱0'
                         }
                       </span>
@@ -1683,20 +1769,36 @@ function BookingPage() {
                           ₱{estimatedPrice.toLocaleString()}
                         </span>
                       </div>
-                      <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-blue-300">Down Payment (Pay Now):</span>
-                          <span className="text-lg font-bold text-blue-300">
-                            ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
-                          </span>
+                      
+                      {/* Payment breakdown based on selected payment type */}
+                      {paymentType === 'half' ? (
+                        <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium text-blue-300">Down Payment (Pay Now):</span>
+                            <span className="text-lg font-bold text-blue-300">
+                              ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-blue-200">Balance (Pay on Arrival):</span>
+                            <span className="text-sm text-blue-200">
+                              ₱{(estimatedPrice - Math.round(estimatedPrice * 0.5)).toLocaleString()}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-blue-200">Pay on Arrival:</span>
-                          <span className="text-sm text-blue-200">
-                            ₱{(estimatedPrice - Math.round(estimatedPrice * 0.5)).toLocaleString()}
-                          </span>
+                      ) : (
+                        <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-3">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium text-green-300">Full Payment (Pay Now):</span>
+                            <span className="text-lg font-bold text-green-300">
+                              ₱{estimatedPrice.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-green-200">✓ No additional payment required</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -1726,7 +1828,9 @@ function BookingPage() {
                 </div>
               ) : canCreateBooking ? (
                 estimatedPrice 
-                  ? ` Pay Down Payment - ₱${Math.round(estimatedPrice * 0.5).toLocaleString()}`
+                  ? paymentType === 'half' 
+                    ? `Pay Down Payment - ₱${Math.round(estimatedPrice * 0.5).toLocaleString()}`
+                    : `Pay Full Amount - ₱${estimatedPrice.toLocaleString()}`
                   : ' Complete Booking Details'
               ) : (
                 '⚠️ Booking Limit Reached'

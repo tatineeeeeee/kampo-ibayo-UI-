@@ -17,6 +17,8 @@ interface Booking {
   total_amount: number;
   status: string | null;
   payment_status: string | null;
+  payment_type: string | null; // 'half' or 'full'
+  payment_amount: number | null; // Amount to be paid based on payment_type
 }
 
 interface ExistingPaymentProof {
@@ -59,9 +61,9 @@ function UploadPaymentProofContent() {
   console.log('  - searchParams object:', searchParams);
   console.log('  - All search params:', Object.fromEntries(searchParams.entries()));
 
-  // Calculate down payment (50%)
-  const downPaymentAmount = booking ? booking.total_amount * 0.5 : 0;
-  const remainingAmount = booking ? booking.total_amount - downPaymentAmount : 0;
+  // Calculate payment amounts based on booking payment type
+  const paymentAmount = booking?.payment_amount || (booking ? booking.total_amount * 0.5 : 0);
+  const remainingAmount = booking ? booking.total_amount - paymentAmount : 0;
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -100,9 +102,9 @@ function UploadPaymentProofContent() {
           setIsResubmission(hasRejectedProofs || false);
         }
         
-        // Calculate down payment inside effect to avoid circular dependency
-        const calculatedDownPayment = data.total_amount * 0.5;
-        setAmount(calculatedDownPayment.toString());
+        // Set the correct payment amount based on booking payment type
+        const calculatedPaymentAmount = data.payment_amount || (data.total_amount * 0.5);
+        setAmount(calculatedPaymentAmount.toString());
       } catch (error) {
         setError('Failed to fetch booking details');
         console.error('Error fetching booking:', error);
@@ -162,6 +164,16 @@ function UploadPaymentProofContent() {
     
     if (!proofImage || !paymentMethod || !amount || !booking) {
       setError('Please fill all required fields and upload an image');
+      return;
+    }
+
+    // Check if reference number is required for selected payment method
+    const requiresReference = ['gcash', 'maya', 'bank_transfer'].includes(paymentMethod);
+    if (requiresReference && !referenceNumber.trim()) {
+      const methodName = paymentMethod === 'gcash' ? 'GCash' 
+        : paymentMethod === 'maya' ? 'Maya' 
+        : 'Bank Transfer';
+      setError(`Reference number is required for ${methodName} payments`);
       return;
     }
 
@@ -374,13 +386,13 @@ function UploadPaymentProofContent() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h3 className="font-semibold text-blue-200 mb-2">📱 Step 1: Make Payment</h3>
-              <p className="text-blue-100 mb-1">Pay your down payment using any of these methods:</p>
+              <h3 className="font-semibold text-blue-200 mb-2">📱 Step 1: Make Online Payment</h3>
+              <p className="text-blue-100 mb-1">Pay your booking amount using these online methods:</p>
               <ul className="text-blue-200 text-xs space-y-1">
                 <li>• GCash Transfer</li>
+                <li>• Maya/PayMaya Transfer</li>
                 <li>• Bank Transfer (BPI, BDO, etc.)</li>
                 <li>• Online Banking</li>
-                <li>• Remittance Centers</li>
               </ul>
             </div>
             <div>
@@ -537,13 +549,17 @@ function UploadPaymentProofContent() {
                   <span className="font-semibold text-lg text-white">₱{booking.total_amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-700 bg-green-800/20 px-3 rounded">
-                  <span className="text-green-300 font-medium">💰 Down Payment (50%):</span>
-                  <span className="font-bold text-green-400 text-lg">₱{downPaymentAmount.toLocaleString()}</span>
+                  <span className="text-green-300 font-medium">
+                    💰 {booking?.payment_type === 'full' ? 'Full Payment (100%)' : 'Down Payment (50%)'}:
+                  </span>
+                  <span className="font-bold text-green-400 text-lg">₱{paymentAmount.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between py-2 bg-orange-800/20 px-3 rounded">
-                  <span className="text-orange-300">💳 Pay on Arrival (50%):</span>
-                  <span className="font-medium text-orange-400">₱{remainingAmount.toLocaleString()}</span>
-                </div>
+                {booking?.payment_type !== 'full' && (
+                  <div className="flex justify-between py-2 bg-orange-800/20 px-3 rounded">
+                    <span className="text-orange-300">💳 Pay on Arrival (50%):</span>
+                    <span className="font-medium text-orange-400">₱{remainingAmount.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
             )}
             
@@ -563,7 +579,8 @@ function UploadPaymentProofContent() {
                   <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
                 </p>
                 <p className="text-xs text-green-300 mt-2">
-                  💡 <strong>Amount to pay:</strong> ₱{downPaymentAmount.toLocaleString()} (50% down payment)
+                  💡 <strong>Amount to pay:</strong> ₱{paymentAmount.toLocaleString()} 
+                  ({booking?.payment_type === 'full' ? '100% full payment' : '50% down payment'})
                 </p>
               </div>
             </div>
@@ -605,23 +622,36 @@ function UploadPaymentProofContent() {
                   <option value="gcash" className="bg-gray-700">GCash</option>
                   <option value="maya" className="bg-gray-700">Maya/PayMaya</option>
                   <option value="bank_transfer" className="bg-gray-700">Bank Transfer</option>
-                  <option value="cash" className="bg-gray-700">Cash Payment</option>
-                  <option value="other" className="bg-gray-700">Other</option>
                 </select>
               </div>
 
               {/* Reference Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Reference/Transaction Number
+                  Reference/Transaction Number 
+                  {(paymentMethod === 'gcash' || paymentMethod === 'maya' || paymentMethod === 'bank_transfer' || paymentMethod === 'online_banking') && (
+                    <span className="text-red-400">*</span>
+                  )}
                 </label>
                 <input
                   type="text"
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value)}
-                  placeholder="Enter transaction reference number (if applicable)"
+                  placeholder={
+                    paymentMethod === 'gcash' ? "Enter GCash reference number (e.g., 1234567890)"
+                    : paymentMethod === 'maya' ? "Enter Maya reference number"
+                    : paymentMethod === 'bank_transfer' ? "Enter bank transaction reference"
+                    : paymentMethod === 'online_banking' ? "Enter online banking reference"
+                    : "Enter transaction reference (if available)"
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  required={paymentMethod === 'gcash' || paymentMethod === 'maya' || paymentMethod === 'bank_transfer' || paymentMethod === 'online_banking'}
                 />
+                {(paymentMethod === 'gcash' || paymentMethod === 'maya' || paymentMethod === 'bank_transfer' || paymentMethod === 'online_banking') && (
+                  <p className="text-sm text-yellow-400 mt-1 flex items-center gap-1">
+                    <span>⚠️</span> Reference number is required for {paymentMethod === 'gcash' ? 'GCash' : paymentMethod === 'maya' ? 'Maya' : paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Online Banking'} payments
+                  </p>
+                )}
               </div>
 
               {/* Amount */}
@@ -639,7 +669,8 @@ function UploadPaymentProofContent() {
                   required
                 />
                 <p className="text-sm text-green-400 mt-1 flex items-center gap-1">
-                  <span>💡</span> Recommended: ₱{downPaymentAmount.toLocaleString()} (50% down payment)
+                  <span>💡</span> Recommended: ₱{paymentAmount.toLocaleString()} 
+                  ({booking?.payment_type === 'full' ? 'full payment' : '50% down payment'})
                 </p>
               </div>
 
