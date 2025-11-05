@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, TrendingUp, DollarSign, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Calendar, TrendingUp, PhilippinePeso, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
@@ -241,7 +241,8 @@ export default function DashboardPage() {
       {/* Key Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-8 h-8 text-blue-500" />
             <div>
               <h3 className="text-gray-500 text-sm font-medium">Total Bookings</h3>
               <div className="text-3xl font-bold text-blue-600">
@@ -253,29 +254,29 @@ export default function DashboardPage() {
               </div>
               <p className="text-xs text-gray-500 mt-1">All time bookings</p>
             </div>
-            <Calendar className="w-8 h-8 text-blue-500" />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <PhilippinePeso className="w-8 h-8 text-green-500" />
             <div>
               <h3 className="text-gray-500 text-sm font-medium">Total Revenue</h3>
               <div className="text-3xl font-bold text-green-600">
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  formatCurrency(stats.totalRevenue)
+                  stats.totalRevenue.toLocaleString()
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">Confirmed bookings only</p>
             </div>
-            <DollarSign className="w-8 h-8 text-green-500" />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Clock className="w-8 h-8 text-yellow-500" />
             <div>
               <h3 className="text-gray-500 text-sm font-medium">Pending Bookings</h3>
               <div className="text-3xl font-bold text-yellow-600">
@@ -287,7 +288,6 @@ export default function DashboardPage() {
               </div>
               <p className="text-xs text-gray-500 mt-1">Need admin approval</p>
             </div>
-            <Clock className="w-8 h-8 text-yellow-500" />
           </div>
         </div>
       </div>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
         {/* Monthly Revenue Trend */}
         <div className="bg-white p-6 rounded-xl shadow-md">
           <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-green-600" />
+            <PhilippinePeso className="w-5 h-5 text-green-600" />
             Monthly Revenue Trend
           </h3>
           {loading ? (
@@ -372,7 +372,7 @@ export default function DashboardPage() {
           ) : (
             <div className="h-64 flex items-center justify-center text-gray-500">
               <div className="text-center">
-                <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <PhilippinePeso className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                 <p>No revenue data available</p>
               </div>
             </div>
