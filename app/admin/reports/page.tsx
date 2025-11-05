@@ -10,7 +10,7 @@ import {
   FileText, 
   ChevronLeft, 
   ChevronRight,
-  DollarSign,
+  PhilippinePeso,
   Clock,
   Phone,
   Building,
@@ -54,7 +54,7 @@ const REPORT_TYPES = [
     id: 'revenue-summary',
     name: 'Revenue Report',
     description: 'Earnings summary for accounting & tax purposes',
-    icon: DollarSign,
+    icon: PhilippinePeso,
     color: 'purple'
   },
   {
@@ -660,7 +660,7 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-md">
               <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
+                <PhilippinePeso className="w-5 h-5 text-green-600" />
                 Monthly Revenue Breakdown
               </h3>
               {isLoading ? (
@@ -979,7 +979,7 @@ export default function ReportsPage() {
                     {isLoading ? '...' : formatCurrency(totalRevenue)}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
+                <PhilippinePeso className="w-8 h-8 text-green-500" />
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md">
@@ -990,7 +990,7 @@ export default function ReportsPage() {
                     {isLoading ? '...' : confirmedBookings.length}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-blue-500" />
+                <PhilippinePeso className="w-8 h-8 text-blue-500" />
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md">
