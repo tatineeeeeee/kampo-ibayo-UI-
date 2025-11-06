@@ -575,7 +575,16 @@ function UploadPaymentProofContent() {
                   <span className="text-xs">(Kampo Ibayo)</span>
                 </p>
                 <p className="flex items-center gap-2">
+                  <span className="font-medium">BDO:</span> 
+                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
+                  <span className="text-xs">(Kampo Ibayo)</span>
+                </p>
+                <p className="flex items-center gap-2">
                   <span className="font-medium">BPI:</span> 
+                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="font-medium">PayMaya:</span> 
                   <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
                 </p>
                 <p className="text-xs text-green-300 mt-2">
