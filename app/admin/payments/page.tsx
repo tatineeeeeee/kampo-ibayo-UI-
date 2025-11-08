@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DollarSign, BarChart3, Clock, X } from "lucide-react";
 import { exportPaymentsCSV } from "../../utils/csvExport";
 import { useToastHelpers } from "../../components/Toast";
+import { formatBookingNumber } from "../../utils/bookingNumber";
 
 interface Payment {
   id: number;
@@ -364,7 +365,7 @@ export default function PaymentsPage() {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{payment.user}</div>
                         <div className="text-xs text-gray-500">{payment.email}</div>
-                        <div className="text-xs text-gray-400">Booking #{payment.booking_id}</div>
+                        <div className="text-xs text-gray-400">{formatBookingNumber(payment.booking_id)}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

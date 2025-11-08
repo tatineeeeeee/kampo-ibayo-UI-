@@ -6,6 +6,7 @@ import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { isMaintenanceMode } from "../utils/maintenanceMode";
 import { displayPhoneNumber } from "../utils/phoneUtils";
+import { formatBookingNumber } from "../utils/bookingNumber";
 import { 
   checkAndExpirePendingBookings, 
   getDaysPending, 
@@ -924,7 +925,7 @@ function BookingsPageContent() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-white truncate">
-                              Booking #{booking.id}
+                              {formatBookingNumber(booking.id)}
                             </h3>
                           </div>
                         </div>
@@ -1140,7 +1141,7 @@ function BookingsPageContent() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cancel Booking</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Booking #{selectedBooking.id}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{formatBookingNumber(selectedBooking.id)}</p>
               </div>
             </div>
 
@@ -1334,7 +1335,7 @@ function BookingsPageContent() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
-                        Booking #{selectedBooking.id}
+                        {formatBookingNumber(selectedBooking.id)}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
                         {selectedBooking.guest_name} • {selectedBooking.guest_email || 'No email'}

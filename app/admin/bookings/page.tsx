@@ -6,6 +6,7 @@ import { useToastHelpers } from "../../components/Toast";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download } from "lucide-react";
 import { Tables } from "../../../database.types";
 import { displayPhoneNumber } from "../../utils/phoneUtils";
+import { formatBookingNumber, parseBookingNumber } from "../../utils/bookingNumber";
 import Image from "next/image";
 import { exportBookingsCSV } from "../../utils/csvExport";
 
@@ -179,13 +180,19 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
   }, [bookingId]);
 
   if (loading) {
-    return <span className="text-xs text-gray-400">Loading...</span>;
+    return (
+      <div className="flex items-center justify-center">
+        <span className="text-xs text-gray-400">...</span>
+      </div>
+    );
   }
 
   if (!paymentProof) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">No Proof</span>
+      <div className="flex items-center justify-center">
+        <span className="px-3 py-1 bg-gray-400 text-white rounded-full text-xs font-bold">
+          No Proof
+        </span>
       </div>
     );
   }
@@ -194,22 +201,22 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
     switch (status) {
       case 'pending':
         return { 
-          badge: 'bg-amber-100 text-amber-800', 
-          text: 'Review Needed'
+          badge: 'bg-orange-500 text-white', 
+          text: 'Review'
         };
       case 'verified':
         return { 
-          badge: 'bg-emerald-100 text-emerald-800', 
+          badge: 'bg-green-500 text-white', 
           text: 'Verified'
         };
       case 'rejected':
         return { 
-          badge: 'bg-red-100 text-red-800', 
+          badge: 'bg-red-500 text-white', 
           text: 'Rejected'
         };
       default:
         return { 
-          badge: 'bg-gray-100 text-gray-600', 
+          badge: 'bg-gray-500 text-white', 
           text: 'Unknown'
         };
     }
@@ -218,9 +225,11 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
   const statusInfo = getStatusInfo(paymentProof.status);
   
   return (
-    <span className={`px-2 py-1 rounded text-xs font-medium ${statusInfo.badge}`}>
-      {statusInfo.text}
-    </span>
+    <div className="flex items-center justify-center">
+      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.badge}`}>
+        {statusInfo.text}
+      </span>
+    </div>
   );
 }
 
@@ -388,8 +397,8 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
     return (
       <button 
         onClick={() => onConfirm(booking.id)}
-        className="px-4 py-2 bg-green-500 text-white rounded-md text-sm hover:bg-green-600 animate-pulse font-semibold"
-        title="Step 3: Confirm booking (payment verified ✓)"
+        className="px-4 py-2 bg-teal-500 text-white rounded-md text-sm hover:bg-teal-600 font-semibold"
+        title="Step 3: Confirm booking (payment verified)"
       >
         Confirm
       </button>
@@ -399,8 +408,8 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
   return (
     <button 
       onClick={() => onConfirm(booking.id)}
-      className="h-7 w-full px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 animate-pulse text-center flex items-center justify-center"
-      title="Step 3: Confirm booking (payment verified ✓)"
+      className="h-6 w-full px-2 py-1 bg-teal-500 text-white rounded text-xs hover:bg-teal-600 text-center flex items-center justify-center"
+      title="Step 3: Confirm booking (payment verified)"
     >
       Confirm
     </button>
@@ -500,13 +509,13 @@ function PaymentProofButton({
   const getButtonStyle = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-orange-500 hover:bg-orange-600';
+        return 'bg-amber-500 hover:bg-amber-600';
       case 'verified':
-        return 'bg-green-500 hover:bg-green-600';
+        return 'bg-emerald-500 hover:bg-emerald-600';
       case 'rejected':
-        return 'bg-red-500 hover:bg-red-600';
+        return 'bg-slate-500 hover:bg-slate-600';
       default:
-        return 'bg-purple-500 hover:bg-purple-600';
+        return 'bg-violet-500 hover:bg-violet-600';
     }
   };
 
@@ -776,17 +785,31 @@ export default function BookingsPage() {
     // Then filter by search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(booking => 
-        // Search by guest name
-        booking.guest_name?.toLowerCase().includes(searchLower) ||
-        // Search by guest email
-        booking.guest_email?.toLowerCase().includes(searchLower) ||
-        // Search by guest phone (remove spaces and dashes for better matching)
-        booking.guest_phone?.replace(/[\s-]/g, '').includes(searchTerm.replace(/[\s-]/g, '')) ||
-        // Search by booking ID
-        booking.id.toString().includes(searchTerm.trim())
-        // Note: Status search removed to avoid confusion between database status vs displayed workflow status
-      );
+      const searchUpper = searchTerm.toUpperCase().trim();
+      
+      filtered = filtered.filter(booking => {
+        // Search by formatted booking number (KB-0001, KB-10000, etc.)
+        const bookingNumber = formatBookingNumber(booking.id);
+        const matchesBookingNumber = bookingNumber.includes(searchUpper);
+        
+        // Parse booking number if user typed KB-0001 format
+        const parsedId = parseBookingNumber(searchUpper);
+        const matchesParsedBookingNumber = parsedId === booking.id;
+        
+        return (
+          // Search by booking number formats
+          matchesBookingNumber ||
+          matchesParsedBookingNumber ||
+          // Search by guest name
+          booking.guest_name?.toLowerCase().includes(searchLower) ||
+          // Search by guest email
+          booking.guest_email?.toLowerCase().includes(searchLower) ||
+          // Search by guest phone (remove spaces and dashes for better matching)
+          booking.guest_phone?.replace(/[\s-]/g, '').includes(searchTerm.replace(/[\s-]/g, '')) ||
+          // Search by raw booking ID
+          booking.id.toString().includes(searchTerm.trim())
+        );
+      });
     }
     
     setFilteredBookings(filtered);
@@ -1259,7 +1282,7 @@ export default function BookingsPage() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search by guest name, email, phone, or booking ID..."
+              placeholder="Search by booking number (KB-0001), guest name, email, phone, or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
@@ -1432,24 +1455,31 @@ export default function BookingsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-left text-gray-600 text-sm">
-                  <th className="p-3">Guest</th>
-                  <th className="p-3">Email</th>
-                  <th className="p-3">Contact</th>
-                  <th className="p-3">Check-in</th>
-                  <th className="p-3">Check-out</th>
-                  <th className="p-3">Guests</th>
-                  <th className="p-3">Amount</th>
-                  <th className="p-3">Workflow Status</th>
-                  <th className="p-3">Payment</th>
-                  <th className="p-3">Actions</th>
-                </tr>
-              </thead>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse min-w-[1200px]">
+                <thead>
+                  <tr className="bg-gray-50 text-left text-gray-600 text-sm">
+                    <th className="p-2 w-20 text-center">#</th>
+                    <th className="p-3 min-w-[160px]">Guest</th>
+                    <th className="p-3 min-w-[180px]">Email</th>
+                    <th className="p-3 min-w-[120px]">Contact</th>
+                    <th className="p-3 min-w-[90px]">Check-in</th>
+                    <th className="p-3 min-w-[90px]">Check-out</th>
+                    <th className="p-3 w-16 text-center">Guests</th>
+                    <th className="p-3 min-w-[100px]">Amount</th>
+                    <th className="p-3 min-w-[120px]">Status</th>
+                    <th className="p-3 min-w-[90px]">Payment</th>
+                    <th className="p-3 min-w-[140px]">Actions</th>
+                  </tr>
+                </thead>
               <tbody>
                 {paginatedBookings.map((booking) => (
                   <tr key={booking.id} className={`border-t hover:bg-gray-50 ${!booking.user_exists ? 'bg-red-50' : ''}`}>
+                    <td className="p-2 text-center">
+                      <div className="font-mono font-bold text-blue-700 text-xs whitespace-nowrap">
+                        {formatBookingNumber(booking.id)}
+                      </div>
+                    </td>
                     <td className="p-3 text-black">
                       <div className="font-medium">
                         {booking.guest_name}
@@ -1484,17 +1514,13 @@ export default function BookingsPage() {
                         <span className="text-gray-400">No phone</span>
                       )}
                     </td>
-                    <td className="p-3 text-black">{formatDate(booking.check_in_date)}</td>
-                    <td className="p-3 text-black">{formatDate(booking.check_out_date)}</td>
-                    <td className="p-3 text-black">{booking.number_of_guests}</td>
+                    <td className="p-3 text-black text-sm">{formatDate(booking.check_in_date)}</td>
+                    <td className="p-3 text-black text-sm">{formatDate(booking.check_out_date)}</td>
+                    <td className="p-3 text-black text-center">{booking.number_of_guests}</td>
                       <td className="p-3 text-black">
-                      <div className="font-medium">₱{booking.total_amount.toLocaleString()}</div>
-                      <div className="text-xs text-gray-600">
-                        {booking.payment_type === 'full' ? (
-                          `₱${booking.total_amount.toLocaleString()} due (Full Payment)`
-                        ) : (
-                          `₱${Math.round(booking.total_amount * 0.5).toLocaleString()} paid • ₱${Math.round(booking.total_amount * 0.5).toLocaleString()} due`
-                        )}
+                      <div className="font-medium text-sm">₱{booking.total_amount.toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">
+                        {booking.payment_type === 'full' ? 'Full Pay' : '50% Down'}
                       </div>
                     </td>
                     <td className="p-3">
@@ -1504,12 +1530,12 @@ export default function BookingsPage() {
                       <PaymentProofStatusCell bookingId={booking.id} />
                     </td>
                     <td className="p-3">
-                      <div className="w-40 flex flex-col gap-2">
-                        {/* Primary Actions Row - Fixed Width */}
-                        <div className="grid grid-cols-2 gap-1">
+                      <div className="flex flex-col gap-1">
+                        {/* Primary Actions Row */}
+                        <div className="flex gap-1">
                           <button 
                             onClick={() => openModal(booking)}
-                            className="h-7 w-full px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 text-center flex items-center justify-center"
+                            className="h-6 px-2 py-1 bg-indigo-500 text-white rounded text-xs hover:bg-indigo-600 flex items-center justify-center"
                             title="View booking details"
                           >
                             View
@@ -1526,20 +1552,18 @@ export default function BookingsPage() {
 
                         {/* Secondary Actions Row - Only for pending bookings */}
                         {(booking.status || 'pending') === 'pending' && (
-                          <div className="grid grid-cols-2 gap-1">
-                            <div className="w-full">
-                              <SmartConfirmButton 
-                                booking={booking}
-                                onConfirm={(bookingId) => updateBookingStatus(bookingId, 'confirmed')}
-                              />
-                            </div>
+                          <div className="flex gap-1">
+                            <SmartConfirmButton 
+                              booking={booking}
+                              onConfirm={(bookingId) => updateBookingStatus(bookingId, 'confirmed')}
+                            />
                             <button 
                               onClick={() => {
                                 setSelectedBooking(booking);
                                 setShowModal(true);
                                 setShowCancelModal(true);
                               }}
-                              className="h-7 w-full px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 text-center flex items-center justify-center"
+                              className="h-6 px-2 py-1 bg-rose-500 text-white rounded text-xs hover:bg-rose-600 flex items-center justify-center"
                               title="Cancel booking"
                             >
                               Cancel
@@ -1552,6 +1576,7 @@ export default function BookingsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
@@ -1639,7 +1664,7 @@ export default function BookingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">Booking Management</h2>
-                  <p className="text-gray-600 text-sm">Complete reservation details</p>
+                  <p className="text-gray-600 text-sm">Complete reservation details • {selectedBooking ? formatBookingNumber(selectedBooking.id) : ''}</p>
                 </div>
                 <button
                   onClick={closeModal}
@@ -1657,13 +1682,13 @@ export default function BookingsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">
-                      Booking #{selectedBooking.id}
+                      {formatBookingNumber(selectedBooking.id)}
                     </h3>
                     <p className="text-gray-600 text-sm">
                       {selectedBooking.guest_name}
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
-                      Booked on {selectedBooking.created_at ? formatDate(selectedBooking.created_at) : 'N/A'}
+                      Booked on {selectedBooking.created_at ? formatDate(selectedBooking.created_at) : 'N/A'} • ID: {selectedBooking.id}
                     </p>
                   </div>
                   <div className="text-right">
