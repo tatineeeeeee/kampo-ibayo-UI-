@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { X, Send, Minimize2, MessageCircle } from "lucide-react";
 
 interface Message {
@@ -204,6 +204,33 @@ const FAQ_DATABASE: FAQItem[] = [
     keywords: ["grocery", "store", "buy", "nearby"],
     question: "Are there nearby stores?",
     answer: "Yes! Dali Grocery is our landmark (very close). There are also sari-sari stores nearby for basics. We recommend bringing most of your supplies, but you can get essentials if needed."
+  },
+  
+  // COMBINATION QUERIES (for better multi-keyword handling)
+  {
+    keywords: ["pet", "cost", "bring pets", "pets cost", "pet fee", "pets price"],
+    question: "Can I bring pets and what's the cost?",
+    answer: "YES, absolutely! We're completely pet-friendly with NO additional charges for your furbabies! 🐕🐱\n\n• **Pet Policy**: All pets welcome - dogs, cats, and other well-behaved pets\n• **Cost**: FREE - no extra fees for pets!\n• **Requirements**: Just let us know in advance how many pets you're bringing\n• **Guidelines**: Please supervise them and clean up after them\n\nBring your whole family - including the furry members! 🐾"
+  },
+  {
+    keywords: ["price", "pet", "additional", "extra cost"],
+    question: "Are there additional costs for pets?",
+    answer: "Great news! We're pet-friendly with NO additional charges for your furbabies. Just let us know in advance how many pets you're bringing so we can prepare. Please ensure they're supervised and well-behaved."
+  },
+  {
+    keywords: ["booking", "cancellation", "refund", "policy"],
+    question: "What's the booking and cancellation policy?",
+    answer: "BOOKING: 50% downpayment secures your reservation. CANCELLATION: 48-hour advance notice required for refunds (minus processing fee). Same-day cancellations forfeit the deposit. Weather-related cancellations are free to reschedule!"
+  },
+  {
+    keywords: ["pool", "safety", "kids", "children", "supervision"],
+    question: "Is the pool safe for children?",
+    answer: "Yes! Our pool is family-friendly, but adult supervision is REQUIRED at all times for children. We have open shower areas and comfort rooms nearby. Pool depth varies, so please watch young children closely."
+  },
+  {
+    keywords: ["kitchen", "cooking", "utensils", "equipment"],
+    question: "What cooking facilities and equipment do you provide?",
+    answer: "FULLY EQUIPPED KITCHEN: Stove, refrigerator, cooking utensils, plates, cups, and basic cookware. OUTDOOR: BBQ grill area for outdoor cooking. We provide 1st gallon of drinking water FREE. Just bring your food and ingredients!"
   }
 ];
 
@@ -227,6 +254,10 @@ const HELP_MESSAGE = `I can assist you with the following topics:
 
 Feel free to ask me anything about Kampo Ibayo Resort, or select from the quick questions below for instant answers.`;
 
+// Safety constants
+const MAX_MESSAGES = 50; // Prevent memory bloat
+const MAX_INPUT_LENGTH = 500; // Prevent extremely long inputs
+
 export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -235,6 +266,22 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   const [isTyping, setIsTyping] = useState(false);
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Performance optimization: Create keyword index for O(1) lookups
+  const keywordIndex = useMemo(() => {
+    const index = new Map<string, FAQItem[]>();
+    FAQ_DATABASE.forEach(faq => {
+      faq.keywords.forEach(keyword => {
+        const lowerKeyword = keyword.toLowerCase();
+        if (!index.has(lowerKeyword)) {
+          index.set(lowerKeyword, []);
+        }
+        index.get(lowerKeyword)!.push(faq);
+      });
+    });
+    return index;
+  }, []);
 
   // Custom setter that immediately calls the callback
   const setChatbotOpen = (open: boolean) => {
@@ -249,6 +296,15 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -276,26 +332,138 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
       return HELP_MESSAGE;
     }
 
-    // Find matching FAQ
-    let bestMatch: FAQItem | undefined;
-    let maxMatches = 0;
-
-    FAQ_DATABASE.forEach(faq => {
-      const matches = faq.keywords.filter(keyword => 
-        lowerMessage.includes(keyword.toLowerCase())
-      ).length;
-
-      if (matches > maxMatches) {
-        maxMatches = matches;
-        bestMatch = faq;
+    // Enhanced matching with scoring system - optimized with keyword index
+    const candidateFAQs = new Set<FAQItem>();
+    
+    // Use keyword index for faster lookups
+    for (const [keyword, faqs] of keywordIndex.entries()) {
+      if (lowerMessage.includes(keyword)) {
+        faqs.forEach(faq => candidateFAQs.add(faq));
       }
-    });
-
-    if (bestMatch && maxMatches > 0) {
-      return bestMatch.answer;
     }
 
-    // Default response
+    // If no matches from index, fall back to full search (preserves functionality)
+    const faqsToSearch = candidateFAQs.size > 0 ? Array.from(candidateFAQs) : FAQ_DATABASE;
+
+    const matchResults = faqsToSearch.map(faq => {
+      let score = 0;
+      const matchedKeywords: string[] = [];
+      const keywordPositions: number[] = [];
+
+      // Calculate base keyword matches
+      faq.keywords.forEach(keyword => {
+        const keywordLower = keyword.toLowerCase();
+        const index = lowerMessage.indexOf(keywordLower);
+        
+        if (index !== -1) {
+          matchedKeywords.push(keyword);
+          keywordPositions.push(index);
+          
+          // Base score for keyword match
+          score += 10;
+          
+          // Bonus for exact word match (not partial)
+          const beforeChar = index > 0 ? lowerMessage[index - 1] : ' ';
+          const afterChar = index + keywordLower.length < lowerMessage.length 
+            ? lowerMessage[index + keywordLower.length] : ' ';
+          
+          if ((/\s/.test(beforeChar) || beforeChar === ' ') && 
+              (/\s/.test(afterChar) || afterChar === ' ')) {
+            score += 5; // Exact word match bonus
+          }
+          
+          // Bonus for important keywords (longer = more specific)
+          if (keywordLower.length > 5) {
+            score += 3;
+          }
+        }
+      });
+
+      // Multiple keyword proximity bonus
+      if (matchedKeywords.length > 1) {
+        score += matchedKeywords.length * 3; // Multi-keyword bonus
+        
+        // Proximity bonus - keywords close together get higher score
+        if (keywordPositions.length > 1) {
+          const maxDistance = Math.max(...keywordPositions) - Math.min(...keywordPositions);
+          if (maxDistance < 50) { // Keywords within 50 characters
+            score += 8;
+          } else if (maxDistance < 100) {
+            score += 4;
+          }
+        }
+      }
+
+      // Question similarity bonus (if user question is similar to FAQ question)
+      const questionSimilarity = calculateQuestionSimilarity(lowerMessage, faq.question.toLowerCase());
+      score += questionSimilarity * 5;
+
+      return {
+        faq,
+        score,
+        matchedKeywords,
+        keywordCount: matchedKeywords.length
+      };
+    });
+
+    // Sort by score (highest first)
+    matchResults.sort((a, b) => b.score - a.score);
+    
+    const bestMatch = matchResults[0];
+    const secondBest = matchResults[1];
+
+    // Only return answer if we have a clear winner
+    if (bestMatch && bestMatch.score > 0) {
+      // First check if we have a specific combination FAQ that already handles multiple topics
+      const hasCombinationAnswer = FAQ_DATABASE.some(faq => 
+        faq.keywords.some(keyword => lowerMessage.includes(keyword)) &&
+        (faq.question.toLowerCase().includes('and') || faq.keywords.length > 3)
+      );
+      
+      // If the best match is already a combination answer, just return it
+      if (hasCombinationAnswer && bestMatch.faq.question.toLowerCase().includes('and')) {
+        return bestMatch.faq.answer;
+      }
+      
+      // Check for multiple distinct topics in the question
+      const distinctTopics = findDistinctTopics(lowerMessage, matchResults);
+      
+      if (distinctTopics.length > 1) {
+        // User asked about multiple topics, show all relevant answers
+        let multiTopicResponse = "I found information for multiple topics in your question:\n\n";
+        
+        distinctTopics.forEach((topic, index) => {
+          multiTopicResponse += `**${index + 1}. ${topic.faq.question}**\n${topic.faq.answer}\n\n`;
+        });
+        
+        multiTopicResponse += "Does this cover everything you wanted to know?";
+        return multiTopicResponse;
+      }
+      
+      // If there's a close second match, provide both options
+      if (secondBest && 
+          secondBest.score > 0 && 
+          bestMatch.score - secondBest.score < 15 && 
+          bestMatch.keywordCount >= 1) {
+        
+        return `I found information related to your question. Here's what I can help with:
+
+**${bestMatch.faq.question}**
+${bestMatch.faq.answer}
+
+**You might also be asking about:**
+**${secondBest.faq.question}**
+${secondBest.faq.answer}
+
+Was one of these what you were looking for?`;
+      }
+      
+      return bestMatch.faq.answer;
+    }
+
+    // Enhanced default response with suggestions
+    const suggestedTopics = getSuggestedTopics(lowerMessage);
+    
     return `I apologize, but I don't have specific information about that topic. However, I can help you with:
 
 📋 Resort rates and packages
@@ -304,6 +472,8 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
 📅 Booking and availability
 📞 Contact information
 
+${suggestedTopics ? `\n💡 **You might be interested in:** ${suggestedTopics}` : ''}
+
 For detailed inquiries beyond my knowledge, please contact us directly:
 • Phone: +63 945 277 9541
 • Email: kampoibayo@gmail.com
@@ -311,46 +481,230 @@ For detailed inquiries beyond my knowledge, please contact us directly:
 Is there anything else about Kampo Ibayo I can help you with?`;
   };
 
+  // Helper function to calculate question similarity
+  const calculateQuestionSimilarity = (userQuestion: string, faqQuestion: string): number => {
+    const userWords = userQuestion.split(/\s+/).filter(word => word.length > 2);
+    const faqWords = faqQuestion.split(/\s+/).filter(word => word.length > 2);
+    
+    let similarWords = 0;
+    userWords.forEach(userWord => {
+      if (faqWords.some(faqWord => 
+        faqWord.includes(userWord) || userWord.includes(faqWord)
+      )) {
+        similarWords++;
+      }
+    });
+    
+    return userWords.length > 0 ? (similarWords / userWords.length) : 0;
+  };
+
+  // Helper function to find distinct topics in user query
+  const findDistinctTopics = (message: string, matchResults: Array<{faq: FAQItem, score: number, matchedKeywords: string[], keywordCount: number}>) => {
+    const topicCategories = [
+      { 
+        category: 'pricing', 
+        keywords: ['price', 'cost', 'rate', 'how much', 'payment', 'fee', 'charge', 'money', 'expensive', 'cheap'], 
+        threshold: 5 
+      },
+      { 
+        category: 'pets', 
+        keywords: ['pet', 'dog', 'cat', 'animal', 'furbaby'], 
+        threshold: 5 
+      },
+      { 
+        category: 'booking', 
+        keywords: ['book', 'reserve', 'reservation', 'availability'], 
+        threshold: 5 
+      },
+      { 
+        category: 'amenities', 
+        keywords: ['pool', 'kitchen', 'videoke', 'amenities', 'facilities'], 
+        threshold: 5 
+      },
+      { 
+        category: 'location', 
+        keywords: ['location', 'where', 'address', 'directions'], 
+        threshold: 5 
+      },
+      { 
+        category: 'policies', 
+        keywords: ['cancel', 'refund', 'reschedule', 'policy'], 
+        threshold: 5 
+      }
+    ];
+
+    const detectedTopics: Array<{category: string, score: number, faq: FAQItem}> = [];
+    const usedFAQs = new Set<string>(); // Track used FAQ questions to avoid duplicates
+    
+    // Check which topic categories are mentioned
+    topicCategories.forEach(topic => {
+      let categoryScore = 0;
+      let bestFAQForCategory: FAQItem | null = null;
+      let bestScoreForCategory = 0;
+
+      topic.keywords.forEach(keyword => {
+        if (message.includes(keyword.toLowerCase())) {
+          categoryScore += 1;
+        }
+      });
+
+      // Find best FAQ entry for this category that hasn't been used
+      matchResults.forEach(result => {
+        const hasTopicKeywords = result.matchedKeywords.some(keyword => 
+          topic.keywords.includes(keyword.toLowerCase())
+        );
+        
+        if (hasTopicKeywords && 
+            result.score > bestScoreForCategory && 
+            !usedFAQs.has(result.faq.question)) {
+          bestScoreForCategory = result.score;
+          bestFAQForCategory = result.faq;
+        }
+      });
+
+      if (categoryScore >= 1 && bestFAQForCategory !== null) {
+        const faq = bestFAQForCategory as FAQItem;
+        detectedTopics.push({
+          category: topic.category,
+          score: categoryScore,
+          faq: faq
+        });
+        usedFAQs.add(faq.question);
+      }
+    });
+
+    // If we only found one topic but the message clearly has multiple concepts,
+    // try to find additional relevant FAQs
+    if (detectedTopics.length === 1) {
+      const remainingResults = matchResults.filter(result => 
+        !usedFAQs.has(result.faq.question) && result.score > 5
+      );
+      
+      if (remainingResults.length > 0) {
+        // Add the next best match if it's significantly different
+        const nextBest = remainingResults[0];
+        const isDifferentTopic = !detectedTopics[0].faq.keywords.some(keyword =>
+          nextBest.faq.keywords.includes(keyword)
+        );
+        
+        if (isDifferentTopic) {
+          detectedTopics.push({
+            category: 'additional',
+            score: nextBest.score,
+            faq: nextBest.faq
+          });
+        }
+      }
+    }
+
+    // Sort by score and return unique topics
+    return detectedTopics
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 2); // Maximum 2 topics to keep responses focused
+  };
+
+  // Helper function to suggest related topics
+  const getSuggestedTopics = (message: string): string => {
+    const suggestions: string[] = [];
+    
+    if (/(money|cost|expensive|cheap|budget)/i.test(message)) {
+      suggestions.push("pricing information");
+    }
+    if (/(stay|sleep|overnight|room)/i.test(message)) {
+      suggestions.push("accommodation details");
+    }
+    if (/(fun|activity|do|entertainment)/i.test(message)) {
+      suggestions.push("amenities and activities");
+    }
+    if (/(drive|car|travel|go)/i.test(message)) {
+      suggestions.push("location and directions");
+    }
+    
+    return suggestions.join(", ");
+  };
+
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
+
+    // Input validation and sanitization
+    const sanitizedInput = inputText.trim().slice(0, MAX_INPUT_LENGTH);
+    if (!sanitizedInput) return;
 
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText,
+      text: sanitizedInput,
       sender: "user",
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputText;
+    // Add message with history limit to prevent memory bloat
+    setMessages(prev => {
+      const newMessages = [...prev, userMessage];
+      return newMessages.length > MAX_MESSAGES 
+        ? newMessages.slice(-MAX_MESSAGES) 
+        : newMessages;
+    });
+    const currentInput = sanitizedInput;
     setInputText("");
     setIsTyping(true);
 
+    // Clear any existing timeout to prevent race conditions
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     // Simulate bot typing and response
-    setTimeout(() => {
-      const botAnswer = findBestAnswer(currentInput);
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botAnswer,
-        sender: "bot",
-        timestamp: new Date()
-      };
+    timeoutRef.current = setTimeout(() => {
+      try {
+        const botAnswer = findBestAnswer(currentInput);
+        const botResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          text: botAnswer,
+          sender: "bot",
+          timestamp: new Date()
+        };
 
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
+        setMessages(prev => {
+          const newMessages = [...prev, botResponse];
+          return newMessages.length > MAX_MESSAGES 
+            ? newMessages.slice(-MAX_MESSAGES) 
+            : newMessages;
+        });
+        setIsTyping(false);
 
-      // If bot couldn't answer well, show quick questions again
-      if (botAnswer.includes("I'm not sure about that specific question")) {
-        setTimeout(() => {
-          const helpMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            text: "Here are some topics I can definitely help with:",
-            sender: "bot",
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, helpMessage]);
-        }, 1000);
+        // If bot couldn't answer well, show quick questions again
+        if (botAnswer.includes("I'm not sure about that specific question")) {
+          setTimeout(() => {
+            const helpMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              text: "Here are some topics I can definitely help with:",
+              sender: "bot",
+              timestamp: new Date()
+            };
+            setMessages(prev => {
+              const newMessages = [...prev, helpMessage];
+              return newMessages.length > MAX_MESSAGES 
+                ? newMessages.slice(-MAX_MESSAGES) 
+                : newMessages;
+            });
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Chatbot error:', error);
+        const errorResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          text: "I'm experiencing technical difficulties. Please try rephrasing your question or contact us directly at +63 945 277 9541.",
+          sender: "bot",
+          timestamp: new Date()
+        };
+        setMessages(prev => {
+          const newMessages = [...prev, errorResponse];
+          return newMessages.length > MAX_MESSAGES 
+            ? newMessages.slice(-MAX_MESSAGES) 
+            : newMessages;
+        });
+        setIsTyping(false);
       }
     }, 800);
   };
