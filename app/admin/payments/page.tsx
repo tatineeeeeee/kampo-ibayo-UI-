@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { AdminOnly } from '../../hooks/useRoleAccess';
+import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DollarSign, BarChart3, Clock, X } from "lucide-react";
+import { exportPaymentsCSV } from "../../utils/csvExport";
+import { useToastHelpers } from "../../components/Toast";
 
 interface Payment {
   id: number;
@@ -13,16 +15,101 @@ interface Payment {
   payment_intent_id: string | null;
   booking_status: string | null;
   payment_status: string | null;
+  reference_number: string | null;
+  payment_method: string | null;
+  booking_id: number;
+  verified_at: string | null;
+  verified_by: string | null;
+  admin_notes: string | null;
+  has_payment_proof: boolean;
 }
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedPayments, setPaginatedPayments] = useState<Payment[]>([]);
+  
+  // Toast helpers
+  const { success, error: showError } = useToastHelpers();
 
   useEffect(() => {
     fetchPayments();
   }, []);
+
+  // Filter payments based on search term and status filter
+  useEffect(() => {
+    let filtered = payments;
+    
+    // First filter by status with grouped logic
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(payment => {
+        const status = payment.status?.toLowerCase();
+        if (statusFilter === 'paid') {
+          return status === 'paid' || status === 'verified';
+        } else if (statusFilter === 'pending') {
+          return status === 'pending' || status === 'pending_verification';
+        } else if (statusFilter === 'cancelled') {
+          return status === 'cancelled' || status === 'rejected';
+        }
+        return status === statusFilter.toLowerCase();
+      });
+    }
+    
+    // Then filter by search term (removed status search)
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(payment => 
+        // Search by user name
+        payment.user?.toLowerCase().includes(searchLower) ||
+        // Search by email
+        payment.email?.toLowerCase().includes(searchLower) ||
+        // Search by payment ID
+        payment.id?.toString().includes(searchTerm.trim()) ||
+        // Search by reference number
+        payment.reference_number?.toLowerCase().includes(searchLower) ||
+        // Search by booking ID
+        payment.booking_id?.toString().includes(searchTerm.trim())
+      );
+    }
+    
+    setFilteredPayments(filtered);
+  }, [payments, searchTerm, statusFilter]);
+
+  // Pagination logic
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedPayments(filteredPayments.slice(startIndex, endIndex));
+  }, [filteredPayments, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredPayments]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  
+  // Pagination functions
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+  
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => setCurrentPage(Math.max(1, currentPage - 1));
+  const goToNextPage = () => setCurrentPage(Math.min(totalPages, currentPage + 1));
 
   const fetchPayments = async () => {
     try {
@@ -42,66 +129,20 @@ export default function PaymentsPage() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'paid':
+      case 'verified':
         return 'bg-green-100 text-green-600';
       case 'pending':
+      case 'pending_verification':
         return 'bg-yellow-100 text-yellow-600';
-      case 'processing':
-        return 'bg-blue-100 text-blue-600';
-      case 'failed':
-        return 'bg-red-100 text-red-600';
-      case 'refunded':
-        return 'bg-purple-100 text-purple-600';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-600';
+      case 'rejected':
+        return 'bg-red-100 text-red-600';
       default:
         return 'bg-gray-100 text-gray-600';
     }
   };
 
-  const refreshPayment = async (paymentIntentId: string) => {
-    if (!paymentIntentId) return;
-    
-    try {
-      setLoading(true);
-      const response = await fetch('/api/paymongo/check-payment-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ payment_intent_id: paymentIntentId }),
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Payment status updated:', result);
-        // Refresh the payments list to show updated status
-        await fetchPayments();
-      } else {
-        console.error('Failed to refresh payment status');
-      }
-    } catch (error) {
-      console.error('Error refreshing payment:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const refreshAllPayments = async () => {
-    setLoading(true);
-    try {
-      // Refresh payments with PayMongo API for all that have payment_intent_id
-      const paymentsToRefresh = payments.filter(p => p.payment_intent_id);
-      
-      for (const payment of paymentsToRefresh) {
-        await refreshPayment(payment.payment_intent_id!);
-      }
-      
-      // Final refresh of the list
-      await fetchPayments();
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -129,16 +170,90 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       {/* Payment Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search by guest name, email, reference number, or booking ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+          {searchTerm && (
+            <p className="text-sm text-gray-600 mt-1">
+              Found {filteredPayments.length} payment{filteredPayments.length !== 1 ? 's' : ''} matching &quot;{searchTerm}&quot;
+            </p>
+          )}
+        </div>
+
+        {/* Status Filter Buttons */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              All ({payments.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('paid')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'paid'
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Paid ({payments.filter(p => p.status?.toLowerCase() === 'paid' || p.status?.toLowerCase() === 'verified').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'pending'
+                  ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Pending ({payments.filter(p => p.status?.toLowerCase() === 'pending' || p.status?.toLowerCase() === 'pending_verification').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('cancelled')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'cancelled'
+                  ? 'bg-red-100 text-red-700 border border-red-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Cancelled ({payments.filter(p => p.status?.toLowerCase() === 'cancelled' || p.status?.toLowerCase() === 'rejected').length})
+            </button>
+          </div>
+          {(statusFilter !== 'all' || searchTerm) && (
+            <p className="text-sm text-gray-600 mt-2">
+              Showing {filteredPayments.length} of {payments.length} payments
+              {statusFilter !== 'all' && ` with status "${statusFilter}"`}
+              {searchTerm && ` matching "${searchTerm}"`}
+            </p>
+          )}
+        </div>      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <div className="w-6 h-6 text-green-600">💰</div>
+              <DollarSign className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-sm font-medium text-gray-600">Total Revenue{searchTerm && ' (filtered)'}</p>
               <p className="text-xl font-bold text-gray-900">
-                ₱{payments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+                ₱{filteredPayments.filter(p => p.status?.toLowerCase() === 'paid' || p.status?.toLowerCase() === 'verified').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -147,11 +262,11 @@ export default function PaymentsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <div className="w-6 h-6 text-blue-600">📊</div>
+              <BarChart3 className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Transactions</p>
-              <p className="text-xl font-bold text-gray-900">{payments.length}</p>
+              <p className="text-sm font-medium text-gray-600">Total Transactions{searchTerm && ' (filtered)'}</p>
+              <p className="text-xl font-bold text-gray-900">{filteredPayments.length}</p>
             </div>
           </div>
         </div>
@@ -159,12 +274,12 @@ export default function PaymentsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
-              <div className="w-6 h-6 text-yellow-600">⏳</div>
+              <Clock className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-sm font-medium text-gray-600">Pending{searchTerm && ' (filtered)'}</p>
               <p className="text-xl font-bold text-gray-900">
-                {payments.filter(p => p.status === 'Pending' || p.status === 'Processing').length}
+                {filteredPayments.filter(p => p.status?.toLowerCase() === 'pending' || p.status?.toLowerCase() === 'pending_verification').length}
               </p>
             </div>
           </div>
@@ -173,12 +288,12 @@ export default function PaymentsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">
-              <div className="w-6 h-6 text-red-600">❌</div>
+              <X className="w-6 h-6 text-red-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Failed</p>
+              <p className="text-sm font-medium text-gray-600">Cancelled{searchTerm && ' (filtered)'}</p>
               <p className="text-xl font-bold text-gray-900">
-                {payments.filter(p => p.status === 'Failed').length}
+                {filteredPayments.filter(p => p.status?.toLowerCase() === 'cancelled' || p.status?.toLowerCase() === 'rejected').length}
               </p>
             </div>
           </div>
@@ -189,24 +304,45 @@ export default function PaymentsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">Payment Transactions</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Payment Transactions ({filteredPayments.length}{searchTerm ? ` filtered` : ` total`})
+            </h3>
             <div className="flex items-center space-x-2">
+              {/* Export CSV Button */}
               <button
-                onClick={refreshAllPayments}
-                disabled={loading}
-                className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  try {
+                    exportPaymentsCSV(filteredPayments as unknown as { [key: string]: string | number | boolean | null | undefined | object }[]);
+                    success(`${filteredPayments.length} payment${filteredPayments.length !== 1 ? 's' : ''} exported to CSV successfully!`);
+                  } catch (error) {
+                    console.error('Export error:', error);
+                    showError('Failed to export CSV. Please try again.');
+                  }
+                }}
+                disabled={filteredPayments.length === 0}
+                className={`inline-flex items-center px-3 py-1 border rounded-md text-sm font-medium transition-colors ${
+                  filteredPayments.length === 0
+                    ? 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed' 
+                    : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
+                }`}
+                title="Export payments to CSV"
               >
-                {loading ? '🔄 Syncing...' : '🔄 Sync All with PayMongo'}
+                <Download className="w-4 h-4 mr-1" />
+                Export CSV
               </button>
             </div>
           </div>
         </div>
         
-        {payments.length === 0 ? (
+        {filteredPayments.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">💳</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No payments found</h3>
-            <p className="text-gray-500">Payment transactions will appear here once guests make bookings.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchTerm ? `No payments match "${searchTerm}"` : 'No payments found'}
+            </h3>
+            <p className="text-gray-500">
+              {searchTerm ? 'Try adjusting your search terms or clear the search to see all payments.' : 'Payment transactions will appear here once guests make bookings.'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -215,25 +351,48 @@ export default function PaymentsPage() {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Guest</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Reference</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Method</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date Uploaded</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <AdminOnly fallback={null} asFragment={true}>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">PayMongo ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
-                  </AdminOnly>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {payments.map((payment) => (
+                {paginatedPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{payment.user}</div>
                         <div className="text-xs text-gray-500">{payment.email}</div>
+                        <div className="text-xs text-gray-400">Booking #{payment.booking_id}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-lg font-bold text-green-600">₱{payment.amount.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-700 font-mono">
+                        {payment.reference_number || (
+                          <span className="text-gray-400 italic">
+                            {payment.has_payment_proof ? 'No reference provided' : 'Not uploaded yet'}
+                          </span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-700 capitalize">
+                        {payment.payment_method ? (
+                          payment.payment_method === 'PayMongo' ? (
+                            <span className="text-blue-600 font-medium">PayMongo</span>
+                          ) : (
+                            <span className="capitalize">{payment.payment_method.replace('_', ' ')}</span>
+                          )
+                        ) : (
+                          <span className="text-gray-400 italic">
+                            {payment.has_payment_proof ? 'Not specified' : 'Pending upload'}
+                          </span>
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-700">{payment.date}</span>
@@ -242,53 +401,117 @@ export default function PaymentsPage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}
                       >
-                        {payment.status}
+                        {payment.status === 'paid' ? 'Paid' :
+                         payment.status === 'pending' ? 'Pending' :
+                         payment.status === 'cancelled' ? 'Cancelled' :
+                         payment.status}
                       </span>
                     </td>
-                    <AdminOnly fallback={null} asFragment={true}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
-                          {payment.payment_intent_id || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {payment.payment_intent_id && (
-                          <button
-                            onClick={() => refreshPayment(payment.payment_intent_id!)}
-                            className="inline-flex items-center px-2.5 py-1.5 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
-                            title="Refresh payment status from PayMongo"
-                          >
-                            🔄 Sync
-                          </button>
-                        )}
-                      </td>
-                    </AdminOnly>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {filteredPayments.length > 0 && (
+              <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 px-4 py-3 rounded-lg">
+                {/* Items per page and info */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="itemsPerPage" className="text-sm text-gray-800 font-medium">Show:</label>
+                    <select
+                      id="itemsPerPage"
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-800 font-medium bg-white"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                  <span className="text-sm text-gray-800 font-medium">
+                    Showing {Math.min(startIndex + 1, filteredPayments.length)} to {Math.min(startIndex + itemsPerPage, filteredPayments.length)} of {filteredPayments.length} payments
+                  </span>
+                </div>
+
+                {/* Page info and controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-800 font-medium mr-4">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    {/* Navigation buttons */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={goToFirstPage}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </button>
+                      
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      {/* Page numbers */}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNumber;
+                        if (totalPages <= 5) {
+                          pageNumber = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNumber = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNumber = totalPages - 4 + i;
+                        } else {
+                          pageNumber = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => goToPage(pageNumber)}
+                            className={`px-3 py-2 text-sm font-medium rounded border ${
+                              currentPage === pageNumber
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      
+                      <button
+                        onClick={goToLastPage}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-        
-        <AdminOnly fallback={null}>
-          <div className="px-6 py-4 bg-blue-50 border-t border-gray-200">
-            <div className="flex items-start space-x-2">
-              <div className="text-blue-500 mt-0.5">💡</div>
-              <div>
-                <p className="text-sm font-medium text-blue-900">Admin Features & Limits</p>
-                <p className="text-xs text-blue-700 mt-1">
-                  PayMongo integration details and sync actions are visible to administrators only. 
-                  Staff members can view payment information but cannot access PayMongo API functions.
-                </p>
-                <p className="text-xs text-blue-700 mt-2">
-                  <strong>⚠️ PayMongo Test Mode Limits:</strong> Maximum refund amount is ₱4,500 in TEST MODE only. 
-                  For ₱9K-₱12K Kampo Ibayo bookings, switch to LIVE MODE which supports full amounts, 
-                  or process refunds manually through PayMongo dashboard.
-                </p>
-              </div>
-            </div>
-          </div>
-        </AdminOnly>
+
       </div>
     </div>
   );

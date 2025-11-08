@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download } from "lucide-react";
 import { Tables } from "../../../database.types";
 import { displayPhoneNumber } from "../../utils/phoneUtils";
 import Image from "next/image";
+import { exportBookingsCSV } from "../../utils/csvExport";
 
 interface Booking extends Tables<'bookings'> {
   // Add user info to track if user still exists
@@ -671,6 +672,10 @@ export default function BookingsPage() {
     };
   }, [imageZoomed]);
   
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // You can make this configurable
@@ -754,14 +759,38 @@ export default function BookingsPage() {
     };
   }, []);
 
-  // Filter bookings based on user preference
+  // Filter bookings based on user preference AND search term
   useEffect(() => {
-    if (showDeletedUsers) {
-      setFilteredBookings(bookings);
-    } else {
-      setFilteredBookings(bookings.filter(booking => booking.user_exists));
+    let filtered = bookings;
+    
+    // First filter by deleted users preference
+    if (!showDeletedUsers) {
+      filtered = filtered.filter(booking => booking.user_exists);
     }
-  }, [bookings, showDeletedUsers]);
+    
+    // Then filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status?.toLowerCase() === statusFilter.toLowerCase());
+    }
+    
+    // Then filter by search term
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(booking => 
+        // Search by guest name
+        booking.guest_name?.toLowerCase().includes(searchLower) ||
+        // Search by guest email
+        booking.guest_email?.toLowerCase().includes(searchLower) ||
+        // Search by guest phone (remove spaces and dashes for better matching)
+        booking.guest_phone?.replace(/[\s-]/g, '').includes(searchTerm.replace(/[\s-]/g, '')) ||
+        // Search by booking ID
+        booking.id.toString().includes(searchTerm.trim())
+        // Note: Status search removed to avoid confusion between database status vs displayed workflow status
+      );
+    }
+    
+    setFilteredBookings(filtered);
+  }, [bookings, showDeletedUsers, searchTerm, statusFilter]);
 
   // Pagination logic
   useEffect(() => {
@@ -1225,6 +1254,92 @@ export default function BookingsPage() {
     <div>
       <AdminDashboardSummary />
       <div className="bg-white rounded-xl shadow-md p-4">
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by guest name, email, phone, or booking ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          {searchTerm && (
+            <p className="text-sm text-gray-600 mt-1">
+              Found {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''} matching &quot;{searchTerm}&quot;
+            </p>
+          )}
+        </div>
+
+        {/* Status Filter Buttons */}
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              All ({bookings.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'pending'
+                  ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Pending ({bookings.filter(b => b.status?.toLowerCase() === 'pending').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('confirmed')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'confirmed'
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Confirmed ({bookings.filter(b => b.status?.toLowerCase() === 'confirmed').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('completed')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'completed'
+                  ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Completed ({bookings.filter(b => b.status?.toLowerCase() === 'completed').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('cancelled')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'cancelled'
+                  ? 'bg-red-100 text-red-700 border border-red-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Cancelled ({bookings.filter(b => b.status?.toLowerCase() === 'cancelled').length})
+            </button>
+          </div>
+          {(statusFilter !== 'all' || searchTerm) && (
+            <p className="text-sm text-gray-600 mt-2">
+              Showing {filteredBookings.length} of {bookings.length} bookings
+              {statusFilter !== 'all' && ` with status "${statusFilter}"`}
+              {searchTerm && ` matching "${searchTerm}"`}
+            </p>
+          )}
+        </div>
+
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-700">
             All Bookings ({filteredBookings.length})
@@ -1233,8 +1348,13 @@ export default function BookingsPage() {
                 ({bookings.length - filteredBookings.length} hidden from deleted users)
               </span>
             )}
+            {searchTerm && (
+              <span className="text-sm text-blue-600 ml-2">
+                (filtered)
+              </span>
+            )}
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <label className="flex items-center text-sm text-black">
               <input
                 type="checkbox"
@@ -1244,6 +1364,30 @@ export default function BookingsPage() {
               />
               Show deleted user bookings
             </label>
+            
+            {/* Export CSV Button */}
+            <button 
+              onClick={() => {
+                try {
+                  exportBookingsCSV(filteredBookings as unknown as { [key: string]: string | number | boolean | null | undefined | object }[]);
+                  success('Bookings exported to CSV successfully!');
+                } catch (error) {
+                  console.error('Export error:', error);
+                  showError('Failed to export CSV');
+                }
+              }}
+              disabled={filteredBookings.length === 0}
+              className={`px-3 py-1 text-white rounded-md text-sm transition flex items-center gap-2 ${
+                filteredBookings.length === 0
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-green-500 hover:bg-green-600'
+              }`}
+              title="Export current bookings to CSV"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            
             <button 
               onClick={() => fetchBookings(true)}
               disabled={refreshing}
@@ -1267,7 +1411,7 @@ export default function BookingsPage() {
 
         {/* Pagination Info */}
         {filteredBookings.length > 0 && (
-          <div className="flex justify-between items-center mb-4 text-sm text-gray-600">
+          <div className="flex justify-between items-center mb-4 text-sm text-gray-800 font-medium">
             <div>
               Showing {startIndex + 1} to {endIndex} of {filteredBookings.length} bookings
             </div>
@@ -1418,7 +1562,7 @@ export default function BookingsPage() {
               <button
                 onClick={goToFirstPage}
                 disabled={currentPage === 1}
-                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="First page"
               >
                 <ChevronsLeft className="w-4 h-4" />
@@ -1426,7 +1570,7 @@ export default function BookingsPage() {
               <button
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
-                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1451,10 +1595,10 @@ export default function BookingsPage() {
                   <button
                     key={pageNumber}
                     onClick={() => goToPage(pageNumber)}
-                    className={`px-3 py-2 text-sm rounded-md border ${
+                    className={`px-3 py-2 text-sm font-medium rounded-md border ${
                       currentPage === pageNumber
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     {pageNumber}
@@ -1467,7 +1611,7 @@ export default function BookingsPage() {
               <button
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Next page"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -1475,7 +1619,7 @@ export default function BookingsPage() {
               <button
                 onClick={goToLastPage}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Last page"
               >
                 <ChevronsRight className="w-4 h-4" />

@@ -1,7 +1,18 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, Users, FileText, LogOut, ShieldCheck } from "lucide-react";
+import { 
+  Calendar, 
+  Users, 
+  LogOut, 
+  ShieldCheck, 
+  CreditCard, 
+  BarChart3, 
+  Settings, 
+  HelpCircle,
+  Star,
+  Home
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "../supabaseClient";
@@ -29,30 +40,42 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 p-4 space-y-2">
           <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <Calendar className="w-5 h-5" /> Dashboard
+            <Home className="w-5 h-5" /> Dashboard
           </Link>
           <Link href="/admin/bookings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/bookings') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <FileText className="w-5 h-5" /> Bookings
+            <Calendar className="w-5 h-5" /> Bookings
           </Link>
           <Link href="/admin/users" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/users') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
             <Users className="w-5 h-5" /> Users
           </Link>
           <Link href="/admin/reviews" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/reviews') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <FileText className="w-5 h-5" /> Reviews
+            <Star className="w-5 h-5" /> Reviews
           </Link>
           <Link href="/admin/payments" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/payments') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <FileText className="w-5 h-5" /> Payments
+            <CreditCard className="w-5 h-5" /> Payments
           </Link>
           <Link href="/admin/reports" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/reports') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <FileText className="w-5 h-5" /> Reports
+            <BarChart3 className="w-5 h-5" /> Reports
           </Link>
           <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <FileText className="w-5 h-5" /> Settings
+            <Settings className="w-5 h-5" /> Settings
           </Link>
           <Link href="/admin/help" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/help') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <FileText className="w-5 h-5" /> Help
+            <HelpCircle className="w-5 h-5" /> Help
           </Link>
         </nav>
+        
+        {/* Logout Button at Bottom */}
+        <div className="p-4 border-t border-gray-200">
+          <button 
+            onClick={() => window.location.href = "/"} 
+            className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
       <div className="flex-1 flex flex-col">
         <header className="bg-white shadow-sm p-4">
@@ -140,30 +163,42 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 p-4 space-y-2">
           <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <Calendar className="w-5 h-5" /> Dashboard
+            <Home className="w-5 h-5" /> Dashboard
           </Link>
           <Link href="/admin/bookings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/bookings') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <FileText className="w-5 h-5" /> Bookings
+            <Calendar className="w-5 h-5" /> Bookings
           </Link>
           <Link href="/admin/users" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/users') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
             <Users className="w-5 h-5" /> Users
           </Link>
           <Link href="/admin/reviews" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/reviews') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <FileText className="w-5 h-5" /> Reviews
+            <Star className="w-5 h-5" /> Reviews
           </Link>
           <Link href="/admin/payments" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/payments') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <FileText className="w-5 h-5" /> Payments
+            <CreditCard className="w-5 h-5" /> Payments
           </Link>
           <Link href="/admin/reports" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/reports') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <FileText className="w-5 h-5" /> Reports
+            <BarChart3 className="w-5 h-5" /> Reports
           </Link>
           <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <FileText className="w-5 h-5" /> Settings
+            <Settings className="w-5 h-5" /> Settings
           </Link>
           <Link href="/admin/help" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/help') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <FileText className="w-5 h-5" /> Help
+            <HelpCircle className="w-5 h-5" /> Help
           </Link>
         </nav>
+        
+        {/* Logout Button at Bottom */}
+        <div className="p-4 border-t border-gray-200">
+          <button 
+            onClick={handleLogout} 
+            className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col">
@@ -181,10 +216,6 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
-            <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200" title="Logout">
-              <LogOut className="w-5 h-5" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
           </div>
         </header>
         <main className="p-6">{children}</main>

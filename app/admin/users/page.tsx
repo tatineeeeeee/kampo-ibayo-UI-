@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
 import { Tables } from "../../../database.types";
+import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { exportUsersCSV } from "../../utils/csvExport";
 
 type User = Tables<'users'>;
 type Booking = Tables<'bookings'>;
@@ -141,6 +143,16 @@ export default function UsersPage() {
   const [showBookingsModal, setShowBookingsModal] = useState(false);
   const [selectedUserBookings, setSelectedUserBookings] = useState<User | null>(null);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedUsers, setPaginatedUsers] = useState<User[]>([]);
 
   // Standardized toast helpers
   const { success, error: showError, warning } = useToastHelpers();
@@ -188,6 +200,57 @@ export default function UsersPage() {
     const timer = setTimeout(() => fetchUsers(), 100);
     return () => clearTimeout(timer);
   }, [fetchUsers]);
+
+  // Filter users based on search term and role filter
+  useEffect(() => {
+    let filtered = users;
+    
+    // First filter by role
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+    
+    // Then filter by search term (removed role search)
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(user => 
+        // Search by name
+        user.name?.toLowerCase().includes(searchLower) ||
+        // Search by email
+        user.email?.toLowerCase().includes(searchLower) ||
+        // Search by ID
+        user.id?.toString().includes(searchTerm.trim())
+      );
+    }
+    
+    setFilteredUsers(filtered);
+  }, [users, searchTerm, roleFilter]);
+
+  // Pagination logic
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedUsers(filteredUsers.slice(startIndex, endIndex));
+  }, [filteredUsers, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredUsers]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  
+  // Pagination functions
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+  
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => setCurrentPage(Math.max(1, currentPage - 1));
+  const goToNextPage = () => setCurrentPage(Math.min(totalPages, currentPage + 1));
 
   const updateUserRole = async (userId: string, newRole: string) => {
     if (!userId || !newRole) {
@@ -266,19 +329,121 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-xl shadow-md">
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name, email, or user ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          {searchTerm && (
+            <p className="text-sm text-gray-600 mt-1">
+              Found {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} matching &quot;{searchTerm}&quot;
+            </p>
+          )}
+        </div>
+
+        {/* Role Filter Buttons */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setRoleFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                roleFilter === 'all'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              All ({users.length})
+            </button>
+            <button
+              onClick={() => setRoleFilter('admin')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                roleFilter === 'admin'
+                  ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Admin ({users.filter(u => u.role === 'admin').length})
+            </button>
+            <button
+              onClick={() => setRoleFilter('staff')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                roleFilter === 'staff'
+                  ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Staff ({users.filter(u => u.role === 'staff').length})
+            </button>
+            <button
+              onClick={() => setRoleFilter('user')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                roleFilter === 'user'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              User ({users.filter(u => u.role === 'user').length})
+            </button>
+          </div>
+          {(roleFilter !== 'all' || searchTerm) && (
+            <p className="text-sm text-gray-600 mt-2">
+              Showing {filteredUsers.length} of {users.length} users
+              {roleFilter !== 'all' && ` with role "${roleFilter}"`}
+              {searchTerm && ` matching "${searchTerm}"`}
+            </p>
+          )}
+        </div>
+
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
             <p className="text-gray-600 mt-1">
-              {loading ? 'Loading users...' : `Manage user accounts and roles (${users.length} users)`}
+              {loading ? 'Loading users...' : `Manage user accounts and roles (${filteredUsers.length}${searchTerm ? ` of ${users.length}` : ''} users)`}
             </p>
           </div>
-          <button
-            onClick={fetchUsers}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Refresh Users
-          </button>
+          
+          <div className="flex gap-2">
+            {/* Export CSV Button */}
+            <button
+              onClick={() => {
+                try {
+                  exportUsersCSV(filteredUsers as unknown as { [key: string]: string | number | boolean | null | undefined | object }[]);
+                  success(`${filteredUsers.length} users exported to CSV successfully!`);
+                } catch (error) {
+                  console.error('Export error:', error);
+                  showError('Failed to export CSV');
+                }
+              }}
+              disabled={filteredUsers.length === 0}
+              className={`px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
+                filteredUsers.length === 0
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-700'
+              }`}
+              title="Export filtered users to CSV"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            
+            <button
+              onClick={fetchUsers}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Refresh Users
+            </button>
+          </div>
         </div>
 
         {loading && users.length === 0 ? (
@@ -286,9 +451,21 @@ export default function UsersPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span className="ml-3">Loading users...</span>
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No users found.</p>
+            {searchTerm ? (
+              <div>
+                <p className="text-gray-500">No users found matching &quot;{searchTerm}&quot;</p>
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="text-blue-600 hover:text-blue-700 text-sm mt-2"
+                >
+                  Clear search
+                </button>
+              </div>
+            ) : (
+              <p className="text-gray-500">No users found.</p>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -313,7 +490,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div>
@@ -372,6 +549,100 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {filteredUsers.length > 0 && (
+            <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 px-4 py-3 rounded-lg">
+              {/* Items per page and info */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <label htmlFor="itemsPerPage" className="text-sm text-gray-800 font-medium">Show:</label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-800 font-medium bg-white"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+                  <span className="text-sm text-gray-800 font-medium">
+                    Showing {Math.min(startIndex + 1, filteredUsers.length)} to {Math.min(startIndex + itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
+                  </span>
+                </div>
+
+                {/* Page info and controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-800 font-medium mr-4">
+                      Page {currentPage} of {totalPages}
+                    </span>                  {/* Navigation buttons */}
+                  <div className="flex items-center gap-1">
+                      <button
+                        onClick={goToFirstPage}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </button>
+                      
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>                    {/* Page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => goToPage(pageNumber)}
+                            className={`px-3 py-2 text-sm font-medium rounded border ${
+                              currentPage === pageNumber
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                    
+                    <button
+                      onClick={goToLastPage}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                    >
+                      <ChevronsRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           </div>
         )}
       </div>
