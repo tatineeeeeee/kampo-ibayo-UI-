@@ -378,8 +378,9 @@ function Home() {
 
     setLoading(true);
     try {
-        const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-        const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+        // Extend range to include previous and next month dates that appear in calendar
+        const startOfMonth = new Date(month.getFullYear(), month.getMonth() - 1, 15); // Start from mid previous month
+        const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 2, 15); // End in mid next month
 
         // Helper to format local date as YYYY-MM-DD (avoid timezone shifts)
         const toYMD = (d: Date) => {
@@ -752,6 +753,8 @@ function Home() {
           max-width: 100% !important;
           margin: 0 auto !important;
           overflow: hidden !important;
+          min-height: 410px !important;
+          height: auto !important;
         }
         .react-datepicker__header {
           background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
@@ -890,6 +893,8 @@ function Home() {
           display: flex !important;
           justify-content: space-around !important;
           margin: 0.125rem 0 !important;
+          height: 3rem !important;
+          min-height: 3rem !important;
         }
 
         .react-datepicker__day {
@@ -898,20 +903,44 @@ function Home() {
           margin: 0.125rem 0.03125rem !important;
           border: none !important;
           width: calc(14.285% - 0.0625rem) !important;
-          min-width: 2rem !important;
-          max-width: 2.5rem !important;
-          height: 2rem !important;
-          line-height: 2rem !important;
-          font-size: 0.75rem !important;
+          min-width: 2.75rem !important;
+          max-width: 3.25rem !important;
+          height: 2.75rem !important;
+          line-height: 2.75rem !important;
+          font-size: 0.875rem !important;
           transition: all 0.2s ease !important;
           text-align: center !important;
           cursor: default !important;
           flex-shrink: 0 !important;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+          position: relative !important;
         }
         .react-datepicker__day:hover {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
           transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
+        }
+        .react-datepicker__day::after {
+          content: 'AVAILABLE' !important;
+          position: absolute !important;
+          bottom: 0px !important;
+          right: 0px !important;
+          font-size: 0.5rem !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 3px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Mobile: Use shorter "OPEN" text for better layout */
+        @media (max-width: 640px) {
+          .react-datepicker__day::after {
+            content: 'OPEN' !important;
+            font-size: 0.5rem !important;
+            padding: 1px 2px !important;
+          }
         }
 
         .react-datepicker__day--selected,
@@ -924,16 +953,58 @@ function Home() {
 
         .react-datepicker__day--excluded {
           color: #6b7280 !important;
-          text-decoration: line-through !important;
-          background-color: #1f2937 !important;
+          text-decoration: none !important;
+          background: #374151 !important;
+          opacity: 0.6 !important;
+        }
+        .react-datepicker__day--excluded:hover {
+          background: #374151 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+        .react-datepicker__day--excluded::after {
+          content: 'N/A' !important;
+          position: absolute !important;
+          bottom: 0px !important;
+          right: 0px !important;
+          font-size: 0.5rem !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: #9ca3af !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+          font-weight: 700 !important;
+        }
+
+        .react-datepicker__day--disabled {
+          color: #6b7280 !important;
+          background: #374151 !important;
           opacity: 0.5 !important;
+        }
+        .react-datepicker__day--disabled:hover {
+          background: #374151 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+        .react-datepicker__day--disabled::after {
+          content: 'N/A' !important;
+          position: absolute !important;
+          bottom: 0px !important;
+          right: 0px !important;
+          font-size: 0.5rem !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: #9ca3af !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+          font-weight: 700 !important;
         }
 
         /* Custom booking status indicators - Higher specificity to override DatePicker defaults */
         .react-datepicker__day--checkin,
         .react-datepicker__day--checkin.react-datepicker__day--today,
         .react-datepicker__day--checkin.react-datepicker__day--selected {
-          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
           color: white !important;
           font-weight: 600 !important;
           position: relative !important;
@@ -941,7 +1012,7 @@ function Home() {
         .react-datepicker__day--checkin:hover,
         .react-datepicker__day--checkin.react-datepicker__day--today:hover,
         .react-datepicker__day--checkin.react-datepicker__day--selected:hover {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--checkin::after,
@@ -951,10 +1022,10 @@ function Home() {
           position: absolute !important;
           bottom: 0px !important;
           right: 0px !important;
-          font-size: 0.5rem !important;
+          font-size: 0.6rem !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
+          padding: 1px 3px !important;
           border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: 700 !important;
@@ -981,10 +1052,10 @@ function Home() {
           position: absolute !important;
           bottom: 0px !important;
           right: 0px !important;
-          font-size: 0.5rem !important;
+          font-size: 0.6rem !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
+          padding: 1px 3px !important;
           border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: 700 !important;
@@ -1011,10 +1082,10 @@ function Home() {
           position: absolute !important;
           bottom: 0px !important;
           right: 0px !important;
-          font-size: 0.5rem !important;
+          font-size: 0.6rem !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
+          padding: 1px 3px !important;
           border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: 700 !important;
@@ -1041,10 +1112,10 @@ function Home() {
           position: absolute !important;
           bottom: 0px !important;
           right: 0px !important;
-          font-size: 0.5rem !important;
+          font-size: 0.6rem !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 1px 2px !important;
+          padding: 1px 3px !important;
           border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: 700 !important;
@@ -1055,6 +1126,9 @@ function Home() {
           .react-datepicker {
             max-width: 100% !important;
             border-radius: 0.5rem !important;
+            min-height: 410px !important;
+            height: auto !important;
+            max-height: 470px !important;
           }
           
           .react-datepicker__header {
@@ -1106,20 +1180,30 @@ function Home() {
           
           .react-datepicker__day {
             width: calc(14.285% - 0.125rem) !important;
-            min-width: 1.5rem !important;
-            max-width: 2rem !important;
-            height: 1.5rem !important;
-            line-height: 1.5rem !important;
-            font-size: 0.625rem !important;
+            min-width: 2.25rem !important;
+            max-width: 2.75rem !important;
+            height: 2.25rem !important;
+            line-height: 2.25rem !important;
+            font-size: 0.8rem !important;
             margin: 0.0625rem !important;
+          }
+
+          .react-datepicker__week {
+            height: 2.5rem !important;
+            min-height: 2.5rem !important;
+          }
+
+          .react-datepicker__day::after {
+            font-size: 0.5rem !important;
+            padding: 1px 2px !important;
           }
 
           .react-datepicker__day--checkin::after,
           .react-datepicker__day--checkout::after,
           .react-datepicker__day--occupied::after,
           .react-datepicker__day--same-day::after {
-            font-size: 0.375rem !important;
-            padding: 0.5px 1px !important;
+            font-size: 0.55rem !important;
+            padding: 1px 2px !important;
           }
         }
 
@@ -1128,6 +1212,8 @@ function Home() {
           .react-datepicker {
             max-width: 100% !important;
             border-radius: 0.75rem !important;
+            min-height: 450px !important;
+            height: 450px !important;
           }
           
           .react-datepicker__header {
@@ -1180,6 +1266,8 @@ function Home() {
           .react-datepicker {
             max-width: 100% !important;
             border-radius: 1rem !important;
+            min-height: 500px !important;
+            height: 500px !important;
           }
           
           .react-datepicker__header {
@@ -1233,46 +1321,64 @@ function Home() {
         }
         
         /* Override all DatePicker default styling for normal dates */
-        .react-datepicker__day:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day) {
-          background: #374151 !important;
+        .react-datepicker__day:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day):not(.react-datepicker__day--excluded):not(.react-datepicker__day--disabled) {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
           color: white !important;
-          border: 1px solid #4b5563 !important;
+          border: none !important;
           font-weight: normal !important;
         }
         
         /* Override today styling to look normal when no booking status */
         .react-datepicker__day--today:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day) {
-          background: #374151 !important;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
           color: white !important;
           font-weight: normal !important;
-          border: 1px solid #4b5563 !important;
+          border: none !important;
         }
         
         /* Override selected styling to look normal when no booking status */
         .react-datepicker__day--selected:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day) {
-          background: #374151 !important;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
           color: white !important;
           font-weight: normal !important;
-          border: 1px solid #4b5563 !important;
+          border: none !important;
         }
         
         /* Override keyboard navigation styling */
         .react-datepicker__day--keyboard-selected:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day) {
-          background: #374151 !important;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
           color: white !important;
           font-weight: normal !important;
-          border: 1px solid #4b5563 !important;
+          border: none !important;
         }
         
         .react-datepicker__day--today:hover:not(.react-datepicker__day--checkin):not(.react-datepicker__day--checkout):not(.react-datepicker__day--occupied):not(.react-datepicker__day--same-day) {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
           transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
         }
         .react-datepicker__day--disabled {
-          color: #4b5563 !important;
-          background-color: transparent !important;
-          opacity: 0.3 !important;
+          color: #6b7280 !important;
+          background: #374151 !important;
+          opacity: 0.5 !important;
+        }
+        .react-datepicker__day--disabled:hover {
+          background: #374151 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+        .react-datepicker__day--disabled::after {
+          content: 'N/A' !important;
+          position: absolute !important;
+          bottom: 0px !important;
+          right: 0px !important;
+          font-size: 0.5rem !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: #9ca3af !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+          font-weight: 700 !important;
         }
       `}</style>
     <div>
@@ -1995,29 +2101,28 @@ function Home() {
 
       {/* Availability Modal */}
       {showAvailabilityModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:p-6">
-          <div className="bg-gray-900 rounded-xl md:rounded-2xl shadow-2xl w-full max-w-[96vw] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl border border-gray-700 max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-gray-700 bg-gray-900 flex-shrink-0">
-              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
-                <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-green-400 flex-shrink-0" />
-                <span className="hidden sm:inline">Check Availability</span>
-                <span className="sm:hidden">Availability</span>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-0 sm:p-2 md:p-4 overflow-y-auto">
+          <div className="bg-gray-900 rounded-none sm:rounded-xl md:rounded-2xl shadow-2xl w-full sm:max-w-[95vw] md:max-w-lg lg:max-w-xl xl:max-w-2xl border-0 sm:border border-gray-700 min-h-screen sm:min-h-0 sm:max-h-[98vh] md:max-h-[95vh] lg:max-h-[92vh] xl:max-h-[90vh] overflow-hidden flex flex-col mt-0 sm:mt-2 md:mt-0">
+            {/* Modal Header - Mobile Safe */}
+            <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 lg:p-6 border-b border-gray-700 bg-gray-900 flex-shrink-0 sticky top-0 z-10">
+              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                <CalendarDays className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-green-400 flex-shrink-0" />
+                <span className="truncate">Check Availability</span>
               </h2>
               <button
                 onClick={() => setShowAvailabilityModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-800"
+                className="text-gray-400 hover:text-white transition-colors p-2 sm:p-3 min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-800 active:bg-gray-700"
               >
                 <X className="w-6 h-6 sm:w-7 sm:h-7" />
               </button>
             </div>
 
-            {/* Modal Content - Scrollable Body */}
-            <div className="overflow-y-auto flex-1 min-h-0">
-              <div className="p-4 sm:p-5 md:p-6 space-y-4 md:space-y-5 lg:space-y-6">
+            {/* Modal Content - Mobile Safe Scrollable Body */}
+            <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain">
+              <div className="p-3 sm:p-4 md:p-5 lg:p-6 space-y-4 sm:space-y-5 md:space-y-6">
                 {/* Calendar View - React DatePicker (Read-only for availability display) */}
-                <div className="bg-gray-800/50 rounded-lg md:rounded-xl p-3 sm:p-4 md:p-5 border border-gray-600">
-                  <div style={{ minHeight: '550px', height: '550px' }}>
+                <div className="bg-gray-800/50 rounded-lg md:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 border border-gray-600">
+                  <div style={{ minHeight: '470px', height: 'auto', maxHeight: '600px' }} className="sm:!min-h-[500px] sm:!max-h-[650px]">
                     {loading ? (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-white text-center">
@@ -2031,15 +2136,7 @@ function Home() {
                       onChange={() => {}} // Read-only - no interaction needed
                       openToDate={currentMonth}
                       dayClassName={(date) => {
-                        // Only show booking status for dates in the current month being viewed
-                        const isCurrentMonth = date.getMonth() === currentMonth.getMonth() && 
-                                             date.getFullYear() === currentMonth.getFullYear();
-                        
-                        if (!isCurrentMonth) {
-                          return ''; // No special styling for dates outside current month
-                        }
-                        
-                        // Show booking status using exact same logic as booking page
+                        // Show booking status for all dates regardless of which month view
                         const capacity = getDateCapacity(date);
                         
                         if (capacity === 'same-day') return 'react-datepicker__day--same-day';
@@ -2105,28 +2202,34 @@ function Home() {
                       }}
                     />
                     
-                    {/* Legend - Mobile Responsive */}
-                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center justify-center gap-3 sm:gap-4">
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-green-600 flex-shrink-0"></span>
-                        <span className="text-gray-300 text-sm sm:text-base">Check-in</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-red-600 flex-shrink-0"></span>
-                        <span className="text-gray-300 text-sm sm:text-base">Check-out</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-yellow-600 flex-shrink-0"></span>
-                        <span className="text-gray-300 text-sm sm:text-base">Occupied</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-purple-600 flex-shrink-0"></span>
-                        <span className="text-gray-300 text-sm sm:text-base">Full Day</span>
-                      </span>
-                      <span className="flex items-center gap-2 col-span-2 sm:col-span-1">
-                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-gray-700 border border-gray-600 flex-shrink-0"></span>
-                        <span className="text-gray-300 text-sm sm:text-base">Available</span>
-                      </span>
+                    {/* Legend - Fully Mobile Responsive */}
+                    <div className="mt-4 p-3 sm:p-2 bg-gray-800/30 rounded-lg border border-gray-600/50 min-h-[120px] sm:min-h-0">
+                      <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:grid-cols-3 sm:gap-4 md:flex md:flex-wrap md:items-center md:justify-center">
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-green-900/20 rounded-md border border-green-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-green-600 flex-shrink-0"></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Available</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-blue-900/20 rounded-md border border-blue-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-blue-600 flex-shrink-0"></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Check-in</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-red-900/20 rounded-md border border-red-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-red-600 flex-shrink-0"></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Check-out</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-yellow-900/20 rounded-md border border-yellow-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-yellow-600 flex-shrink-0"></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Occupied</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-purple-900/20 rounded-md border border-purple-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-purple-600 flex-shrink-0"></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Full Day</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-gray-800/20 rounded-md border border-gray-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-gray-600 flex-shrink-0"></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Unavailable</span>
+                        </span>
+                      </div>
                     </div>
                     </>
                   )}
@@ -2135,10 +2238,10 @@ function Home() {
 
                 {/* Mobile-Responsive Availability Guide */}
                 <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg md:rounded-xl overflow-hidden">
-                  {/* Collapsible Header - Only on Mobile/Small Tablet */}
+                  {/* Collapsible Header - Mobile First Design */}
                   <button 
                     onClick={() => setAvailabilityGuideOpen(!availabilityGuideOpen)}
-                    className="w-full p-3 sm:p-4 md:hidden flex items-center justify-between hover:bg-blue-800/10 transition-colors touch-manipulation min-h-[48px]"
+                    className="w-full p-4 sm:p-5 md:hidden flex items-center justify-between hover:bg-blue-800/10 active:bg-blue-800/20 transition-colors touch-manipulation min-h-[56px]"
                   >
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 text-blue-400 text-base">ℹ️</div>
@@ -2153,58 +2256,64 @@ function Home() {
                   </button>
 
                   {/* Desktop Header - Always Visible */}
-                  <div className="hidden md:flex items-center gap-2 md:gap-3 p-3 md:p-4 lg:p-5 border-b border-blue-600/20">
-                    <div className="w-5 h-5 md:w-6 md:h-6 text-blue-400 text-base md:text-lg">ℹ️</div>
-                    <h4 className="text-blue-200 text-base md:text-lg lg:text-xl font-semibold">How to Read Availability</h4>
+                  <div className="hidden md:flex items-center gap-3 lg:gap-4 p-4 lg:p-5 border-b border-blue-600/20">
+                    <div className="w-6 h-6 lg:w-7 lg:h-7 text-blue-400 text-lg lg:text-xl">ℹ️</div>
+                    <h4 className="text-blue-200 text-lg lg:text-xl xl:text-2xl font-semibold">How to Read Availability</h4>
                   </div>
 
-                  {/* Content - Collapsible on mobile/tablet, always visible on desktop */}
-                  <div className={`${availabilityGuideOpen ? 'block' : 'hidden'} md:block`}>
-                    <div className="px-3 pb-3 sm:px-4 sm:pb-4 md:px-5 md:pb-5">
-                      {/* Responsive Grid Layout */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 gap-3 sm:gap-4 md:gap-4 lg:gap-4 mt-3 sm:mt-4">
-                        {/* Check-in */}
-                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-green-900/20 border border-green-600/30 rounded-lg">
-                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-green-600 flex-shrink-0 mt-0.5"></span>
-                          <div className="min-w-0">
-                            <div className="text-green-200 text-sm sm:text-base md:text-lg font-medium">Check-in Day</div>
-                            <div className="text-green-100/80 text-xs sm:text-sm md:text-base leading-tight">Guests arrive 2 PM</div>
+                  {/* Content - Mobile Safe Collapsible */}
+                  <div className={`${availabilityGuideOpen ? 'block' : 'hidden'} md:block transition-all duration-200`}>
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 md:px-6 md:pb-6">
+                      {/* Mobile First Responsive Grid Layout */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mt-4 sm:mt-5">
+                        {/* Row 1: Available + Check-in */}
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-green-900/20 border border-green-600/30 rounded-lg hover:bg-green-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-green-600 flex-shrink-0 mt-1"></span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-green-200 text-base sm:text-lg md:text-xl font-semibold">Available Dates</div>
+                            <div className="text-green-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Open for booking</div>
                           </div>
                         </div>
 
-                        {/* Check-out */}
-                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-red-900/20 border border-red-600/30 rounded-lg">
-                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-red-600 flex-shrink-0 mt-0.5"></span>
-                          <div className="min-w-0">
-                            <div className="text-red-200 text-sm sm:text-base md:text-lg font-medium">Check-out Day</div>
-                            <div className="text-red-100/80 text-xs sm:text-sm md:text-base leading-tight">You can check-in here (guests leave 12 PM)</div>
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-blue-900/20 border border-blue-600/30 rounded-lg hover:bg-blue-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-blue-600 flex-shrink-0 mt-1"></span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-blue-200 text-base sm:text-lg md:text-xl font-semibold">Check-in Day</div>
+                            <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Guests arrive 2 PM</div>
                           </div>
                         </div>
 
-                        {/* Occupied */}
-                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
-                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-yellow-600 flex-shrink-0 mt-0.5"></span>
-                          <div className="min-w-0">
-                            <div className="text-yellow-200 text-sm sm:text-base md:text-lg font-medium">Occupied</div>
-                            <div className="text-yellow-100/80 text-xs sm:text-sm md:text-base leading-tight">Resort fully occupied (no availability)</div>
+                        {/* Row 2: Check-out + Occupied */}
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-red-900/20 border border-red-600/30 rounded-lg hover:bg-red-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-red-600 flex-shrink-0 mt-1"></span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-red-200 text-base sm:text-lg md:text-xl font-semibold">Check-out Day</div>
+                            <div className="text-red-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Available for check-in (guests leave 12 PM)</div>
                           </div>
                         </div>
 
-                        {/* Full Day */}
-                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-purple-900/20 border border-purple-600/30 rounded-lg">
-                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-purple-600 flex-shrink-0 mt-0.5"></span>
-                          <div className="min-w-0">
-                            <div className="text-purple-200 text-sm sm:text-base md:text-lg font-medium">Full Day</div>
-                            <div className="text-purple-100/80 text-xs sm:text-sm md:text-base leading-tight">Same-day check-in & check-out</div>
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-yellow-900/20 border border-yellow-600/30 rounded-lg hover:bg-yellow-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-yellow-600 flex-shrink-0 mt-1"></span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-yellow-200 text-base sm:text-lg md:text-xl font-semibold">Occupied</div>
+                            <div className="text-yellow-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Resort fully occupied</div>
                           </div>
                         </div>
 
-                        {/* Available - Full width on smaller screens */}
-                        <div className="flex items-start gap-2 p-3 sm:p-3 md:p-4 bg-gray-800/20 border border-gray-600/30 rounded-lg xs:col-span-2 lg:col-span-4 xl:col-span-2">
-                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded border border-green-500/50 bg-gray-700 flex-shrink-0 mt-0.5"></span>
-                          <div className="min-w-0">
-                            <div className="text-gray-200 text-sm sm:text-base md:text-lg font-medium">Available</div>
-                            <div className="text-gray-100/80 text-xs sm:text-sm md:text-base leading-tight">Free for both check-in and check-out</div>
+                        {/* Row 3: Full Day + Unavailable */}
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-purple-900/20 border border-purple-600/30 rounded-lg hover:bg-purple-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-purple-600 flex-shrink-0 mt-1"></span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-purple-200 text-base sm:text-lg md:text-xl font-semibold">Full Day</div>
+                            <div className="text-purple-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Same-day check-in & check-out</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-gray-800/20 border border-gray-600/30 rounded-lg hover:bg-gray-800/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-gray-600 flex-shrink-0 mt-1"></span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-gray-200 text-base sm:text-lg md:text-xl font-semibold">Unavailable</div>
+                            <div className="text-gray-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Cannot be booked</div>
                           </div>
                         </div>
                       </div>
@@ -2275,11 +2384,11 @@ function Home() {
               </div>
             </div>
 
-            {/* Modal Footer - Fixed at Bottom */}
-            <div className="border-t border-gray-700 bg-gray-900 p-4 sm:p-5 md:p-6 flex-shrink-0">
+            {/* Modal Footer - Mobile Safe Bottom */}
+            <div className="border-t border-gray-700 bg-gray-900 p-4 sm:p-5 md:p-6 flex-shrink-0 sticky bottom-0 z-10">
               <button
                 onClick={() => setShowAvailabilityModal(false)}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 sm:py-3.5 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm sm:text-base md:text-lg transition-colors min-h-[48px] touch-manipulation shadow-lg"
+                className="w-full bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-4 sm:py-3.5 md:py-4 rounded-lg md:rounded-xl font-semibold text-base sm:text-lg transition-all duration-200 min-h-[52px] touch-manipulation shadow-lg hover:shadow-xl"
               >
                 Close
               </button>

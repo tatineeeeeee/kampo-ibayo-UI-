@@ -696,20 +696,20 @@ function BookingPage() {
           font-family: inherit !important;
           border-radius: 1rem !important;
           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
-          min-height: 420px !important;
-          max-height: 420px !important;
-          height: 420px !important;
+          min-height: 480px !important;
+          max-height: 480px !important;
+          height: 480px !important;
           overflow: hidden !important;
         }
         .react-datepicker__month-container {
+          min-height: 420px !important;
+          max-height: 420px !important;
+          height: 420px !important;
+        }
+        .react-datepicker__month {
           min-height: 360px !important;
           max-height: 360px !important;
           height: 360px !important;
-        }
-        .react-datepicker__month {
-          min-height: 300px !important;
-          max-height: 300px !important;
-          height: 300px !important;
           display: flex !important;
           flex-direction: column !important;
         }
@@ -717,7 +717,49 @@ function BookingPage() {
           display: flex !important;
           justify-content: space-around !important;
           align-items: center !important;
-          height: 3.5rem !important;
+          height: 4rem !important;
+          min-height: 4rem !important;
+        }
+        
+        /* Mobile responsiveness for date cells */
+        @media (max-width: 768px) {
+          .react-datepicker__week {
+            height: 3.5rem !important;
+            min-height: 3.5rem !important;
+          }
+          
+          .react-datepicker__day {
+            width: 2.8rem !important;
+            height: 2.8rem !important;
+            line-height: 2.8rem !important;
+            margin: 0.15rem !important;
+            font-size: 0.9rem !important;
+          }
+          
+          .react-datepicker__day-name {
+            width: 2.8rem !important;
+            height: 2.2rem !important;
+            line-height: 2.2rem !important;
+            font-size: 0.8rem !important;
+          }
+        }
+        
+        /* Extra mobile optimization for very small screens */
+        @media (max-width: 480px) {
+          .react-datepicker__day {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            line-height: 2.5rem !important;
+            margin: 0.1rem !important;
+            font-size: 0.85rem !important;
+          }
+          
+          .react-datepicker__day-name {
+            width: 2.5rem !important;
+            height: 2rem !important;
+            line-height: 2rem !important;
+            font-size: 0.75rem !important;
+          }
         }
         .react-datepicker__header {
           background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
@@ -754,64 +796,130 @@ function BookingPage() {
           transition: all 0.2s ease !important;
           display: inline-block !important;
           text-align: center !important;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+          position: relative !important;
         }
         .react-datepicker__day:hover {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
           transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
+        }
+        .react-datepicker__day::after {
+          content: 'OPEN' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 8px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: white !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
+          line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+        }
+        
+        /* 📱 MOBILE: Keep OPEN readable */
+        @media (max-width: 768px) {
+          .react-datepicker__day::after {
+            content: 'OPEN' !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
+            bottom: 2px !important;
+          }
         }
         .react-datepicker__day--selected,
         .react-datepicker__day--range-start,
         .react-datepicker__day--range-end {
-          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
           color: white !important;
           font-weight: 700 !important;
-          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.5) !important;
+          box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.5) !important;
         }
         .react-datepicker__day--in-range {
-          background: rgba(220, 38, 38, 0.3) !important;
+          background: rgba(249, 115, 22, 0.3) !important;
           color: white !important;
         }
         .react-datepicker__day--excluded {
           color: #6b7280 !important;
-          text-decoration: line-through !important;
-          background-color: #1f2937 !important;
-          opacity: 0.5 !important;
+          text-decoration: none !important;
+          background: #374151 !important;
+          opacity: 0.6 !important;
         }
         .react-datepicker__day--excluded:hover {
-          background-color: #1f2937 !important;
+          background: #374151 !important;
           cursor: not-allowed !important;
           transform: none !important;
+        }
+        .react-datepicker__day--excluded::after {
+          content: 'N/A' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: #9ca3af !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
+          line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
         }
         
         /* Override today styling to look normal */
         .react-datepicker__day--today {
-          background: transparent !important;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
           color: white !important;
           font-weight: normal !important;
           border: none !important;
         }
         .react-datepicker__day--today:hover {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
           transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3) !important;
+          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
         }
         .react-datepicker__day--disabled {
-          color: #4b5563 !important;
-          background-color: transparent !important;
-          opacity: 0.3 !important;
+          color: #6b7280 !important;
+          background: #374151 !important;
+          opacity: 0.5 !important;
+        }
+        .react-datepicker__day--disabled:hover {
+          background: #374151 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+        .react-datepicker__day--disabled::after {
+          content: 'N/A' !important;
+          position: absolute !important;
+          bottom: 1px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-size: 10px !important;
+          background: rgba(0,0,0,0.8) !important;
+          color: #9ca3af !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
+          line-height: 1 !important;
+          font-weight: bold !important;
+          white-space: nowrap !important;
+          max-width: 90% !important;
+          overflow: hidden !important;
         }
         
         /* Selected dates override all other states */
         .react-datepicker__day--selected {
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
           color: white !important;
           font-weight: 600 !important;
           position: relative !important;
-          border: 2px solid #1e40af !important;
+          border: 2px solid #ea580c !important;
         }
         .react-datepicker__day--selected:hover {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+          background: linear-gradient(135deg, #fb923c 0%, #f97316 100%) !important;
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--selected::after {
@@ -835,9 +943,9 @@ function BookingPage() {
         /* 📱 MOBILE: Shorter labels for better readability */
         @media (max-width: 768px) {
           .react-datepicker__day--selected::after {
-            content: '✓' !important;
-            font-size: 12px !important;
-            padding: 2px 3px !important;
+            content: 'PICK' !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
             bottom: 2px !important;
           }
         }
@@ -874,21 +982,21 @@ function BookingPage() {
         @media (max-width: 768px) {
           .react-datepicker__day--same-day::after {
             content: 'FULL' !important;
-            font-size: 11px !important;
-            padding: 2px 3px !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
             bottom: 2px !important;
           }
         }
         
         /* Custom capacity indicator classes */
         .react-datepicker__day--checkin {
-          background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
           color: white !important;
           font-weight: 600 !important;
           position: relative !important;
         }
         .react-datepicker__day--checkin:hover {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--checkin::after {
@@ -913,7 +1021,7 @@ function BookingPage() {
         @media (max-width: 768px) {
           .react-datepicker__day--checkin::after {
             content: 'IN' !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
             padding: 2px 3px !important;
             bottom: 2px !important;
           }
@@ -951,7 +1059,7 @@ function BookingPage() {
         @media (max-width: 768px) {
           .react-datepicker__day--checkout::after {
             content: 'OUT' !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
             padding: 2px 3px !important;
             bottom: 2px !important;
           }
@@ -989,8 +1097,8 @@ function BookingPage() {
         @media (max-width: 768px) {
           .react-datepicker__day--occupied::after {
             content: 'BUSY' !important;
-            font-size: 11px !important;
-            padding: 2px 3px !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
             bottom: 2px !important;
           }
         }
@@ -1153,9 +1261,9 @@ function BookingPage() {
         
         /* Force consistent 6-row calendar layout */
         .react-datepicker__month {
-          min-height: 330px !important;
-          max-height: 330px !important;
-          height: 330px !important;
+          min-height: 390px !important;
+          max-height: 390px !important;
+          height: 390px !important;
           display: flex !important;
           flex-direction: column !important;
           justify-content: space-between !important;
@@ -1166,23 +1274,23 @@ function BookingPage() {
           display: flex !important;
           justify-content: space-around !important;
           align-items: center !important;
-          height: 50px !important;
-          min-height: 50px !important;
+          height: 60px !important;
+          min-height: 60px !important;
           flex: 1 !important;
         }
         
         /* Force calendar container to maintain consistent height */
         .react-datepicker {
-          min-height: 420px !important;
-          max-height: 420px !important;
-          height: 420px !important;
+          min-height: 480px !important;
+          max-height: 480px !important;
+          height: 480px !important;
         }
         
         /* Ensure month container maintains height */
         .react-datepicker__month-container {
-          min-height: 360px !important;
-          max-height: 360px !important;
-          height: 360px !important;
+          min-height: 420px !important;
+          max-height: 420px !important;
+          height: 420px !important;
           display: flex !important;
           flex-direction: column !important;
         }
@@ -1201,6 +1309,47 @@ function BookingPage() {
           padding: 1rem 0 !important;
           height: 60px !important;
           min-height: 60px !important;
+        }
+        
+        /* 🚀 FINAL MOBILE OVERRIDES - Must come last to override desktop styles */
+        @media (max-width: 768px) {
+          .react-datepicker__day {
+            width: 2.8rem !important;
+            height: 2.8rem !important;
+            line-height: 2.8rem !important;
+            margin: 0.15rem !important;
+            font-size: 0.9rem !important;
+          }
+          
+          .react-datepicker__day-name {
+            width: 2.8rem !important;
+            height: 2.2rem !important;
+            line-height: 2.2rem !important;
+            font-size: 0.8rem !important;
+          }
+          
+          .react-datepicker__week {
+            height: 3.5rem !important;
+            min-height: 3.5rem !important;
+          }
+        }
+        
+        /* Extra small mobile screens */
+        @media (max-width: 480px) {
+          .react-datepicker__day {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            line-height: 2.5rem !important;
+            margin: 0.1rem !important;
+            font-size: 0.85rem !important;
+          }
+          
+          .react-datepicker__day-name {
+            width: 2.5rem !important;
+            height: 2rem !important;
+            line-height: 2rem !important;
+            font-size: 0.75rem !important;
+          }
         }
       `}</style>
       
@@ -1569,7 +1718,7 @@ function BookingPage() {
 
             {/* Inline Calendar - Larger */}
             <div>
-              <div className="bg-gray-800/50 rounded-xl border-2 border-gray-700 p-4 flex justify-center min-h-[450px]">
+              <div className="bg-gray-800/50 rounded-xl border-2 border-gray-700 p-4 flex justify-center min-h-[520px]">
                 <DatePicker
                   selected={formData.checkIn}
                   onChange={(dates) => {
@@ -1648,14 +1797,21 @@ function BookingPage() {
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-blue-600"></span>
+                  <span className="w-4 h-4 rounded bg-green-600"></span>
                   <span className="text-gray-300">
-                    <span className="hidden sm:inline">Pick</span>
+                    <span className="hidden sm:inline">Open</span>
+                    <span className="sm:hidden">Open</span>
+                  </span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-orange-600"></span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Selected</span>
                     <span className="sm:hidden">Pick ✓</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-green-600"></span>
+                  <span className="w-4 h-4 rounded bg-blue-600"></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Check-in</span>
                     <span className="sm:hidden">In</span>
@@ -1683,8 +1839,11 @@ function BookingPage() {
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-gray-700 border border-gray-600"></span>
-                  <span className="text-gray-300">Available</span>
+                  <span className="w-4 h-4 rounded bg-gray-600"></span>
+                  <span className="text-gray-300">
+                    <span className="hidden sm:inline">Unavailable</span>
+                    <span className="sm:hidden">N/A</span>
+                  </span>
                 </span>
               </div>
             </div>
