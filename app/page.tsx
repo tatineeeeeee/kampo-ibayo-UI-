@@ -1287,7 +1287,7 @@ function Home() {
               <p className="font-semibold">Kampo Ibayo is temporarily closed for maintenance</p>
             </div>
             <p className="text-sm mt-1 text-orange-100">
-              For assistance, please call <a href="tel:+639452779541" className="font-bold text-white hover:underline">+63 945 277 9541</a> or message us on <a href="https://www.facebook.com/profile.php?id=61562942638753" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:underline">Facebook</a>
+              For assistance, please call <a href="tel:+639662815123" className="font-bold text-white hover:underline">+63 966 281 5123</a> or message us on <a href="https://www.facebook.com/profile.php?id=61562942638753" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:underline">Facebook</a>
             </p>
           </div>
         </div>
@@ -1784,11 +1784,11 @@ function Home() {
                 </h3>
                 <div className="space-y-2 sm:space-y-3">
                   <a 
-                    href="tel:+639452779541"
+                    href="tel:+639662815123"
                     className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-green-400 transition-colors group"
                   >
                     <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                    +63 945 277 9541
+                    +63 966 281 5123
                   </a>
                   <a 
                     href="mailto:kampoibayo@gmail.com"

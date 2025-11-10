@@ -93,6 +93,38 @@ export async function POST(request: NextRequest) {
       const cancellationEmail = createAdminCancellationGuestEmail(cancellationData);
       const emailResult = await sendEmail(cancellationEmail);
 
+      // Send SMS notification if phone number is available (non-blocking)
+      let smsResult = null;
+      if (booking.guest_phone) {
+        try {
+          const smsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sms/booking-cancelled`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phoneNumber: booking.guest_phone,
+              bookingDetails: {
+                name: booking.guest_name,
+                booking_number: `KB-${booking.id.toString().padStart(4, '0')}`,
+                check_in_date: new Date(booking.check_in_date).toLocaleDateString(),
+                check_out_date: new Date(booking.check_out_date).toLocaleDateString(),
+                number_of_guests: booking.number_of_guests,
+                refund_status: refundProcessed ? 'processing' : null
+              },
+              reason: 'Cancelled by resort administration',
+              cancelledBy: 'Admin'
+            }),
+          });
+          
+          if (smsResponse.ok) {
+            smsResult = await smsResponse.json();
+            console.log('Cancellation SMS sent successfully');
+          }
+        } catch (smsError) {
+          console.error('Failed to send cancellation SMS (non-blocking):', smsError);
+          // SMS failure doesn't affect the overall operation
+        }
+      }
+
       if (emailResult.success) {
         return NextResponse.json({
           success: true,
@@ -100,12 +132,14 @@ export async function POST(request: NextRequest) {
             ? `Booking cancelled and refund notification sent (₱${refundAmount.toLocaleString()})`
             : 'Booking cancelled and notification email sent',
           messageId: emailResult.messageId,
+          smsStatus: smsResult?.success ? 'SMS sent' : 'SMS failed (non-critical)'
         });
       } else {
         return NextResponse.json({
           success: true, // Still success since booking was cancelled
           message: 'Booking cancelled but email failed to send',
           emailError: emailResult.error,
+          smsStatus: smsResult?.success ? 'SMS sent' : 'SMS failed (non-critical)'
         });
       }
     } else {

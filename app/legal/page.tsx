@@ -158,7 +158,7 @@ export default function LegalHub() {
               <Phone className="w-5 h-5 text-red-400" />
               <div>
                 <p className="text-white font-medium">Emergency Hotline</p>
-                <p className="text-gray-300 text-sm">+63 917 123 4567</p>
+                <p className="text-gray-300 text-sm">+63 966 281 5123</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

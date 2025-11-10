@@ -2387,7 +2387,7 @@ export const createAdminCancellationGuestEmail = (cancellationData: Cancellation
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 5px 0; width: 120px;"><strong>Phone:</strong></td>
-                <td style="padding: 5px 0;"><a href="tel:+639452779541" style="color: #2b6cb0; text-decoration: none;">+63 945 277 9541</a></td>
+                <td style="padding: 5px 0;"><a href="tel:+639662815123" style="color: #2b6cb0; text-decoration: none;">+63 966 281 5123</a></td>
               </tr>
               <tr>
                 <td style="padding: 5px 0;"><strong>Email:</strong></td>

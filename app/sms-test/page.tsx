@@ -120,9 +120,48 @@ export default function SMSTestPage() {
           <button
             onClick={testSMS}
             disabled={loading || !phoneNumber}
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 mb-2"
           >
             {loading ? '📱 Sending...' : '📱 Send Test SMS'}
+          </button>
+          
+          <button
+            onClick={async () => {
+              if (!phoneNumber) {
+                alert('Please enter a phone number');
+                return;
+              }
+              setLoading(true);
+              try {
+                const response = await fetch('/api/sms/booking-cancelled', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    phoneNumber,
+                    bookingDetails: {
+                      name: 'Test Guest',
+                      booking_number: 'KB-0001',
+                      check_in_date: '2024-12-15',
+                      check_out_date: '2024-12-16',
+                      number_of_guests: 4,
+                      refund_status: 'processing'
+                    },
+                    reason: 'Test cancellation',
+                    cancelledBy: 'Admin'
+                  }),
+                });
+                const data = await response.json();
+                setResult(data);
+              } catch (error) {
+                setResult({ success: false, error: 'Network error: ' + error });
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading || !phoneNumber}
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? '📱 Sending...' : '🚫 Test Cancellation SMS'}
           </button>
         </div>
 

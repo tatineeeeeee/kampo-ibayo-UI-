@@ -183,7 +183,7 @@ GMAIL_APP_PASSWORD=your_app_password
 - **Booking Window**: Up to 2 years in advance
 
 ### Contact Integration
-- **Phone**: +63 945 277 9541
+- **Phone**: +63 966 281 5123
 - **Email**: kampoibayo@gmail.com
 - **Address**: 132 Ibayo, Brgy Tapia, General Trias, Cavite
 - **Facebook**: Kampo Ibayo (for social media presence)

@@ -25,7 +25,7 @@ export default function SettingsPage() {
   });
   const [resortSettings, setResortSettings] = useState({
     maintenance_mode: false,
-    emergency_contact: "+63 945 277 9541"
+    emergency_contact: "+63 966 281 5123"
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,14 +62,14 @@ export default function SettingsPage() {
             setResortSettings(prev => ({
               ...prev,
               maintenance_mode: maintenanceSettings.isActive || false,
-              emergency_contact: "+63 945 277 9541" // Always provide default value
+              emergency_contact: "+63 966 281 5123" // Always provide default value
             }));
           } catch (error) {
             console.error('Error loading maintenance settings:', error);
             setResortSettings(prev => ({
               ...prev,
               maintenance_mode: false,
-              emergency_contact: "+63 945 277 9541"
+              emergency_contact: "+63 966 281 5123"
             }));
           }
         };
@@ -300,7 +300,7 @@ export default function SettingsPage() {
               </label>
               <input
                 type="tel"
-                value={resortSettings.emergency_contact || "+63 945 277 9541"}
+                value={resortSettings.emergency_contact || "+63 966 281 5123"}
                 onChange={(e) => setResortSettings({ ...resortSettings, emergency_contact: e.target.value })}
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all bg-white text-gray-900 placeholder-gray-400"
                 placeholder="+63 xxx xxx xxxx"

@@ -865,7 +865,7 @@ function BookingsPageContent() {
               )}
               {maintenanceActive && (
                 <p className="text-gray-400 text-xs sm:text-sm text-center">
-                  Resort is temporarily closed for maintenance. Call <a href="tel:+639452779541" className="text-orange-400 hover:text-orange-300">+63 945 277 9541</a> for assistance.
+                  Resort is temporarily closed for maintenance. Call <a href="tel:+639662815123" className="text-orange-400 hover:text-orange-300">+63 966 281 5123</a> for assistance.
                 </p>
               )}
               <div className="text-center">

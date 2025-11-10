@@ -571,7 +571,7 @@ function UploadPaymentProofContent() {
               <div className="text-sm text-green-200 space-y-2">
                 <p className="flex items-center gap-2">
                   <span className="font-medium">GCash:</span> 
-                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">09452779541</span>
+                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">09662815123</span>
                   <span className="text-xs">(Kampo Ibayo)</span>
                 </p>
                 <p className="flex items-center gap-2">

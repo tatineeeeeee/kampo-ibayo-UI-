@@ -71,14 +71,15 @@ export const sendSMS = async (smsData: SMSData): Promise<SMSResponse> => {
 
 /**
  * SMS Message Templates for Kampo Ibayo Resort
- * All messages kept under 160 characters for single SMS delivery
+ * All messages exactly 160 characters for optimal single SMS delivery
  */
 export const createBookingConfirmationSMS = (
   bookingId: string,
   guestName: string,
   checkInDate: string
 ): string => {
-  return `KAMPO IBAYO RESORT: Hi ${guestName}! Booking #${bookingId} confirmed. Check-in: ${checkInDate} 2PM. Contact: 0945-277-9541`;
+  const baseMessage = `KAMPO IBAYO RESORT: Dear ${guestName}, your booking ${bookingId} is confirmed! Check-in date: ${checkInDate} at 2:00 PM. Contact us: 09662815123`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
 export const createBookingApprovalSMS = (
@@ -86,19 +87,22 @@ export const createBookingApprovalSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  return `KAMPO IBAYO RESORT: Hi ${guestName}! Booking #${bookingId} approved by admin. Check-in: ${checkInDate} 2PM. See you soon!`;
+  const baseMessage = `KAMPO IBAYO RESORT: Hi ${guestName}! Great news - booking ${bookingId} approved by admin. Check-in: ${checkInDate} 2PM. We can't wait to see you!`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
 export const createBookingReminderSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  return `KAMPO IBAYO RESORT: Hi ${guestName}! Your stay is tomorrow (${checkInDate}). Check-in 2PM. Safe travels!`;
+  const baseMessage = `KAMPO IBAYO RESORT: Hello ${guestName}! Friendly reminder: Your amazing stay begins tomorrow ${checkInDate}. Check-in starts at 2PM. Safe travels!`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
 export const createBookingCancellationSMS = (
   bookingId: string,
   guestName: string
 ): string => {
-  return `KAMPO IBAYO RESORT: Hi ${guestName}, booking #${bookingId} cancelled. Refund processing 5-10 days. Questions: 0945-277-9541`;
+  const baseMessage = `KAMPO IBAYO RESORT: Dear ${guestName}, booking ${bookingId} has been cancelled. Refund will be processed within 5-10 business days. Call: 09662815123`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
 };

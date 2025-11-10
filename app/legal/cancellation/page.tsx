@@ -219,7 +219,7 @@ export default function CancellationPage() {
                   <Phone className="w-5 h-5 text-green-400" />
                   <div>
                     <div className="font-medium text-white">Phone</div>
-                    <div className="text-gray-400 text-sm">+63 945 277 9541</div>
+                    <div className="text-gray-400 text-sm">+63 966 281 5123</div>
                   </div>
                 </div>
               </div>

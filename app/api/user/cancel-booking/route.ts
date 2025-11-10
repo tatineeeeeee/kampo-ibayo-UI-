@@ -209,6 +209,39 @@ export async function POST(request: NextRequest) {
       console.log('⚠️ No email sent - guest_email is missing or empty:', booking.guest_email);
     }
 
+    // Send SMS notification if phone number is available (non-blocking)
+    let smsResult = null;
+    if (booking.guest_phone) {
+      try {
+        console.log('📱 Sending cancellation SMS to:', booking.guest_phone);
+        const smsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sms/booking-cancelled`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phoneNumber: booking.guest_phone,
+            bookingDetails: {
+              name: booking.guest_name,
+              booking_number: `KB-${booking.id.toString().padStart(4, '0')}`,
+              check_in_date: new Date(booking.check_in_date).toLocaleDateString(),
+              check_out_date: new Date(booking.check_out_date).toLocaleDateString(),
+              number_of_guests: booking.number_of_guests,
+              refund_status: refundResponse ? 'processing' : null
+            },
+            reason: cancellationReason || 'Cancelled by guest',
+            cancelledBy: 'Guest'
+          }),
+        });
+        
+        if (smsResponse.ok) {
+          smsResult = await smsResponse.json();
+          console.log('✅ Cancellation SMS sent successfully');
+        }
+      } catch (smsError) {
+        console.error('❌ Failed to send cancellation SMS (non-blocking):', smsError);
+        // SMS failure doesn't affect the overall operation
+      }
+    }
+
     // Return success even if emails fail (booking cancellation is more important)
     const emailErrors = [];
     if (!guestEmailResult.success && guestEmailResult.error) {
@@ -229,6 +262,7 @@ export async function POST(request: NextRequest) {
       } : null,
       guestEmailSent: guestEmailResult.success,
       adminEmailSent: adminEmailResult.success,
+      smsSent: smsResult?.success || false,
     };
 
     if (guestEmailResult.success && adminEmailResult.success) {

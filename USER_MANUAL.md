@@ -139,7 +139,7 @@
    - Less than 7 days: 25% refund
 
 #### Modifying Bookings
-Currently, date changes require cancellation and rebooking. Contact resort directly for special circumstances: +63 945 277 9541
+Currently, date changes require cancellation and rebooking. Contact resort directly for special circumstances: +63 966 281 5123
 
 ### Leaving Reviews
 
@@ -547,7 +547,7 @@ Currently, date changes require cancellation and rebooking. Contact resort direc
 2. Try different payment method (GCash vs Card)
 3. Clear browser cache and cookies
 4. Try different browser
-5. Contact resort directly: +63 945 277 9541
+5. Contact resort directly: +63 966 281 5123
 
 #### **Don't Receive Confirmation Email**
 **Problem**: No email after booking or confirmation
@@ -633,7 +633,7 @@ Currently, date changes require cancellation and rebooking. Contact resort direc
 - **System Issues**: Contact development team
 - **Urgent Problems**: Call resort directly for immediate assistance
 - **Email**: kampoibayo@gmail.com
-- **Phone**: +63 945 277 9541
+- **Phone**: +63 966 281 5123
 
 #### **Guest Support**
 - **Booking Questions**: Call resort directly
@@ -642,7 +642,7 @@ Currently, date changes require cancellation and rebooking. Contact resort direc
 - **General Inquiries**: Facebook messenger or email
 
 #### **Emergency Contact**
-- **Resort Phone**: +63 945 277 9541 (24/7 during operating season)
+- **Resort Phone**: +63 966 281 5123 (24/7 during operating season)
 - **Location**: 132 Ibayo, Brgy Tapia, General Trias, Cavite
 - **Nearest Hospital**: General Trias Hospital (20 minutes)
 

@@ -276,7 +276,7 @@ npm run start
 
 **Technical Issues**: Create an issue in this repository
 **Business Inquiries**: kampoibayo@gmail.com
-**Resort Information**: +63 945 277 9541
+**Resort Information**: +63 966 281 5123
 
 ---
 

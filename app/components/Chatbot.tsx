@@ -47,7 +47,7 @@ const FAQ_DATABASE: FAQItem[] = [
   {
     keywords: ["available", "availability", "vacant", "open dates", "free dates"],
     question: "How do I check availability?",
-    answer: "Visit our booking page or call/message us directly at +63 945 277 9541. We can check real-time availability and help you secure your preferred dates."
+    answer: "Visit our booking page or call/message us directly at +63 966 281 5123. We can check real-time availability and help you secure your preferred dates."
   },
   {
     keywords: ["payment", "downpayment", "deposit", "how to pay", "payment method"],
@@ -169,7 +169,7 @@ const FAQ_DATABASE: FAQItem[] = [
   {
     keywords: ["contact", "phone", "email", "reach", "call", "message"],
     question: "How can I contact you?",
-    answer: "Contact us at +63 945 277 9541 (call/text), email kampoibayo@gmail.com, or message our Facebook page 'Kampo Ibayo'. We're available 8 AM - 8 PM daily and respond promptly to all inquiries."
+    answer: "Contact us at +63 966 281 5123 (call/text), email kampoibayo@gmail.com, or message our Facebook page 'Kampo Ibayo'. We're available 8 AM - 8 PM daily and respond promptly to all inquiries."
   },
   {
     keywords: ["emergency", "urgent", "help", "problem"],
@@ -475,7 +475,7 @@ Was one of these what you were looking for?`;
 ${suggestedTopics ? `\n💡 **You might be interested in:** ${suggestedTopics}` : ''}
 
 For detailed inquiries beyond my knowledge, please contact us directly:
-• Phone: +63 945 277 9541
+• Phone: +63 966 281 5123
 • Email: kampoibayo@gmail.com
 
 Is there anything else about Kampo Ibayo I can help you with?`;
@@ -694,7 +694,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
         console.error('Chatbot error:', error);
         const errorResponse: Message = {
           id: (Date.now() + 1).toString(),
-          text: "I'm experiencing technical difficulties. Please try rephrasing your question or contact us directly at +63 945 277 9541.",
+          text: "I'm experiencing technical difficulties. Please try rephrasing your question or contact us directly at +63 966 281 5123.",
           sender: "bot",
           timestamp: new Date()
         };
