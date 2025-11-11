@@ -101,6 +101,15 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
     return null; // No button, the rejection status will show the resubmit button
   }
 
+  // For cancelled proofs, show cancelled status
+  if (proofStatus === 'cancelled') {
+    return (
+      <div className="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1">
+        🚫 Cancelled
+      </div>
+    );
+  }
+
   // Show status for pending or verified proofs
   if (proofStatus === 'pending') {
     return (
@@ -207,6 +216,14 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
           title: 'Payment Rejected',
           message: 'Upload a corrected payment proof',
           messageColor: 'text-red-300'
+        };
+      case 'cancelled':
+        return {
+          color: 'bg-gray-900/20 border-gray-500/30 text-gray-400',
+          icon: '🚫',
+          title: 'Payment Cancelled',
+          message: 'Payment proof was cancelled (booking may have been cancelled)',
+          messageColor: 'text-gray-300'
         };
       default:
         return {
@@ -453,9 +470,62 @@ function BookingsPageContent() {
         }
       });
 
+    // ✨ NEW: Real-time subscription for user's payment proofs - INSTANT verification/rejection updates
+    const userPaymentProofsSubscription = supabase
+      .channel(`user-payment-proofs-${user.id}`, { 
+        config: { 
+          broadcast: { self: true },
+          presence: { key: `user-payment-${user.id}` }
+        } 
+      })
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'payment_proofs',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('� Real-time user payment proof update received:', payload);
+          
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+          
+          if (eventType === 'UPDATE' && newRecord && oldRecord) {
+            // Check if status changed (admin verified/rejected payment)
+            if (oldRecord.status !== newRecord.status) {
+              console.log(`⚡ Payment proof ${newRecord.id} status changed: ${oldRecord.status} → ${newRecord.status}`);
+              
+              // Show instant status change notification
+              const statusMessages = {
+                verified: { title: '✅ Payment Verified!', message: 'Your payment proof has been approved by admin' },
+                rejected: { title: '❌ Payment Rejected', message: 'Your payment proof was rejected. Please check details and resubmit.' },
+                cancelled: { title: '🚫 Payment Cancelled', message: 'Your payment proof was cancelled' }
+              };
+              
+              const statusInfo = statusMessages[newRecord.status as keyof typeof statusMessages];
+              if (statusInfo) {
+                showToast({
+                  type: newRecord.status === 'verified' ? 'success' : newRecord.status === 'rejected' ? 'error' : 'info',
+                  title: statusInfo.title,
+                  message: statusInfo.message,
+                  duration: 5000
+                });
+              }
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔗 User payment proofs real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ User payment proof real-time system active - instant verification/rejection updates');
+        }
+      });
+
     return () => {
-      console.log('🔌 Cleaning up user bookings real-time subscription');
+      console.log('🔌 Cleaning up user real-time subscriptions');
       userBookingsSubscription.unsubscribe();
+      userPaymentProofsSubscription.unsubscribe();
     };
   }, [user, showToast]);
 

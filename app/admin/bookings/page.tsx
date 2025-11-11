@@ -30,13 +30,15 @@ interface PaymentProof {
   verified_by: string | null;
 }
 
+
+
 // Smart booking workflow status that considers both booking and payment proof
 function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | null) {
   const bookingStatus = booking.status || 'pending';
   const proofStatus = paymentProof?.status || null;
 
   // Determine the current workflow step
-  if (bookingStatus === 'pending') {
+  if (bookingStatus === 'pending' || bookingStatus === 'pending_verification') {
     if (!paymentProof) {
       return {
         step: 'awaiting_payment',
@@ -72,6 +74,15 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         text: 'Payment Rejected',
         description: 'Payment proof rejected, guest needs to resubmit',
         actionNeeded: 'Contact guest for new payment proof'
+      };
+    } else if (proofStatus === 'cancelled') {
+      return {
+        step: 'payment_cancelled',
+        priority: 1,
+        badge: 'bg-gray-100 text-gray-600',
+        text: 'Payment Cancelled',
+        description: 'Payment proof cancelled (likely due to booking cancellation)',
+        actionNeeded: 'None - check booking status'
       };
     }
   } else if (bookingStatus === 'confirmed') {
@@ -129,7 +140,7 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
 }
 
 // Combined component - shows status AND action button
-function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
+function PaymentProofStatusCell({ bookingId, refreshKey }: { bookingId: number; refreshKey?: number }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -144,7 +155,8 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
           .limit(1);
 
         if (error) throw error;
-        setPaymentProof(data && data.length > 0 ? data[0] : null);
+        const proof = data && data.length > 0 ? data[0] : null;
+        setPaymentProof(proof);
       } catch (error) {
         console.error('Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -157,7 +169,7 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
 
     // Set up real-time subscription for payment proof updates
     const subscription = supabase
-      .channel(`payment_proof_${bookingId}`)
+      .channel(`payment_proof_${bookingId}_${refreshKey || 0}`)
       .on(
         'postgres_changes',
         {
@@ -166,8 +178,7 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
           table: 'payment_proofs',
           filter: `booking_id=eq.${bookingId}`
         },
-        (payload) => {
-          console.log('🔄 Payment proof real-time update:', payload);
+        () => {
           // Refresh payment proof data when changes occur
           fetchPaymentProof();
         }
@@ -177,7 +188,7 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [bookingId]);
+  }, [bookingId, refreshKey]); // ✅ Dependencies include bookingId and refreshKey for instant updates
 
   if (loading) {
     return (
@@ -214,6 +225,11 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
           badge: 'bg-red-500 text-white', 
           text: 'Rejected'
         };
+      case 'cancelled':
+        return { 
+          badge: 'bg-gray-400 text-white', 
+          text: 'Cancelled'
+        };
       default:
         return { 
           badge: 'bg-gray-500 text-white', 
@@ -234,7 +250,7 @@ function PaymentProofStatusCell({ bookingId }: { bookingId: number }) {
 }
 
 // Clean Workflow Status Component
-function SmartWorkflowStatusCell({ booking }: { booking: Booking }) {
+function SmartWorkflowStatusCell({ booking, refreshKey }: { booking: Booking; refreshKey?: number }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -249,7 +265,8 @@ function SmartWorkflowStatusCell({ booking }: { booking: Booking }) {
           .limit(1);
 
         if (error) throw error;
-        setPaymentProof(data && data.length > 0 ? data[0] : null);
+        const proof = data && data.length > 0 ? data[0] : null;
+        setPaymentProof(proof);
       } catch (error) {
         console.error('Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -262,7 +279,7 @@ function SmartWorkflowStatusCell({ booking }: { booking: Booking }) {
 
     // Set up real-time subscription for payment proof updates
     const subscription = supabase
-      .channel(`workflow_payment_proof_${booking.id}`)
+      .channel(`workflow_payment_proof_${booking.id}_${refreshKey || 0}`)
       .on(
         'postgres_changes',
         {
@@ -271,9 +288,8 @@ function SmartWorkflowStatusCell({ booking }: { booking: Booking }) {
           table: 'payment_proofs',
           filter: `booking_id=eq.${booking.id}`
         },
-        (payload) => {
-          console.log('🔄 Workflow payment proof real-time update:', payload);
-          // Refresh payment proof data when changes occur
+        () => {
+          // Refresh payment proof data immediately when changes occur
           fetchPaymentProof();
         }
       )
@@ -282,7 +298,7 @@ function SmartWorkflowStatusCell({ booking }: { booking: Booking }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [booking.id]);
+  }, [booking.id, refreshKey]);
 
   if (loading) {
     return <span className="text-xs text-gray-400">Loading...</span>;
@@ -420,11 +436,13 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
 function PaymentProofButton({ 
   bookingId, 
   onViewProof,
-  variant = 'table'
+  variant = 'table',
+  refreshKey
 }: { 
   bookingId: number;
   onViewProof: (proof: PaymentProof) => void;
   variant?: 'table' | 'modal';
+  refreshKey?: number;
 }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
@@ -450,7 +468,7 @@ function PaymentProofButton({
     };
 
     fetchPaymentProof();
-  }, [bookingId]);
+  }, [bookingId, refreshKey]);
 
   if (loading) {
     if (variant === 'modal') {
@@ -514,6 +532,8 @@ function PaymentProofButton({
         return 'bg-emerald-500 hover:bg-emerald-600';
       case 'rejected':
         return 'bg-slate-500 hover:bg-slate-600';
+      case 'cancelled':
+        return 'bg-gray-400 hover:bg-gray-500';
       default:
         return 'bg-violet-500 hover:bg-violet-600';
     }
@@ -527,6 +547,8 @@ function PaymentProofButton({
         return 'View Proof';
       case 'rejected':
         return 'View Proof';
+      case 'cancelled':
+        return 'Cancelled';
       default:
         return 'View Proof';
     }
@@ -649,6 +671,10 @@ export default function BookingsPage() {
   const [customRejectionReason, setCustomRejectionReason] = useState("");
   const [imageZoomed, setImageZoomed] = useState(false);
   const [newBookingAlert, setNewBookingAlert] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✨ For triggering component refreshes on payment proof updates
+  const [lastRealTimeEvent, setLastRealTimeEvent] = useState<string | null>(null); // Track real-time events
+  const [realTimeStatus, setRealTimeStatus] = useState<'connecting' | 'active' | 'degraded' | 'offline'>('connecting');
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false); // Manual refresh state
   
   // Enhanced rejection reasons for payment proofs
   const rejectionReasons = [
@@ -694,12 +720,11 @@ export default function BookingsPage() {
   // Toast helpers
   const { success, error: showError, warning } = useToastHelpers();
   useEffect(() => {
-    // ✅ OPTIMIZED: Delayed fetch to not block navigation
+    // Delayed fetch to not block navigation
     const timer = setTimeout(() => fetchBookings(), 100);
 
-    // ✅ ENHANCED: Ultra-reliable real-time subscriptions for instant updates
-    console.log('🚀 Setting up ENHANCED real-time bookings system...');
-    console.log('⚡ Real-time mode: INSTANT updates enabled for admin panel');
+    // Set up real-time subscriptions for instant updates
+    setRealTimeStatus('connecting');
     
     // Set up real-time subscription for bookings with enhanced reliability
     const bookingsSubscription = supabase
@@ -716,88 +741,78 @@ export default function BookingsPage() {
           table: 'bookings' 
         },
         (payload) => {
-          console.log('🔄 INSTANT booking change detected:', payload.eventType, payload);
-          console.log('⚡ Payload details:', JSON.stringify(payload, null, 2));
-          
           // Enhanced optimistic updates for instant UI response
           if (payload.eventType === 'UPDATE' && payload.new) {
-            console.log('🔄 Real-time booking UPDATE received:', {
-              bookingId: payload.new.id,
-              oldStatus: payload.old?.status,
-              newStatus: payload.new.status,
-              cancelledBy: payload.new.cancelled_by,
-              cancelledAt: payload.new.cancelled_at
-            });
+            
+            // ⚡ CRITICAL: Show alert for payment proof uploads (status change to pending_verification)
+            if (payload.old?.status === 'pending' && payload.new.status === 'pending_verification') {
+              if (!document.hidden) {
+                success('💸 Payment Proof Uploaded!', `Booking ${payload.new.id} (${payload.new.guest_name}) uploaded payment proof - Ready for review!`);
+                setRefreshTrigger(prev => prev + 1);
+              }
+            }
+            
+            // ⚡ CRITICAL: Handle user cancellation - when booking becomes cancelled, auto-sync payment proof status
+            if (payload.old?.status !== 'cancelled' && payload.new.status === 'cancelled' && payload.new.cancelled_by === 'user') {
+              if (!document.hidden) {
+                warning('🚫 Booking Cancelled', `Booking ${payload.new.id} (${payload.new.guest_name}) was cancelled by the user`);
+                setRefreshTrigger(prev => prev + 1);
+                setTimeout(() => setRefreshTrigger(prev => prev + 1), 500);
+              }
+            }
             
             // Show alert for cancelled bookings
             if (payload.old?.status !== 'cancelled' && payload.new.status === 'cancelled') {
-              console.log('❌ BOOKING CANCELLED ALERT: Guest cancelled booking', payload.new.id);
               if (!document.hidden && payload.new.cancelled_by === 'user') {
                 setNewBookingAlert(`${payload.new.guest_name || 'Guest'} cancelled their booking 💔`);
-                setTimeout(() => {
-                  setNewBookingAlert(null);
-                }, 5000);
+                setTimeout(() => setNewBookingAlert(null), 5000);
               }
             }
             
             // Instantly update the booking with all new data
             setBookings(prevBookings => {
-              const updatedBookings = prevBookings.map(booking => {
+              return prevBookings.map(booking => {
                 if (booking.id === payload.new.id) {
-                  console.log('✅ Updating booking in admin UI:', booking.id, 'Status:', payload.old?.status, '→', payload.new.status);
                   return { 
                     ...booking, 
                     ...payload.new, 
-                    user_exists: booking.user_exists // Preserve existing user_exists flag
+                    user_exists: booking.user_exists
                   };
                 }
                 return booking;
               });
-              
-              console.log('📊 Admin bookings list updated, total bookings:', updatedBookings.length);
-              return updatedBookings;
             });
-          } else if (payload.eventType === 'INSERT' && payload.new) {
-            console.log('🎉 INSTANT NEW BOOKING:', payload.new.id, 'Guest:', payload.new.guest_name);
-            console.log('📋 New booking data:', JSON.stringify(payload.new, null, 2));
             
+            // Force refresh of all payment proof components when booking status changes
+            setRefreshTrigger(prev => prev + 1);
+          } else if (payload.eventType === 'INSERT' && payload.new) {
             // Immediate UI response - Add booking instantly to admin list
             const newBookingWithStatus = {
               ...payload.new,
               user_exists: true // Optimistic user status for instant display
             } as Booking;
             
-            console.log('⚡ Adding booking to admin UI instantly...');
             setBookings(prevBookings => {
               // Prevent duplicates - check if booking already exists
               const existingIndex = prevBookings.findIndex(b => b.id === payload.new.id);
               
               if (existingIndex >= 0) {
-                console.log('🔄 Updating existing booking in admin UI');
                 return prevBookings.map((booking, index) => 
                   index === existingIndex ? newBookingWithStatus : booking
                 );
               } else {
-                console.log('🆕 Adding brand new booking to admin list');
                 // Add new booking and maintain proper sort order (newest first by created_at)
                 const updatedBookings = [newBookingWithStatus, ...prevBookings];
-                const sortedBookings = updatedBookings.sort((a, b) => 
+                return updatedBookings.sort((a, b) => 
                   new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
                 );
-                console.log('📊 Updated admin bookings list, total:', sortedBookings.length);
-                return sortedBookings;
               }
             });
             
             // Show instant visual alert for new bookings
             if (!document.hidden) {
-              console.log('🎉 Showing NEW BOOKING alert to admin');
               setNewBookingAlert(`New booking from ${payload.new.guest_name || 'Guest'}! 🎉`);
-              
-              // Auto-hide alert after 5 seconds
-              setTimeout(() => {
-                setNewBookingAlert(null);
-              }, 5000);
+              setTimeout(() => setNewBookingAlert(null), 5000);
             }
             
             // Verify user status in background (non-blocking and safe)
@@ -827,33 +842,18 @@ export default function BookingsPage() {
             }, 1000);
             
           } else if (payload.eventType === 'DELETE' && payload.old) {
-            console.log('🔄 Booking DELETED received:', {
-              bookingId: payload.old.id,
-              guestName: payload.old.guest_name,
-              status: payload.old.status
-            });
-            
             // Remove deleted booking immediately from admin UI
             setBookings(prevBookings => {
-              const filteredBookings = prevBookings.filter(booking => booking.id !== payload.old.id);
-              console.log('🗑️ Booking removed from admin UI, remaining:', filteredBookings.length);
-              return filteredBookings;
+              return prevBookings.filter(booking => booking.id !== payload.old.id);
             });
           }
         }
       )
       .subscribe((status) => {
-        console.log('📡 ENHANCED Bookings subscription status:', status);
-        
+
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Real-time bookings connection ACTIVE - instant updates enabled!');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time connection error - attempting reconnection...');
-          // Auto-reconnection is handled by Supabase, but we can log it
-        } else if (status === 'TIMED_OUT') {
-          console.warn('⏰ Real-time connection timed out - will retry automatically');
-        } else if (status === 'CLOSED') {
-          console.log('🔒 Real-time connection closed');
+          setRealTimeStatus('active');
+          setLastRealTimeEvent(new Date().toISOString());
         }
       });
 
@@ -877,39 +877,171 @@ export default function BookingsPage() {
         }
       )
       .subscribe((status) => {
-        console.log('📡 Users subscription status:', status);
+
+        if (status === 'SUBSCRIBED') {
+          setRealTimeStatus('active');
+          setLastRealTimeEvent(new Date().toISOString());
+        }
       });
 
-    // Ultra-safe periodic sync for data consistency (every 30 seconds)
-    // This is completely non-interfering and serves as backup to real-time
+    // ✨ NEW: Real-time subscription for payment proofs - INSTANT verification/rejection updates
+    const paymentProofsSubscription = supabase
+      .channel('admin-payment-proofs-realtime', { 
+        config: { 
+          broadcast: { self: true },
+          presence: { key: 'admin-payment-reviews' }
+        } 
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_proofs'
+        },
+        (payload) => {
+
+          
+          if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
+            const { new: newProof, old: oldProof } = payload;
+            
+            console.log(`🔄 ADMIN SUBSCRIPTION: Payment proof UPDATE detected:`, {
+              proofId: newProof.id,
+              bookingId: newProof.booking_id,
+              oldStatus: oldProof.status,
+              newStatus: newProof.status,
+              verifiedBy: newProof.verified_by,
+              adminNotes: newProof.admin_notes
+            });
+            
+            // Check if status changed (verification/rejection)
+            if (oldProof.status !== newProof.status) {
+              console.log(`⚡ Payment proof ${newProof.id} status changed: ${oldProof.status} → ${newProof.status}`);
+              console.log(`📋 Status change details:`, {
+                bookingId: newProof.booking_id,
+                from: oldProof.status,
+                to: newProof.status,
+                changedBy: newProof.verified_by,
+                reason: newProof.admin_notes
+              });
+              
+              // Show instant feedback for payment proof status changes
+              const statusMessages = {
+                verified: { type: 'success', title: '✅ Payment Verified!', message: `Payment proof for booking ${newProof.booking_id} approved` },
+                rejected: { type: 'warning', title: '❌ Payment Rejected', message: `Payment proof for booking ${newProof.booking_id} rejected` },
+                cancelled: { type: 'info', title: '🚫 Payment Cancelled', message: `Payment proof for booking ${newProof.booking_id} cancelled` }
+              };
+              
+              const statusInfo = statusMessages[newProof.status as keyof typeof statusMessages];
+              if (statusInfo) {
+                console.log(`🔔 Showing admin alert: ${statusInfo.title}`);
+                
+                // Show toast notification for instant feedback
+                if (newProof.status === 'verified') {
+                  success(statusInfo.title, statusInfo.message);
+                } else if (newProof.status === 'rejected') {
+                  warning(statusInfo.title, statusInfo.message);
+                } else if (newProof.status === 'cancelled') {
+                  warning(statusInfo.title, statusInfo.message); // Use warning for cancelled status
+                } else {
+                  showError(statusInfo.title, statusInfo.message);
+                }
+              }
+            }
+            
+            // Trigger immediate UI refresh - this will update all payment proof components instantly
+            setRefreshTrigger(prev => prev + 1);
+            
+            // For cancelled status, trigger an additional refresh to ensure UI updates
+            if (newProof.status === 'cancelled') {
+              setTimeout(() => setRefreshTrigger(prev => prev + 1), 100);
+            }
+          }
+          
+          if (payload.eventType === 'INSERT' && payload.new) {
+            setLastRealTimeEvent(new Date().toISOString());
+            success('💸 New Payment Proof!', `Payment proof uploaded for booking ${payload.new.booking_id} - Ready for review!`);
+            
+            // Force immediate workflow status update
+            setRefreshTrigger(prev => prev + 1);
+            
+            // Update the booking in local state immediately for instant UI update
+            setBookings(prevBookings => {
+              return prevBookings.map(booking => {
+                if (booking.id === payload.new.booking_id) {
+                  return {
+                    ...booking,
+                    status: 'pending_verification',
+                    payment_status: 'pending_verification',
+                    updated_at: new Date().toISOString()
+                  };
+                }
+                return booking;
+              });
+            });
+            
+            setTimeout(() => {
+              console.log('🔄 BACKUP: Complete data refresh after 300ms');
+              fetchBookings(false, true); // Silent refresh to sync with database
+            }, 300);
+            
+            setTimeout(() => {
+              console.log('🔄 BACKUP: Final refresh trigger after 500ms');
+              setRefreshTrigger(prev => prev + 1);
+            }, 500);
+            
+            // Additional refresh after 1 second to catch any delayed database updates
+            setTimeout(() => {
+              console.log('🔄 Final refresh to ensure complete synchronization');
+              setRefreshTrigger(prev => prev + 1);
+            }, 1000);
+          }
+          
+          if (payload.eventType === 'DELETE' && payload.old) {
+            console.log('🗑️ Payment proof deleted:', payload.old.booking_id);
+            warning('🗑️ Payment Proof Deleted', `Payment proof for booking ${payload.old.booking_id} was deleted`);
+            setRefreshTrigger(prev => prev + 1);
+          }
+        }
+      )
+      .subscribe((status) => {
+
+        if (status === 'SUBSCRIBED') {
+          // Small delay to ensure all subscriptions are ready
+          setTimeout(() => {
+            setRealTimeStatus('active');
+            setLastRealTimeEvent(new Date().toISOString());
+          }, 100);
+        }
+      });
+
+    // Backup sync system for reliability
     const syncInterval = setInterval(() => {
-      // Only sync under very specific safe conditions
+      const now = Date.now();
+      const timeSinceLastRealTime = lastRealTimeEvent ? now - new Date(lastRealTimeEvent).getTime() : 0;
+      
+      // Only sync if page is active and no recent real-time activity (and we actually have a last event)
       if (!document.hidden && 
           document.hasFocus() && 
           !loading && 
           !refreshing && 
           !isProcessing &&
-          !paymentProofLoading) {
-        
-        console.log('🔄 Safe background sync (backup to real-time)...');
-        // Ultra-silent sync - completely invisible to user, no state changes
+          !paymentProofLoading &&
+          lastRealTimeEvent && 
+          timeSinceLastRealTime > 60000) {
+        setRealTimeStatus('degraded');
         fetchBookings(false, true);
-      } else {
-        console.log('⏸️ Skipping sync - user is busy or page not focused');
       }
     }, 30000); // Every 30 seconds
 
-    // Enhanced visibility change detection for instant updates when admin returns
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('🔄 Admin returned to bookings page, syncing...');
-        fetchBookings(false, true); // Silent sync - completely invisible to user
+        fetchBookings(false, true);
       }
     };
 
     const handleFocus = () => {
-      console.log('🔄 Bookings page gained focus, syncing...');
-      fetchBookings(false, true); // Silent sync - completely invisible to user
+      fetchBookings(false, true);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -917,13 +1049,13 @@ export default function BookingsPage() {
 
     // Cleanup subscriptions on unmount
     return () => {
-      console.log('🧹 Cleaning up real-time subscriptions...');
-      clearTimeout(timer); // ✅ Cleanup timer
-      clearInterval(syncInterval); // ✅ Cleanup sync interval
+      clearTimeout(timer);
+      clearInterval(syncInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
       supabase.removeChannel(bookingsSubscription);
       supabase.removeChannel(usersSubscription);
+      supabase.removeChannel(paymentProofsSubscription);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intentionally empty - setupRealtime should only run once
@@ -987,6 +1119,14 @@ export default function BookingsPage() {
     setCurrentPage(1);
   }, [filteredBookings]);
 
+  // ✨ Refresh data when payment proofs are updated via real-time subscription
+  useEffect(() => {
+    if (refreshTrigger > 0) { // Skip initial render
+      // Force a complete but silent refresh
+      fetchBookings(false, true); // Silent refresh - no loading indicators
+    }
+  }, [refreshTrigger]);
+
   const fetchBookings = async (isRefresh = false, silent = false) => {
     try {
       if (!silent) {
@@ -996,9 +1136,7 @@ export default function BookingsPage() {
           setLoading(true);
         }
       }
-      console.log('🔍 Fetching bookings with optimized queries...');
-      
-      // Step 1: Get all bookings (same as before)
+      // Step 1: Get all bookings
       const { data: bookingsData, error } = await supabase
         .from('bookings')
         .select('*')
@@ -1009,19 +1147,14 @@ export default function BookingsPage() {
         return;
       }
 
-      console.log('📊 Database response:', { data: bookingsData, error });
-      console.log('📈 Number of bookings found:', bookingsData?.length || 0);
-
       // If no bookings, return early
       if (!bookingsData || bookingsData.length === 0) {
-        console.log('✅ No bookings found');
         setBookings([]);
         return;
       }
 
       // Step 2: Get all unique user IDs from bookings
-      const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
-      console.log('👥 Checking existence for', userIds.length, 'unique users');
+      const userIds = Array.from(new Set(bookingsData.map(booking => booking.user_id)));
       
       // Step 3: Single query to check which users exist (MUCH faster than N queries)
       const { data: existingUsers, error: usersError } = await supabase
@@ -1049,9 +1182,32 @@ export default function BookingsPage() {
         user_exists: existingUserIds.has(booking.user_id)
       }));
 
-      console.log('✅ Successfully fetched bookings with user status');
-      console.log('📈 Performance: Checked', userIds.length, 'users in 2 queries instead of', bookingsData.length + 1, 'queries');
-      setBookings(bookingsWithUserStatus as Booking[]);
+      // Step 6: Sort bookings by workflow priority to put payment reviews at the top
+      const sortedBookings = bookingsWithUserStatus.sort((a, b) => {
+        // Get workflow statuses (we'll calculate them here for sorting)
+        const statusA = a.status || 'pending';
+        const statusB = b.status || 'pending';
+        
+        // Priority order: payment reviews > ready to confirm > awaiting payment > confirmed > others
+        const getPriority = (status: string) => {
+          if (status === 'pending_verification') return 1; // Highest priority - needs review
+          if (status === 'pending') return 2; // Second priority - might have payment proof
+          if (status === 'confirmed') return 3; // Third priority
+          return 4; // Lowest priority (cancelled, completed, etc.)
+        };
+        
+        const priorityA = getPriority(statusA);
+        const priorityB = getPriority(statusB);
+        
+        // If priorities are the same, sort by created_at (newest first)
+        if (priorityA === priorityB) {
+          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+        }
+        
+        return priorityA - priorityB;
+      });
+
+      setBookings(sortedBookings as Booking[]);
     } catch (error) {
       console.error('💥 Unexpected error:', error);
     } finally {
@@ -1299,6 +1455,24 @@ export default function BookingsPage() {
     }
   };
 
+  const handleManualRefresh = async () => {
+    if (isManualRefreshing) return;
+    
+    setIsManualRefreshing(true);
+    
+    try {
+      await fetchBookings(true);
+      setLastRealTimeEvent(new Date().toISOString());
+      success('Bookings refreshed successfully');
+    } catch {
+      showError('Failed to refresh bookings. Please try again.');
+    } finally {
+      setTimeout(() => {
+        setIsManualRefreshing(false);
+      }, 500);
+    }
+  };
+
   const handleAdminCancelBooking = async (bookingId: number, shouldRefund: boolean = false) => {
     if (!adminCancellationReason.trim()) {
       warning('Please provide a reason for cancellation');
@@ -1452,6 +1626,81 @@ export default function BookingsPage() {
       )}
       
       <AdminDashboardSummary />
+      
+      {/* Real-time Status Bar */}
+      <div className="bg-white rounded-xl shadow-md mb-4 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Real-time Connection Status */}
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${
+                realTimeStatus === 'active' ? 'bg-green-500' : 
+                realTimeStatus === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+              } ${realTimeStatus === 'active' ? 'animate-pulse' : ''}`}></div>
+              <span className="text-sm font-medium text-gray-700">
+                {realTimeStatus === 'active' ? 'Real-time Active' : 
+                 realTimeStatus === 'degraded' ? 'Sync Mode' : 
+                 realTimeStatus === 'connecting' ? 'Connecting...' : 'Offline Mode'}
+              </span>
+            </div>
+            
+            {/* Last Update Indicator */}
+            <div className="text-xs text-gray-500">
+              {lastRealTimeEvent ? (
+                <>Last update: {new Date(lastRealTimeEvent).toLocaleTimeString()}</>
+              ) : (
+                <>Awaiting updates...</>
+              )}
+            </div>
+            
+            {/* Smart Polling Indicator */}
+            {realTimeStatus === 'degraded' && (
+              <div className="flex items-center gap-1 text-xs text-yellow-600">
+                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Auto-sync active</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Manual Refresh Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleManualRefresh}
+              disabled={isManualRefreshing}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg 
+                className={`w-4 h-4 ${isManualRefreshing ? 'animate-spin' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {isManualRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            
+            {/* System Status Info */}
+            <div className="text-xs text-gray-400">
+              {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
+        
+        {/* Performance Metrics (for development/debugging) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span>Subscriptions: {realTimeStatus === 'active' ? 'Active' : 'Inactive'}</span>
+              <span>Polling: {realTimeStatus === 'degraded' ? 'Enabled' : 'Standby'}</span>
+              <span>Events: {lastRealTimeEvent ? 'Recent' : 'None'}</span>
+            </div>
+          </div>
+        )}
+      </div>
+      
       <div className="bg-white rounded-xl shadow-md p-4">
         {/* Search Bar */}
         <div className="mb-4">
@@ -1700,10 +1949,10 @@ export default function BookingsPage() {
                       </div>
                     </td>
                     <td className="p-3">
-                      <SmartWorkflowStatusCell booking={booking} />
+                      <SmartWorkflowStatusCell booking={booking} refreshKey={refreshTrigger} />
                     </td>
                     <td className="p-3">
-                      <PaymentProofStatusCell bookingId={booking.id} />
+                      <PaymentProofStatusCell bookingId={booking.id} refreshKey={refreshTrigger} />
                     </td>
                     <td className="p-3">
                       <div className="flex flex-col gap-1">
@@ -1722,7 +1971,8 @@ export default function BookingsPage() {
                             onViewProof={(proof) => {
                               setSelectedPaymentProof(proof);
                               setShowPaymentProofModal(true);
-                            }} 
+                            }}
+                            refreshKey={refreshTrigger}
                           />
                         </div>
 
@@ -2017,7 +2267,8 @@ export default function BookingsPage() {
                         onViewProof={(proof) => {
                           setSelectedPaymentProof(proof);
                           setShowPaymentProofModal(true);
-                        }} 
+                        }}
+                        refreshKey={refreshTrigger}
                       />
                     </div>
                     

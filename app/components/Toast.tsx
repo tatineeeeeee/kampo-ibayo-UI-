@@ -176,7 +176,7 @@ const ToastComponent = ({ toast, onRemove }: ToastComponentProps) => {
         </button>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes progress {
           from { width: 100%; }
           to { width: 0%; }

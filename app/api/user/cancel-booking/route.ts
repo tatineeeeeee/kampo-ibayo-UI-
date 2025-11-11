@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createUserCancellationConfirmationEmail, createUserCancellationAdminNotification, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin as supabase } from '@/app/utils/supabaseAdmin';
+
+console.log('🔥 CANCEL BOOKING API ROUTE FILE LOADED 🔥');
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚨🚨🚨 CANCEL BOOKING API CALLED 🚨🚨🚨');
     const body = await request.json();
     const { bookingId, userId, cancellationReason } = body;
+    console.log('📝 Cancel request data:', { bookingId, userId, cancellationReason });
 
     if (!bookingId || !userId) {
       return NextResponse.json(
@@ -108,6 +112,51 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'Failed to update booking status' },
         { status: 500 }
       );
+    }
+
+    // ✨ NEW FEATURE: Auto-cancel any pending payment proofs for this booking
+    console.log(`PAYMENT PROOF AUTO-CANCEL STARTING FOR BOOKING ${bookingId}`);
+    console.log(`Auto-cancelling payment proofs for cancelled booking ${bookingId}`);
+    
+    try {
+      // First, check what payment proofs exist for this booking
+      const { data: existingProofs, error: fetchError } = await supabase
+        .from('payment_proofs')
+        .select('*')
+        .eq('booking_id', bookingId);
+
+      console.log(`📋 Found ${existingProofs?.length || 0} payment proof(s) for booking ${bookingId}:`, existingProofs);
+      
+      if (fetchError) {
+        console.error('❌ Error fetching existing payment proofs:', fetchError);
+      }
+
+      // Update only pending payment proofs to rejected (auto-cancelled)
+      const { data: affectedProofs, error: proofUpdateError } = await supabase
+        .from('payment_proofs')
+        .update({ 
+          status: 'rejected',
+          admin_notes: 'Automatically cancelled due to user booking cancellation',
+          verified_at: philippinesTime.toISOString()
+        })
+        .eq('booking_id', bookingId)
+        .eq('status', 'pending') // Only cancel pending proofs - don't touch verified/rejected ones
+        .select();
+
+      console.log(`🔄 Payment proof update result:`, { affectedProofs, proofUpdateError });
+
+      if (proofUpdateError) {
+        console.error('❌ Failed to update payment proof status:', proofUpdateError);
+        // Don't fail the entire cancellation for this - it's not critical
+      } else if (affectedProofs && affectedProofs.length > 0) {
+        console.log(`✅ Auto-cancelled ${affectedProofs.length} pending payment proof(s) for booking ${bookingId}`);
+        console.log(`📋 Updated payment proofs to rejected status:`, affectedProofs);
+      } else {
+        console.log(`ℹ️ No pending payment proofs found for booking ${bookingId} - nothing to cancel`);
+      }
+    } catch (proofError) {
+      console.error('❌ Payment proof update error:', proofError);
+      // Continue with cancellation - payment proof update failure shouldn't block user cancellation
     }
 
     // Send email notifications only if guest has an email address

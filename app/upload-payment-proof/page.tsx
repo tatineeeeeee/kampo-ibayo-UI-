@@ -250,13 +250,16 @@ function UploadPaymentProofContent() {
       console.log('✅ Payment proof record saved successfully');
       setUploadProgress('Updating booking status...');
 
+      // Add small delay to ensure real-time subscription catches payment proof insert first
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Update booking status (optional - don't block success if this fails)
       try {
+        console.log('🔄 Now updating booking payment status to pending_verification...');
         const { error: updateError } = await supabase
           .from('bookings')
           .update({ 
             payment_status: 'pending_verification',
-            status: 'pending_verification',
             updated_at: new Date().toISOString()
           })
           .eq('id', parseInt(bookingId || '0'))
