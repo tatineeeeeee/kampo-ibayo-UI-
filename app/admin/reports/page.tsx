@@ -156,7 +156,7 @@ export default function ReportsPage() {
         );
         headers = ['Time', 'Guest Name', 'Phone', 'Action Needed', 'Status', 'Notes'];
         rows = todaysActivity.map(booking => [
-          booking.check_in_date === today ? '15:00 (Arrival)' : '11:00 (Departure)',
+          booking.check_in_date === today ? '15:00 (Arrival)' : '13:00 (Departure)',
           booking.guest_name,
           booking.guest_phone || 'No phone provided',
           booking.check_in_date === today ? 'PREPARE RESORT' : 'CLEAN & RESET',

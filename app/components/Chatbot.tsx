@@ -130,7 +130,7 @@ const FAQ_DATABASE: FAQItem[] = [
   {
     keywords: ["check in", "check out", "time", "hours", "arrival"],
     question: "What are check-in/check-out times?",
-    answer: "Check-in: 2:00 PM | Check-out: 12:00 NN. You get a full 22 hours of stay! Early check-in or late check-out may be arranged depending on availability (additional fee may apply)."
+    answer: "Check-in: 3:00 PM | Check-out: 1:00 PM. You get a full 22 hours of stay! Early check-in or late check-out may be arranged depending on availability (additional fee may apply)."
   },
   {
     keywords: ["pet", "dog", "cat", "animal", "pet-friendly"],

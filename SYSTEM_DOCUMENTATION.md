@@ -177,8 +177,8 @@ GMAIL_APP_PASSWORD=your_app_password
 ## Business Integration
 
 ### Resort Operations
-- **Check-in**: 2:00 PM (manual process with digital booking confirmation)
-- **Check-out**: 12:00 PM (triggers cleaning tasks in system)
+- **Check-in**: 3:00 PM (manual process with digital booking confirmation)
+- **Check-out**: 1:00 PM (triggers cleaning tasks in system)
 - **Capacity**: 15 guests maximum (system enforces limit)
 - **Booking Window**: Up to 2 years in advance
 

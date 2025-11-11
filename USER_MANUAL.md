@@ -88,7 +88,7 @@
 
 #### Step 4: Review and Pay
 1. **Review Booking Summary**:
-   - Check-in/Check-out dates and times (2:00 PM - 12:00 PM)
+   - Check-in/Check-out dates and times (3:00 PM - 1:00 PM)
    - Total amount breakdown with detailed pricing
    - Guest count and any additional fees (₱500 per extra guest above 15)
    - Pet accommodation status (no extra charge)

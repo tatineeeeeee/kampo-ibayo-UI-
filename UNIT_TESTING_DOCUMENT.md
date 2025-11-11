@@ -235,7 +235,7 @@
 |-------------------|---------------------------------------|
 | Display real-time availability calendar | |
 | Show check-in, check-out, and occupied dates | |
-| Handle same-day turnover (12 PM checkout, 2 PM check-in) | |
+| Handle same-day turnover (1 PM checkout, 3 PM check-in) | |
 | Prevent bookings for past dates | |
 | Visual indicators for different booking statuses | |
 | Navigate between months and years | |

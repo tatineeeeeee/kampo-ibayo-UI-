@@ -12,11 +12,11 @@ export default function HouseRulesPage() {
       color: "blue",
       rules: [
         {
-          rule: "Check-in Time: 2:00 PM",
+          rule: "Check-in Time: 3:00 PM",
           details: "Early check-in available upon request, subject to availability and room readiness. Please call ahead to confirm."
         },
         {
-          rule: "Check-out Time: 12:00 NN",
+          rule: "Check-out Time: 1:00 PM",
           details: "Late check-out may be available for an additional fee. Must be arranged in advance with management."
         },
         {

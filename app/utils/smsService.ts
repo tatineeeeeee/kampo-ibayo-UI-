@@ -78,7 +78,7 @@ export const createBookingConfirmationSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Dear ${guestName}, your booking ${bookingId} is confirmed! Check-in date: ${checkInDate} at 2:00 PM. Contact us: 09662815123`;
+  const baseMessage = `KAMPO IBAYO RESORT: Dear ${guestName}, your booking ${bookingId} is confirmed! Check-in date: ${checkInDate} at 3:00 PM. Contact us: 09662815123`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -87,7 +87,7 @@ export const createBookingApprovalSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Hi ${guestName}! Great news - booking ${bookingId} approved by admin. Check-in: ${checkInDate} 2PM. We can't wait to see you!`;
+  const baseMessage = `KAMPO IBAYO RESORT: Hi ${guestName}! Great news - booking ${bookingId} approved by admin. Check-in: ${checkInDate} 3PM. We can't wait to see you!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -95,7 +95,7 @@ export const createBookingReminderSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Hello ${guestName}! Friendly reminder: Your amazing stay begins tomorrow ${checkInDate}. Check-in starts at 2PM. Safe travels!`;
+  const baseMessage = `KAMPO IBAYO RESORT: Hello ${guestName}! Friendly reminder: Your amazing stay begins tomorrow ${checkInDate}. Check-in starts at 3PM. Safe travels!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 

@@ -75,7 +75,7 @@ export default function FAQPage() {
       faqs: [
         {
           question: "What are your check-in and check-out times?",
-          answer: "Check-in: 2:00 PM | Check-out: 12:00 NN. Early check-in and late check-out may be available upon request, subject to availability and potential additional charges."
+          answer: "Check-in: 3:00 PM | Check-out: 1:00 PM. Early check-in and late check-out may be available upon request, subject to availability and potential additional charges."
         },
         {
           question: "Are pets allowed at the resort?",

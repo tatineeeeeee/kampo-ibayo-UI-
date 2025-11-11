@@ -44,7 +44,7 @@
 ### Availability Checking
 - [ ] Verify real-time availability calendar display
 - [ ] Test date conflict prevention
-- [ ] Confirm same-day turnover logic (12 PM checkout, 2 PM check-in)
+- [ ] Confirm same-day turnover logic (1 PM checkout, 3 PM check-in)
 - [ ] Test availability for different booking statuses
 - [ ] Verify 2-year advance booking limit
 - [ ] Test past date booking prevention

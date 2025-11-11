@@ -1927,11 +1927,11 @@ function Home() {
                   </p>
                   <p className="flex justify-between">
                     <span>Check-in</span>
-                    <span className="text-blue-400 font-semibold">2:00 PM</span>
+                    <span className="text-blue-400 font-semibold">3:00 PM</span>
                   </p>
                   <p className="flex justify-between">
                     <span>Check-out</span>
-                    <span className="text-orange-400 font-semibold">12:00 NN</span>
+                    <span className="text-orange-400 font-semibold">1:00 PM</span>
                   </p>
                 </div>
               </div>
@@ -2279,7 +2279,7 @@ function Home() {
                           <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-blue-600 flex-shrink-0 mt-1"></span>
                           <div className="min-w-0 flex-1">
                             <div className="text-blue-200 text-base sm:text-lg md:text-xl font-semibold">Check-in Day</div>
-                            <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Guests arrive 2 PM</div>
+                            <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Guests arrive 3 PM</div>
                           </div>
                         </div>
 
@@ -2288,7 +2288,7 @@ function Home() {
                           <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-red-600 flex-shrink-0 mt-1"></span>
                           <div className="min-w-0 flex-1">
                             <div className="text-red-200 text-base sm:text-lg md:text-xl font-semibold">Check-out Day</div>
-                            <div className="text-red-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Available for check-in (guests leave 12 PM)</div>
+                            <div className="text-red-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Available for check-in (guests leave 1 PM)</div>
                           </div>
                         </div>
 
@@ -2325,7 +2325,7 @@ function Home() {
                           <div>
                             <div className="text-green-200 text-sm sm:text-base md:text-lg font-medium mb-1">Same-Day Turnover Available!</div>
                             <div className="text-green-100/90 text-xs sm:text-sm md:text-base leading-relaxed">
-                              You can check-in on red (check-out) days since guests leave at 12 PM and new arrivals start at 2 PM.
+                              You can check-in on red (check-out) days since guests leave at 1 PM and new arrivals start at 3 PM.
                             </div>
                           </div>
                         </div>

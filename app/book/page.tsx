@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -93,10 +93,8 @@ function BookingPage() {
     return () => clearInterval(interval);
   }, [router, warning]);
 
-  // Calculate price based on check-in date (weekday vs weekend/holiday) and guest count
-  const calculatePrice = (checkInDate: Date, guestCount: number = 15) => {
-    const day = checkInDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-    
+  // Calculate price for multi-day bookings with per-day rates
+  const calculateMultiDayPrice = useCallback((checkInDate: Date, checkOutDate: Date, guestCount: number = 15) => {
     // Philippine holidays 2024-2025 (add more as needed)
     const holidays = [
       '2024-12-25', '2024-12-30', '2024-12-31', '2025-01-01', // New Year
@@ -109,20 +107,60 @@ function BookingPage() {
       '2025-12-25', '2025-12-30', '2025-12-31' // Christmas season
     ];
     
-    const dateString = checkInDate.toISOString().split('T')[0];
-    const isHoliday = holidays.includes(dateString);
+    const nights = [];
+    const current = new Date(checkInDate);
+    const end = new Date(checkOutDate);
     
-    // Weekend: Friday (5), Saturday (6), Sunday (0)
-    const isWeekend = day === 0 || day === 5 || day === 6;
+    // Calculate each night's rate
+    while (current < end) {
+      const day = current.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+      const dateString = current.toISOString().split('T')[0];
+      const isHoliday = holidays.includes(dateString);
+      
+      // Weekend: Friday (5), Saturday (6), Sunday (0)
+      const isWeekend = day === 0 || day === 5 || day === 6;
+      
+      // Base rate per night: weekend/holiday or weekday
+      const nightRate = (isWeekend || isHoliday) ? 12000 : 9000;
+      
+      nights.push({
+        date: new Date(current),
+        rate: nightRate,
+        isWeekend: isWeekend || isHoliday,
+        dayName: current.toLocaleDateString('en-US', { weekday: 'short' })
+      });
+      
+      current.setDate(current.getDate() + 1);
+    }
     
-    // Base rate: weekend/holiday or weekday
-    const baseRate = (isWeekend || isHoliday) ? 12000 : 9000;
+    // Calculate total base cost
+    const totalBaseRate = nights.reduce((sum, night) => sum + night.rate, 0);
     
-    // Add excess guest fee: ₱300 per person above 15
-    const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 300 : 0;
+    // Add excess guest fee for entire stay
+    const totalNights = nights.length;
+    const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
     
-    return baseRate + excessGuestFee;
-  };
+    return {
+      nights,
+      totalNights,
+      totalBaseRate,
+      excessGuestFee,
+      totalAmount: totalBaseRate + excessGuestFee,
+      breakdown: {
+        weekdayNights: nights.filter(n => !n.isWeekend).length,
+        weekendNights: nights.filter(n => n.isWeekend).length,
+        weekdayTotal: nights.filter(n => !n.isWeekend).length * 9000,
+        weekendTotal: nights.filter(n => n.isWeekend).length * 12000
+      }
+    };
+  }, []);
+
+  // Legacy single-day price calculation (for backward compatibility)
+  const calculatePrice = useCallback((checkInDate: Date, guestCount: number = 15) => {
+    const nextDay = new Date(checkInDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return calculateMultiDayPrice(checkInDate, nextDay, guestCount).totalAmount;
+  }, [calculateMultiDayPrice]);
 
   // Data loading useEffect  
   useEffect(() => {
@@ -244,19 +282,48 @@ function BookingPage() {
     loadAllData();
   }, [user]);
 
-  // Update price when check-in date or guest count changes
+  // Add pricing breakdown state
+  const [pricingBreakdown, setPricingBreakdown] = useState<{
+    nights: Array<{date: Date, rate: number, isWeekend: boolean, dayName: string}>,
+    totalNights: number,
+    totalBaseRate: number,
+    excessGuestFee: number,
+    totalAmount: number,
+    breakdown: {
+      weekdayNights: number,
+      weekendNights: number,
+      weekdayTotal: number,
+      weekendTotal: number
+    }
+  } | null>(null);
+
+  // Update price when check-in/check-out dates or guest count changes
   useEffect(() => {
-    if (formData.checkIn && formData.guests) {
+    if (formData.checkIn && formData.checkOut && formData.guests) {
+      const guestCount = parseInt(formData.guests) || 15;
+      const pricing = calculateMultiDayPrice(formData.checkIn, formData.checkOut, guestCount);
+      setEstimatedPrice(pricing.totalAmount);
+      setPricingBreakdown(pricing);
+    } else if (formData.checkIn && formData.checkOut) {
+      const pricing = calculateMultiDayPrice(formData.checkIn, formData.checkOut, 15);
+      setEstimatedPrice(pricing.totalAmount);
+      setPricingBreakdown(pricing);
+    } else if (formData.checkIn && formData.guests) {
+      // Single day fallback (if no checkout selected yet)
       const guestCount = parseInt(formData.guests) || 15;
       const price = calculatePrice(formData.checkIn, guestCount);
       setEstimatedPrice(price);
+      setPricingBreakdown(null);
     } else if (formData.checkIn) {
+      // Single day fallback (if no checkout selected yet)
       const price = calculatePrice(formData.checkIn, 15);
       setEstimatedPrice(price);
+      setPricingBreakdown(null);
     } else {
       setEstimatedPrice(null);
+      setPricingBreakdown(null);
     }
-  }, [formData.checkIn, formData.guests]);
+  }, [formData.checkIn, formData.checkOut, formData.guests, calculateMultiDayPrice, calculatePrice]);
 
   // Show loading if auth is still loading or page is loading data
   if (loading || isPageLoading) {
@@ -375,6 +442,7 @@ function BookingPage() {
     return unavailableDates;
   };
   
+  // Enhanced multi-day conflict detection with detailed messaging
   const checkBookingConflict = (checkInDate: Date | null, checkOutDate: Date | null) => {
     if (!checkInDate || !checkOutDate) return { hasConflict: false, message: '' };
 
@@ -394,6 +462,16 @@ function BookingPage() {
       booking.status === 'confirmed' || booking.status === 'pending'
     );
     
+    // Generate all dates in the new booking range (excluding checkout day)
+    const newBookingDates: string[] = [];
+    const current = new Date(checkInDate);
+    const end = new Date(checkOutDate);
+    
+    while (current < end) {
+      newBookingDates.push(formatLocalDate(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
     // 1. Check for exact same date range (prevent double booking)
     for (const booking of activeBookings) {
       const existingCheckIn = new Date(booking.check_in_date);
@@ -411,48 +489,51 @@ function BookingPage() {
       }
     }
     
-    // 2. Check for overlapping stays (guest would be occupying room at same time)
-    // Allow same-day turnover: Guest A checkout 12pm, Guest B checkin 2pm same day = OK
+    // 2. Detailed multi-day overlap detection
+    const conflictingBookings: Array<{booking: Booking, conflictDates: string[]}> = [];
+    
     for (const booking of activeBookings) {
       const existingCheckIn = new Date(booking.check_in_date);
       const existingCheckOut = new Date(booking.check_out_date);
       
-      const newCheckInTime = checkInDate.getTime();
-      const newCheckOutTime = checkOutDate.getTime();
-      const existingCheckInTime = existingCheckIn.getTime();
-      const existingCheckOutTime = existingCheckOut.getTime();
+      // Generate existing booking dates (excluding checkout day)
+      const existingDates: string[] = [];
+      const existingCurrent = new Date(existingCheckIn);
+      const existingEnd = new Date(existingCheckOut);
       
-      // TRUE overlap: dates where guests would be there at the same time
-      // Same-day turnover is allowed (checkout 12pm, new checkin 2pm same day)
-      
-      // Allow same-day turnover: if new check-in is on same day as existing check-out, it's allowed
-      const newCheckInDateStr = formatLocalDate(checkInDate);
-      const existingCheckOutDateStr = formatLocalDate(existingCheckOut);
-      
-      if (newCheckInDateStr === existingCheckOutDateStr) {
-        continue; // Skip this booking, same-day turnover is allowed
+      while (existingCurrent < existingEnd) {
+        existingDates.push(formatLocalDate(existingCurrent));
+        existingCurrent.setDate(existingCurrent.getDate() + 1);
       }
       
-      const hasOverlap = (
-        // New booking starts BEFORE existing booking ends (and not same-day turnover)
-        (newCheckInTime >= existingCheckInTime && newCheckInTime < existingCheckOutTime) ||
-        // New booking ends AFTER existing booking starts (and not same-day turnover)  
-        (newCheckOutTime > existingCheckInTime && newCheckOutTime <= existingCheckOutTime) ||
-        // New booking completely encompasses existing booking
-        (newCheckInTime < existingCheckInTime && newCheckOutTime > existingCheckOutTime)
-      );
+      // Find overlapping dates
+      const overlapping = newBookingDates.filter(date => existingDates.includes(date));
       
-      if (hasOverlap) {
-        const existingCheckInFormatted = existingCheckIn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-        const existingCheckOutFormatted = existingCheckOut.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-        return { 
-          hasConflict: true, 
-          message: `Your dates overlap with an existing booking (${existingCheckInFormatted} to ${existingCheckOutFormatted}). Note: Same-day turnover is allowed (check-out 12pm, check-in 2pm).` 
-        };
+      if (overlapping.length > 0) {
+        conflictingBookings.push({
+          booking,
+          conflictDates: overlapping
+        });
       }
     }
+    
+    // If there are conflicts, create detailed message
+    if (conflictingBookings.length > 0) {
+      const firstConflict = conflictingBookings[0];
+      const conflictStart = new Date(firstConflict.conflictDates[0]);
+      const conflictEnd = new Date(firstConflict.conflictDates[firstConflict.conflictDates.length - 1]);
+      conflictEnd.setDate(conflictEnd.getDate() + 1); // Add one day since we want the end date
+      
+      const existingCheckIn = new Date(firstConflict.booking.check_in_date);
+      const existingCheckOut = new Date(firstConflict.booking.check_out_date);
+      
+      return {
+        hasConflict: true,
+        message: `Your booking conflicts with an existing reservation. The dates ${conflictStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${conflictEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} overlap with a booking from ${existingCheckIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${existingCheckOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. Please choose different dates or adjust your stay duration.`
+      };
+    }
 
-    // 3. Check check-in capacity (max 2 check-ins per day)
+    // 3. Check check-in capacity (max 2 check-ins per day) - enhanced for multi-day
     const checkInCounts = new Map<string, number>();
     
     activeBookings.forEach(booking => {
@@ -482,6 +563,14 @@ function BookingPage() {
     >
   ) => {
     const { name, type, value } = e.target;
+    
+    // Prevent changes to read-only profile fields for security
+    const readOnlyFields = ['name', 'email', 'phone'];
+    if (readOnlyFields.includes(name)) {
+      console.warn(`Attempted to modify read-only field: ${name}`);
+      return; // Block any changes to profile fields
+    }
+    
     let fieldValue: string | boolean = value;
     if (type === "checkbox" && e.target instanceof HTMLInputElement) {
       fieldValue = e.target.checked;
@@ -510,21 +599,28 @@ function BookingPage() {
       return;
     }
     
-    // Validate all required fields
+    // Validate all required fields (name and email are auto-populated from profile)
     if (!formData.name.trim()) {
-      showError('Missing Information', 'Please enter your full name');
+      showError('Profile Information Missing', 'Your profile name is required. Please update your profile first.');
       setIsSubmitting(false);
       return;
     }
     
     if (!formData.email.trim()) {
-      showError('Missing Information', 'Please enter your email address');
+      showError('Profile Information Missing', 'Your profile email is required. Please update your profile first.');
       setIsSubmitting(false);
       return;
     }
     
     if (!formData.guests) {
       showError('Missing Information', 'Please select number of guests');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Validate guest count doesn't exceed capacity
+    if (parseInt(formData.guests) > 100) {
+      showError('Guest Limit Exceeded', 'Maximum capacity is 100 guests. Please contact us directly for larger events.');
       setIsSubmitting(false);
       return;
     }
@@ -543,6 +639,21 @@ function BookingPage() {
       return;
     }
     
+    // Validate maximum stay duration (30 days)
+    const daysDifference = Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDifference > 30) {
+      showError('Stay Too Long', 'Maximum stay is 30 nights. For longer stays, please contact us directly.');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Validate minimum stay duration (1 night)
+    if (daysDifference < 1) {
+      showError('Invalid Stay', 'Minimum stay is 1 night. Please select at least one night.');
+      setIsSubmitting(false);
+      return;
+    }
+    
     // Check for booking conflicts
     const conflictCheck = checkBookingConflict(formData.checkIn, formData.checkOut);
     if (conflictCheck.hasConflict) {
@@ -551,8 +662,9 @@ function BookingPage() {
       return;
     }
     
-    // Calculate dynamic price based on check-in date and guest count
-    const totalAmount = calculatePrice(formData.checkIn!, parseInt(formData.guests));
+    // Calculate dynamic price based on multi-day stay and guest count
+    const pricing = calculateMultiDayPrice(formData.checkIn!, formData.checkOut!, parseInt(formData.guests));
+    const totalAmount = pricing.totalAmount;
     const paymentAmount = paymentType === 'half' ? Math.round(totalAmount * 0.5) : totalAmount;
     
     // Fix timezone issue - use local date strings instead of UTC
@@ -563,8 +675,8 @@ function BookingPage() {
       return `${year}-${month}-${day}`;
     };
     
-    const checkInDateTime = `${formatLocalDate(formData.checkIn!)}T14:00:00`; // 2 PM
-    const checkOutDateTime = `${formatLocalDate(formData.checkOut!)}T12:00:00`; // 12 PM
+    const checkInDateTime = `${formatLocalDate(formData.checkIn!)}T15:00:00`; // 3 PM
+    const checkOutDateTime = `${formatLocalDate(formData.checkOut!)}T13:00:00`; // 1 PM
     
     const bookingData = {
       user_id: user.id,
@@ -1438,7 +1550,7 @@ function BookingPage() {
               <h2 className="text-2xl font-bold text-white">Guest Details</h2>
             </div>
             
-            {/* Full Name */}
+            {/* Full Name - Read Only */}
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-300">
                 Full Name <span className="text-red-500">*</span>
@@ -1447,18 +1559,13 @@ function BookingPage() {
               type="text"
               name="name"
               value={formData.name}
-              onChange={handleChange}
-              className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 ${
-                formData.name 
-                  ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
-                  : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
-              } placeholder-gray-500`}
-              required
-               placeholder="Enter your full name"
+              readOnly
+              className="w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 bg-gray-700/50 border-gray-600 text-gray-300 cursor-not-allowed placeholder-gray-500"
+              placeholder="Loading from your profile..."
             />
             </div>
 
-            {/* Email + Mobile */}
+            {/* Email + Mobile - Read Only */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-gray-300">
@@ -1468,14 +1575,9 @@ function BookingPage() {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
-                className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 ${
-                  formData.email 
-                    ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
-                    : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
-                } placeholder-gray-500`}
-                required
-                placeholder="you@example.com"
+                readOnly
+                className="w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 bg-gray-700/50 border-gray-600 text-gray-300 cursor-not-allowed placeholder-gray-500"
+                placeholder="Loading from your profile..."
               />
               </div>
               <div>
@@ -1486,13 +1588,9 @@ function BookingPage() {
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
-                className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 ${
-                  formData.phone 
-                    ? 'bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white' 
-                    : 'bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white'
-                } placeholder-gray-500`}
-                placeholder="+63 912 345 6789"              
+                readOnly
+                className="w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 bg-gray-700/50 border-gray-600 text-gray-300 cursor-not-allowed placeholder-gray-500"
+                placeholder="Loading from your profile..."              
               />
               </div>
             </div>
@@ -1504,7 +1602,7 @@ function BookingPage() {
               </label>
               <div className="mb-3 p-3 bg-blue-900/20 border border-blue-600/40 rounded-lg">
                 <p className="text-xs text-blue-200">
-                  ℹ️ <span className="font-semibold">Standard:</span> 15 guests · ₱300/person for extras
+                  ℹ️ <span className="font-semibold">Standard:</span> Up to 15 guests included · ₱300/night per extra guest · Max 100 guests
                 </p>
               </div>
               
@@ -1520,7 +1618,7 @@ function BookingPage() {
                   }`}
                 >
                   <div className="text-3xl font-bold text-white">8</div>
-                  <div className="text-xs text-gray-300 mt-1">guests</div>
+                  <div className="text-xs text-gray-300 mt-1">Small</div>
                 </button>
                 <button
                   type="button"
@@ -1536,15 +1634,15 @@ function BookingPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, guests: "25" })}
+                  onClick={() => setFormData({ ...formData, guests: "30" })}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    formData.guests === "25"
+                    formData.guests === "30"
                       ? 'bg-red-600 border-red-500 shadow-lg shadow-red-500/30'
                       : 'bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800'
                   }`}
                 >
-                  <div className="text-3xl font-bold text-white">25</div>
-                  <div className="text-xs text-yellow-400 mt-1">Maximum</div>
+                  <div className="text-3xl font-bold text-white">30</div>
+                  <div className="text-xs text-yellow-400 mt-1">Large</div>
                 </button>
               </div>
 
@@ -1579,12 +1677,12 @@ function BookingPage() {
                   type="button"
                   onClick={() => {
                     const current = parseInt(formData.guests) || 0;
-                    if (current < 25) {
+                    if (current < 100) {
                       setFormData({ ...formData, guests: String(current + 1) });
                     }
                   }}
                   className="w-10 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!!(formData.guests && parseInt(formData.guests) >= 25)}
+                  disabled={!!(formData.guests && parseInt(formData.guests) >= 100)}
                 >
                   +
                 </button>
@@ -1795,6 +1893,27 @@ function BookingPage() {
                   calendarClassName="inline-calendar"
                 />
               </div>
+              
+              {/* Multi-day booking instructions */}
+              <div className="mt-3 p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">ℹ</span>
+                  </div>
+                  <span className="text-blue-300 text-sm font-medium">Multi-Day Booking</span>
+                </div>
+                <p className="text-blue-200 text-xs leading-relaxed">
+                  Select your <strong>check-in</strong> and <strong>check-out</strong> dates to book multiple nights. 
+                  Rates: <span className="text-blue-100">₱9,000/night (Mon-Thu)</span> • <span className="text-blue-100">₱12,000/night (Fri-Sun, Holidays)</span>
+                  {formData.checkIn && formData.checkOut && pricingBreakdown && (
+                    <span className="block mt-1 text-blue-100">
+                      → Your stay: <strong>{pricingBreakdown.totalNights} nights</strong> • 
+                      Total: <strong>₱{pricingBreakdown.totalAmount.toLocaleString()}</strong>
+                    </span>
+                  )}
+                </p>
+              </div>
+              
               <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-green-600"></span>
@@ -1873,19 +1992,65 @@ function BookingPage() {
                     <p className="text-white font-semibold text-sm">
                       {formData.checkIn ? formData.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Select date'}
                     </p>
-                    <p className="text-xs text-green-400 mt-0.5">● 2:00 PM</p>
+                    <p className="text-xs text-green-400 mt-0.5">● 3:00 PM</p>
                   </div>
                   <div className="p-2.5 bg-gray-800/50 rounded-lg">
                     <p className="text-xs text-gray-400 mb-1">Check-out</p>
                     <p className="text-white font-semibold text-sm">
                       {formData.checkOut ? formData.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Select date'}
                     </p>
-                    <p className="text-xs text-orange-400 mt-0.5">● 12:00 PM</p>
+                    <p className="text-xs text-orange-400 mt-0.5">● 1:00 PM</p>
                   </div>
                 </div>
 
-                {estimatedPrice && formData.checkIn ? (
+                {estimatedPrice && formData.checkIn && formData.checkOut && pricingBreakdown ? (
                   <>
+                    {/* Multi-day pricing breakdown */}
+                    <div className="p-3 bg-gray-800/50 rounded-lg mb-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-300 text-sm font-medium">Stay Duration:</span>
+                        <span className="text-white font-semibold text-sm">
+                          {pricingBreakdown.totalNights} {pricingBreakdown.totalNights === 1 ? 'Night' : 'Nights'}
+                        </span>
+                      </div>
+                      
+                      {/* Detailed breakdown */}
+                      <div className="space-y-1.5 text-xs">
+                        {pricingBreakdown.breakdown.weekdayNights > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">
+                              📅 Weekdays ({pricingBreakdown.breakdown.weekdayNights} nights × ₱9,000)
+                            </span>
+                            <span className="text-gray-200">
+                              ₱{pricingBreakdown.breakdown.weekdayTotal.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {pricingBreakdown.breakdown.weekendNights > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">
+                              🌴 Weekends/Holidays ({pricingBreakdown.breakdown.weekendNights} nights × ₱12,000)
+                            </span>
+                            <span className="text-gray-200">
+                              ₱{pricingBreakdown.breakdown.weekendTotal.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-2 pt-2 border-t border-gray-600">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300 text-sm font-medium">Base Rate Total:</span>
+                          <span className="text-white font-semibold">
+                            ₱{pricingBreakdown.totalBaseRate.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : estimatedPrice && formData.checkIn ? (
+                  <>
+                    {/* Single day or incomplete selection */}
                     <div className="flex justify-between items-center p-2.5 bg-gray-800/50 rounded-lg">
                       <span className="text-gray-300 text-sm font-medium">Rate Type:</span>
                       <span className="text-white font-semibold text-sm">
@@ -1915,12 +2080,21 @@ function BookingPage() {
                           ? 'text-yellow-400'
                           : 'text-white'
                       }`}>
-                        {formData.guests && parseInt(formData.guests) > 15 
+                        {formData.guests && parseInt(formData.guests) > 15 && pricingBreakdown
+                          ? `+₱${pricingBreakdown.excessGuestFee.toLocaleString()}`
+                          : formData.guests && parseInt(formData.guests) > 15
                           ? `+₱${((parseInt(formData.guests) - 15) * 300).toLocaleString()}`
                           : '₱0'
                         }
                       </span>
                     </div>
+                    
+                    {/* Show per-night breakdown for extra guests if multi-day */}
+                    {formData.guests && parseInt(formData.guests) > 15 && pricingBreakdown && pricingBreakdown.totalNights > 1 && (
+                      <div className="text-xs text-yellow-300 bg-yellow-900/10 p-2 rounded">
+                        ℹ️ Extra guest fee: ₱300 × {parseInt(formData.guests) - 15} guests × {pricingBreakdown.totalNights} nights
+                      </div>
+                    )}
                     <div className="pt-3 mt-2 border-t-2 border-gray-700 space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-lg font-bold text-white">Total Amount:</span>

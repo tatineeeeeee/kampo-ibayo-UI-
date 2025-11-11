@@ -996,8 +996,8 @@ export const createBookingConfirmedEmail = (bookingDetails: BookingDetails): Ema
           </h4>
           <ul class="info-list">
             <li><strong>Valid government-issued ID</strong> required for check-in</li>
-            <li><strong>Check-in time:</strong> 2:00 PM onwards</li>
-            <li><strong>Check-out time:</strong> 12:00 PM (noon)</li>
+            <li><strong>Check-in time:</strong> 3:00 PM onwards</li>
+            <li><strong>Check-out time:</strong> 1:00 PM</li>
             <li><strong>Payment:</strong> Full payment required upon arrival</li>
             <li><strong>Confirmation:</strong> Please bring this email (print or mobile)</li>
           </ul>

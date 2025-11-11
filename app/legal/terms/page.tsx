@@ -101,7 +101,7 @@ export default function TermsPage() {
                 <li>Remaining balance is due upon check-in</li>
                 <li>Bookings are confirmed only after deposit payment and written confirmation</li>
                 <li>Maximum occupancy is 15 guests; additional guests subject to approval and fees</li>
-                <li>Check-in: 2:00 PM | Check-out: 12:00 NN (strictly enforced)</li>
+                <li>Check-in: 3:00 PM | Check-out: 1:00 PM (strictly enforced)</li>
               </ul>
             </div>
 
