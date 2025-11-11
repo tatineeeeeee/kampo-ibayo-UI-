@@ -250,29 +250,39 @@ function UploadPaymentProofContent() {
       console.log('✅ Payment proof record saved successfully');
       setUploadProgress('Updating booking status...');
 
-      // Add small delay to ensure real-time subscription catches payment proof insert first
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Update booking status (optional - don't block success if this fails)
+      // CRITICAL: Update booking to trigger real-time admin updates
       try {
-        console.log('🔄 Now updating booking payment status to pending_verification...');
-        const { error: updateError } = await supabase
+        console.log('🔄 Now updating booking payment status to payment_review...');
+        console.log('🔍 Update parameters:', {
+          bookingId: parseInt(bookingId || '0'),
+          userId: authUser?.id,
+          updateData: {
+            payment_status: 'payment_review', // This indicates payment proof needs review
+            updated_at: new Date().toISOString()
+          }
+        });
+        
+        const { data: updateData, error: updateError } = await supabase
           .from('bookings')
           .update({ 
-            payment_status: 'pending_verification',
+            // Keep status as 'pending' but update payment_status to indicate payment proof uploaded
+            payment_status: 'payment_review', // This will trigger admin real-time subscription
             updated_at: new Date().toISOString()
           })
           .eq('id', parseInt(bookingId || '0'))
-          .eq('user_id', authUser?.id || ''); // Ensure user can only update their own booking
+          .eq('user_id', authUser?.id || '') // Ensure user can only update their own booking
+          .select(); // Add select to return updated data for verification
 
         if (updateError) {
-          console.warn('⚠️ Could not update booking status, but payment proof was uploaded successfully:', updateError);
+          console.error('❌ Booking payment status update failed:', updateError);
+          console.warn('⚠️ Could not update booking payment status, but payment proof was uploaded successfully:', updateError);
           // This is not critical - admin can update status manually when reviewing proof
         } else {
-          console.log('✅ Booking status updated successfully');
+          console.log('✅ Booking payment status updated successfully - Admin should see real-time update now!');
+          console.log('📋 Updated booking data:', updateData);
         }
       } catch (updateErr) {
-        console.warn('⚠️ Booking status update failed, but payment proof upload was successful:', updateErr);
+        console.warn('⚠️ Booking payment status update failed, but payment proof upload was successful:', updateErr);
         // Continue with success flow - payment proof is the important part
       }
 

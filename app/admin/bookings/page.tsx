@@ -35,20 +35,48 @@ interface PaymentProof {
 // Smart booking workflow status that considers both booking and payment proof
 function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | null) {
   const bookingStatus = booking.status || 'pending';
+  const paymentStatus = booking.payment_status || 'pending';
   const proofStatus = paymentProof?.status || null;
 
-  // Determine the current workflow step
-  if (bookingStatus === 'pending' || bookingStatus === 'pending_verification') {
-    if (!paymentProof) {
+  // Handle USER cancellations FIRST - these should show as "Cancelled" and block payments
+  if (bookingStatus === 'cancelled' && booking.cancelled_by === 'user') {
+    return {
+      step: 'user_cancelled',
+      priority: 0,
+      badge: 'bg-gray-100 text-gray-800',
+      text: 'Cancelled',
+      description: 'Booking cancelled by guest',
+      actionNeeded: 'None - booking cancelled by guest'
+    };
+  }
+
+  // Handle ADMIN cancellations - full booking cancellation by admin
+  if (bookingStatus === 'cancelled' && booking.cancelled_by === 'admin') {
+    return {
+      step: 'admin_cancelled',
+      priority: 6,
+      badge: 'bg-red-100 text-red-800',
+      text: 'Admin Cancelled',
+      description: 'Booking cancelled by administrator',
+      actionNeeded: 'None - booking cancelled by admin'
+    };
+  }
+
+  // Handle active booking payment workflow
+  if (bookingStatus === 'pending' || bookingStatus === 'pending_verification' || paymentStatus === 'payment_review' || paymentStatus === 'rejected') {
+    // First check if payment proof was rejected BY ADMIN - this should take priority
+    if (proofStatus === 'rejected' || paymentStatus === 'rejected') {
       return {
-        step: 'awaiting_payment',
-        priority: 4,
-        badge: 'bg-orange-100 text-orange-800',
-        text: 'Awaiting Payment',
-        description: 'Guest needs to upload payment proof',
-        actionNeeded: 'Remind guest to upload payment'
+        step: 'payment_rejected',
+        priority: 6,
+        badge: 'bg-red-100 text-red-800',
+        text: 'Payment Rejected',
+        description: 'Payment proof was rejected by admin',
+        actionNeeded: 'Guest needs to upload new payment proof or booking should be cancelled'
       };
-    } else if (proofStatus === 'pending') {
+    }
+    // Check if payment is under review (payment proof uploaded and pending)
+    else if (paymentStatus === 'payment_review' || proofStatus === 'pending') {
       return {
         step: 'payment_review',
         priority: 5,
@@ -57,7 +85,8 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         description: 'Payment proof uploaded, admin review needed',
         actionNeeded: 'Review payment proof immediately'
       };
-    } else if (proofStatus === 'verified') {
+    } 
+    else if (proofStatus === 'verified') {
       return {
         step: 'ready_to_confirm',
         priority: 3,
@@ -66,26 +95,19 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         description: 'Payment verified, booking can now be confirmed',
         actionNeeded: 'Click Confirm button to finalize booking'
       };
-    } else if (proofStatus === 'rejected') {
+    }
+    else if (!paymentProof) {
       return {
-        step: 'payment_failed',
+        step: 'awaiting_payment',
         priority: 4,
-        badge: 'bg-red-100 text-red-800',
-        text: 'Payment Rejected',
-        description: 'Payment proof rejected, guest needs to resubmit',
-        actionNeeded: 'Contact guest for new payment proof'
-      };
-    } else if (proofStatus === 'cancelled') {
-      return {
-        step: 'payment_cancelled',
-        priority: 1,
-        badge: 'bg-gray-100 text-gray-600',
-        text: 'Payment Cancelled',
-        description: 'Payment proof cancelled (likely due to booking cancellation)',
-        actionNeeded: 'None - check booking status'
+        badge: 'bg-orange-100 text-orange-800',
+        text: 'Awaiting Payment',
+        description: 'Guest needs to upload payment proof',
+        actionNeeded: 'Remind guest to upload payment'
       };
     }
-  } else if (bookingStatus === 'confirmed') {
+  }
+  else if (bookingStatus === 'confirmed') {
     if (proofStatus === 'verified') {
       return {
         step: 'completed',
@@ -107,17 +129,20 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
     }
   }
 
+  // Handle any remaining cancelled bookings (fallback case)
+  if (bookingStatus === 'cancelled') {
+    return {
+      step: 'cancelled',
+      priority: 0,
+      badge: 'bg-gray-100 text-gray-800',
+      text: 'Cancelled',
+      description: 'Booking has been cancelled',
+      actionNeeded: 'None - booking cancelled'
+    };
+  }
+
   // Standard states
   switch (bookingStatus) {
-    case 'cancelled':
-      return {
-        step: 'cancelled',
-        priority: 0,
-        badge: 'bg-gray-100 text-gray-800',
-        text: 'Cancelled',
-        description: 'Booking has been cancelled',
-        actionNeeded: 'None - archived'
-      };
     case 'completed':
       return {
         step: 'completed',
@@ -140,7 +165,7 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
 }
 
 // Combined component - shows status AND action button
-function PaymentProofStatusCell({ bookingId, refreshKey }: { bookingId: number; refreshKey?: number }) {
+function PaymentProofStatusCell({ booking, refreshKey }: { booking: Booking; refreshKey?: number }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -150,11 +175,15 @@ function PaymentProofStatusCell({ bookingId, refreshKey }: { bookingId: number; 
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('*')
-          .eq('booking_id', bookingId)
+          .eq('booking_id', booking.id)
           .order('uploaded_at', { ascending: false })
           .limit(1);
 
-        if (error) throw error;
+        if (error) {
+          console.error(`❌ PaymentProofStatusCell: Error fetching payment proof for booking ${booking.id}:`, error);
+          throw error;
+        }
+        
         const proof = data && data.length > 0 ? data[0] : null;
         setPaymentProof(proof);
       } catch (error) {
@@ -169,14 +198,14 @@ function PaymentProofStatusCell({ bookingId, refreshKey }: { bookingId: number; 
 
     // Set up real-time subscription for payment proof updates
     const subscription = supabase
-      .channel(`payment_proof_${bookingId}_${refreshKey || 0}`)
+      .channel(`payment_proof_cell_${booking.id}_${refreshKey || 0}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'payment_proofs',
-          filter: `booking_id=eq.${bookingId}`
+          filter: `booking_id=eq.${booking.id}`
         },
         () => {
           // Refresh payment proof data when changes occur
@@ -188,12 +217,57 @@ function PaymentProofStatusCell({ bookingId, refreshKey }: { bookingId: number; 
     return () => {
       subscription.unsubscribe();
     };
-  }, [bookingId, refreshKey]); // ✅ Dependencies include bookingId and refreshKey for instant updates
+  }, [booking.id, booking.payment_status, refreshKey]); // ✅ Dependencies include booking.id, payment_status and refreshKey for instant updates
 
   if (loading) {
     return (
       <div className="flex items-center justify-center">
         <span className="text-xs text-gray-400">...</span>
+      </div>
+    );
+  }
+
+  // Priority check: If there's a payment proof with pending status, show Review
+  if (paymentProof && paymentProof.status === 'pending') {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">
+          Review
+        </span>
+      </div>
+    );
+  }
+
+  // Check if payment proof was rejected OR if booking was cancelled by user
+  if ((paymentProof && paymentProof.status === 'rejected') || 
+      (booking.status === 'cancelled' && booking.cancelled_by === 'user')) {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold">
+          Rejected
+        </span>
+      </div>
+    );
+  }
+
+  // Check if payment proof was verified
+  if (paymentProof && paymentProof.status === 'verified') {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">
+          Verified
+        </span>
+      </div>
+    );
+  }
+
+  // Secondary check: If booking payment_status indicates review needed but no proof found yet
+  if (booking.payment_status === 'payment_review' && !paymentProof) {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">
+          Review
+        </span>
       </div>
     );
   }
@@ -264,7 +338,11 @@ function SmartWorkflowStatusCell({ booking, refreshKey }: { booking: Booking; re
           .order('uploaded_at', { ascending: false })
           .limit(1);
 
-        if (error) throw error;
+        if (error) {
+          console.error(`❌ SmartWorkflowStatusCell: Error fetching payment proof for booking ${booking.id}:`, error);
+          throw error;
+        }
+        
         const proof = data && data.length > 0 ? data[0] : null;
         setPaymentProof(proof);
       } catch (error) {
@@ -298,7 +376,7 @@ function SmartWorkflowStatusCell({ booking, refreshKey }: { booking: Booking; re
     return () => {
       subscription.unsubscribe();
     };
-  }, [booking.id, refreshKey]);
+  }, [booking.id, booking.status, refreshKey]);
 
   if (loading) {
     return <span className="text-xs text-gray-400">Loading...</span>;
@@ -330,10 +408,15 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
           .order('uploaded_at', { ascending: false })
           .limit(1);
 
-        if (error) throw error;
-        setPaymentProof(data && data.length > 0 ? data[0] : null);
+        if (error) {
+          console.error(`❌ SmartConfirmButton: Error fetching payment proof for booking ${booking.id}:`, error);
+          throw error;
+        }
+        
+        const proof = data && data.length > 0 ? data[0] : null;
+        setPaymentProof(proof);
       } catch (error) {
-        console.error('Error fetching payment proof:', error);
+        console.error('SmartConfirmButton: Error fetching payment proof:', error);
         setPaymentProof(null);
       } finally {
         setLoading(false);
@@ -744,8 +827,8 @@ export default function BookingsPage() {
           // Enhanced optimistic updates for instant UI response
           if (payload.eventType === 'UPDATE' && payload.new) {
             
-            // ⚡ CRITICAL: Show alert for payment proof uploads (status change to pending_verification)
-            if (payload.old?.status === 'pending' && payload.new.status === 'pending_verification') {
+            // ⚡ CRITICAL: Show alert for payment proof uploads (payment_status change to payment_review)
+            if (payload.old?.payment_status !== 'payment_review' && payload.new.payment_status === 'payment_review') {
               if (!document.hidden) {
                 success('💸 Payment Proof Uploaded!', `Booking ${payload.new.id} (${payload.new.guest_name}) uploaded payment proof - Ready for review!`);
                 setRefreshTrigger(prev => prev + 1);
@@ -867,9 +950,7 @@ export default function BookingsPage() {
           schema: 'public',
           table: 'users'
         },
-        (payload) => {
-          console.log('🔄 Real-time user change detected:', payload.eventType, payload);
-          
+        () => {
           // When users are added/deleted, refresh bookings to update user_exists status
           setTimeout(() => {
             fetchBookings(false, true); // Silent sync - won't show loading state
@@ -905,26 +986,8 @@ export default function BookingsPage() {
           if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
             const { new: newProof, old: oldProof } = payload;
             
-            console.log(`🔄 ADMIN SUBSCRIPTION: Payment proof UPDATE detected:`, {
-              proofId: newProof.id,
-              bookingId: newProof.booking_id,
-              oldStatus: oldProof.status,
-              newStatus: newProof.status,
-              verifiedBy: newProof.verified_by,
-              adminNotes: newProof.admin_notes
-            });
-            
             // Check if status changed (verification/rejection)
             if (oldProof.status !== newProof.status) {
-              console.log(`⚡ Payment proof ${newProof.id} status changed: ${oldProof.status} → ${newProof.status}`);
-              console.log(`📋 Status change details:`, {
-                bookingId: newProof.booking_id,
-                from: oldProof.status,
-                to: newProof.status,
-                changedBy: newProof.verified_by,
-                reason: newProof.admin_notes
-              });
-              
               // Show instant feedback for payment proof status changes
               const statusMessages = {
                 verified: { type: 'success', title: '✅ Payment Verified!', message: `Payment proof for booking ${newProof.booking_id} approved` },
@@ -934,8 +997,6 @@ export default function BookingsPage() {
               
               const statusInfo = statusMessages[newProof.status as keyof typeof statusMessages];
               if (statusInfo) {
-                console.log(`🔔 Showing admin alert: ${statusInfo.title}`);
-                
                 // Show toast notification for instant feedback
                 if (newProof.status === 'verified') {
                   success(statusInfo.title, statusInfo.message);
@@ -960,19 +1021,28 @@ export default function BookingsPage() {
           
           if (payload.eventType === 'INSERT' && payload.new) {
             setLastRealTimeEvent(new Date().toISOString());
-            success('💸 New Payment Proof!', `Payment proof uploaded for booking ${payload.new.booking_id} - Ready for review!`);
             
-            // Force immediate workflow status update
-            setRefreshTrigger(prev => prev + 1);
+            // Show immediate visual alert for new payment proof
+            if (!document.hidden) {
+              success('🎉 Payment Proof Uploaded!', `New payment proof received for booking ${payload.new.booking_id} - Ready for review!`);
+              
+              // Also show browser notification if permitted
+              if (Notification.permission === 'granted') {
+                new Notification('New Payment Proof Uploaded!', {
+                  body: `Booking ${payload.new.booking_id} uploaded payment proof`,
+                  icon: '/favicon.ico',
+                  tag: `payment-proof-${payload.new.booking_id}`
+                });
+              }
+            }
             
-            // Update the booking in local state immediately for instant UI update
+            // INSTANT UI updates - Update booking to show "Payment Review" status immediately
             setBookings(prevBookings => {
               return prevBookings.map(booking => {
                 if (booking.id === payload.new.booking_id) {
                   return {
                     ...booking,
-                    status: 'pending_verification',
-                    payment_status: 'pending_verification',
+                    payment_status: 'payment_review', 
                     updated_at: new Date().toISOString()
                   };
                 }
@@ -980,38 +1050,40 @@ export default function BookingsPage() {
               });
             });
             
+            // Force immediate UI refresh for all payment proof components
+            setRefreshTrigger(prev => prev + 1);
+            
+            // Immediate second update to ensure UI components catch the change
             setTimeout(() => {
-              console.log('🔄 BACKUP: Complete data refresh after 300ms');
-              fetchBookings(false, true); // Silent refresh to sync with database
+              setRefreshTrigger(prev => prev + 1);
+            }, 100);
+            
+            // Third update to ensure all components are synchronized
+            setTimeout(() => {
+              setRefreshTrigger(prev => prev + 1);
             }, 300);
             
+            // Background sync to ensure database consistency
             setTimeout(() => {
-              console.log('🔄 BACKUP: Final refresh trigger after 500ms');
-              setRefreshTrigger(prev => prev + 1);
+              fetchBookings(false, true); // Silent refresh to sync with database
             }, 500);
-            
-            // Additional refresh after 1 second to catch any delayed database updates
-            setTimeout(() => {
-              console.log('🔄 Final refresh to ensure complete synchronization');
-              setRefreshTrigger(prev => prev + 1);
-            }, 1000);
           }
           
           if (payload.eventType === 'DELETE' && payload.old) {
-            console.log('🗑️ Payment proof deleted:', payload.old.booking_id);
             warning('🗑️ Payment Proof Deleted', `Payment proof for booking ${payload.old.booking_id} was deleted`);
             setRefreshTrigger(prev => prev + 1);
           }
         }
       )
       .subscribe((status) => {
-
         if (status === 'SUBSCRIBED') {
-          // Small delay to ensure all subscriptions are ready
-          setTimeout(() => {
-            setRealTimeStatus('active');
-            setLastRealTimeEvent(new Date().toISOString());
-          }, 100);
+          setRealTimeStatus('active');
+          setLastRealTimeEvent(new Date().toISOString());
+          
+          // Request notification permission if not already granted
+          if (Notification.permission === 'default') {
+            Notification.requestPermission();
+          }
         }
       });
 
@@ -1104,6 +1176,14 @@ export default function BookingsPage() {
       });
     }
     
+    // Special sorting for cancelled filter - show most recent cancellations first
+    if (statusFilter === 'cancelled') {
+      filtered = filtered.sort((a, b) => {
+        // Sort cancelled bookings by created_at (newest first) regardless of who cancelled them
+        return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+      });
+    }
+    
     setFilteredBookings(filtered);
   }, [bookings, showDeletedUsers, searchTerm, statusFilter]);
 
@@ -1119,11 +1199,11 @@ export default function BookingsPage() {
     setCurrentPage(1);
   }, [filteredBookings]);
 
-  // ✨ Refresh data when payment proofs are updated via real-time subscription
+  // ✨ Enhanced refresh trigger for instant updates when payment proofs change
   useEffect(() => {
     if (refreshTrigger > 0) { // Skip initial render
-      // Force a complete but silent refresh
-      fetchBookings(false, true); // Silent refresh - no loading indicators
+      // No need to fetch bookings here - the individual components will update via their own subscriptions
+      // This just ensures all components re-render with fresh data
     }
   }, [refreshTrigger]);
 
@@ -1182,22 +1262,45 @@ export default function BookingsPage() {
         user_exists: existingUserIds.has(booking.user_id)
       }));
 
-      // Step 6: Sort bookings by workflow priority to put payment reviews at the top
+      // Step 6: Sort bookings by workflow priority to put active bookings at the top
       const sortedBookings = bookingsWithUserStatus.sort((a, b) => {
         // Get workflow statuses (we'll calculate them here for sorting)
         const statusA = a.status || 'pending';
         const statusB = b.status || 'pending';
+        const paymentStatusA = a.payment_status || 'pending';
+        const paymentStatusB = b.payment_status || 'pending';
         
-        // Priority order: payment reviews > ready to confirm > awaiting payment > confirmed > others
-        const getPriority = (status: string) => {
-          if (status === 'pending_verification') return 1; // Highest priority - needs review
-          if (status === 'pending') return 2; // Second priority - might have payment proof
-          if (status === 'confirmed') return 3; // Third priority
-          return 4; // Lowest priority (cancelled, completed, etc.)
+        // Priority order: payment reviews > pending bookings > confirmed > completed > user cancelled (bottom)
+        const getPriority = (status: string, paymentStatus: string, cancelledBy: string | null) => {
+          // SPECIAL CASE: When viewing cancelled filter, all cancelled bookings get same priority for pure date sorting
+          if (statusFilter === 'cancelled' && status === 'cancelled') {
+            return 90; // Same priority for all cancelled bookings when filtered
+          }
+          
+          // CRITICAL: User cancelled bookings go to BOTTOM first (only when not in cancelled filter)
+          if (status === 'cancelled' && cancelledBy === 'user') {
+            return 99; // Bottom - user cancelled
+          }
+          
+          // CRITICAL: Payment reviews get TOP priority regardless of booking status
+          // This handles admin cancelled bookings where users can still upload payment proofs
+          if (status === 'pending_verification' || paymentStatus === 'payment_review') return 1; // Highest priority - needs review
+          
+          if (status === 'pending') return 2; // Second priority - active bookings awaiting payment
+          if (status === 'confirmed') return 3; // Third priority - confirmed bookings
+          if (status === 'completed') return 4; // Fourth priority - completed stays
+          
+          // Admin cancelled bookings without payment activity go to bottom (but above user cancellations)
+          if (status === 'cancelled' && cancelledBy === 'admin' && paymentStatus !== 'payment_review') return 98;
+          
+          // Any other cancelled booking (no cancelled_by field) goes to bottom
+          if (status === 'cancelled') return 99;
+          
+          return 5; // Other statuses
         };
         
-        const priorityA = getPriority(statusA);
-        const priorityB = getPriority(statusB);
+        const priorityA = getPriority(statusA, paymentStatusA, a.cancelled_by);
+        const priorityB = getPriority(statusB, paymentStatusB, b.cancelled_by);
         
         // If priorities are the same, sort by created_at (newest first)
         if (priorityA === priorityB) {
@@ -1220,39 +1323,26 @@ export default function BookingsPage() {
 
   // Handle payment proof verification
   const handlePaymentProofAction = async (action: 'approve' | 'reject', proofId: number) => {
-    console.log('🚀 Starting payment proof action:', { action, proofId, selectedPaymentProof });
-    
     // Prevent double-clicking
     if (paymentProofLoading) {
-      console.log('⚠️ Action already in progress, ignoring duplicate request');
       return;
     }
     
     setPaymentProofLoading(true);
     
     try {
-      console.log('🔐 Checking user authentication...');
-      
       // Skip user lookup to avoid hanging - use placeholder since API will handle admin permissions
-      console.log('⚡ Skipping user lookup, using admin placeholder...');
-      
       const user = {
         id: 'admin-placeholder',
         email: 'admin@kampoibayow.com'
       };
       
-      console.log('✅ Using admin placeholder:', user.email);
-      console.log('📋 Updating payment proof status...');
-      
       // First, let's check if the payment proof exists
-      console.log('🔍 Checking if payment proof exists with ID:', proofId);
       const { data: existingProof, error: fetchError } = await supabase
         .from('payment_proofs')
         .select('*')
         .eq('id', proofId)
         .single();
-      
-      console.log('📄 Existing proof check result:', { existingProof, fetchError });
       
       if (fetchError) {
         console.error('❌ Failed to fetch payment proof:', fetchError);
@@ -1264,11 +1354,7 @@ export default function BookingsPage() {
         throw new Error('Payment proof not found');
       }
       
-      console.log('✅ Payment proof found, proceeding with update...');
-      
       // Use API endpoint with admin permissions to bypass RLS issues
-      console.log('🌐 Calling admin API endpoint...');
-      
       // Import timeout utility
       const { withTimeout } = await import('../../utils/apiTimeout');
       
@@ -1296,7 +1382,6 @@ export default function BookingsPage() {
       );
 
       clearTimeout(timeoutId);
-      console.log('🌐 API Response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -1315,7 +1400,6 @@ export default function BookingsPage() {
       success(action === 'approve' ? 'Payment proof approved successfully!' : 'Payment proof rejected successfully!');
       
       // Close modal immediately
-      console.log('🔄 Closing modal and clearing state...');
       setShowPaymentProofModal(false);
       setSelectedPaymentProof(null);
       setVerificationNotes("");
@@ -1323,25 +1407,19 @@ export default function BookingsPage() {
       setCustomRejectionReason("");
       
       // Force refresh data with retry mechanism
-      console.log('♻️ Force refreshing all data...');
-      
       try {
         await fetchBookings(true); // Force refresh bookings
-        console.log('✅ Bookings refreshed successfully');
       } catch (refreshError) {
         console.warn('⚠️ Bookings refresh failed, will retry:', refreshError);
         // Retry once more after a short delay
         setTimeout(async () => {
           try {
             await fetchBookings(true);
-            console.log('✅ Bookings refreshed on retry');
           } catch (retryError) {
             console.error('❌ Bookings refresh failed on retry:', retryError);
           }
         }, 1000);
       }
-
-      console.log('✅ All operations completed successfully');
     } catch (error) {
       console.error('💥 Error in handlePaymentProofAction:', error);
       
@@ -1358,9 +1436,7 @@ export default function BookingsPage() {
       showError(`Error updating payment proof: ${errorMessage}. Please try again.`);
       
       // Don't close modal on error, let user retry
-      console.log('❌ Keeping modal open due to error');
     } finally {
-      console.log('🔧 Setting paymentProofLoading to false');
       setPaymentProofLoading(false);
     }
   };
@@ -1689,13 +1765,33 @@ export default function BookingsPage() {
           </div>
         </div>
         
-        {/* Performance Metrics (for development/debugging) */}
+        {/* Performance Metrics and Real-time Activity Log */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-2 pt-2 border-t border-gray-100">
             <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span>Subscriptions: {realTimeStatus === 'active' ? 'Active' : 'Inactive'}</span>
-              <span>Polling: {realTimeStatus === 'degraded' ? 'Enabled' : 'Standby'}</span>
-              <span>Events: {lastRealTimeEvent ? 'Recent' : 'None'}</span>
+              <span>Subscriptions: {realTimeStatus === 'active' ? '✅ Active' : '❌ Inactive'}</span>
+              <span>Polling: {realTimeStatus === 'degraded' ? '⚠️ Enabled' : '⏸️ Standby'}</span>
+              <span>Events: {lastRealTimeEvent ? `🟢 ${new Date(lastRealTimeEvent).toLocaleTimeString()}` : '🔴 None'}</span>
+              <span>Refresh Trigger: #{refreshTrigger}</span>
+              <button
+                onClick={() => {
+                  console.log('🔄 MANUAL: Forcing refresh trigger increment');
+                  setRefreshTrigger(prev => prev + 1);
+                }}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Force Refresh
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Real-time Activity Indicator */}
+        {refreshTrigger > 0 && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-2 text-xs text-green-600">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Real-time update #{refreshTrigger} - Payment proof components refreshed at {new Date().toLocaleTimeString()}</span>
             </div>
           </div>
         )}
@@ -1952,7 +2048,7 @@ export default function BookingsPage() {
                       <SmartWorkflowStatusCell booking={booking} refreshKey={refreshTrigger} />
                     </td>
                     <td className="p-3">
-                      <PaymentProofStatusCell bookingId={booking.id} refreshKey={refreshTrigger} />
+                      <PaymentProofStatusCell booking={booking} refreshKey={refreshTrigger} />
                     </td>
                     <td className="p-3">
                       <div className="flex flex-col gap-1">
