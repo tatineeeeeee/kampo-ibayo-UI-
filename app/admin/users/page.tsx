@@ -15,6 +15,201 @@ interface UserBookingsModalProps {
   onClose: () => void;
 }
 
+interface DeleteConfirmModalProps {
+  user: User | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function DeleteConfirmModal({ user, onConfirm, onCancel }: DeleteConfirmModalProps) {
+  const [bookingInfo, setBookingInfo] = useState<{
+    loading: boolean;
+    total: number;
+    active: number;
+    upcoming: number;
+    recent: number;
+    error: string | null;
+  }>({
+    loading: true,
+    total: 0,
+    active: 0,
+    upcoming: 0,
+    recent: 0,
+    error: null
+  });
+
+  useEffect(() => {
+    const fetchBookingInfo = async () => {
+      if (!user?.auth_id) {
+        setBookingInfo(prev => ({ ...prev, loading: false, error: 'No user ID found' }));
+        return;
+      }
+
+      try {
+        const { data: bookings, error } = await supabase
+          .from('bookings')
+          .select('id, status, check_in_date, check_out_date')
+          .eq('user_id', user.auth_id);
+
+        if (error) {
+          setBookingInfo(prev => ({ ...prev, loading: false, error: 'Failed to load bookings' }));
+          return;
+        }
+
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const activeBookings = bookings?.filter(b => 
+          b.status === 'pending' || b.status === 'confirmed' || b.status === 'paid'
+        ).length || 0;
+
+        const upcomingBookings = bookings?.filter(b => {
+          const checkInDate = new Date(b.check_in_date);
+          return checkInDate > today;
+        }).length || 0;
+
+        const recentBookings = bookings?.filter(b => {
+          const checkOutDate = new Date(b.check_out_date);
+          return checkOutDate > thirtyDaysAgo;
+        }).length || 0;
+
+        setBookingInfo({
+          loading: false,
+          total: bookings?.length || 0,
+          active: activeBookings,
+          upcoming: upcomingBookings,
+          recent: recentBookings,
+          error: null
+        });
+
+      } catch (err) {
+        console.error('Error fetching booking info:', err);
+        setBookingInfo(prev => ({ ...prev, loading: false, error: 'Error checking bookings' }));
+      }
+    };
+
+    fetchBookingInfo();
+  }, [user?.auth_id]);
+
+  if (!user) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/30 p-6 max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete User?</h3>
+          <p className="text-sm text-gray-600">This action cannot be undone</p>
+        </div>
+
+        {/* User Info Card */}
+        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+          <div className="text-sm">
+            <p className="font-medium text-gray-900">{user.name || 'N/A'}</p>
+            <p className="text-gray-600">{user.email}</p>
+            <p className="text-xs text-gray-500 mt-1">Role: {user.role}</p>
+            <p className="text-xs text-gray-500">ID: {user.id}</p>
+          </div>
+        </div>
+
+        {/* Booking Information */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-2 mb-3">
+            <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-blue-800">User Booking Information</p>
+              {bookingInfo.loading ? (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="animate-spin rounded-full h-3 w-3 border border-blue-600 border-t-transparent"></div>
+                  <span className="text-xs text-blue-700">Checking bookings...</span>
+                </div>
+              ) : bookingInfo.error ? (
+                <p className="text-xs text-red-600 mt-1">{bookingInfo.error}</p>
+              ) : (
+                <div className="mt-2 space-y-1">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Total Bookings:</span>
+                      <span className="font-medium text-blue-800">{bookingInfo.total}</span>
+                    </div>
+                    {bookingInfo.active > 0 && (
+                      <div className="flex justify-between text-red-700">
+                        <span>Active:</span>
+                        <span className="font-medium">{bookingInfo.active}</span>
+                      </div>
+                    )}
+                    {bookingInfo.upcoming > 0 && (
+                      <div className="flex justify-between text-orange-700">
+                        <span>Upcoming:</span>
+                        <span className="font-medium">{bookingInfo.upcoming}</span>
+                      </div>
+                    )}
+                    {bookingInfo.recent > 0 && (
+                      <div className="flex justify-between text-yellow-700">
+                        <span>Recent (30d):</span>
+                        <span className="font-medium">{bookingInfo.recent}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {bookingInfo.total === 0 && (
+                    <p className="text-xs text-green-700 mt-2">✅ No bookings found - safe to delete</p>
+                  )}
+                  
+                  {(bookingInfo.active > 0 || bookingInfo.upcoming > 0 || bookingInfo.recent > 0) && (
+                    <p className="text-xs text-amber-700 mt-2 font-medium">
+                      ⚠️ User has active/upcoming/recent bookings
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Override Warning */}
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-3 mb-6">
+          <div className="flex items-start gap-2">
+            <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+              <p className="text-xs font-medium text-amber-800">Admin Override</p>
+              <p className="text-xs text-amber-700 mt-1">
+                As an admin, you can delete users regardless of booking status. This bypasses all user safety restrictions.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Delete User
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false); // ✅ Start false for instant modal
@@ -143,6 +338,10 @@ export default function UsersPage() {
   const [showBookingsModal, setShowBookingsModal] = useState(false);
   const [selectedUserBookings, setSelectedUserBookings] = useState<User | null>(null);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -284,29 +483,151 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setUserToDelete(null);
+    setShowDeleteModal(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (userToDelete) {
+      await deleteUser(userToDelete.id);
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    }
+  };
+
   const deleteUser = async (userId: string) => {
     if (!userId) {
       warning('Invalid user data');
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
-
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
+      // Find the user to get their auth_id
+      const userToDeleteData = users.find(u => u.id === userId);
+      if (!userToDeleteData) {
+        showError('User not found');
+        return;
+      }
 
-      if (error) throw error;
+      // 🔒 CLIENT-SIDE AUDIT LOG: Admin initiating user deletion
+      console.log('🔒 ADMIN AUDIT: Initiating user deletion from admin panel', {
+        timestamp: new Date().toISOString(),
+        adminAction: 'DELETE_USER_INITIATED',
+        targetUser: {
+          id: userToDeleteData.id,
+          email: userToDeleteData.email,
+          name: userToDeleteData.name,
+          role: userToDeleteData.role
+        },
+        adminPanelLocation: '/admin/users',
+        userAgent: navigator.userAgent
+      });
 
-      success('User deleted successfully!');
+      console.log('Attempting to delete user:', { userId, hasAuthId: !!userToDeleteData.auth_id });
+
+      // Use the hard delete API to remove from both database and auth
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          authId: userToDeleteData.auth_id
+        }),
+      });
+
+      console.log('Delete API response status:', response.status);
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('Non-JSON response received:', textResponse);
+        throw new Error('Server returned invalid response format');
+      }
+
+      const result = await response.json();
+      console.log('Delete API result:', result);
+
+      if (!response.ok) {
+        const errorMsg = result.error || result.message || 'Failed to delete user';
+        throw new Error(errorMsg);
+      }
+
+      // Handle successful response
+      if (result.success) {
+        // 🔒 CLIENT-SIDE AUDIT LOG: Admin user deletion completed
+        console.log('🔒 ADMIN AUDIT: User deletion completed successfully', {
+          timestamp: new Date().toISOString(),
+          adminAction: 'DELETE_USER_COMPLETED',
+          targetUser: {
+            id: userToDeleteData.id,
+            email: userToDeleteData.email,
+            name: userToDeleteData.name,
+            role: userToDeleteData.role
+          },
+          result: {
+            success: true,
+            hasAuthError: !!result.authError
+          },
+          adminPanelLocation: '/admin/users'
+        });
+
+        const message = result.message || 'User completely deleted! They can now re-register with the same email if needed.';
+        success(message);
+        
+        // Show warning if auth deletion failed
+        if (result.authError) {
+          warning('Note: Authentication cleanup may be incomplete');
+        }
+      } else {
+        throw new Error('Deletion was not successful');
+      }
+
       fetchUsers(); // Refresh the list
+      
+      // Close the modal
+      setUserToDelete(null);
+      setShowDeleteModal(false);
+
     } catch (error) {
+      // Find the user data for audit logging (since userToDeleteData might be out of scope)
+      const userForAudit = users.find(u => u.id === userId);
+      
+      // 🔒 CLIENT-SIDE AUDIT LOG: Admin user deletion failed
+      console.error('🔒 ADMIN AUDIT: User deletion failed', {
+        timestamp: new Date().toISOString(),
+        adminAction: 'DELETE_USER_FAILED',
+        targetUser: {
+          id: userForAudit?.id || userId,
+          email: userForAudit?.email || 'unknown',
+          name: userForAudit?.name || 'unknown',
+          role: userForAudit?.role || 'unknown'
+        },
+        error: error instanceof Error ? error.message : 'Unknown error',
+        adminPanelLocation: '/admin/users'
+      });
+
       console.error('Error deleting user:', error);
-      showError('Failed to delete user');
+      
+      if (error instanceof Error) {
+        if (error.message.includes('configuration')) {
+          showError('Server configuration error. Please contact support.');
+        } else if (error.message.includes('invalid response format')) {
+          showError('Server error. Please try again or contact support.');
+        } else {
+          showError(`Failed to delete user: ${error.message}`);
+        }
+      } else {
+        showError('Failed to delete user - unknown error occurred');
+      }
     }
   };
 
@@ -537,7 +858,7 @@ export default function UsersPage() {
                             Edit Role
                           </button>
                           <button
-                            onClick={() => deleteUser(user.id)}
+                            onClick={() => handleDeleteClick(user)}
                             className="text-red-600 hover:text-red-900"
                           >
                             Delete
@@ -703,6 +1024,15 @@ export default function UsersPage() {
             setShowBookingsModal(false);
             setSelectedUserBookings(null);
           }}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && userToDelete && (
+        <DeleteConfirmModal 
+          user={userToDelete}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
         />
       )}
     </div>
