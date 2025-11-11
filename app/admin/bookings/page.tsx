@@ -648,6 +648,7 @@ export default function BookingsPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [customRejectionReason, setCustomRejectionReason] = useState("");
   const [imageZoomed, setImageZoomed] = useState(false);
+  const [newBookingAlert, setNewBookingAlert] = useState<string | null>(null);
   
   // Enhanced rejection reasons for payment proofs
   const rejectionReasons = [
@@ -696,12 +697,18 @@ export default function BookingsPage() {
     // ✅ OPTIMIZED: Delayed fetch to not block navigation
     const timer = setTimeout(() => fetchBookings(), 100);
 
-    // ✅ RE-ENABLED: Real-time subscriptions (AuthContext navigation fixed!)
-    console.log('� Setting up real-time bookings subscriptions...');
+    // ✅ ENHANCED: Ultra-reliable real-time subscriptions for instant updates
+    console.log('🚀 Setting up ENHANCED real-time bookings system...');
+    console.log('⚡ Real-time mode: INSTANT updates enabled for admin panel');
     
-    // Set up real-time subscription for bookings
+    // Set up real-time subscription for bookings with enhanced reliability
     const bookingsSubscription = supabase
-      .channel('admin-bookings-changes')
+      .channel('admin-bookings-realtime', { 
+        config: { 
+          broadcast: { self: true },
+          presence: { key: 'admin-user' }
+        } 
+      })
       .on('postgres_changes', 
         { 
           event: '*', 
@@ -709,31 +716,145 @@ export default function BookingsPage() {
           table: 'bookings' 
         },
         (payload) => {
-          console.log('🔄 Real-time booking change detected:', payload.eventType, payload);
+          console.log('🔄 INSTANT booking change detected:', payload.eventType, payload);
+          console.log('⚡ Payload details:', JSON.stringify(payload, null, 2));
           
-          // Optimistic update for faster UI response
+          // Enhanced optimistic updates for instant UI response
           if (payload.eventType === 'UPDATE' && payload.new) {
-            console.log('🔄 Real-time booking update received:', payload.new.id, 'Status:', payload.new.status);
-            setBookings(prevBookings => 
-              prevBookings.map(booking => 
-                booking.id === payload.new.id 
-                  ? { ...booking, ...payload.new }
-                  : booking
-              )
-            );
+            console.log('🔄 Real-time booking UPDATE received:', {
+              bookingId: payload.new.id,
+              oldStatus: payload.old?.status,
+              newStatus: payload.new.status,
+              cancelledBy: payload.new.cancelled_by,
+              cancelledAt: payload.new.cancelled_at
+            });
+            
+            // Show alert for cancelled bookings
+            if (payload.old?.status !== 'cancelled' && payload.new.status === 'cancelled') {
+              console.log('❌ BOOKING CANCELLED ALERT: Guest cancelled booking', payload.new.id);
+              if (!document.hidden && payload.new.cancelled_by === 'user') {
+                setNewBookingAlert(`${payload.new.guest_name || 'Guest'} cancelled their booking 💔`);
+                setTimeout(() => {
+                  setNewBookingAlert(null);
+                }, 5000);
+              }
+            }
+            
+            // Instantly update the booking with all new data
+            setBookings(prevBookings => {
+              const updatedBookings = prevBookings.map(booking => {
+                if (booking.id === payload.new.id) {
+                  console.log('✅ Updating booking in admin UI:', booking.id, 'Status:', payload.old?.status, '→', payload.new.status);
+                  return { 
+                    ...booking, 
+                    ...payload.new, 
+                    user_exists: booking.user_exists // Preserve existing user_exists flag
+                  };
+                }
+                return booking;
+              });
+              
+              console.log('📊 Admin bookings list updated, total bookings:', updatedBookings.length);
+              return updatedBookings;
+            });
           } else if (payload.eventType === 'INSERT' && payload.new) {
-            // For new bookings, do a refresh to get user status
-            fetchBookings(true);
+            console.log('🎉 INSTANT NEW BOOKING:', payload.new.id, 'Guest:', payload.new.guest_name);
+            console.log('📋 New booking data:', JSON.stringify(payload.new, null, 2));
+            
+            // Immediate UI response - Add booking instantly to admin list
+            const newBookingWithStatus = {
+              ...payload.new,
+              user_exists: true // Optimistic user status for instant display
+            } as Booking;
+            
+            console.log('⚡ Adding booking to admin UI instantly...');
+            setBookings(prevBookings => {
+              // Prevent duplicates - check if booking already exists
+              const existingIndex = prevBookings.findIndex(b => b.id === payload.new.id);
+              
+              if (existingIndex >= 0) {
+                console.log('🔄 Updating existing booking in admin UI');
+                return prevBookings.map((booking, index) => 
+                  index === existingIndex ? newBookingWithStatus : booking
+                );
+              } else {
+                console.log('🆕 Adding brand new booking to admin list');
+                // Add new booking and maintain proper sort order (newest first by created_at)
+                const updatedBookings = [newBookingWithStatus, ...prevBookings];
+                const sortedBookings = updatedBookings.sort((a, b) => 
+                  new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+                );
+                console.log('📊 Updated admin bookings list, total:', sortedBookings.length);
+                return sortedBookings;
+              }
+            });
+            
+            // Show instant visual alert for new bookings
+            if (!document.hidden) {
+              console.log('🎉 Showing NEW BOOKING alert to admin');
+              setNewBookingAlert(`New booking from ${payload.new.guest_name || 'Guest'}! 🎉`);
+              
+              // Auto-hide alert after 5 seconds
+              setTimeout(() => {
+                setNewBookingAlert(null);
+              }, 5000);
+            }
+            
+            // Verify user status in background (non-blocking and safe)
+            setTimeout(async () => {
+              try {
+                const { data: userData, error } = await supabase
+                  .from('users')
+                  .select('auth_id')
+                  .eq('auth_id', payload.new.user_id)
+                  .single();
+                
+                const userExists = !error && userData;
+                
+                // Update user_exists status if different
+                if (!userExists) {
+                  setBookings(prevBookings => 
+                    prevBookings.map(booking => 
+                      booking.id === payload.new.id 
+                        ? { ...booking, user_exists: false }
+                        : booking
+                    )
+                  );
+                }
+              } catch (error) {
+                console.warn('Failed to verify user status for new booking:', error);
+              }
+            }, 1000);
+            
           } else if (payload.eventType === 'DELETE' && payload.old) {
-            // Remove deleted booking immediately
-            setBookings(prevBookings => 
-              prevBookings.filter(booking => booking.id !== payload.old.id)
-            );
+            console.log('🔄 Booking DELETED received:', {
+              bookingId: payload.old.id,
+              guestName: payload.old.guest_name,
+              status: payload.old.status
+            });
+            
+            // Remove deleted booking immediately from admin UI
+            setBookings(prevBookings => {
+              const filteredBookings = prevBookings.filter(booking => booking.id !== payload.old.id);
+              console.log('🗑️ Booking removed from admin UI, remaining:', filteredBookings.length);
+              return filteredBookings;
+            });
           }
         }
       )
       .subscribe((status) => {
-        console.log('📡 Bookings subscription status:', status);
+        console.log('📡 ENHANCED Bookings subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time bookings connection ACTIVE - instant updates enabled!');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time connection error - attempting reconnection...');
+          // Auto-reconnection is handled by Supabase, but we can log it
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⏰ Real-time connection timed out - will retry automatically');
+        } else if (status === 'CLOSED') {
+          console.log('🔒 Real-time connection closed');
+        }
       });
 
     // Set up real-time subscription for users (to detect user deletions)
@@ -751,7 +872,7 @@ export default function BookingsPage() {
           
           // When users are added/deleted, refresh bookings to update user_exists status
           setTimeout(() => {
-            fetchBookings(true);
+            fetchBookings(false, true); // Silent sync - won't show loading state
           }, 500);
         }
       )
@@ -759,14 +880,53 @@ export default function BookingsPage() {
         console.log('📡 Users subscription status:', status);
       });
 
+    // Ultra-safe periodic sync for data consistency (every 30 seconds)
+    // This is completely non-interfering and serves as backup to real-time
+    const syncInterval = setInterval(() => {
+      // Only sync under very specific safe conditions
+      if (!document.hidden && 
+          document.hasFocus() && 
+          !loading && 
+          !refreshing && 
+          !isProcessing &&
+          !paymentProofLoading) {
+        
+        console.log('🔄 Safe background sync (backup to real-time)...');
+        // Ultra-silent sync - completely invisible to user, no state changes
+        fetchBookings(false, true);
+      } else {
+        console.log('⏸️ Skipping sync - user is busy or page not focused');
+      }
+    }, 30000); // Every 30 seconds
+
+    // Enhanced visibility change detection for instant updates when admin returns
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 Admin returned to bookings page, syncing...');
+        fetchBookings(false, true); // Silent sync - completely invisible to user
+      }
+    };
+
+    const handleFocus = () => {
+      console.log('🔄 Bookings page gained focus, syncing...');
+      fetchBookings(false, true); // Silent sync - completely invisible to user
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
     // Cleanup subscriptions on unmount
     return () => {
       console.log('🧹 Cleaning up real-time subscriptions...');
       clearTimeout(timer); // ✅ Cleanup timer
+      clearInterval(syncInterval); // ✅ Cleanup sync interval
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
       supabase.removeChannel(bookingsSubscription);
       supabase.removeChannel(usersSubscription);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - setupRealtime should only run once
 
   // Filter bookings based on user preference AND search term
   useEffect(() => {
@@ -827,12 +987,14 @@ export default function BookingsPage() {
     setCurrentPage(1);
   }, [filteredBookings]);
 
-  const fetchBookings = async (isRefresh = false) => {
+  const fetchBookings = async (isRefresh = false, silent = false) => {
     try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
+      if (!silent) {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
       }
       console.log('🔍 Fetching bookings with optimized queries...');
       
@@ -893,8 +1055,10 @@ export default function BookingsPage() {
     } catch (error) {
       console.error('💥 Unexpected error:', error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!silent) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
@@ -1275,6 +1439,18 @@ export default function BookingsPage() {
 
   return (
     <div>
+      {/* Real-time Booking Alerts */}
+      {newBookingAlert && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg animate-pulse text-white ${
+          newBookingAlert.includes('cancelled') ? 'bg-red-500' : 'bg-green-500'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{newBookingAlert.includes('cancelled') ? '💔' : '🎉'}</span>
+            <span className="font-semibold">{newBookingAlert}</span>
+          </div>
+        </div>
+      )}
+      
       <AdminDashboardSummary />
       <div className="bg-white rounded-xl shadow-md p-4">
         {/* Search Bar */}

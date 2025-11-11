@@ -368,6 +368,97 @@ function BookingsPageContent() {
     };
   }, []);
 
+  // ⚡ ENHANCED: Real-time subscriptions for instant user booking updates
+  useEffect(() => {
+    if (!user) return;
+    
+    console.log('🚀 Setting up INSTANT real-time user bookings system...');
+    console.log('⚡ User will see instant updates when admin changes booking status');
+    
+    // Set up real-time subscription for user's bookings
+    const userBookingsSubscription = supabase
+      .channel(`user-bookings-${user.id}`, { 
+        config: { 
+          broadcast: { self: true },
+          presence: { key: `user-${user.id}` }
+        } 
+      })
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'bookings',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('🔄 Real-time user booking update received:', payload);
+          
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+          
+          if (eventType === 'UPDATE' && newRecord) {
+            console.log('⚡ INSTANT booking status update for user');
+            
+            // Update booking in state instantly
+            setBookings(prevBookings => 
+              prevBookings.map(booking => 
+                booking.id === newRecord.id 
+                  ? { ...booking, ...newRecord }
+                  : booking
+              )
+            );
+
+            // Show status change notification if admin changed it
+            if (oldRecord && oldRecord.status !== newRecord.status) {
+              const statusMessages = {
+                confirmed: { title: '🎉 Booking Confirmed!', message: 'Your booking has been confirmed by admin' },
+                cancelled: { title: '❌ Booking Cancelled', message: 'Your booking has been cancelled by admin' },
+                pending: { title: '⏳ Booking Pending', message: 'Your booking is now pending review' }
+              };
+              
+              const statusInfo = statusMessages[newRecord.status as keyof typeof statusMessages];
+              if (statusInfo) {
+                showToast({
+                  type: newRecord.status === 'confirmed' ? 'success' : 'info',
+                  title: statusInfo.title,
+                  message: statusInfo.message,
+                  duration: 4000
+                });
+              }
+            }
+          }
+          
+          if (eventType === 'INSERT' && newRecord) {
+            console.log('📝 New booking created - should not happen here for user view');
+          }
+          
+          if (eventType === 'DELETE' && oldRecord) {
+            console.log('🗑️ Booking deleted by admin');
+            setBookings(prevBookings => 
+              prevBookings.filter(booking => booking.id !== oldRecord.id)
+            );
+            
+            showToast({
+              type: 'warning',
+              title: '🗑️ Booking Removed',
+              message: 'A booking was removed by admin',
+              duration: 3000
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔗 User bookings real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ User bookings real-time system active - instant updates enabled');
+        }
+      });
+
+    return () => {
+      console.log('🔌 Cleaning up user bookings real-time subscription');
+      userBookingsSubscription.unsubscribe();
+    };
+  }, [user, showToast]);
+
   useEffect(() => {
     async function loadBookings() {
       if (!user) return;
@@ -507,13 +598,16 @@ function BookingsPageContent() {
       return;
     }
 
-    // INSTANT cancellation - no confirmation needed
-    console.log('⚡ INSTANT cancellation started for booking:', bookingId);
+    // ⚡ ULTRA-FAST cancellation with proper data capture
+    console.log('🚀 INSTANT user cancellation started for booking:', bookingId);
     
-    // Close modal immediately
-    setShowCancelModal(false);
+    // Capture reason before clearing (prevent stale closure)
+    const reasonForServer = cancellationReason.trim();
     
-    // Immediately update booking to cancelled state
+    // Store original booking state for potential revert
+    const originalBooking = bookings.find(b => b.id === bookingId);
+    
+    // 1. INSTANT UI UPDATE - User sees immediate response
     const instantUpdatedBookings = bookings.map(booking => 
       booking.id === bookingId 
         ? { 
@@ -521,32 +615,33 @@ function BookingsPageContent() {
             status: 'cancelled',
             cancelled_by: 'user',
             cancelled_at: new Date().toISOString(),
-            cancellation_reason: cancellationReason.trim()
+            cancellation_reason: reasonForServer
           } 
         : booking
     );
     setBookings(instantUpdatedBookings);
-    console.log('✨ UI updated instantly - booking now shows as cancelled');
+    console.log('⚡ UI updated INSTANTLY - booking shows as cancelled immediately');
 
-    // Show immediate success toast
+    // 2. INSTANT modal close and cleanup
+    setShowCancelModal(false);
+    setCancellationReason("");
+
+    // 3. INSTANT success feedback - No waiting for server!
     showToast({
       type: 'success',
-      title: 'Booking Cancelled!',
+      title: '✅ Booking Cancelled Instantly!',
       message: 'Your booking has been cancelled successfully',
       duration: 3000
     });
 
-    // Clear cancellation reason
-    setCancellationReason("");
-
-    // Background server processing - user doesn't wait for this
-    console.log('🔄 Starting background server processing...');
-    processServerCancellation(bookingId);
+    // 4. Background server sync - User doesn't wait for this
+    console.log('🔄 Starting background server sync (user already sees success)...');
+    processServerCancellation(bookingId, reasonForServer, originalBooking);
   };
 
-  // Background server processing function
-  const processServerCancellation = async (bookingId: number) => {
-    console.log('🚀 Starting background cancellation for booking:', bookingId);
+  // ⚡ Enhanced background server sync - Non-blocking and safe
+  const processServerCancellation = async (bookingId: number, reason: string, originalBooking: Booking | undefined) => {
+    console.log('🚀 Background server sync for booking:', bookingId, 'with reason:', reason);
     
     try {
       const response = await fetch('/api/user/cancel-booking', {
@@ -557,71 +652,70 @@ function BookingsPageContent() {
         body: JSON.stringify({ 
           bookingId,
           userId: user?.id,
-          cancellationReason: cancellationReason.trim()
+          cancellationReason: reason
         }),
       });
 
       const result = await response.json();
-      console.log('✅ Server response:', result);
+      console.log('✅ Server sync response:', result);
 
       if (result.success) {
-        console.log('🎉 Cancellation confirmed by server');
+        console.log('🎉 Server confirmed cancellation - all systems in sync');
         
-        // Server confirmed - show additional info if needed
+        // Optional: Show subtle confirmation that email was sent
         if (result.warning) {
           showToast({
             type: 'info',
-            title: 'Email Notification',
+            title: '📧 Email Update',
             message: result.warning,
-            duration: 4000
+            duration: 3000
           });
         } else {
-          // Optional: Show email confirmation toast
           showToast({
             type: 'info',
-            title: 'Email Sent',
+            title: '📧 Email Sent',
             message: 'Cancellation confirmation email sent',
             duration: 2000
           });
         }
 
-        // Refresh data silently in background
+        // Refresh data silently to ensure full sync
         refreshBookingsInBackground();
       } else {
-        console.error('❌ Server cancellation failed:', result.error);
+        console.error('❌ Server sync failed:', result.error);
         
-        // Server failed - revert the optimistic update
+        // SAFE REVERT: Restore original booking state
+        if (originalBooking) {
+          const revertedBookings = bookings.map(booking => 
+            booking.id === bookingId ? originalBooking : booking
+          );
+          setBookings(revertedBookings);
+          
+          showToast({
+            type: 'error',
+            title: '⚠️ Cancellation Issue',
+            message: 'Server sync failed. Your booking is still active.',
+            duration: 5000
+          });
+        }
+      }
+    } catch (error) {
+      console.error('🔥 Network error during server sync:', error);
+      
+      // SAFE REVERT: Network issue - restore original state
+      if (originalBooking) {
         const revertedBookings = bookings.map(booking => 
-          booking.id === bookingId 
-            ? { ...booking, status: 'pending' } // Revert to previous state
-            : booking
+          booking.id === bookingId ? originalBooking : booking
         );
         setBookings(revertedBookings);
 
         showToast({
           type: 'error',
-          title: 'Cancellation Failed',
-          message: 'There was an issue. Your booking is still active.',
+          title: '🌐 Connection Issue',
+          message: 'Network error - your booking is still active. Please try again.',
           duration: 5000
         });
       }
-    } catch (error) {
-      console.error('🔥 Network error during cancellation:', error);
-      
-      // Revert optimistic update on network error
-      const revertedBookings = bookings.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, status: 'pending' }
-          : booking
-      );
-      setBookings(revertedBookings);
-
-      showToast({
-        type: 'error',
-        title: 'Network Error',
-        message: 'Please check your connection and try again',
-        duration: 5000
-      });
     }
   };
 
