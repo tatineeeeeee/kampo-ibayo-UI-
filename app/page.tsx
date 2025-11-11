@@ -36,7 +36,8 @@ import {
 import { FaHome, FaGamepad, FaUtensils, FaMapMarkedAlt } from "react-icons/fa";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./contexts/AuthContext";
-import { TrustBadges, EnhancedGallery } from "./components/EnhancedComponents";
+import { TrustBadges } from "./components/EnhancedComponents";
+import DynamicGallery from "./components/DynamicGallery";
 import Chatbot from "./components/Chatbot";
 import ReviewSystem from "./components/ReviewSystem";
 
@@ -1777,9 +1778,7 @@ function Home() {
       </section>
 
       {/* Gallery Section */}
-      <section id="gallery">
-        <EnhancedGallery />
-      </section>
+      <DynamicGallery />
 
       {/* Reviews Section */}
       <section id="reviews" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">

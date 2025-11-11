@@ -352,6 +352,65 @@ export type Database = {
           }
         ]
       }
+      gallery_images: {
+        Row: {
+          id: number
+          file_name: string
+          storage_path: string
+          public_url: string | null
+          category: string | null
+          caption: string | null
+          alt_text: string | null
+          is_featured: boolean | null
+          display_order: number | null
+          file_size: number | null
+          mime_type: string | null
+          uploaded_by: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          file_name: string
+          storage_path: string
+          public_url?: string | null
+          category?: string | null
+          caption?: string | null
+          alt_text?: string | null
+          is_featured?: boolean | null
+          display_order?: number | null
+          file_size?: number | null
+          mime_type?: string | null
+          uploaded_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          file_name?: string
+          storage_path?: string
+          public_url?: string | null
+          category?: string | null
+          caption?: string | null
+          alt_text?: string | null
+          is_featured?: boolean | null
+          display_order?: number | null
+          file_size?: number | null
+          mime_type?: string | null
+          uploaded_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_images_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       users: {
         Row: {
           id: string

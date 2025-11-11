@@ -11,7 +11,8 @@ import {
   Settings, 
   HelpCircle,
   Star,
-  Home
+  Home,
+  Camera
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -56,6 +57,9 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <Link href="/admin/reports" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/reports') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
             <BarChart3 className="w-5 h-5" /> Reports
+          </Link>
+          <Link href="/admin/gallery" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/gallery') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
+            <Camera className="w-5 h-5" /> Gallery
           </Link>
           <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
             <Settings className="w-5 h-5" /> Settings
@@ -179,6 +183,9 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <Link href="/admin/reports" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/reports') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
             <BarChart3 className="w-5 h-5" /> Reports
+          </Link>
+          <Link href="/admin/gallery" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/gallery') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
+            <Camera className="w-5 h-5" /> Gallery
           </Link>
           <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
             <Settings className="w-5 h-5" /> Settings
