@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaHome, FaUser } from 'react-icons/fa';
-import { ChevronLeft, ChevronRight, Check, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import BookingSelector from '../components/BookingSelector';
 import CategoryRatings from '../components/CategoryRatings';
 import ReviewSubmissionForm from '../components/ReviewSubmissionForm';
@@ -113,17 +113,17 @@ export default function ReviewPage() {
       </div>
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Thank you for your review!</h2>
       <p className="text-gray-300 text-base sm:text-lg mb-4 sm:mb-6 max-w-md mx-auto px-2 sm:px-0">
-        Your review has been submitted successfully and is now being reviewed by our team.
+        Your review has been published successfully and is now visible to other guests!
       </p>
       
-      <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-4 sm:p-6 max-w-lg mx-auto mb-4 sm:mb-6">
+      <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-4 sm:p-6 max-w-lg mx-auto mb-4 sm:mb-6">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-          <h3 className="text-blue-200 font-semibold text-sm sm:text-base">What happens next?</h3>
+          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+          <h3 className="text-green-200 font-semibold text-sm sm:text-base">Your review is live!</h3>
         </div>
-        <p className="text-blue-100 text-xs sm:text-sm leading-relaxed">
-          Our team will review your submission within <strong>24-48 hours</strong>. 
-          Once approved, your review will be visible to other guests on our website.
+        <p className="text-green-100 text-xs sm:text-sm leading-relaxed">
+          Your honest feedback helps future guests make informed decisions. 
+          Thank you for sharing your experience at <strong>Kampo Ibayo Resort</strong>!
         </p>
       </div>
 
@@ -216,7 +216,7 @@ export default function ReviewPage() {
             
             {currentStep === 1 && (
               <p className="text-gray-400 max-w-md mx-auto text-sm sm:text-base px-4 sm:px-0">
-                Choose a completed stay to review. You can only review stays once, but can resubmit if rejected.
+                Choose a completed stay to review. Your honest feedback will be published immediately to help future guests.
               </p>
             )}
             

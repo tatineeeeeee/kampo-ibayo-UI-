@@ -18,7 +18,7 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<ReviewWithPhotos[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<ReviewWithPhotos[]>([]);
   const [loading, setLoading] = useState(false); // ✅ Start false for instant UI
-  const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [filter, setFilter] = useState<'all' | 'approved' | 'pending' | 'flagged'>('flagged');
   const [updating, setUpdating] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -75,6 +75,8 @@ export default function AdminReviewsPage() {
       filtered = reviews.filter(r => r.approved === true);
     } else if (filter === 'pending') {
       filtered = reviews.filter(r => r.approved === null);
+    } else if (filter === 'flagged') {
+      filtered = reviews.filter(r => r.approved === false); // Flagged for manual review
     }
     setFilteredReviews(filtered);
     setCurrentPage(1); // Reset to first page when filter changes
@@ -177,8 +179,9 @@ export default function AdminReviewsPage() {
 
   const filteredReviewsCount = {
     all: reviews.length,
-    approved: reviews.filter(r => r.approved).length,
-    pending: reviews.filter(r => !r.approved).length,
+    approved: reviews.filter(r => r.approved === true).length,
+    pending: reviews.filter(r => r.approved === null).length,
+    flagged: reviews.filter(r => r.approved === false).length,
   };
 
   // ✅ REMOVED BLOCKING LOADING SCREEN - UI renders instantly
@@ -186,9 +189,27 @@ export default function AdminReviewsPage() {
   return (
     <div>
       <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
+        {/* Auto-Publish System Notice */}
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-r-lg">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <Check className="h-5 w-5 text-green-400" />
+            </div>
+            <div className="ml-3">
+              <h4 className="text-sm font-medium text-green-800">
+                ✅ Auto-Publish System Active
+              </h4>
+              <p className="text-sm text-green-700 mt-1">
+                Reviews now publish automatically for better guest trust. Only problematic content (spam, profanity, personal attacks) gets flagged for manual review. 
+                <strong> This improves conversion rates and builds authentic credibility.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
           <h3 className="text-lg sm:text-xl font-semibold text-gray-700">
-            All Reviews ({loading ? '...' : filteredReviews.length})
+            Review Management ({loading ? '...' : filteredReviews.length})
           </h3>
           <div className="flex flex-col sm:flex-row gap-2">
             <button 
@@ -217,9 +238,10 @@ export default function AdminReviewsPage() {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex flex-wrap gap-2 sm:gap-8">
               {[
+                { key: 'flagged', label: 'Flagged for Review', count: filteredReviewsCount.flagged },
                 { key: 'all', label: 'All Reviews', count: filteredReviewsCount.all },
-                { key: 'pending', label: 'Pending Approval', count: filteredReviewsCount.pending },
-                { key: 'approved', label: 'Approved', count: filteredReviewsCount.approved },
+                { key: 'approved', label: 'Published', count: filteredReviewsCount.approved },
+                { key: 'pending', label: 'Legacy Pending', count: filteredReviewsCount.pending },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -260,7 +282,9 @@ export default function AdminReviewsPage() {
             <Eye className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No reviews found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {filter === 'pending' ? 'No pending reviews to approve' : 'No reviews have been submitted yet'}
+              {filter === 'flagged' ? 'No reviews flagged for manual review - all reviews are auto-publishing!' : 
+               filter === 'pending' ? 'No legacy pending reviews' : 
+               'No reviews have been submitted yet'}
             </p>
           </div>
         ) : (
@@ -311,6 +335,42 @@ export default function AdminReviewsPage() {
                       {/* Review Text */}
                       <div className="mb-3">
                         <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{review.review_text}</p>
+                        
+                        {/* Auto-flagged explanation */}
+                        {review.approved === false && !review.rejection_reason && (
+                          <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0">
+                                <Eye className="h-4 w-4 text-orange-400 mt-0.5" />
+                              </div>
+                              <div className="ml-2">
+                                <h5 className="text-sm font-medium text-orange-800">Auto-flagged by System</h5>
+                                <p className="text-xs text-orange-700 mt-1">
+                                  This review was automatically flagged for containing potentially problematic content 
+                                  (profanity, spam, personal attacks, etc.). You can approve it if the content is acceptable 
+                                  or reject it with feedback for the guest.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Admin rejection reason */}
+                        {review.approved === false && review.rejection_reason && (
+                          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0">
+                                <X className="h-4 w-4 text-red-400 mt-0.5" />
+                              </div>
+                              <div className="ml-2">
+                                <h5 className="text-sm font-medium text-red-800">Rejected by Admin</h5>
+                                <p className="text-xs text-red-700 mt-1">
+                                  <strong>Reason:</strong> {review.rejection_reason}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Category Ratings */}
@@ -365,23 +425,30 @@ export default function AdminReviewsPage() {
                             review.approved 
                               ? 'bg-green-100 text-green-800'
                               : review.approved === false
-                              ? 'bg-red-100 text-red-800'
+                              ? (review.rejection_reason ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800')
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {review.approved ? (
                               <>
                                 <Check className="w-3 h-3 mr-1" />
-                                Approved & Live
+                                Published & Live
                               </>
                             ) : review.approved === false ? (
-                              <>
-                                <X className="w-3 h-3 mr-1" />
-                                Rejected
-                              </>
+                              review.rejection_reason ? (
+                                <>
+                                  <X className="w-3 h-3 mr-1" />
+                                  Rejected by Admin
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Flagged for Review
+                                </>
+                              )
                             ) : (
                               <>
                                 <Eye className="w-3 h-3 mr-1" />
-                                Awaiting Review
+                                Awaiting Review (Legacy)
                               </>
                             )}
                           </span>
@@ -396,7 +463,7 @@ export default function AdminReviewsPage() {
                                 className="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                               >
                                 <Check className="w-3 h-3 mr-1" />
-                                Approve & Publish
+                                {review.rejection_reason ? 'Override & Approve' : 'Approve & Publish'}
                               </button>
                               <button
                                 onClick={() => setRejectionModal({
@@ -408,7 +475,7 @@ export default function AdminReviewsPage() {
                                 className="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
                               >
                                 <X className="w-3 h-3 mr-1" />
-                                Reject
+                                {review.rejection_reason ? 'Update Rejection' : 'Reject with Feedback'}
                               </button>
                             </>
                           )}

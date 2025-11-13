@@ -1789,7 +1789,7 @@ function Home() {
             </h2>
           </div>
           <ReviewSystem 
-            limit={4} 
+            limit={8} 
             showPagination={false} 
             className="" 
           />

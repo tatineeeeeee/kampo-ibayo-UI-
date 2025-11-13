@@ -218,7 +218,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
       case 'pending':
         return {
           icon: Clock,
-          text: 'Review Under Review',
+          text: 'Quality Review in Progress',
           color: 'text-yellow-400',
           bgColor: 'bg-yellow-900/20 border-yellow-500/30',
           clickable: false
@@ -399,7 +399,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                   booking.reviewStatus === 'blocked' ? 'bg-gray-900/30 border border-gray-600/30' :
                   'bg-red-900/30 border border-red-600/30'
                 }`}>
-                  <p className={`text-sm ${
+                  <div className={`text-sm ${
                     booking.reviewStatus === 'approved' ? 'text-green-200' :
                     booking.reviewStatus === 'pending' ? 'text-yellow-200' :
                     booking.reviewStatus === 'blocked' ? 'text-gray-200' :
@@ -408,7 +408,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                     {booking.reviewStatus === 'approved' && 
                       `✅ Your review has been published and is visible to other guests.`}
                     {booking.reviewStatus === 'pending' && 
-                      `⏳ Your review is waiting for admin confirmation. This usually takes 24-48 hours.`}
+                      `⏳ Your review is under quality review and will be published once approved (rare cases only).`}
                     {booking.reviewStatus === 'rejected' && (
                       <div className="space-y-2">
                         <div>
@@ -441,7 +441,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                         </div>
                       </div>
                     )}
-                  </p>
+                  </div>
                 </div>
               )}
             </div>

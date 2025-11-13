@@ -192,6 +192,26 @@ const ReviewSubmissionForm = ({
         hasBookingId: Boolean(formData.bookingId)
       });
 
+      // Smart moderation: Only flag obviously problematic content
+      const shouldAutoApprove = (reviewText: string) => {
+        const text = reviewText.toLowerCase().trim();
+        
+        // Auto-reject only for clear policy violations
+        const hasProfanity = /\b(fuck|shit|damn|hell|bitch|asshole|crap)\b/i.test(text);
+        const isSpam = text.length < 10 || /(.)\1{5,}/.test(text); // Too short or repeated chars  
+        const hasPersonalAttack = /\b(stupid|idiot|moron|hate|worst|terrible staff|horrible management)\b/i.test(text);
+        const isOffTopic = !/(stay|room|pool|food|service|clean|staff|location|resort|hotel|vacation|trip)/i.test(text);
+        // REMOVED: Don't auto-flag low ratings - they may be legitimate feedback
+        const hasExcessiveCaps = (text.match(/[A-Z]/g) || []).length > text.length * 0.3; // Flag ALL CAPS
+        
+        // Only flag these specific violations - everything else auto-approves (including 1-star reviews)
+        return !hasProfanity && !isSpam && !hasPersonalAttack && !isOffTopic && !hasExcessiveCaps;
+      };
+
+      const isAutoApproved = shouldAutoApprove(formData.reviewText);
+      
+      console.log(`📋 Review Moderation: ${isAutoApproved ? 'AUTO-APPROVED' : 'FLAGGED'} - Will ${isAutoApproved ? 'publish immediately' : 'require admin review'}`);
+
       // Prepare review data matching the table structure
       const reviewData = {
         user_id: user.id,
@@ -199,6 +219,8 @@ const ReviewSubmissionForm = ({
         guest_location: formData.guestLocation.trim() || null,
         rating: categoryRatings?.overall || formData.rating,
         review_text: formData.reviewText.trim(),
+        // AUTO-APPROVE SYSTEM: Most reviews publish immediately 
+        approved: isAutoApproved, // true = published, false = flagged for admin review
         // Add category ratings if provided
         ...(categoryRatings && {
           cleanliness_rating: categoryRatings.cleanliness || null,
@@ -349,10 +371,10 @@ const ReviewSubmissionForm = ({
           <CheckCircle className={`w-16 h-16 ${isModal ? 'text-green-500' : 'text-green-400'} mx-auto mb-4`} />
           <h3 className={`text-xl font-bold ${isModal ? 'text-green-800' : 'text-white'} mb-2`}>Thank You!</h3>
           <p className={`${isModal ? 'text-green-700' : 'text-green-100'} mb-4`}>
-            Your review has been submitted successfully. It will be published after moderation.
+            Your review has been published successfully and is now visible to other guests!
           </p>
           <p className={`${isModal ? 'text-green-600' : 'text-green-200'} text-sm`}>
-            We appreciate your feedback and hope to see you again at Kampo Ibayo!
+            Thank you for sharing your honest experience. We appreciate your feedback!
           </p>
         </div>
       </div>
