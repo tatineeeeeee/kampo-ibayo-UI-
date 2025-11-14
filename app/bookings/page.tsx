@@ -483,8 +483,48 @@ function BookingsPageContent() {
               )
             );
 
-            // Show status change notification if admin changed it
+            // Update stats instantly when status changes
             if (oldRecord && oldRecord.status !== newRecord.status) {
+              setBookingStats(prevStats => {
+                if (!prevStats) return prevStats;
+                
+                let pendingDelta = 0;
+                let confirmedDelta = 0;
+                let cancelledDelta = 0;
+                
+                // Calculate deltas based on status change
+                if (oldRecord.status === 'pending' && newRecord.status !== 'pending') {
+                  pendingDelta = -1;
+                }
+                if (oldRecord.status !== 'pending' && newRecord.status === 'pending') {
+                  pendingDelta = 1;
+                }
+                if (oldRecord.status === 'confirmed' && newRecord.status !== 'confirmed') {
+                  confirmedDelta = -1;
+                }
+                if (oldRecord.status !== 'confirmed' && newRecord.status === 'confirmed') {
+                  confirmedDelta = 1;
+                }
+                if (oldRecord.status === 'cancelled' && newRecord.status !== 'cancelled') {
+                  cancelledDelta = -1;
+                }
+                if (oldRecord.status !== 'cancelled' && newRecord.status === 'cancelled') {
+                  cancelledDelta = 1;
+                }
+                
+                const updatedStats = {
+                  ...prevStats,
+                  pendingCount: Math.max(0, prevStats.pendingCount + pendingDelta),
+                  confirmedCount: Math.max(0, prevStats.confirmedCount + confirmedDelta),
+                  cancelledCount: Math.max(0, prevStats.cancelledCount + cancelledDelta)
+                };
+                
+                updatedStats.canCreatePending = updatedStats.pendingCount < 3;
+                
+                console.log(`📊 Stats updated instantly: pending ${prevStats.pendingCount} → ${updatedStats.pendingCount}`);
+                return updatedStats;
+              });
+
               const statusMessages = {
                 confirmed: { title: 'Booking Confirmed!', message: 'Your booking has been confirmed by admin' },
                 cancelled: { title: 'Booking Cancelled', message: 'Your booking has been cancelled by admin' },
@@ -512,6 +552,31 @@ function BookingsPageContent() {
             setBookings(prevBookings => 
               prevBookings.filter(booking => booking.id !== oldRecord.id)
             );
+            
+            // Update stats when booking is deleted
+            setBookingStats(prevStats => {
+              if (!prevStats) return prevStats;
+              
+              let pendingDelta = 0;
+              let confirmedDelta = 0;
+              let cancelledDelta = 0;
+              
+              if (oldRecord.status === 'pending') pendingDelta = -1;
+              if (oldRecord.status === 'confirmed') confirmedDelta = -1;
+              if (oldRecord.status === 'cancelled') cancelledDelta = -1;
+              
+              const updatedStats = {
+                ...prevStats,
+                pendingCount: Math.max(0, prevStats.pendingCount + pendingDelta),
+                confirmedCount: Math.max(0, prevStats.confirmedCount + confirmedDelta),
+                cancelledCount: Math.max(0, prevStats.cancelledCount + cancelledDelta)
+              };
+              
+              updatedStats.canCreatePending = updatedStats.pendingCount < 3;
+              
+              console.log(`📊 Stats updated after deletion: pending ${prevStats.pendingCount} → ${updatedStats.pendingCount}`);
+              return updatedStats;
+            });
             
             showToast({
               type: 'warning',
@@ -751,19 +816,31 @@ function BookingsPageContent() {
     setBookings(instantUpdatedBookings);
     console.log('⚡ UI updated INSTANTLY - booking shows as cancelled immediately');
 
-    // 2. INSTANT modal close and cleanup
+    // 2. INSTANT STATS UPDATE - Update booking stats immediately
+    if (bookingStats && originalBooking?.status === 'pending') {
+      const updatedStats = {
+        ...bookingStats,
+        pendingCount: Math.max(0, bookingStats.pendingCount - 1),
+        cancelledCount: bookingStats.cancelledCount + 1,
+        canCreatePending: (bookingStats.pendingCount - 1) < 3
+      };
+      setBookingStats(updatedStats);
+      console.log('⚡ STATS updated INSTANTLY - pending count decremented immediately');
+    }
+
+    // 3. INSTANT modal close and cleanup
     setShowCancelModal(false);
     setCancellationReason("");
 
-    // 3. INSTANT success feedback - No waiting for server!
+    // 4. INSTANT success feedback - No waiting for server!
     showToast({
       type: 'success',
-      title: 'Booking Cancelled!',
-      message: 'Your booking has been cancelled successfully',
-      duration: 3000
+      title: 'Booking Cancelled Successfully!',
+      message: 'Confirmation email will be sent to your inbox',
+      duration: 4000
     });
 
-    // 4. Background server sync - User doesn't wait for this
+    // 5. Background server sync - User doesn't wait for this
     console.log('🔄 Starting background server sync (user already sees success)...');
     processServerCancellation(bookingId, reasonForServer, originalBooking);
   };
@@ -791,34 +868,54 @@ function BookingsPageContent() {
       if (result.success) {
         console.log('🎉 Server confirmed cancellation - all systems in sync');
         
-        // Optional: Show subtle confirmation that email was sent
+        // Only show notifications for email issues, not for successful delivery
         if (result.warning) {
           showToast({
-            type: 'info',
-            title: 'Email Update',
+            type: 'warning',
+            title: 'Email Issue',
             message: result.warning,
+            duration: 4000
+          });
+        } else if (!result.guestEmailSent && !result.adminEmailSent) {
+          showToast({
+            type: 'warning',
+            title: 'Email Issue',
+            message: 'Booking cancelled but confirmation email may not have been sent',
+            duration: 4000
+          });
+        } else if (!result.guestEmailSent || !result.adminEmailSent) {
+          showToast({
+            type: 'info', 
+            title: 'Email Status',
+            message: 'Booking cancelled - some emails may have failed',
             duration: 3000
           });
-        } else {
-          showToast({
-            type: 'info',
-            title: 'Email Sent',
-            message: 'Cancellation confirmation email sent',
-            duration: 2000
-          });
         }
+        // For successful email delivery, we don't show additional toast (user already got instant confirmation)
 
-        // Refresh data silently to ensure full sync
+        // Refresh data silently to ensure full sync (including updated stats)
         refreshBookingsInBackground();
       } else {
         console.error('❌ Server sync failed:', result.error);
         
-        // SAFE REVERT: Restore original booking state
+        // SAFE REVERT: Restore original booking state AND stats
         if (originalBooking) {
           const revertedBookings = bookings.map(booking => 
             booking.id === bookingId ? originalBooking : booking
           );
           setBookings(revertedBookings);
+          
+          // Revert stats if it was a pending booking
+          if (bookingStats && originalBooking.status === 'pending') {
+            const revertedStats = {
+              ...bookingStats,
+              pendingCount: bookingStats.pendingCount + 1,
+              cancelledCount: Math.max(0, bookingStats.cancelledCount - 1),
+              canCreatePending: (bookingStats.pendingCount + 1) < 3
+            };
+            setBookingStats(revertedStats);
+            console.log('🔄 Stats reverted due to server sync failure');
+          }
           
           showToast({
             type: 'error',
@@ -831,12 +928,24 @@ function BookingsPageContent() {
     } catch (error) {
       console.error('🔥 Network error during server sync:', error);
       
-      // SAFE REVERT: Network issue - restore original state
+      // SAFE REVERT: Network issue - restore original state AND stats
       if (originalBooking) {
         const revertedBookings = bookings.map(booking => 
           booking.id === bookingId ? originalBooking : booking
         );
         setBookings(revertedBookings);
+
+        // Revert stats if it was a pending booking
+        if (bookingStats && originalBooking.status === 'pending') {
+          const revertedStats = {
+            ...bookingStats,
+            pendingCount: bookingStats.pendingCount + 1,
+            cancelledCount: Math.max(0, bookingStats.cancelledCount - 1),
+            canCreatePending: (bookingStats.pendingCount + 1) < 3
+          };
+          setBookingStats(revertedStats);
+          console.log('🔄 Stats reverted due to network error');
+        }
 
         showToast({
           type: 'error',
@@ -852,14 +961,24 @@ function BookingsPageContent() {
   const refreshBookingsInBackground = async () => {
     try {
       if (user) {
-        const { data, error } = await supabase
-          .from("bookings")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+        // Refresh both bookings and stats
+        const [bookingsResult, statsResult] = await Promise.all([
+          supabase
+            .from("bookings")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
+          getUserBookingStats(user.id)
+        ]);
         
-        if (!error && data) {
-          setBookings(data as Booking[]);
+        if (!bookingsResult.error && bookingsResult.data) {
+          setBookings(bookingsResult.data as Booking[]);
+          console.log('📊 Background bookings refresh completed');
+        }
+        
+        if (statsResult) {
+          setBookingStats(statsResult);
+          console.log('📊 Background stats refresh completed');
         }
       }
     } catch (error) {
