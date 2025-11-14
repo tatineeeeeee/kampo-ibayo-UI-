@@ -47,6 +47,7 @@ function UploadPaymentProofContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [existingProofs, setExistingProofs] = useState<ExistingPaymentProof[]>([]);
   const [isResubmission, setIsResubmission] = useState(false);
+  const [ocrResult, setOcrResult] = useState<{referenceNumber: string | null; amount: number | null; confidence: number; method: string} | null>(null);
 
   const router = useRouter();
   const { user } = useAuth();
@@ -134,7 +135,19 @@ function UploadPaymentProofContent() {
     }
   }, [bookingId, user, router]); // Remove downPaymentAmount to prevent circular dependency
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Cleanup OCR worker on unmount
+  useEffect(() => {
+    return () => {
+      // Dynamic import to avoid loading OCR service if not used
+      import('../utils/ocrService').then(({ OCRService }) => {
+        OCRService.terminateWorker().catch(console.warn);
+      }).catch(() => {
+        // Ignore import errors during cleanup
+      });
+    };
+  }, []);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file size (max 5MB)
@@ -153,9 +166,62 @@ function UploadPaymentProofContent() {
       setProofImage(file);
       setError('');
       
+      // Reset OCR result for new image
+      setOcrResult(null);
+      
       // Create preview URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+
+      // Auto-process with OCR
+      try {
+        console.log('🤖 Starting automatic OCR processing...');
+        const { OCRService } = await import('../utils/ocrService');
+        const result = await OCRService.processPaymentImage(file);
+        
+        // Store OCR result for display
+        setOcrResult({
+          referenceNumber: result.referenceNumber,
+          amount: result.amount,
+          confidence: result.confidence,
+          method: result.method
+        });
+        
+        let fieldsUpdated = 0;
+        
+        if (result.referenceNumber) {
+          setReferenceNumber(result.referenceNumber);
+          fieldsUpdated++;
+        }
+        
+        if (result.amount) {
+          setAmount(result.amount.toString());
+          fieldsUpdated++;
+        }
+        
+        if (result.method && result.method !== 'unknown') {
+          const methodMap: { [key: string]: string } = {
+            'gcash': 'gcash',
+            'maya': 'maya',
+            'bank': 'bank_transfer'
+          };
+          const mappedMethod = methodMap[result.method];
+          if (mappedMethod) {
+            setPaymentMethod(mappedMethod);
+            fieldsUpdated++;
+          }
+        }
+        
+        // Auto-fill completed silently
+        if (fieldsUpdated > 0) {
+          console.log('✅ Auto-filled', fieldsUpdated, 'field(s) successfully');
+        }
+        
+      } catch (error) {
+        console.warn('OCR processing failed:', error);
+        setOcrResult(null);
+        // Silently fail - user can still fill form manually
+      }
     }
   };
 
@@ -389,34 +455,35 @@ function UploadPaymentProofContent() {
       {/* Main Content */}
       <div className="px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6 max-w-6xl mx-auto">
 
-        {/* Payment Instructions - Helpful Guide */}
+        {/* Payment Instructions - Streamlined */}
         <div className="bg-blue-800/50 border border-blue-600/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-blue-600/30 p-2 rounded-full">
               <CreditCard className="w-5 h-5 text-blue-400" />
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white">Payment Instructions</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white">How It Works</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h3 className="font-semibold text-blue-200 mb-2">📱 Step 1: Make Online Payment</h3>
-              <p className="text-blue-100 mb-1">Pay your booking amount using these online methods:</p>
-              <ul className="text-blue-200 text-xs space-y-1">
-                <li>• GCash Transfer</li>
-                <li>• Maya/PayMaya Transfer</li>
-                <li>• Bank Transfer (BPI, BDO, etc.)</li>
-                <li>• Online Banking</li>
-              </ul>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="text-center">
+              <div className="bg-blue-600/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                <span className="text-blue-300 font-bold">1</span>
+              </div>
+              <h3 className="font-semibold text-blue-200 mb-1">💳 Pay Online</h3>
+              <p className="text-blue-100 text-xs">GCash, Maya, Bank Transfer</p>
             </div>
-            <div>
-              <h3 className="font-semibold text-blue-200 mb-2">📸 Step 2: Take Screenshot</h3>
-              <p className="text-blue-100 mb-1">Capture a clear photo/screenshot showing:</p>
-              <ul className="text-blue-200 text-xs space-y-1">
-                <li>• Payment amount</li>
-                <li>• Transaction date & time</li>
-                <li>• Reference number</li>
-                <li>• Recipient details</li>
-              </ul>
+            <div className="text-center">
+              <div className="bg-blue-600/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                <span className="text-blue-300 font-bold">2</span>
+              </div>
+              <h3 className="font-semibold text-blue-200 mb-1">📸 Upload Screenshot</h3>
+              <p className="text-blue-100 text-xs">Clear payment confirmation</p>
+            </div>
+            <div className="text-center">
+              <div className="bg-green-600/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                <span className="text-green-300 font-bold">3</span>
+              </div>
+              <h3 className="font-semibold text-green-200 mb-1">🤖 Auto-Fill</h3>
+              <p className="text-green-100 text-xs">AI extracts payment details</p>
             </div>
           </div>
         </div>
@@ -721,23 +788,101 @@ function UploadPaymentProofContent() {
                           className="mx-auto rounded-lg shadow-md max-h-40 object-contain border border-gray-600"
                         />
                         <p className="text-sm text-green-400 font-medium">✅ Image uploaded - Click to change</p>
+
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <FileImage className="w-12 h-12 text-gray-400 mx-auto" />
                         <div>
                           <Upload className="w-6 h-6 text-red-400 mx-auto mb-2" />
-                          <p className="text-gray-300">📸 Click to upload screenshot or receipt</p>
+                          <p className="text-gray-300">📸 Click to upload payment screenshot</p>
                           <p className="text-xs text-gray-400">JPG, PNG, GIF up to 5MB</p>
+                          <p className="text-xs text-blue-400 mt-1">🚀 Smart auto-fill enabled</p>
                         </div>
                       </div>
                     )}
                   </label>
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
-                  💡 <strong>Tip:</strong> Make sure the image shows payment amount, date, and reference number clearly
+                  💡 <strong>Smart Tip:</strong> Upload clear payment screenshots - reference numbers and amounts will be detected automatically
                 </p>
               </div>
+
+              {/* OCR Results Display */}
+              {ocrResult && proofImage && (
+                <div className="mt-4 bg-gray-800 border border-gray-600 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-white flex items-center gap-2">
+                      <div className="bg-blue-600/30 p-1.5 rounded-full">
+                        <FileImage className="w-4 h-4 text-blue-400" />
+                      </div>
+                      Extracted Information
+                    </h4>
+                    <span className={`text-xs px-2 py-1 rounded-full bg-gray-700 ${
+                      ocrResult.confidence >= 80 ? 'text-green-400' : 
+                      ocrResult.confidence >= 60 ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      {ocrResult.confidence.toFixed(0)}% confidence
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Payment Method */}
+                    {ocrResult.method !== 'unknown' && (
+                      <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
+                        <span className="text-gray-400 text-sm">Detected Method:</span>
+                        <span className="text-white font-medium">
+                          {ocrResult.method === 'gcash' ? '📱 GCash' : 
+                           ocrResult.method === 'maya' ? '💳 Maya/PayMaya' : 
+                           ocrResult.method === 'bank' ? '🏦 Bank Transfer' : '❓ Unknown'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Reference Number */}
+                    <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
+                      <span className="text-gray-400 text-sm">Reference Number:</span>
+                      <div className="flex items-center gap-2">
+                        {ocrResult.referenceNumber ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <span className="text-white font-mono text-sm">{ocrResult.referenceNumber}</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4 text-red-400" />
+                            <span className="text-red-300 text-sm">Not detected</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
+                      <span className="text-gray-400 text-sm">Amount:</span>
+                      <div className="flex items-center gap-2">
+                        {ocrResult.amount ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <span className="text-white font-semibold">₱{ocrResult.amount.toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4 text-red-400" />
+                            <span className="text-red-300 text-sm">Not detected</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+
+                  </div>
+                </div>
+              )}
+
+
+
+
 
               {/* Error Message - Dark Theme */}
               {error && (
@@ -786,14 +931,25 @@ function UploadPaymentProofContent() {
 
             {/* Important Note - Dark Theme */}
             <div className="mt-6 p-4 bg-yellow-800/20 border border-yellow-600/50 rounded-lg">
-              <h4 className="font-semibold text-yellow-300 mb-1">⚠️ Important Guidelines:</h4>
-              <ul className="text-sm text-yellow-200 space-y-1">
-                <li>• 📸 Upload clear screenshot showing payment confirmation</li>
-                <li>• 🔢 Include transaction reference number if available</li>
-                <li>• ⏱️ Admin will verify and confirm your booking within <strong>24 hours</strong></li>
-                <li>• 📧 You&apos;ll receive email confirmation once verified</li>
-                <li>• 🔒 Your payment information is kept secure and confidential</li>
-              </ul>
+              <h4 className="font-semibold text-yellow-300 mb-2">⚠️ Verification Process:</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-yellow-200">
+                <div className="flex items-center gap-2">
+                  <span>⏱️</span>
+                  <span>Verified within <strong>24 hours</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>📧</span>
+                  <span>Email confirmation sent</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>🔒</span>
+                  <span>Secure & confidential</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>🤖</span>
+                  <span>AI-powered auto-fill</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
