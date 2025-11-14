@@ -2204,28 +2204,28 @@ function Home() {
                     {/* Legend - Fully Mobile Responsive */}
                     <div className="mt-4 p-3 sm:p-2 bg-gray-800/30 rounded-lg border border-gray-600/50 min-h-[120px] sm:min-h-0">
                       <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:grid-cols-3 sm:gap-4 md:flex md:flex-wrap md:items-center md:justify-center">
-                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-green-900/20 rounded-md border border-green-600/30">
-                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-green-600 flex-shrink-0"></span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-emerald-900/20 rounded-md border border-emerald-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded" style={{background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'}}></span>
                           <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Available</span>
                         </span>
                         <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-blue-900/20 rounded-md border border-blue-600/30">
-                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-blue-600 flex-shrink-0"></span>
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded" style={{background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'}}></span>
                           <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Check-in</span>
                         </span>
                         <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-red-900/20 rounded-md border border-red-600/30">
-                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-red-600 flex-shrink-0"></span>
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded" style={{background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'}}></span>
                           <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Check-out</span>
                         </span>
-                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-yellow-900/20 rounded-md border border-yellow-600/30">
-                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-yellow-600 flex-shrink-0"></span>
-                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Occupied</span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-yellow-900/20 rounded-md border border-yellow-500/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded" style={{background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)'}}></span>
+                          <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Busy</span>
                         </span>
-                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-purple-900/20 rounded-md border border-purple-600/30">
-                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-purple-600 flex-shrink-0"></span>
+                        <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-violet-900/20 rounded-md border border-violet-600/30">
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded" style={{background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)'}}></span>
                           <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Full Day</span>
                         </span>
                         <span className="flex items-center gap-1.5 sm:gap-2 p-2 bg-gray-800/20 rounded-md border border-gray-600/30">
-                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-gray-600 flex-shrink-0"></span>
+                          <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-gray-700 flex-shrink-0"></span>
                           <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">Unavailable</span>
                         </span>
                       </div>
@@ -2266,16 +2266,16 @@ function Home() {
                       {/* Mobile First Responsive Grid Layout */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mt-4 sm:mt-5">
                         {/* Row 1: Available + Check-in */}
-                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-green-900/20 border border-green-600/30 rounded-lg hover:bg-green-900/30 transition-colors">
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-green-600 flex-shrink-0 mt-1"></span>
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-emerald-900/20 border border-emerald-600/30 rounded-lg hover:bg-emerald-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1" style={{background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'}}></span>
                           <div className="min-w-0 flex-1">
-                            <div className="text-green-200 text-base sm:text-lg md:text-xl font-semibold">Available Dates</div>
-                            <div className="text-green-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Open for booking</div>
+                            <div className="text-emerald-200 text-base sm:text-lg md:text-xl font-semibold">Available Dates</div>
+                            <div className="text-emerald-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Open for booking</div>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-blue-900/20 border border-blue-600/30 rounded-lg hover:bg-blue-900/30 transition-colors">
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-blue-600 flex-shrink-0 mt-1"></span>
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1" style={{background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'}}></span>
                           <div className="min-w-0 flex-1">
                             <div className="text-blue-200 text-base sm:text-lg md:text-xl font-semibold">Check-in Day</div>
                             <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Guests arrive 3 PM</div>
@@ -2284,32 +2284,32 @@ function Home() {
 
                         {/* Row 2: Check-out + Occupied */}
                         <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-red-900/20 border border-red-600/30 rounded-lg hover:bg-red-900/30 transition-colors">
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-red-600 flex-shrink-0 mt-1"></span>
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1" style={{background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'}}></span>
                           <div className="min-w-0 flex-1">
                             <div className="text-red-200 text-base sm:text-lg md:text-xl font-semibold">Check-out Day</div>
                             <div className="text-red-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Available for check-in (guests leave 1 PM)</div>
                           </div>
                         </div>
 
-                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-yellow-900/20 border border-yellow-600/30 rounded-lg hover:bg-yellow-900/30 transition-colors">
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-yellow-600 flex-shrink-0 mt-1"></span>
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-yellow-900/20 border border-yellow-500/30 rounded-lg hover:bg-yellow-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1" style={{background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)'}}></span>
                           <div className="min-w-0 flex-1">
-                            <div className="text-yellow-200 text-base sm:text-lg md:text-xl font-semibold">Occupied</div>
+                            <div className="text-yellow-200 text-base sm:text-lg md:text-xl font-semibold">Busy</div>
                             <div className="text-yellow-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Resort fully occupied</div>
                           </div>
                         </div>
 
                         {/* Row 3: Full Day + Unavailable */}
-                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-purple-900/20 border border-purple-600/30 rounded-lg hover:bg-purple-900/30 transition-colors">
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-purple-600 flex-shrink-0 mt-1"></span>
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-violet-900/20 border border-violet-600/30 rounded-lg hover:bg-violet-900/30 transition-colors">
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1" style={{background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)'}}></span>
                           <div className="min-w-0 flex-1">
-                            <div className="text-purple-200 text-base sm:text-lg md:text-xl font-semibold">Full Day</div>
-                            <div className="text-purple-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Same-day check-in & check-out</div>
+                            <div className="text-violet-200 text-base sm:text-lg md:text-xl font-semibold">Full Day</div>
+                            <div className="text-violet-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Same-day check-in & check-out</div>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-gray-800/20 border border-gray-600/30 rounded-lg hover:bg-gray-800/30 transition-colors">
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-gray-600 flex-shrink-0 mt-1"></span>
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-gray-700 flex-shrink-0 mt-1"></span>
                           <div className="min-w-0 flex-1">
                             <div className="text-gray-200 text-base sm:text-lg md:text-xl font-semibold">Unavailable</div>
                             <div className="text-gray-100/80 text-sm sm:text-base md:text-lg leading-relaxed">Cannot be booked</div>

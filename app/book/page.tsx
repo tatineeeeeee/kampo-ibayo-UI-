@@ -1916,42 +1916,42 @@ function BookingPage() {
               
               <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-green-600"></span>
+                  <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Open</span>
                     <span className="sm:hidden">Open</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-orange-600"></span>
+                  <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Selected</span>
                     <span className="sm:hidden">Pick ✓</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-blue-600"></span>
+                  <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Check-in</span>
                     <span className="sm:hidden">In</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-red-600"></span>
+                  <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Check-out</span>
                     <span className="sm:hidden">Out</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-yellow-600"></span>
+                  <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)'}}></span>
                   <span className="text-gray-300">
-                    <span className="hidden sm:inline">Occupied</span>
+                    <span className="hidden sm:inline">Busy</span>
                     <span className="sm:hidden">Busy</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded bg-purple-600"></span>
+                  <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Full Day</span>
                     <span className="sm:hidden">Full</span>
