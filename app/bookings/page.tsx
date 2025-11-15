@@ -20,6 +20,7 @@ import { useToast } from "../components/Toast";
 import { Tables } from '../../database.types';
 
 import { CheckCircle, XCircle, PawPrint, MessageCircle, Clock, AlertTriangle, Ban, HourglassIcon, CheckCircle2, PhilippinePeso, Calendar, Users, Phone, Upload, Lightbulb, CreditCard, Smartphone, Home, Plus, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 
 type Booking = Tables<'bookings'>;
 
@@ -364,6 +365,13 @@ function BookingsPageContent() {
   const [cancellationReason, setCancellationReason] = useState("");
   const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
   const [maintenanceActive, setMaintenanceActive] = useState(false);
+  
+  // Reschedule state
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [newCheckInDate, setNewCheckInDate] = useState("");
+  const [newCheckOutDate, setNewCheckOutDate] = useState("");
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(true); // Default to calendar view
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -727,6 +735,10 @@ function BookingsPageContent() {
     setSelectedBooking(null);
     setShowCancelModal(false);
     setCancellationReason("");
+    setShowRescheduleModal(false);
+    setNewCheckInDate("");
+    setNewCheckOutDate("");
+    setShowCalendar(false);
   };
 
   // Pagination helpers
@@ -762,6 +774,11 @@ function BookingsPageContent() {
     }
     
     return false;
+  };
+
+  const canRescheduleBooking = (booking: Booking) => {
+    // Same rules as cancellation - can reschedule if can cancel
+    return canCancelBooking(booking);
   };
 
   const getCancellationMessage = (booking: Booking) => {
@@ -954,6 +971,114 @@ function BookingsPageContent() {
           duration: 5000
         });
       }
+    }
+  };
+
+  // Reschedule handlers
+  const handleOpenReschedule = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setNewCheckInDate(""); // Reset dates
+    setNewCheckOutDate("");
+    setShowRescheduleModal(true);
+  };
+
+  const handleCalendarDateSelect = (checkIn: string, checkOut: string) => {
+    setNewCheckInDate(checkIn);
+    setNewCheckOutDate(checkOut);
+  };
+
+  const handleRescheduleBooking = async () => {
+    if (!selectedBooking || !newCheckInDate || !newCheckOutDate) {
+      showToast({
+        type: 'warning',
+        title: 'Missing Information',
+        message: 'Please select both check-in and check-out dates',
+        duration: 4000
+      });
+      return;
+    }
+
+    // Validate dates
+    const checkIn = new Date(newCheckInDate);
+    const checkOut = new Date(newCheckOutDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (checkIn < today) {
+      showToast({
+        type: 'warning',
+        title: 'Invalid Date',
+        message: 'Check-in date cannot be in the past',
+        duration: 4000
+      });
+      return;
+    }
+
+    if (checkOut <= checkIn) {
+      showToast({
+        type: 'warning',
+        title: 'Invalid Date',
+        message: 'Check-out date must be after check-in date',
+        duration: 4000
+      });
+      return;
+    }
+
+    setRescheduleLoading(true);
+
+    try {
+      // Call backend API to reschedule
+      const response = await fetch('/api/user/reschedule-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: selectedBooking.id,
+          newCheckIn: newCheckInDate,
+          newCheckOut: newCheckOutDate,
+          userId: user?.id
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update local state immediately
+        setBookings(prevBookings => 
+          prevBookings.map(booking => 
+            booking.id === selectedBooking.id 
+              ? { ...booking, check_in_date: newCheckInDate, check_out_date: newCheckOutDate }
+              : booking
+          )
+        );
+
+        showToast({
+          type: 'success',
+          title: 'Booking Rescheduled!',
+          message: 'Your booking dates have been updated successfully',
+          duration: 4000
+        });
+
+        setShowRescheduleModal(false);
+        setNewCheckInDate("");
+        setNewCheckOutDate("");
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Reschedule Failed',
+          message: result.error || 'Could not reschedule booking. Please try again.',
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Reschedule error:', error);
+      showToast({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Please check your connection and try again',
+        duration: 4000
+      });
+    } finally {
+      setRescheduleLoading(false);
     }
   };
 
@@ -1393,6 +1518,17 @@ function BookingsPageContent() {
                           <PaymentProofUploadButton bookingId={booking.id} />
                         )}
 
+                        {/* Reschedule Button */}
+                        {canRescheduleBooking(booking) && (
+                          <button 
+                            onClick={() => handleOpenReschedule(booking)}
+                            className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1"
+                          >
+                            <Calendar className="w-3 h-3" />
+                            Reschedule
+                          </button>
+                        )}
+
                         {canCancelBooking(booking) ? (
                           <button 
                             onClick={() => {
@@ -1650,6 +1786,156 @@ function BookingsPageContent() {
                   </button>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reschedule Modal */}
+      {showRescheduleModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reschedule Booking</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{formatBookingNumber(selectedBooking.id)}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Current Dates Display */}
+            <div className="mx-6 mt-4 mb-4">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Current Dates</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Check-in</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{new Date(selectedBooking.check_in_date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Check-out</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{new Date(selectedBooking.check_out_date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Calendar or Date Inputs Toggle */}
+            <div className="mx-6 mb-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowCalendar(!showCalendar)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    showCalendar
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  📅 Calendar View
+                </button>
+                <button
+                  onClick={() => setShowCalendar(false)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    !showCalendar
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  📝 Date Input
+                </button>
+              </div>
+            </div>
+
+            {/* Calendar or Date Inputs */}
+            <div className="mx-6 mb-4">
+              {showCalendar ? (
+                <div className="border rounded-lg overflow-hidden">
+                  <AvailabilityCalendar
+                    selectedCheckIn={selectedBooking.check_in_date.split('T')[0]} 
+                    selectedCheckOut={selectedBooking.check_out_date.split('T')[0]}
+                    onDateSelect={handleCalendarDateSelect}
+                    excludeBookingId={selectedBooking.id}
+                    minDate={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      New Check-in Date
+                    </label>
+                    <input
+                      type="date"
+                      value={newCheckInDate}
+                      onChange={(e) => setNewCheckInDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      New Check-out Date
+                    </label>
+                    <input
+                      type="date"
+                      value={newCheckOutDate}
+                      onChange={(e) => setNewCheckOutDate(e.target.value)}
+                      min={newCheckInDate || new Date().toISOString().split('T')[0]}
+                      className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Policy Info */}
+            <div className="mx-6 mb-6">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  📅 Rescheduling is free if done 24+ hours before your current check-in date.
+                  Your original dates will be released when new dates are confirmed.
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 p-6 pt-0 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={closeModal}
+                className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRescheduleBooking}
+                disabled={!newCheckInDate || !newCheckOutDate || rescheduleLoading}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
+              >
+                {rescheduleLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b border-white"></div>
+                    Rescheduling...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="w-4 h-4" />
+                    Confirm Reschedule
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
