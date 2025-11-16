@@ -155,12 +155,6 @@ export default function HelpPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Mobile-First Sticky Header */}
-      export default function HelpPage() {
-  const { user, loading } = useAuth();
-  
-  return (
-    <>
-      {/* Navigation Bar */}
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
