@@ -5,7 +5,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
+    
 interface PaymentProof {
   id: number;
   booking_id: number;
@@ -19,7 +19,7 @@ interface PaymentProof {
   verified_at: string | null;
 }
 
-export async function GET(
+export async function GET(    
   request: Request,
   { params }: { params: { bookingId: string } }
 ) {

@@ -54,15 +54,30 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   useEffect(() => {
     const checkPaymentProof = async () => {
       try {
+        // Fetch ALL payment proofs and prioritize them correctly (same logic as admin)
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('status')
           .eq('booking_id', bookingId)
-          .order('uploaded_at', { ascending: false })
-          .limit(1);
+          .order('uploaded_at', { ascending: false });
 
         if (error) throw error;
-        setProofStatus(data && data.length > 0 ? data[0].status : null);
+        
+        let selectedStatus = null;
+        
+        if (data && data.length > 0) {
+          // Priority: pending > verified > rejected > cancelled
+          // This ensures new pending proofs take priority over old rejected ones
+          const pendingProof = data.find(proof => proof.status === 'pending');
+          const verifiedProof = data.find(proof => proof.status === 'verified');
+          const rejectedProof = data.find(proof => proof.status === 'rejected');
+          const cancelledProof = data.find(proof => proof.status === 'cancelled');
+          
+          const selectedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || data[0];
+          selectedStatus = selectedProof?.status || null;
+        }
+        
+        setProofStatus(selectedStatus);
       } catch (error) {
         console.error('Error checking payment proof:', error);
         setProofStatus(null);
@@ -73,9 +88,54 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
 
     checkPaymentProof();
 
-    // Refresh every 10 seconds to catch new uploads
-    const interval = setInterval(checkPaymentProof, 10000);
-    return () => clearInterval(interval);
+    // ✨ ENHANCED Real-time subscription for instant updates when admin verifies/rejects
+    const subscription = supabase
+      .channel(`user_payment_button_${bookingId}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: `button-${bookingId}` }
+        }
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_proofs',
+          filter: `booking_id=eq.${bookingId}`
+        },
+        (payload) => {
+          console.log(`🚨 CRITICAL: Payment button real-time update for booking ${bookingId}:`, payload);
+          
+          const oldStatus = payload.old && typeof payload.old === 'object' && 'status' in payload.old ? payload.old.status : 'unknown';
+          const newStatus = payload.new && typeof payload.new === 'object' && 'status' in payload.new ? payload.new.status : 'unknown';
+          console.log(`📝 Event: ${payload.eventType}, Old status: ${oldStatus}, New status: ${newStatus}`);
+          
+          // Force immediate refresh with debugging
+          console.log(`🔄 Triggering immediate button refresh for booking ${bookingId}...`);
+          checkPaymentProof();
+          
+          // Also force a small delay refresh as backup
+          setTimeout(() => {
+            console.log(`🔄 Backup button refresh for booking ${bookingId}...`);
+            checkPaymentProof();
+          }, 500);
+        }
+      )
+      .subscribe((status) => {
+        console.log(`🔗 User payment button subscription for booking ${bookingId}:`, status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`✅ Real-time payment button updates ACTIVE for booking ${bookingId}`);
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error(`❌ Real-time button subscription ERROR for booking ${bookingId}`);
+        }
+      });
+
+    return () => {
+      console.log(`🔌 Unsubscribing payment button real-time for booking ${bookingId}`);
+      subscription.unsubscribe();
+    };
   }, [bookingId]);
 
   if (loading) {
@@ -213,15 +273,29 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
   useEffect(() => {
     const fetchPaymentProof = async () => {
       try {
+        // Fetch ALL payment proofs and prioritize them correctly (same logic as admin)
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('*')
           .eq('booking_id', bookingId)
-          .order('uploaded_at', { ascending: false })
-          .limit(1);
+          .order('uploaded_at', { ascending: false });
 
         if (error) throw error;
-        setPaymentProof(data && data.length > 0 ? data[0] : null);
+        
+        let selectedProof = null;
+        
+        if (data && data.length > 0) {
+          // Priority: pending > verified > rejected > cancelled
+          // This ensures new pending proofs take priority over old rejected ones
+          const pendingProof = data.find(proof => proof.status === 'pending');
+          const verifiedProof = data.find(proof => proof.status === 'verified');
+          const rejectedProof = data.find(proof => proof.status === 'rejected');
+          const cancelledProof = data.find(proof => proof.status === 'cancelled');
+          
+          selectedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || data[0];
+        }
+        
+        setPaymentProof(selectedProof);
       } catch (error) {
         console.error('Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -231,6 +305,52 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
     };
 
     fetchPaymentProof();
+
+    // ✨ ENHANCED Real-time subscription for instant updates when admin verifies/rejects
+    const subscription = supabase
+      .channel(`user_payment_status_${bookingId}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: `payment-${bookingId}` }
+        }
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_proofs',
+          filter: `booking_id=eq.${bookingId}`
+        },
+        (payload) => {
+          console.log(`🚨 CRITICAL: Payment proof real-time update for booking ${bookingId}:`, payload);
+          console.log(`📝 Event type: ${payload.eventType}, Old: ${JSON.stringify(payload.old)}, New: ${JSON.stringify(payload.new)}`);
+          
+          // Force immediate refresh with debugging
+          console.log(`🔄 Triggering immediate refresh for booking ${bookingId} payment status...`);
+          fetchPaymentProof();
+          
+          // Also force a small delay refresh as backup
+          setTimeout(() => {
+            console.log(`🔄 Backup refresh for booking ${bookingId} payment status...`);
+            fetchPaymentProof();
+          }, 1000);
+        }
+      )
+      .subscribe((status) => {
+        console.log(`🔗 User payment status subscription for booking ${bookingId}:`, status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`✅ Real-time payment updates ACTIVE for booking ${bookingId}`);
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error(`❌ Real-time subscription ERROR for booking ${bookingId}`);
+        }
+      });
+
+    return () => {
+      console.log(`🔌 Unsubscribing payment status real-time for booking ${bookingId}`);
+      subscription.unsubscribe();
+    };
   }, [bookingId]);
 
   if (loading) {
@@ -627,6 +747,10 @@ function BookingsPageContent() {
             if (oldRecord.status !== newRecord.status) {
               console.log(`⚡ Payment proof ${newRecord.id} status changed: ${oldRecord.status} → ${newRecord.status}`);
               
+              // ⚡ FORCE COMPONENT REFRESH - Critical for real-time UI updates
+              console.log(`🚨 FORCING component refresh due to payment status change: ${oldRecord.status} → ${newRecord.status}`);
+              setRefreshTrigger(prev => prev + 1);
+              
               // Show instant status change notification
               const statusMessages = {
                 verified: { title: 'Payment Verified!', message: 'Your payment proof has been approved by admin' },
@@ -659,7 +783,7 @@ function BookingsPageContent() {
       userBookingsSubscription.unsubscribe();
       userPaymentProofsSubscription.unsubscribe();
     };
-  }, [user, showToast]);
+  }, [user, showToast, setRefreshTrigger]);
 
   useEffect(() => {
     async function loadBookings() {
@@ -1519,7 +1643,10 @@ function BookingsPageContent() {
 
                     {/* Payment Proof Status - Show for pending bookings only */}
                     {booking.status === 'pending' && (
-                      <UserPaymentProofStatus bookingId={booking.id} />
+                      <UserPaymentProofStatus 
+                        key={`payment-status-${booking.id}-${refreshTrigger}`}
+                        bookingId={booking.id} 
+                      />
                     )}
 
                     {/* Actions Section - Mobile First */}
@@ -1540,7 +1667,10 @@ function BookingsPageContent() {
                         
                         {/* Upload Payment Proof Button - Only show if pending */}
                         {booking.status === 'pending' && (
-                          <PaymentProofUploadButton bookingId={booking.id} />
+                          <PaymentProofUploadButton 
+                            key={`upload-button-${booking.id}-${refreshTrigger}`}
+                            bookingId={booking.id} 
+                          />
                         )}
 
                         {/* Reschedule Button */}

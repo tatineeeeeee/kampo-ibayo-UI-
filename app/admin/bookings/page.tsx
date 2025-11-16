@@ -78,19 +78,8 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
 
   // Handle active booking payment workflow
   if (bookingStatus === 'pending' || bookingStatus === 'pending_verification' || paymentStatus === 'payment_review' || paymentStatus === 'rejected') {
-    // First check if payment proof was rejected BY ADMIN - this should take priority
-    if (proofStatus === 'rejected' || paymentStatus === 'rejected') {
-      return {
-        step: 'payment_rejected',
-        priority: 6,
-        badge: 'bg-red-100 text-red-800',
-        text: 'Payment Rejected',
-        description: 'Payment proof was rejected by admin',
-        actionNeeded: 'Guest needs to upload new payment proof or booking should be cancelled'
-      };
-    }
-    // Check if payment is under review (payment proof uploaded and pending)
-    else if (paymentStatus === 'payment_review' || proofStatus === 'pending') {
+    // PRIORITY: Check if payment is under review (payment proof uploaded and pending) - THIS SHOULD BE FIRST
+    if (paymentStatus === 'payment_review' || proofStatus === 'pending') {
       return {
         step: 'payment_review',
         priority: 5,
@@ -98,6 +87,17 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         text: 'Payment Review',
         description: 'Payment proof uploaded, admin review needed',
         actionNeeded: 'Review payment proof immediately'
+      };
+    }
+    // Check if payment proof was rejected BY ADMIN - only if no pending proof exists
+    else if (proofStatus === 'rejected' || paymentStatus === 'rejected') {
+      return {
+        step: 'payment_rejected',
+        priority: 6,
+        badge: 'bg-red-100 text-red-800',
+        text: 'Payment Rejected',
+        description: 'Payment proof was rejected by admin',
+        actionNeeded: 'Guest needs to upload new payment proof or booking should be cancelled'
       };
     } 
     else if (proofStatus === 'verified') {
