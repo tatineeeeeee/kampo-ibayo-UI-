@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,14 +21,23 @@ interface Booking {
   payment_amount: number | null; // Amount to be paid based on payment_type
 }
 
-interface ExistingPaymentProof {
+interface PaymentHistoryEntry {
   id: number;
-  status: string;
-  admin_notes: string | null;
-  uploaded_at: string;
-  reference_number: string | null;
-  payment_method: string;
+  attemptNumber: number;
   amount: number;
+  paymentMethod: string;
+  referenceNumber: string | null;
+  status: string;
+  uploadedAt: string;
+  verifiedAt: string | null;
+  adminNotes: string | null;
+  isLatest: boolean;
+}
+
+interface PaymentSummary {
+  totalPaid: number;
+  pendingAmount: number;
+  totalSubmissions: number;
 }
 
 
@@ -41,20 +50,24 @@ function UploadPaymentProofContent() {
   const [referenceNumber, setReferenceNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [existingProofs, setExistingProofs] = useState<ExistingPaymentProof[]>([]);
   const [isResubmission, setIsResubmission] = useState(false);
   const [ocrResult, setOcrResult] = useState<{referenceNumber: string | null; amount: number | null; confidence: number; method: string} | null>(null);
+  
+  // Payment history state
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryEntry[]>([]);
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary>({ totalPaid: 0, pendingAmount: 0, totalSubmissions: 0 });
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [isManualAmountSet, setIsManualAmountSet] = useState(false); // Track if user manually set amount
 
   const router = useRouter();
   const { user } = useAuth();
   const searchParams = useSearchParams();
   
-  // Get booking ID directly from search params
-  const bookingId = searchParams.get('bookingId') || searchParams.get('booking_id');
+  // Get booking ID directly from search params (support multiple parameter names)
+  const bookingId = searchParams.get('bookingId') || searchParams.get('booking_id') || searchParams.get('booking');
   
   // Debug logging
   console.log('🔍 URL Parameter Check:');
@@ -62,9 +75,31 @@ function UploadPaymentProofContent() {
   console.log('  - searchParams object:', searchParams);
   console.log('  - All search params:', Object.fromEntries(searchParams.entries()));
 
-  // Calculate payment amounts based on booking payment type
-  const paymentAmount = booking?.payment_amount || (booking ? booking.total_amount * 0.5 : 0);
-  const remainingAmount = booking ? booking.total_amount - paymentAmount : 0;
+  // Calculate remaining balance after verified payments and pending payments
+  const verifiedPaidAmount = paymentSummary.totalPaid;
+  const pendingAmount = paymentSummary.pendingAmount;
+  const currentDetectedAmount = ocrResult?.amount || 0;
+  const remainingAmount = booking ? Math.max(0, booking.total_amount - verifiedPaidAmount - pendingAmount) : 0;
+  const remainingAfterCurrent = Math.max(0, remainingAmount - currentDetectedAmount);
+  
+  // Function to fetch payment history
+  const fetchPaymentHistory = useCallback(async (bookingId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`/api/user/payment-history/${bookingId}?userId=${user.id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setPaymentHistory(data.paymentHistory || []);
+        setPaymentSummary(data.paymentSummary || { totalPaid: 0, pendingAmount: 0, totalSubmissions: 0 });
+      } else {
+        console.error('Failed to fetch payment history:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -96,16 +131,19 @@ function UploadPaymentProofContent() {
         if (proofsError) {
           console.warn('Could not fetch existing proofs:', proofsError);
         } else {
-          setExistingProofs(proofs || []);
+          // Payment history loaded successfully
           
           // Check if this is a resubmission (has rejected proofs)
           const hasRejectedProofs = proofs?.some(proof => proof.status === 'rejected');
           setIsResubmission(hasRejectedProofs || false);
         }
         
-        // Set the correct payment amount based on booking payment type
-        const calculatedPaymentAmount = data.payment_amount || (data.total_amount * 0.5);
-        setAmount(calculatedPaymentAmount.toString());
+        // Don't auto-set amount on booking load - let it start empty for OCR workflow
+        // const calculatedPaymentAmount = data.payment_amount || (data.total_amount * 0.5);
+        // setAmount(calculatedPaymentAmount.toString());
+        
+        // Fetch payment history for balance calculations
+        await fetchPaymentHistory(bookingId);
       } catch (error) {
         setError('Failed to fetch booking details');
         console.error('Error fetching booking:', error);
@@ -133,7 +171,16 @@ function UploadPaymentProofContent() {
         router.replace('/bookings');
       }, 3000);
     }
-  }, [bookingId, user, router]); // Remove downPaymentAmount to prevent circular dependency
+  }, [bookingId, user, router, fetchPaymentHistory]); // Include fetchPaymentHistory dependency
+
+  // Auto-populate amount from OCR detection when available
+  // This triggers after OCR processing completes
+  useEffect(() => {
+    if (ocrResult?.amount && !isManualAmountSet) {
+      console.log('🤖 OCR useEffect: Setting amount to', ocrResult.amount);
+      setAmount(ocrResult.amount.toString());
+    }
+  }, [ocrResult?.amount, isManualAmountSet]); // More specific dependency
 
   // Cleanup OCR worker on unmount
   useEffect(() => {
@@ -166,8 +213,10 @@ function UploadPaymentProofContent() {
       setProofImage(file);
       setError('');
       
-      // Reset OCR result for new image
+      // Reset OCR result and amount for new image
       setOcrResult(null);
+      setAmount(''); // Clear amount field for new image
+      setIsManualAmountSet(false); // Reset manual flag for new image
       
       // Create preview URL
       const url = URL.createObjectURL(file);
@@ -194,9 +243,10 @@ function UploadPaymentProofContent() {
           fieldsUpdated++;
         }
         
+        // Auto-fill amount if detected (OCR takes priority over any existing value)
         if (result.amount) {
           setAmount(result.amount.toString());
-          fieldsUpdated++;
+          setIsManualAmountSet(false); // Reset manual flag since this is OCR auto-fill
         }
         
         if (result.method && result.method !== 'unknown') {
@@ -250,18 +300,15 @@ function UploadPaymentProofContent() {
 
     setIsUploading(true);
     setError('');
-    setUploadProgress('Starting upload...');
 
     // Add timeout to prevent hanging
     const timeoutId = setTimeout(() => {
       setIsUploading(false);
-      setUploadProgress('');
       setError('Upload timeout. Please try again.');
     }, 30000); // 30 second timeout
 
     try {
       console.log('📤 Starting upload process...');
-      setUploadProgress('Preparing file...');
       
       // Import timeout utility
       const { withTimeout } = await import('../utils/apiTimeout');
@@ -271,7 +318,6 @@ function UploadPaymentProofContent() {
       const fileName = `proof_${bookingId}_${Date.now()}.${fileExt}`;
       
       console.log('📁 Uploading file to storage:', fileName);
-      setUploadProgress('Uploading image...');
       
       const { error: uploadError } = await withTimeout(
         supabase.storage
@@ -286,7 +332,6 @@ function UploadPaymentProofContent() {
       }
 
       console.log('✅ File uploaded to storage successfully');
-      setUploadProgress('Processing upload...');
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -295,7 +340,6 @@ function UploadPaymentProofContent() {
 
       // Save payment proof record - Use auth.uid() which matches our database structure
       console.log('💾 Saving payment proof record...');
-      setUploadProgress('Saving proof record...');
       const { data: { user: authUser } } = await supabase.auth.getUser();
       const { error: insertError } = await supabase
         .from('payment_proofs')
@@ -314,7 +358,6 @@ function UploadPaymentProofContent() {
       }
 
       console.log('✅ Payment proof record saved successfully');
-      setUploadProgress('Updating booking status...');
 
       // CRITICAL: Update booking to trigger real-time admin updates
       try {
@@ -355,7 +398,6 @@ function UploadPaymentProofContent() {
       // Success - Show success state briefly, then redirect
       console.log('✅ Payment proof uploaded successfully!');
       clearTimeout(timeoutId); // Clear timeout on success
-      setUploadProgress('Upload complete!');
       setUploadSuccess(true);
       
       // Add a small delay to show success state, then redirect
@@ -370,7 +412,6 @@ function UploadPaymentProofContent() {
     } finally {
       if (!uploadSuccess) {
         setIsUploading(false);
-        setUploadProgress('');
       }
     }
   };
@@ -468,130 +509,186 @@ function UploadPaymentProofContent() {
               <div className="bg-blue-600/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
                 <span className="text-blue-300 font-bold">1</span>
               </div>
-              <h3 className="font-semibold text-blue-200 mb-1">💳 Pay Online</h3>
+              <h3 className="font-semibold text-blue-200 mb-1">Pay Online</h3>
               <p className="text-blue-100 text-xs">GCash, Maya, Bank Transfer</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-600/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
                 <span className="text-blue-300 font-bold">2</span>
               </div>
-              <h3 className="font-semibold text-blue-200 mb-1">📸 Upload Screenshot</h3>
+              <h3 className="font-semibold text-blue-200 mb-1">Upload Screenshot</h3>
               <p className="text-blue-100 text-xs">Clear payment confirmation</p>
             </div>
             <div className="text-center">
               <div className="bg-green-600/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
                 <span className="text-green-300 font-bold">3</span>
               </div>
-              <h3 className="font-semibold text-green-200 mb-1">🤖 Auto-Fill</h3>
+              <h3 className="font-semibold text-green-200 mb-1">Auto-Fill</h3>
               <p className="text-green-100 text-xs">AI extracts payment details</p>
             </div>
           </div>
         </div>
 
-        {/* Previous Payment Attempts */}
-        {existingProofs.length > 0 && (
+        {/* Payment Balance & History */}
+        {(paymentSummary.totalSubmissions > 0 || paymentSummary.totalPaid > 0) && (
           <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <div className="bg-yellow-600/30 p-1.5 rounded-full">
-                <CreditCard className="w-4 h-4 text-yellow-500" />
-              </div>
-              Payment History
-            </h2>
-            
-            <div className="space-y-3">
-              {existingProofs.map((proof, index) => {
-                const isRejected = proof.status === 'rejected';
-                const isPending = proof.status === 'pending';
-                
-                // Extract rejection reason from admin notes
-                let rejectionReason = null;
-                if (isRejected && proof.admin_notes) {
-                  const reasonMatch = proof.admin_notes.match(/REJECTION REASON: (.+?)(?:\n|$)/);
-                  rejectionReason = reasonMatch ? reasonMatch[1] : proof.admin_notes;
-                }
-                
-                return (
-                  <div
-                    key={proof.id}
-                    className={`p-4 rounded-lg border ${
-                      isRejected 
-                        ? 'bg-red-900/20 border-red-600/50' 
-                        : isPending 
-                        ? 'bg-yellow-900/20 border-yellow-600/50'
-                        : 'bg-green-900/20 border-green-600/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-400">
-                        Attempt #{existingProofs.length - index} • {new Date(proof.uploaded_at).toLocaleDateString()}
-                      </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        isRejected 
-                          ? 'bg-red-600/30 text-red-300' 
-                          : isPending 
-                          ? 'bg-yellow-600/30 text-yellow-300'
-                          : 'bg-green-600/30 text-green-300'
-                      }`}>
-                        {isRejected ? '❌ Rejected' : isPending ? '⏳ Under Review' : '✅ Verified'}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                      <div>
-                        <span className="text-gray-400">Method:</span>
-                        <span className="text-white ml-1">{proof.payment_method}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="text-white ml-1">₱{proof.amount.toLocaleString()}</span>
-                      </div>
-                      {proof.reference_number && (
-                        <div>
-                          <span className="text-gray-400">Ref:</span>
-                          <span className="text-white ml-1">{proof.reference_number}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {isRejected && rejectionReason && (
-                      <div className="mt-3 p-3 bg-red-800/30 border border-red-600/30 rounded">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <h4 className="text-red-300 font-medium text-sm">Reason for rejection:</h4>
-                            <p className="text-red-200 text-sm mt-1">{rejectionReason}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {isPending && (
-                      <div className="mt-3 p-3 bg-yellow-800/30 border border-yellow-600/30 rounded">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                          <p className="text-yellow-200 text-sm">Currently under admin review. You will be notified via email once reviewed.</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <div className="bg-blue-600/30 p-1.5 rounded-full">
+                  <CreditCard className="w-4 h-4 text-blue-500" />
+                </div>
+                Payment History
+                {paymentSummary.totalSubmissions > 0 && (
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    {paymentSummary.totalSubmissions} submission{paymentSummary.totalSubmissions !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </h2>
+              {paymentSummary.totalSubmissions > 0 && (
+                <button
+                  onClick={() => setShowPaymentHistory(!showPaymentHistory)}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                >
+                  {showPaymentHistory ? 'Hide Details' : 'Show Details'}
+                </button>
+              )}
             </div>
             
-            {isResubmission && (
-              <div className="mt-4 p-4 bg-blue-800/30 border border-blue-600/30 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <div className="bg-blue-600/30 p-2 rounded-full flex-shrink-0">
-                    <Upload className="w-4 h-4 text-blue-400" />
+            {/* Payment Balance Summary */}
+            {booking && paymentSummary.totalPaid > 0 && (
+              <div className="mb-4 p-4 bg-green-900/20 border border-green-600/50 rounded-lg">
+                <h3 className="text-green-300 font-semibold mb-3 flex items-center gap-2">
+                  <span>💰</span> Payment Balance
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <p className="text-gray-400">Total Booking</p>
+                    <p className="text-white font-semibold text-lg">₱{booking.total_amount.toLocaleString()}</p>
                   </div>
-                  <div>
-                    <h4 className="text-blue-300 font-medium">Ready to resubmit?</h4>
-                    <p className="text-blue-200 text-sm mt-1">
-                      Please review the rejection reason above and upload a corrected payment proof below. 
-                      Make sure your new submission addresses the issues mentioned.
+                  <div className="text-center">
+                    <p className="text-gray-400">Verified Payments</p>
+                    <p className="text-green-400 font-semibold text-lg">₱{paymentSummary.totalPaid.toLocaleString()}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-400">Remaining Balance</p>
+                    <p className="font-semibold text-lg text-orange-400">
+                      ₱{Math.max(0, remainingAmount).toLocaleString()}
                     </p>
                   </div>
                 </div>
+                
+                {paymentSummary.pendingAmount > 0 && (
+                  <div className="mt-3 p-2 bg-yellow-900/20 border border-yellow-600/50 rounded">
+                    <p className="text-yellow-300 text-sm">
+                      <span className="font-medium">⏳ Pending Review:</span> ₱{paymentSummary.pendingAmount.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                
+                {remainingAmount <= 0 && (
+                  <div className="mt-3 p-2 bg-green-900/20 border border-green-600/50 rounded">
+                    <p className="text-green-300 text-sm font-medium">
+                      ✅ Booking fully paid! No additional payment required.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Payment History Details */}
+            {showPaymentHistory && paymentHistory.length > 0 && (
+              <div className="space-y-3">
+                {paymentHistory.map((entry) => {
+                  const isRejected = entry.status === 'rejected';
+                  const isPending = entry.status === 'pending';
+                  const isVerified = entry.status === 'verified';
+                  
+                  // Extract rejection reason from admin notes
+                  let rejectionReason = null;
+                  if (isRejected && entry.adminNotes) {
+                    const reasonMatch = entry.adminNotes.match(/REJECTION REASON: (.+?)(?:\n|$)/);
+                    rejectionReason = reasonMatch ? reasonMatch[1] : entry.adminNotes;
+                  }
+                  
+                  return (
+                    <div
+                      key={entry.id}
+                      className="p-4 rounded-lg border bg-gray-900/20 border-gray-600/50"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-400">
+                            Attempt #{entry.attemptNumber} • {new Date(entry.uploadedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </span>
+                          {entry.isLatest && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                              Latest
+                            </span>
+                          )}
+                        </div>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-600/30 text-green-300">
+                          {isRejected ? '❌ Rejected' : isPending ? '⏳ Under Review' : '✅ Verified'}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <span className="text-gray-400">Method:</span>
+                          <span className="text-white ml-1">{entry.paymentMethod}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Amount:</span>
+                          <span className="text-white ml-1">₱{entry.amount.toLocaleString()}</span>
+                        </div>
+                        {entry.referenceNumber && (
+                          <div>
+                            <span className="text-gray-400">Ref:</span>
+                            <span className="text-white ml-1">{entry.referenceNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {isRejected && rejectionReason && (
+                        <div className="mt-3 p-3 bg-red-800/30 border border-red-600/30 rounded">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <h4 className="text-red-300 font-medium text-sm">Reason for rejection:</h4>
+                              <p className="text-red-200 text-sm mt-1">{rejectionReason}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {isPending && (
+                        <div className="mt-3 p-3 bg-yellow-800/30 border border-yellow-600/30 rounded">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-yellow-200 text-sm">Currently under admin review. You will be notified via email once reviewed.</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {isVerified && entry.verifiedAt && (
+                        <div className="mt-3 p-2 bg-green-800/30 border border-green-600/30 rounded">
+                          <p className="text-green-200 text-sm">
+                            ✅ Verified on {new Date(entry.verifiedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -608,69 +705,128 @@ function UploadPaymentProofContent() {
             </h2>
             {booking && (
               <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Guest Name:</span>
-                  <span className="font-medium text-white">{booking.guest_name}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Check-in:</span>
-                  <span className="font-medium text-white">{new Date(booking.check_in_date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Check-out:</span>
-                  <span className="font-medium text-white">{new Date(booking.check_out_date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Guests:</span>
-                  <span className="font-medium text-white">{booking.number_of_guests}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Total Amount:</span>
-                  <span className="font-semibold text-lg text-white">₱{booking.total_amount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-700 bg-green-800/20 px-3 rounded">
-                  <span className="text-green-300 font-medium">
-                    💰 {booking?.payment_type === 'full' ? 'Full Payment (100%)' : 'Down Payment (50%)'}:
-                  </span>
-                  <span className="font-bold text-green-400 text-lg">₱{paymentAmount.toLocaleString()}</span>
-                </div>
-                {booking?.payment_type !== 'full' && (
-                  <div className="flex justify-between py-2 bg-orange-800/20 px-3 rounded">
-                    <span className="text-orange-300">💳 Pay on Arrival (50%):</span>
-                    <span className="font-medium text-orange-400">₱{remainingAmount.toLocaleString()}</span>
+                {/* Guest Information */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-500 text-xs block">Primary Guest</span>
+                    <span className="text-white font-medium">{booking.guest_name}</span>
                   </div>
-                )}
+                  <div>
+                    <span className="text-gray-500 text-xs block">Total Guests</span>
+                    <span className="text-white">{booking.number_of_guests} {booking.number_of_guests === 1 ? 'person' : 'people'}</span>
+                  </div>
+                </div>
+
+                {/* Stay Details */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-500 text-xs block">Check-in</span>
+                    <span className="text-white">{new Date(booking.check_in_date).toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-xs block">Check-out</span>
+                    <span className="text-white">{new Date(booking.check_out_date).toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}</span>
+                  </div>
+                </div>
+
+                {/* Additional Booking Info */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-500 text-xs block">Duration</span>
+                    <span className="text-white">
+                      {(() => {
+                        const checkIn = new Date(booking.check_in_date);
+                        const checkOut = new Date(booking.check_out_date);
+                        const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+                        return `${nights} ${nights === 1 ? 'night' : 'nights'}`;
+                      })()} 
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-xs block">Booking Status</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      booking.status === 'confirmed' ? 'bg-green-900/30 text-green-400'
+                      : booking.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400' 
+                      : 'bg-gray-700 text-gray-300'
+                    }`}>
+                      {booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Pending'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Payment Summary - Simplified */}
+                <div className="border-t border-gray-700 pt-3 mt-3">
+                  <div className="text-center p-4 rounded-lg bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-600/30">
+                    {paymentSummary.totalPaid > 0 ? (
+                      // Show detailed breakdown when there are payments
+                      <>
+                        <div className="text-gray-400 text-sm mb-1">Total Booking Amount</div>
+                        <div className="text-white font-bold text-2xl">₱{booking.total_amount.toLocaleString()}</div>
+                        <div className="mt-2 text-sm">
+                          <span className="text-green-400">₱{paymentSummary.totalPaid.toLocaleString()} paid</span>
+                          {paymentSummary.pendingAmount > 0 && (
+                            <span className="text-yellow-400 ml-2">• ₱{paymentSummary.pendingAmount.toLocaleString()} pending</span>
+                          )}
+                        </div>
+                        {remainingAmount > 0 && (
+                          <div className="mt-2 px-3 py-1 bg-orange-600/20 border border-orange-500/30 rounded-full inline-block">
+                            <span className="text-orange-300 font-semibold text-sm">
+                              ₱{remainingAmount.toLocaleString()} remaining
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      // Show simple amount when no payments made
+                      <>
+                        <div className="text-gray-400 text-sm mb-1">Amount to Pay</div>
+                        <div className="text-white font-bold text-2xl">₱{booking.total_amount.toLocaleString()}</div>
+                        <div className="text-gray-400 text-xs mt-1">Full booking amount</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
               </div>
             )}
             
-            {/* Payment Details */}
+            {/* Payment Methods */}
             <div className="mt-6 p-4 bg-green-800/20 border border-green-600/30 rounded-lg">
               <h3 className="font-semibold text-green-300 mb-3 flex items-center gap-2">
-                <span>📱</span> Payment Details
+                <span>📳</span> Payment Methods
               </h3>
               <div className="text-sm text-green-200 space-y-2">
-                <p className="flex items-center gap-2">
-                  <span className="font-medium">GCash:</span> 
-                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">09662815123</span>
-                  <span className="text-xs">(Kampo Ibayo)</span>
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="font-medium">BDO:</span> 
-                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
-                  <span className="text-xs">(Kampo Ibayo)</span>
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="font-medium">BPI:</span> 
-                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="font-medium">PayMaya:</span> 
-                  <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono">1234-567-890</span>
-                </p>
-                <p className="text-xs text-green-300 mt-2">
-                  💡 <strong>Amount to pay:</strong> ₱{paymentAmount.toLocaleString()} 
-                  ({booking?.payment_type === 'full' ? '100% full payment' : '50% down payment'})
-                </p>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">GCash:</span> 
+                    <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono text-xs">09662815123</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">BDO:</span> 
+                    <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono text-xs">1234-567-890</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">BPI:</span> 
+                    <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono text-xs">1234-567-890</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Maya:</span> 
+                    <span className="bg-gray-700 px-2 py-1 rounded text-green-400 font-mono text-xs">1234-567-890</span>
+                  </div>
+                </div>
+                <div className="text-xs text-green-300 mt-3 p-2 bg-green-900/20 rounded">
+                  💡 <strong>Account Name:</strong> Kampo Ibayo
+                </div>
               </div>
             </div>
           </div>
@@ -678,8 +834,8 @@ function UploadPaymentProofContent() {
           {/* Upload Form - Dark Theme */}
           <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <div className={`p-1.5 rounded-full ${isResubmission ? 'bg-orange-600/30' : 'bg-green-600/30'}`}>
-                <Upload className={`w-4 h-4 ${isResubmission ? 'text-orange-500' : 'text-green-500'}`} />
+              <div className="p-1.5 rounded-full bg-green-600/30">
+                <Upload className="w-4 h-4 text-green-500" />
               </div>
               {isResubmission ? 'Resubmit Payment Proof' : 'Upload Payment Proof'}
             </h2>
@@ -696,6 +852,81 @@ function UploadPaymentProofContent() {
             )}
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* File Upload - Dark Theme */
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Payment Screenshot/Receipt <span className="text-red-400">*</span>
+                </label>
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-red-500 transition-colors bg-gray-700/50">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="proof-upload"
+                    required
+                  />
+                  <label htmlFor="proof-upload" className="cursor-pointer">
+                    {previewUrl ? (
+                      <div className="space-y-2">
+                        <Image
+                          src={previewUrl}
+                          alt="Payment proof preview"
+                          width={200}
+                          height={150}
+                          className="mx-auto rounded-lg shadow-md max-h-40 object-contain border border-gray-600"
+                        />
+                        <p className="text-sm text-green-400 font-medium">✅ Image uploaded - Click to change</p>
+
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <FileImage className="w-12 h-12 text-gray-400 mx-auto" />
+                        <div>
+                          <Upload className="w-6 h-6 text-red-400 mx-auto mb-2" />
+                          <p className="text-gray-300">📸 Click to upload payment screenshot</p>
+                          <p className="text-xs text-gray-400">JPG, PNG, GIF up to 5MB</p>
+                          <p className="text-xs text-blue-400 mt-1">🚀 Smart auto-fill enabled</p>
+                        </div>
+                      </div>
+                    )}
+                  </label>
+                </div>
+                {!previewUrl && (
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <span>💡</span> Clear screenshots help AI detect payment details
+                  </p>
+                )}
+              </div>
+              }
+              {/* Compact OCR Summary - Only show key detection status */}
+              {ocrResult && proofImage && (ocrResult.referenceNumber || ocrResult.amount) && (
+                <div className="mt-3 p-3 bg-gray-800/40 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400 flex items-center gap-2">
+                      🤖 Auto-Detected
+                    </span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-900/30 text-green-400">
+                      {ocrResult.confidence.toFixed(0)}% confidence
+                    </span>
+                  </div>
+                  <div className="flex gap-4 text-sm">
+                    {ocrResult.referenceNumber && (
+                      <span className="text-green-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Reference: {ocrResult.referenceNumber}
+                      </span>
+                    )}
+                    {ocrResult.amount && (
+                      <span className="text-green-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Amount: ₱{ocrResult.amount.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Payment Method */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -743,7 +974,7 @@ function UploadPaymentProofContent() {
                 )}
               </div>
 
-              {/* Amount */}
+              {/* Amount Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Amount Paid <span className="text-red-400">*</span>
@@ -751,134 +982,121 @@ function UploadPaymentProofContent() {
                 <input
                   type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                    // Only mark as manual if user is actually typing (not auto-population)
+                    if (e.target.value !== (ocrResult?.amount?.toString() || '')) {
+                      setIsManualAmountSet(true);
+                    }
+                  }}
                   min="0"
                   step="0.01"
+                  placeholder="Upload receipt to auto-detect amount"
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   required
                 />
-                <p className="text-sm text-green-400 mt-1 flex items-center gap-1">
-                  <span>💡</span> Recommended: ₱{paymentAmount.toLocaleString()} 
-                  ({booking?.payment_type === 'full' ? 'full payment' : '50% down payment'})
-                </p>
-              </div>
-
-              {/* File Upload - Dark Theme */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Payment Screenshot/Receipt <span className="text-red-400">*</span>
-                </label>
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-red-500 transition-colors bg-gray-700/50">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="proof-upload"
-                    required
-                  />
-                  <label htmlFor="proof-upload" className="cursor-pointer">
-                    {previewUrl ? (
-                      <div className="space-y-2">
-                        <Image
-                          src={previewUrl}
-                          alt="Payment proof preview"
-                          width={200}
-                          height={150}
-                          className="mx-auto rounded-lg shadow-md max-h-40 object-contain border border-gray-600"
-                        />
-                        <p className="text-sm text-green-400 font-medium">✅ Image uploaded - Click to change</p>
-
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <FileImage className="w-12 h-12 text-gray-400 mx-auto" />
-                        <div>
-                          <Upload className="w-6 h-6 text-red-400 mx-auto mb-2" />
-                          <p className="text-gray-300">📸 Click to upload payment screenshot</p>
-                          <p className="text-xs text-gray-400">JPG, PNG, GIF up to 5MB</p>
-                          <p className="text-xs text-blue-400 mt-1">🚀 Smart auto-fill enabled</p>
-                        </div>
+                
+                {/* Simple Payment Notice */}
+                {remainingAmount > 0 && (
+                  <div className="mt-2 p-2 bg-blue-900/20 border border-blue-600/50 rounded">
+                    <p className="text-blue-200 text-xs">
+                      <strong>Required payment:</strong> ₱{remainingAmount.toLocaleString()} (remaining balance)
+                    </p>
+                  </div>
+                )}
+                
+                {/* Quick action buttons */}
+                {(ocrResult?.amount || remainingAmount > 0) && (
+                  <div className="mt-2 flex gap-2">
+                    {ocrResult?.amount && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAmount(ocrResult.amount!.toString());
+                          setIsManualAmountSet(true);
+                        }}
+                        className="px-2 py-1 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-600/30 rounded text-xs transition-all"
+                        title="Use the amount detected from your uploaded receipt"
+                      >
+                        Use AI: ₱{ocrResult.amount.toLocaleString()}
+                      </button>
+                    )}
+                    {remainingAmount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAmount(remainingAmount.toString());
+                          setIsManualAmountSet(true);
+                        }}
+                        className="px-2 py-1 bg-green-600/20 text-green-300 hover:bg-green-600/30 border border-green-600/30 rounded text-xs transition-all"
+                        title="Pay the full remaining balance to complete your booking"
+                      >
+                        Pay Remaining: ₱{remainingAmount.toLocaleString()}
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Payment Summary - moved below Amount Paid */}
+                <div className="mt-4">
+                  <div className="p-3 bg-gray-800/50 border border-gray-600/50 rounded-lg space-y-2">
+                    <h3 className="text-sm font-medium text-gray-300 mb-2">Payment Summary</h3>
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total Booking Amount:</span>
+                      <span className="text-white font-medium">₱{booking?.total_amount.toLocaleString() || '0'}</span>
+                    </div>
+                    
+                    {paymentSummary.totalPaid > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Already Paid:</span>
+                        <span className="text-green-400 font-medium">₱{paymentSummary.totalPaid.toLocaleString()}</span>
                       </div>
                     )}
-                  </label>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  💡 <strong>Smart Tip:</strong> Upload clear payment screenshots - reference numbers and amounts will be detected automatically
-                </p>
-              </div>
-
-              {/* OCR Results Display */}
-              {ocrResult && proofImage && (
-                <div className="mt-4 bg-gray-800 border border-gray-600 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-white flex items-center gap-2">
-                      <div className="bg-blue-600/30 p-1.5 rounded-full">
-                        <FileImage className="w-4 h-4 text-blue-400" />
+                    
+                    {amount && parseFloat(amount) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Current Payment:</span>
+                        <span className="text-blue-400 font-medium">₱{parseFloat(amount).toLocaleString()}</span>
                       </div>
-                      Extracted Information
-                    </h4>
-                    <span className={`text-xs px-2 py-1 rounded-full bg-gray-700 ${
-                      ocrResult.confidence >= 80 ? 'text-green-400' : 
-                      ocrResult.confidence >= 60 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {ocrResult.confidence.toFixed(0)}% confidence
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Payment Method */}
-                    {ocrResult.method !== 'unknown' && (
-                      <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-                        <span className="text-gray-400 text-sm">Detected Method:</span>
-                        <span className="text-white font-medium">
-                          {ocrResult.method === 'gcash' ? '📱 GCash' : 
-                           ocrResult.method === 'maya' ? '💳 Maya/PayMaya' : 
-                           ocrResult.method === 'bank' ? '🏦 Bank Transfer' : '❓ Unknown'}
+                    )}
+                    
+                    <div className="border-t border-gray-600 pt-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-300 font-medium">Remaining After This:</span>
+                        <span className={`font-bold ${
+                          (amount && parseFloat(amount) > 0 ? remainingAfterCurrent : remainingAmount) <= 0 ? 'text-green-400' : 'text-orange-400'
+                        }`}>
+                          ₱{(amount && parseFloat(amount) > 0 ? Math.max(0, remainingAfterCurrent) : remainingAmount).toLocaleString()}
                         </span>
                       </div>
+                    </div>
+                    
+                    {/* Single Validation Message */}
+                    {amount && parseFloat(amount) > 0 && remainingAmount > 0 && (
+                      <>
+                        {/* Show validation warning only if not paying full amount OR screenshot doesn't match */}
+                        {(Math.abs(parseFloat(amount) - remainingAmount) > 0.01 || 
+                          (ocrResult?.amount && Math.abs(parseFloat(amount) - ocrResult.amount) > 0.01)) && (
+                          <div className="mt-2 p-2 bg-red-900/20 border border-red-600/30 rounded">
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="w-3 h-3 text-red-400" />
+                              <div className="text-red-300 text-xs">
+                                {Math.abs(parseFloat(amount) - remainingAmount) > 0.01 ? (
+                                  <p>You must pay the full remaining balance of ₱{remainingAmount.toLocaleString()}</p>
+                                ) : ocrResult?.amount && Math.abs(parseFloat(amount) - ocrResult.amount) > 0.01 ? (
+                                  <p>Amount doesn&apos;t match screenshot (₱{ocrResult.amount.toLocaleString()})</p>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
-
-                    {/* Reference Number */}
-                    <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-                      <span className="text-gray-400 text-sm">Reference Number:</span>
-                      <div className="flex items-center gap-2">
-                        {ocrResult.referenceNumber ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white font-mono text-sm">{ocrResult.referenceNumber}</span>
-                          </>
-                        ) : (
-                          <>
-                            <AlertCircle className="w-4 h-4 text-red-400" />
-                            <span className="text-red-300 text-sm">Not detected</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Amount */}
-                    <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-                      <span className="text-gray-400 text-sm">Amount:</span>
-                      <div className="flex items-center gap-2">
-                        {ocrResult.amount ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white font-semibold">₱{ocrResult.amount.toLocaleString()}</span>
-                          </>
-                        ) : (
-                          <>
-                            <AlertCircle className="w-4 h-4 text-red-400" />
-                            <span className="text-red-300 text-sm">Not detected</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
 
                   </div>
                 </div>
-              )}
+              </div>
 
 
 
@@ -898,28 +1116,9 @@ function UploadPaymentProofContent() {
               <button
                 type="submit"
                 disabled={isUploading || !proofImage || uploadSuccess}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg ${
-                  uploadSuccess 
-                    ? 'bg-gradient-to-r from-green-600 to-green-500 text-white' 
-                    : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploadSuccess ? (
-                  <>
-                    <CheckCircle className="w-5 h-5 text-green-100" />
-                    ✅ Upload Successful! Redirecting...
-                  </>
-                ) : isUploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    {uploadProgress || 'Processing...'}
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    Submit Payment Proof
-                  </>
-                )}
+                {isUploading ? 'Processing...' : 'Submit Payment Proof'}
               </button>
               
               {!proofImage && (
@@ -928,27 +1127,41 @@ function UploadPaymentProofContent() {
                 </p>
               )}
             </form>
+          </div>
 
-            {/* Important Note - Dark Theme */}
-            <div className="mt-6 p-4 bg-yellow-800/20 border border-yellow-600/50 rounded-lg">
-              <h4 className="font-semibold text-yellow-300 mb-2">⚠️ Verification Process:</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-yellow-200">
-                <div className="flex items-center gap-2">
-                  <span>⏱️</span>
-                  <span>Verified within <strong>24 hours</strong></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>📧</span>
-                  <span>Email confirmation sent</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>🔒</span>
-                  <span>Secure & confidential</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>🤖</span>
-                  <span>AI-powered auto-fill</span>
-                </div>
+        </div>
+
+        {/* Important Note - Full Width */}
+        <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
+          <h4 className="font-semibold text-yellow-300 mb-4">Verification Process</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-yellow-200">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <span>Verified within <strong>24 hours</strong></span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <span>Email confirmation sent</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <span>Secure & confidential</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-green-400 rounded-full flex-shrink-0"></div>
+              <span>AI-powered auto-fill</span>
+            </div>
+          </div>
+          
+          {/* Helpful Tip */}
+          <div className="mt-6 p-4 bg-blue-900/20 border border-blue-600/50 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-3 h-3 bg-blue-400 rounded-full flex-shrink-0 mt-1.5"></div>
+              <div>
+                <h5 className="text-blue-200 font-semibold text-sm mb-1">Smart Auto-Detection</h5>
+                <p className="text-blue-200 text-sm">
+                  Our AI automatically detects payment amounts from screenshots - just upload and let it fill the details for you!
+                </p>
               </div>
             </div>
           </div>
@@ -965,7 +1178,7 @@ export default function UploadPaymentProof() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <div className="text-white text-xl font-semibent">Loading payment page...</div>
+          <div className="text-white text-xl font-semibold">Loading payment page...</div>
         </div>
       </div>
     }>

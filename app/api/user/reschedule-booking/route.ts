@@ -114,16 +114,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Calculate new total amount based on new dates
+    const calculateMultiDayPrice = (checkInDate: Date, checkOutDate: Date, guestCount: number = 15) => {
+      const nights = [];
+      const currentNight = new Date(checkInDate);
+      
+      // Calculate each night between check-in and check-out
+      while (currentNight < checkOutDate) {
+        const dayOfWeek = currentNight.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+        
+        // Simple weekend/holiday logic (can be expanded later)
+        const nightRate = isWeekend ? 12000 : 9000;
+        
+        nights.push({
+          date: new Date(currentNight),
+          rate: nightRate,
+          isWeekend
+        });
+        
+        currentNight.setDate(currentNight.getDate() + 1);
+      }
+      
+      // Calculate total base cost
+      const totalBaseRate = nights.reduce((sum, night) => sum + night.rate, 0);
+      
+      // Add excess guest fee (₱300 per guest over 15, per night)
+      const totalNights = nights.length;
+      const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
+      
+      return {
+        totalNights,
+        totalBaseRate,
+        excessGuestFee,
+        totalAmount: totalBaseRate + excessGuestFee
+      };
+    };
+
+    // Calculate new total amount
+    const newPricing = calculateMultiDayPrice(checkInDate, checkOutDate, booking.number_of_guests);
+    const newTotalAmount = newPricing.totalAmount;
+
     // Format dates for database (with times)
     const newCheckInDateTime = `${newCheckIn}T15:00:00`; // 3 PM check-in
     const newCheckOutDateTime = `${newCheckOut}T13:00:00`; // 1 PM check-out
 
-    // Update the booking with new dates
+    // Update the booking with new dates, new amount, and reset payment status
     const { data: updatedBooking, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update({
         check_in_date: newCheckInDateTime,
         check_out_date: newCheckOutDateTime,
+        total_amount: newTotalAmount,
+        payment_status: 'pending', // Reset payment status since amount changed
         updated_at: new Date().toISOString()
       })
       .eq('id', bookingId)
@@ -191,8 +234,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Booking rescheduled successfully",
-      booking: updatedBooking
+      message: "Booking rescheduled successfully! Please upload new payment proof for the updated amount.",
+      booking: updatedBooking,
+      pricing: {
+        originalAmount: booking.total_amount,
+        newAmount: newTotalAmount,
+        amountDifference: newTotalAmount - booking.total_amount,
+        nightsCount: newPricing.totalNights
+      },
+      requiresNewPayment: true
     });
 
   } catch (error) {

@@ -51,6 +51,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // IMPORTANT: Cancel any pending payment proofs for this booking
+    // When admin cancels a booking, there's no point reviewing payments
+    const { error: paymentProofError } = await supabase
+      .from('payment_proofs')
+      .update({
+        status: 'cancelled',
+        admin_notes: 'Automatically cancelled due to admin booking cancellation',
+        verified_at: philippinesTime.toISOString()
+      })
+      .eq('booking_id', bookingId)
+      .in('status', ['pending']); // Only update pending payment proofs
+
+    if (paymentProofError) {
+      console.error('Warning: Failed to cancel payment proofs:', paymentProofError);
+      // Don't fail the entire operation, just log the warning
+    }
+
     // Send enhanced cancellation email to guest (only if email exists)
     if (booking.guest_email) {
       // Prepare refund details if refund was processed

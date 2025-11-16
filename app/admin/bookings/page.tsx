@@ -30,6 +30,20 @@ interface PaymentProof {
   verified_by: string | null;
 }
 
+interface PaymentHistoryEntry {
+  id: number;
+  sequenceNumber: number;
+  amount: number;
+  paymentMethod: string;
+  referenceNumber: string | null;
+  status: string;
+  uploadedAt: string;
+  verifiedAt: string | null;
+  adminNotes: string | null;
+  proofImageUrl: string;
+  isLatest: boolean;
+}
+
 
 
 // Smart booking workflow status that considers both booking and payment proof
@@ -164,28 +178,42 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
   }
 }
 
-// Combined component - shows status AND action button
-function PaymentProofStatusCell({ booking, refreshKey }: { booking: Booking; refreshKey?: number }) {
+// Payment Status Cell - Shows overall booking payment status
+function PaymentStatusCell({ booking, refreshKey }: { booking: Booking; refreshKey?: number }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPaymentProof = async () => {
       try {
+        setLoading(true);
+        
+        // Fetch ALL payment proofs and prioritize them correctly
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('*')
           .eq('booking_id', booking.id)
-          .order('uploaded_at', { ascending: false })
-          .limit(1);
+          .order('uploaded_at', { ascending: false });
 
         if (error) {
-          console.error(`❌ PaymentProofStatusCell: Error fetching payment proof for booking ${booking.id}:`, error);
+          console.error(`❌ PaymentStatusCell: Error fetching payment proof for booking ${booking.id}:`, error);
           throw error;
         }
         
-        const proof = data && data.length > 0 ? data[0] : null;
-        setPaymentProof(proof);
+        let selectedProof = null;
+        
+        if (data && data.length > 0) {
+          // Priority: pending > verified > rejected > cancelled
+          // This ensures new pending proofs show "Payment Review" even if there are older rejected ones
+          const pendingProof = data.find(proof => proof.status === 'pending');
+          const verifiedProof = data.find(proof => proof.status === 'verified');
+          const rejectedProof = data.find(proof => proof.status === 'rejected');
+          const cancelledProof = data.find(proof => proof.status === 'cancelled');
+          
+          selectedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || data[0];
+        }
+        
+        setPaymentProof(selectedProof);
       } catch (error) {
         console.error('Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -196,9 +224,9 @@ function PaymentProofStatusCell({ booking, refreshKey }: { booking: Booking; ref
 
     fetchPaymentProof();
 
-    // Set up real-time subscription for payment proof updates
+    // Enhanced real-time subscription with multiple event triggers
     const subscription = supabase
-      .channel(`payment_proof_cell_${booking.id}_${refreshKey || 0}`)
+      .channel(`payment_status_realtime_${booking.id}_${refreshKey || 0}`)
       .on(
         'postgres_changes',
         {
@@ -207,9 +235,10 @@ function PaymentProofStatusCell({ booking, refreshKey }: { booking: Booking; ref
           table: 'payment_proofs',
           filter: `booking_id=eq.${booking.id}`
         },
-        () => {
-          // Refresh payment proof data when changes occur
-          fetchPaymentProof();
+        (payload) => {
+          console.log(`🔥 Real-time payment proof update for booking ${booking.id}:`, payload);
+          // Force immediate refresh on any payment proof change
+          setTimeout(() => fetchPaymentProof(), 10); // Very short delay for database consistency
         }
       )
       .subscribe();
@@ -217,7 +246,7 @@ function PaymentProofStatusCell({ booking, refreshKey }: { booking: Booking; ref
     return () => {
       subscription.unsubscribe();
     };
-  }, [booking.id, booking.payment_status, refreshKey]); // ✅ Dependencies include booking.id, payment_status and refreshKey for instant updates
+  }, [booking.id, booking.payment_status, booking.status, refreshKey]);
 
   if (loading) {
     return (
@@ -227,92 +256,72 @@ function PaymentProofStatusCell({ booking, refreshKey }: { booking: Booking; ref
     );
   }
 
-  // Priority check: If there's a payment proof with pending status, show Review
-  if (paymentProof && paymentProof.status === 'pending') {
-    return (
-      <div className="flex items-center justify-center">
-        <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">
-          Review
-        </span>
-      </div>
-    );
-  }
+  // Determine the overall payment status based on booking status and payment proof
+  const getPaymentStatusDisplay = () => {
+    // If booking is cancelled, show cancelled
+    if (booking.status === 'cancelled') {
+      return {
+        text: 'Cancelled',
+        badge: 'bg-gray-500 text-white'
+      };
+    }
 
-  // Check if payment proof was rejected OR if booking was cancelled by user
-  if ((paymentProof && paymentProof.status === 'rejected') || 
-      (booking.status === 'cancelled' && booking.cancelled_by === 'user')) {
-    return (
-      <div className="flex items-center justify-center">
-        <span className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold">
-          Rejected
-        </span>
-      </div>
-    );
-  }
+    // If there's a payment proof, use its status
+    if (paymentProof) {
+      switch (paymentProof.status) {
+        case 'pending':
+          return {
+            text: 'Payment Review',
+            badge: 'bg-orange-500 text-white'
+          };
+        case 'verified':
+          return {
+            text: 'Payment Verified',
+            badge: 'bg-green-500 text-white'
+          };
+        case 'rejected':
+          return {
+            text: 'Payment Rejected',
+            badge: 'bg-red-500 text-white'
+          };
+        case 'cancelled':
+          return {
+            text: 'Payment Cancelled',
+            badge: 'bg-gray-500 text-white'
+          };
+        default:
+          return {
+            text: 'Unknown Status',
+            badge: 'bg-gray-400 text-white'
+          };
+      }
+    }
 
-  // Check if payment proof was verified
-  if (paymentProof && paymentProof.status === 'verified') {
-    return (
-      <div className="flex items-center justify-center">
-        <span className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">
-          Verified
-        </span>
-      </div>
-    );
-  }
-
-  // Secondary check: If booking payment_status indicates review needed but no proof found yet
-  if (booking.payment_status === 'payment_review' && !paymentProof) {
-    return (
-      <div className="flex items-center justify-center">
-        <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">
-          Review
-        </span>
-      </div>
-    );
-  }
-
-  if (!paymentProof) {
-    return (
-      <div className="flex items-center justify-center">
-        <span className="px-3 py-1 bg-gray-400 text-white rounded-full text-xs font-bold">
-          No Proof
-        </span>
-      </div>
-    );
-  }
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { 
-          badge: 'bg-orange-500 text-white', 
-          text: 'Review'
-        };
-      case 'verified':
-        return { 
-          badge: 'bg-green-500 text-white', 
-          text: 'Verified'
-        };
-      case 'rejected':
-        return { 
-          badge: 'bg-red-500 text-white', 
-          text: 'Rejected'
-        };
-      case 'cancelled':
-        return { 
-          badge: 'bg-gray-400 text-white', 
-          text: 'Cancelled'
-        };
-      default:
-        return { 
-          badge: 'bg-gray-500 text-white', 
-          text: 'Unknown'
-        };
+    // If no payment proof exists, check booking payment_status
+    if (booking.payment_status === 'payment_review') {
+      return {
+        text: 'Payment Review',
+        badge: 'bg-orange-500 text-white'
+      };
+    } else if (booking.payment_status === 'rejected') {
+      return {
+        text: 'Payment Rejected',
+        badge: 'bg-red-500 text-white'
+      };
+    } else if (booking.payment_status === 'paid') {
+      return {
+        text: 'Payment Verified',
+        badge: 'bg-green-500 text-white'
+      };
+    } else {
+      return {
+        text: 'Awaiting Payment',
+        badge: 'bg-gray-400 text-white'
+      };
     }
   };
 
-  const statusInfo = getStatusInfo(paymentProof.status);
+  const statusInfo = getPaymentStatusDisplay();
   
   return (
     <div className="flex items-center justify-center">
@@ -331,20 +340,31 @@ function SmartWorkflowStatusCell({ booking, refreshKey }: { booking: Booking; re
   useEffect(() => {
     const fetchPaymentProof = async () => {
       try {
+        // Fetch ALL payment proofs and prioritize them correctly
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('*')
           .eq('booking_id', booking.id)
-          .order('uploaded_at', { ascending: false })
-          .limit(1);
+          .order('uploaded_at', { ascending: false });
 
         if (error) {
           console.error(`❌ SmartWorkflowStatusCell: Error fetching payment proof for booking ${booking.id}:`, error);
           throw error;
         }
         
-        const proof = data && data.length > 0 ? data[0] : null;
-        setPaymentProof(proof);
+        let selectedProof = null;
+        
+        if (data && data.length > 0) {
+          // Priority: pending > verified > rejected > cancelled
+          const pendingProof = data.find(proof => proof.status === 'pending');
+          const verifiedProof = data.find(proof => proof.status === 'verified');
+          const rejectedProof = data.find(proof => proof.status === 'rejected');
+          const cancelledProof = data.find(proof => proof.status === 'cancelled');
+          
+          selectedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || data[0];
+        }
+        
+        setPaymentProof(selectedProof);
       } catch (error) {
         console.error('Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -401,20 +421,31 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
   useEffect(() => {
     const fetchPaymentProof = async () => {
       try {
+        // Fetch ALL payment proofs and prioritize them correctly
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('*')
           .eq('booking_id', booking.id)
-          .order('uploaded_at', { ascending: false })
-          .limit(1);
+          .order('uploaded_at', { ascending: false });
 
         if (error) {
           console.error(`❌ SmartConfirmButton: Error fetching payment proof for booking ${booking.id}:`, error);
           throw error;
         }
         
-        const proof = data && data.length > 0 ? data[0] : null;
-        setPaymentProof(proof);
+        let selectedProof = null;
+        
+        if (data && data.length > 0) {
+          // Priority: pending > verified > rejected > cancelled
+          const pendingProof = data.find(proof => proof.status === 'pending');
+          const verifiedProof = data.find(proof => proof.status === 'verified');
+          const rejectedProof = data.find(proof => proof.status === 'rejected');
+          const cancelledProof = data.find(proof => proof.status === 'cancelled');
+          
+          selectedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || data[0];
+        }
+        
+        setPaymentProof(selectedProof);
       } catch (error) {
         console.error('SmartConfirmButton: Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -533,15 +564,36 @@ function PaymentProofButton({
   useEffect(() => {
     const fetchPaymentProof = async () => {
       try {
+        setLoading(true);
+        
+        // Small delay for database consistency on refreshes
+        if (refreshKey && refreshKey > 0) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Fetch ALL payment proofs and prioritize them correctly
         const { data, error } = await supabase
           .from('payment_proofs')
           .select('*')
           .eq('booking_id', bookingId)
-          .order('uploaded_at', { ascending: false })
-          .limit(1);
+          .order('uploaded_at', { ascending: false });
 
         if (error) throw error;
-        setPaymentProof(data && data.length > 0 ? data[0] : null);
+        
+        let selectedProof = null;
+        
+        if (data && data.length > 0) {
+          // Priority: pending > verified > rejected > cancelled
+          const pendingProof = data.find(proof => proof.status === 'pending');
+          const verifiedProof = data.find(proof => proof.status === 'verified');
+          const rejectedProof = data.find(proof => proof.status === 'rejected');
+          const cancelledProof = data.find(proof => proof.status === 'cancelled');
+          
+          selectedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || data[0];
+        }
+        
+        setPaymentProof(selectedProof);
+        
       } catch (error) {
         console.error('Error fetching payment proof:', error);
         setPaymentProof(null);
@@ -551,6 +603,28 @@ function PaymentProofButton({
     };
 
     fetchPaymentProof();
+
+    // Set up real-time subscription for this specific booking's payment proofs
+    const subscription = supabase
+      .channel(`payment_proof_button_${bookingId}_${refreshKey || 0}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_proofs',
+          filter: `booking_id=eq.${bookingId}`
+        },
+        () => {
+          // Immediately refresh payment proof data when changes occur
+          fetchPaymentProof();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [bookingId, refreshKey]);
 
   if (loading) {
@@ -753,6 +827,17 @@ export default function BookingsPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [customRejectionReason, setCustomRejectionReason] = useState("");
   const [imageZoomed, setImageZoomed] = useState(false);
+  
+  // Payment history state
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryEntry[]>([]);
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [paymentSummary, setPaymentSummary] = useState<{
+    totalAmount: number;
+    totalPaid: number;
+    pendingAmount: number;
+    remainingBalance: number;
+  } | null>(null);
   const [newBookingAlert, setNewBookingAlert] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✨ For triggering component refreshes on payment proof updates
   const [lastRealTimeEvent, setLastRealTimeEvent] = useState<string | null>(null); // Track real-time events
@@ -835,10 +920,37 @@ export default function BookingsPage() {
               }
             }
             
-            // ⚡ CRITICAL: Handle user cancellation - when booking becomes cancelled, auto-sync payment proof status
-            if (payload.old?.status !== 'cancelled' && payload.new.status === 'cancelled' && payload.new.cancelled_by === 'user') {
+            // ⚡ CRITICAL: Handle ANY cancellation - auto-cancel payment proofs when booking is cancelled
+            if (payload.old?.status !== 'cancelled' && payload.new.status === 'cancelled') {
+              // Automatically cancel any pending payment proofs for this cancelled booking
+              const cancelPaymentProofs = async () => {
+                try {
+                  const { error } = await supabase
+                    .from('payment_proofs')
+                    .update({
+                      status: 'cancelled',
+                      admin_notes: `Automatically cancelled - booking cancelled by ${payload.new.cancelled_by || 'system'}`,
+                      verified_at: new Date().toISOString()
+                    })
+                    .eq('booking_id', payload.new.id)
+                    .in('status', ['pending']);
+                  
+                  if (error) {
+                    console.error('Failed to cancel payment proofs:', error);
+                  } else {
+                    console.log(`✅ Auto-cancelled payment proofs for booking ${payload.new.id}`);
+                  }
+                } catch (error) {
+                  console.error('Error cancelling payment proofs:', error);
+                }
+              };
+              
+              // Cancel payment proofs in background
+              cancelPaymentProofs();
+              
               if (!document.hidden) {
-                warning('🚫 Booking Cancelled', `Booking ${payload.new.id} (${payload.new.guest_name}) was cancelled by the user`);
+                const cancelledBy = payload.new.cancelled_by === 'user' ? 'user' : 'admin';
+                warning('🚫 Booking Cancelled', `Booking ${payload.new.id} (${payload.new.guest_name}) was cancelled by ${cancelledBy}`);
                 setRefreshTrigger(prev => prev + 1);
                 setTimeout(() => setRefreshTrigger(prev => prev + 1), 500);
               }
@@ -1010,11 +1122,42 @@ export default function BookingsPage() {
               }
             }
             
-            // Trigger immediate UI refresh - this will update all payment proof components instantly
+            // 🔥 CRITICAL: If modal is open for this booking, refresh it immediately with updated data
+            if (showPaymentProofModal && selectedBooking && selectedBooking.id === newProof.booking_id) {
+              console.log('🔄 Modal is open for updated proof - refreshing payment history');
+              fetchPaymentHistory(newProof.booking_id);
+              
+              // Update the selected payment proof to reflect status change immediately
+              if (selectedPaymentProof && selectedPaymentProof.id === newProof.id) {
+                setSelectedPaymentProof(newProof);
+                console.log('✅ Modal updated with status change');
+              }
+              
+              // Also fetch the latest payment proof to ensure we have the most current data
+              (async () => {
+                try {
+                  const { data: latestProof } = await supabase
+                    .from('payment_proofs')
+                    .select('*')
+                    .eq('booking_id', newProof.booking_id)
+                    .order('uploaded_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                  
+                  if (latestProof) {
+                    setSelectedPaymentProof(latestProof);
+                  }
+                } catch (error) {
+                  console.log('Error fetching latest proof:', error);
+                }
+              })();
+            }
+            
+            // Immediate UI refresh for payment proof status changes
             setRefreshTrigger(prev => prev + 1);
             
-            // For cancelled status, trigger an additional refresh to ensure UI updates
-            if (newProof.status === 'cancelled') {
+            // Additional refresh for cancelled/rejected status
+            if (newProof.status === 'cancelled' || newProof.status === 'rejected') {
               setTimeout(() => setRefreshTrigger(prev => prev + 1), 100);
             }
           }
@@ -1050,18 +1193,39 @@ export default function BookingsPage() {
               });
             });
             
-            // Force immediate UI refresh for all payment proof components
+            // 🔥 CRITICAL: If modal is open for this booking, refresh it immediately
+            if (showPaymentProofModal && selectedBooking && selectedBooking.id === payload.new.booking_id) {
+              console.log('🔄 Modal is open for this booking - refreshing payment history and proof data');
+              fetchPaymentHistory(payload.new.booking_id);
+              
+              // Update the selected payment proof to the new one IMMEDIATELY
+              (async () => {
+                try {
+                  const { data: latestProof } = await supabase
+                    .from('payment_proofs')
+                    .select('*')
+                    .eq('booking_id', payload.new.booking_id)
+                    .order('uploaded_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                  
+                  if (latestProof) {
+                    setSelectedPaymentProof(latestProof);
+                    console.log('✅ Modal updated with latest payment proof');
+                  }
+                } catch (error) {
+                  console.error('Failed to update modal with latest proof:', error);
+                }
+              })();
+            }
+            
+            // Immediate UI refresh for all payment proof components
             setRefreshTrigger(prev => prev + 1);
             
-            // Immediate second update to ensure UI components catch the change
-            setTimeout(() => {
-              setRefreshTrigger(prev => prev + 1);
-            }, 100);
-            
-            // Third update to ensure all components are synchronized
-            setTimeout(() => {
-              setRefreshTrigger(prev => prev + 1);
-            }, 300);
+            // Multiple staged refreshes to ensure all components update
+            setTimeout(() => setRefreshTrigger(prev => prev + 1), 100);
+            setTimeout(() => setRefreshTrigger(prev => prev + 1), 300);
+            setTimeout(() => setRefreshTrigger(prev => prev + 1), 1000);
             
             // Background sync to ensure database consistency
             setTimeout(() => {
@@ -1207,6 +1371,30 @@ export default function BookingsPage() {
     }
   }, [refreshTrigger]);
 
+  // Fetch payment history for a booking
+  const fetchPaymentHistory = async (bookingId: number) => {
+    setPaymentHistoryLoading(true);
+    try {
+      const response = await fetch(`/api/admin/payment-history/${bookingId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setPaymentHistory(data.paymentHistory || []);
+        setPaymentSummary(data.paymentSummary || null);
+      } else {
+        console.error('Failed to fetch payment history:', data.error);
+        setPaymentHistory([]);
+        setPaymentSummary(null);
+      }
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+      setPaymentHistory([]);
+      setPaymentSummary(null);
+    } finally {
+      setPaymentHistoryLoading(false);
+    }
+  };
+
   const fetchBookings = async (isRefresh = false, silent = false) => {
     try {
       if (!silent) {
@@ -1270,33 +1458,35 @@ export default function BookingsPage() {
         const paymentStatusA = a.payment_status || 'pending';
         const paymentStatusB = b.payment_status || 'pending';
         
-        // Priority order: payment reviews > pending bookings > confirmed > completed > user cancelled (bottom)
+        // Priority order: payment reviews > pending bookings > confirmed > completed > ALL cancelled (bottom)
         const getPriority = (status: string, paymentStatus: string, cancelledBy: string | null) => {
           // SPECIAL CASE: When viewing cancelled filter, all cancelled bookings get same priority for pure date sorting
           if (statusFilter === 'cancelled' && status === 'cancelled') {
             return 90; // Same priority for all cancelled bookings when filtered
           }
           
-          // CRITICAL: User cancelled bookings go to BOTTOM first (only when not in cancelled filter)
-          if (status === 'cancelled' && cancelledBy === 'user') {
-            return 99; // Bottom - user cancelled
+          // CRITICAL: ALL cancelled bookings go to BOTTOM - no exceptions
+          if (status === 'cancelled') {
+            if (cancelledBy === 'user') {
+              return 99; // Bottom - user cancelled
+            } else if (cancelledBy === 'admin') {
+              return 98; // Bottom - admin cancelled (slightly above user cancelled)
+            } else {
+              return 97; // Bottom - other cancelled bookings
+            }
           }
           
-          // CRITICAL: Payment reviews get TOP priority regardless of booking status
-          // This handles admin cancelled bookings where users can still upload payment proofs
+          // Payment reviews get TOP priority (only for non-cancelled bookings)
           if (status === 'pending_verification' || paymentStatus === 'payment_review') return 1; // Highest priority - needs review
           
-          if (status === 'pending') return 2; // Second priority - active bookings awaiting payment
-          if (status === 'confirmed') return 3; // Third priority - confirmed bookings
-          if (status === 'completed') return 4; // Fourth priority - completed stays
+          // Rejected payments need attention - second highest priority
+          if (paymentStatus === 'rejected') return 2; // High priority - rejected payments need action
           
-          // Admin cancelled bookings without payment activity go to bottom (but above user cancellations)
-          if (status === 'cancelled' && cancelledBy === 'admin' && paymentStatus !== 'payment_review') return 98;
+          if (status === 'pending') return 3; // Third priority - active bookings awaiting payment
+          if (status === 'confirmed') return 4; // Fourth priority - confirmed bookings
+          if (status === 'completed') return 5; // Fifth priority - completed stays
           
-          // Any other cancelled booking (no cancelled_by field) goes to bottom
-          if (status === 'cancelled') return 99;
-          
-          return 5; // Other statuses
+          return 6; // Other statuses
         };
         
         const priorityA = getPriority(statusA, paymentStatusA, a.cancelled_by);
@@ -1399,7 +1589,15 @@ export default function BookingsPage() {
       // Show success message first
       success(action === 'approve' ? 'Payment proof approved successfully!' : 'Payment proof rejected successfully!');
       
-      // Close modal immediately
+      // 🚀 CRITICAL: Trigger real-time component updates immediately BEFORE closing modal
+      setRefreshTrigger(prev => prev + 1);
+      
+      // 🔄 Refresh payment history to show updated data in modal
+      if (existingProof?.booking_id) {
+        await fetchPaymentHistory(existingProof.booking_id);
+      }
+      
+      // Close modal after refreshing data
       setShowPaymentProofModal(false);
       setSelectedPaymentProof(null);
       setVerificationNotes("");
@@ -1409,12 +1607,16 @@ export default function BookingsPage() {
       // Force refresh data with retry mechanism
       try {
         await fetchBookings(true); // Force refresh bookings
+        // Trigger another update after data refresh to ensure all components refresh
+        setTimeout(() => setRefreshTrigger(prev => prev + 1), 500);
       } catch (refreshError) {
         console.warn('⚠️ Bookings refresh failed, will retry:', refreshError);
         // Retry once more after a short delay
         setTimeout(async () => {
           try {
             await fetchBookings(true);
+            // Trigger refresh after retry
+            setRefreshTrigger(prev => prev + 1);
           } catch (retryError) {
             console.error('❌ Bookings refresh failed on retry:', retryError);
           }
@@ -2048,7 +2250,11 @@ export default function BookingsPage() {
                       <SmartWorkflowStatusCell booking={booking} refreshKey={refreshTrigger} />
                     </td>
                     <td className="p-3">
-                      <PaymentProofStatusCell booking={booking} refreshKey={refreshTrigger} />
+                      <PaymentStatusCell 
+                        key={`payment-status-${booking.id}-${refreshTrigger}-${booking.payment_status || 'none'}-${booking.status || 'pending'}-${booking.updated_at || 'none'}`}
+                        booking={booking} 
+                        refreshKey={refreshTrigger} 
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex flex-col gap-1">
@@ -2063,10 +2269,31 @@ export default function BookingsPage() {
                           </button>
                           
                           <PaymentProofButton 
+                            key={`proof-${booking.id}-${refreshTrigger}-${booking.payment_status || 'none'}`}
                             bookingId={booking.id} 
-                            onViewProof={(proof) => {
+                            onViewProof={async (proof) => {
                               setSelectedPaymentProof(proof);
                               setShowPaymentProofModal(true);
+                              if (proof.id > 0) { // Only fetch history for real proofs, not dummy ones
+                                await fetchPaymentHistory(booking.id);
+                                
+                                // Also fetch the latest payment proof to ensure modal shows current data
+                                try {
+                                  const { data: latestProof } = await supabase
+                                    .from('payment_proofs')
+                                    .select('*')
+                                    .eq('booking_id', booking.id)
+                                    .order('uploaded_at', { ascending: false })
+                                    .limit(1)
+                                    .single();
+                                  
+                                  if (latestProof) {
+                                    setSelectedPaymentProof(latestProof);
+                                  }
+                                } catch (error) {
+                                  console.log('No payment proof found or error:', error);
+                                }
+                              }
                             }}
                             refreshKey={refreshTrigger}
                           />
@@ -2358,11 +2585,32 @@ export default function BookingsPage() {
                         Payment Verification
                       </h4>
                       <PaymentProofButton 
+                        key={`modal-proof-${selectedBooking.id}-${refreshTrigger}-${selectedBooking.payment_status || 'none'}`}
                         bookingId={selectedBooking.id}
                         variant="modal"
-                        onViewProof={(proof) => {
+                        onViewProof={async (proof) => {
                           setSelectedPaymentProof(proof);
                           setShowPaymentProofModal(true);
+                          if (proof.id > 0) { // Only fetch history for real proofs, not dummy ones
+                            await fetchPaymentHistory(selectedBooking.id);
+                            
+                            // Fetch the latest payment proof to ensure modal shows current data
+                            try {
+                              const { data: latestProof } = await supabase
+                                .from('payment_proofs')
+                                .select('*')
+                                .eq('booking_id', selectedBooking.id)
+                                .order('uploaded_at', { ascending: false })
+                                .limit(1)
+                                .single();
+                              
+                              if (latestProof) {
+                                setSelectedPaymentProof(latestProof);
+                              }
+                            } catch (error) {
+                              console.log('No payment proof found or error:', error);
+                            }
+                          }
                         }}
                         refreshKey={refreshTrigger}
                       />
@@ -2578,6 +2826,9 @@ export default function BookingsPage() {
                     setRejectionReason("");
                     setCustomRejectionReason("");
                     setImageZoomed(false);
+                    setPaymentHistory([]);
+                    setPaymentSummary(null);
+                    setShowPaymentHistory(false);
                   }}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:shadow-md transition"
                 >
@@ -2621,23 +2872,181 @@ export default function BookingsPage() {
                 </div>
               </div>
 
+              {/* Payment Summary Section */}
+              {selectedPaymentProof.id > 0 && paymentSummary && (
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Payment Summary</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white/60 p-4 rounded-lg border border-green-200">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Total Amount</div>
+                      <div className="text-xl font-bold text-gray-900">₱{paymentSummary.totalAmount.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-white/60 p-4 rounded-lg border border-green-200">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Total Paid</div>
+                      <div className="text-xl font-bold text-green-700">₱{paymentSummary.totalPaid.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-white/60 p-4 rounded-lg border border-green-200">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Pending</div>
+                      <div className="text-xl font-bold text-yellow-600">₱{paymentSummary.pendingAmount.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-white/60 p-4 rounded-lg border border-green-200">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Remaining Balance</div>
+                      <div className={`text-xl font-bold ${paymentSummary.remainingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        ₱{paymentSummary.remainingBalance.toLocaleString()}
+                      </div>
+                      {paymentSummary.remainingBalance === 0 && (
+                        <div className="text-xs text-green-600 font-medium mt-1">✓ Fully Paid</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment History Section */}
+              {selectedPaymentProof.id > 0 && (
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <h3 className="text-lg font-semibold text-gray-900">Payment History</h3>
+                      {paymentHistory.length > 0 && (
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {paymentHistory.length} submission{paymentHistory.length !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setShowPaymentHistory(!showPaymentHistory)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    >
+                      {showPaymentHistory ? 'Hide History' : 'Show History'}
+                    </button>
+                  </div>
+                  
+                  {paymentHistoryLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-sm text-gray-600">Loading payment history...</span>
+                    </div>
+                  ) : showPaymentHistory && paymentHistory.length > 0 ? (
+                    <div className="space-y-3">
+                      {paymentHistory.map((entry) => (
+                        <div key={entry.id} className={`border rounded-lg p-4 ${
+                          entry.isLatest 
+                            ? 'border-blue-300 bg-blue-50' 
+                            : 'border-gray-200 bg-white'
+                        }`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-gray-700">
+                                Submission #{entry.sequenceNumber}
+                              </span>
+                              {entry.isLatest && (
+                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                  Current
+                                </span>
+                              )}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                entry.status === 'verified' ? 'bg-green-100 text-green-800' :
+                                entry.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {entry.status}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {new Date(entry.uploadedAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="font-medium text-gray-600">Amount:</span>
+                              <p className="text-gray-800">₱{entry.amount.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-600">Method:</span>
+                              <p className="text-gray-800">{entry.paymentMethod}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-600">Reference:</span>
+                              <p className="text-gray-800">{entry.referenceNumber || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-600">Status:</span>
+                              <p className="text-gray-800">{entry.status}</p>
+                            </div>
+                          </div>
+                          
+                          {entry.adminNotes && (
+                            <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded">
+                              <span className="text-xs font-medium text-amber-800">Admin Notes:</span>
+                              <p className="text-xs text-amber-700 mt-1">{entry.adminNotes}</p>
+                            </div>
+                          )}
+                          
+                          {entry.verifiedAt && (
+                            <div className="mt-2 text-xs text-gray-500">
+                              Verified on: {new Date(entry.verifiedAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric', 
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : showPaymentHistory && paymentHistory.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No payment history found for this booking.</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
               {/* Payment Proof Image */}
               <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <h3 className="text-lg font-semibold text-gray-900">Payment Proof</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Current Payment Proof</h3>
                 </div>
                 
-                <div className="relative group cursor-pointer" onClick={() => setImageZoomed(true)}>
+                <div className="relative group cursor-pointer" onClick={() => selectedPaymentProof?.proof_image_url && setImageZoomed(true)}>
                   {/* Image Container */}
                   <div className="relative overflow-hidden rounded-xl bg-gray-100 border-2 border-dashed border-gray-200 transition-all duration-300 group-hover:border-blue-300 group-hover:shadow-md">
-                    <Image 
-                      src={selectedPaymentProof.proof_image_url} 
-                      alt="Payment Proof"
-                      width={500}
-                      height={400}
-                      className="w-full h-auto max-h-80 object-contain pointer-events-none transition-all duration-500 group-hover:scale-105"
-                    />
+                    {selectedPaymentProof?.proof_image_url ? (
+                      <Image 
+                        src={selectedPaymentProof.proof_image_url} 
+                        alt="Payment Proof"
+                        width={500}
+                        height={400}
+                        className="w-full h-auto max-h-80 object-contain pointer-events-none transition-all duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-80 flex items-center justify-center bg-gray-50">
+                        <div className="text-center">
+                          <div className="w-12 h-12 mx-auto mb-2 text-gray-400">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm text-gray-500">No image available</p>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Overlay with zoom hint */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center">
@@ -2655,7 +3064,7 @@ export default function BookingsPage() {
               </div>
 
               {/* Full Screen Image Modal */}
-              {imageZoomed && (
+              {imageZoomed && selectedPaymentProof?.proof_image_url && (
                 <div className="fixed inset-0 bg-black z-[70] flex items-center justify-center">
                   {/* Backdrop - Click to close */}
                   <div 
@@ -2665,15 +3074,33 @@ export default function BookingsPage() {
                   
                   {/* Image Container */}
                   <div className="relative z-10 w-full h-full flex items-center justify-center p-8">
-                    <Image 
-                      src={selectedPaymentProof.proof_image_url} 
-                      alt="Payment Proof - Full View"
-                      width={1920}
-                      height={1080}
-                      className="max-w-full max-h-full object-contain cursor-pointer"
-                      onClick={() => setImageZoomed(false)}
-                      priority
-                    />
+                    {selectedPaymentProof?.proof_image_url ? (
+                      <Image 
+                        src={selectedPaymentProof.proof_image_url} 
+                        alt="Payment Proof - Full View"
+                        width={1920}
+                        height={1080}
+                        className="max-w-full max-h-full object-contain cursor-pointer"
+                        onClick={() => setImageZoomed(false)}
+                        priority
+                      />
+                    ) : (
+                      <div className="bg-gray-800 rounded-lg p-8 text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <p className="text-white text-lg">No image available</p>
+                        <p className="text-gray-400 text-sm mt-2">The payment proof image could not be loaded</p>
+                        <button 
+                          onClick={() => setImageZoomed(false)}
+                          className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Close Button */}
@@ -2849,6 +3276,9 @@ export default function BookingsPage() {
                     setRejectionReason("");
                     setCustomRejectionReason("");
                     setImageZoomed(false);
+                    setPaymentHistory([]);
+                    setPaymentSummary(null);
+                    setShowPaymentHistory(false);
                   }}
                   disabled={paymentProofLoading}
                   className="py-2 px-4 bg-gray-500 text-white rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"

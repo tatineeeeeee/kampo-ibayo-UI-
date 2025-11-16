@@ -1042,25 +1042,50 @@ function BookingsPageContent() {
       const result = await response.json();
 
       if (result.success) {
-        // Update local state immediately
+        // Update local state with new booking details including payment status
         setBookings(prevBookings => 
           prevBookings.map(booking => 
             booking.id === selectedBooking.id 
-              ? { ...booking, check_in_date: newCheckInDate, check_out_date: newCheckOutDate }
+              ? { 
+                  ...booking, 
+                  check_in_date: newCheckInDate, 
+                  check_out_date: newCheckOutDate,
+                  total_amount: result.booking.total_amount,
+                  payment_status: 'pending' // Reset to pending since amount changed
+                }
               : booking
           )
         );
 
-        showToast({
-          type: 'success',
-          title: 'Booking Rescheduled!',
-          message: 'Your booking dates have been updated successfully',
-          duration: 4000
-        });
-
+        // Close the reschedule modal first
         setShowRescheduleModal(false);
         setNewCheckInDate("");
         setNewCheckOutDate("");
+
+        // Show payment information if amount changed
+        if (result.requiresNewPayment && result.pricing) {
+          const { newAmount, nightsCount } = result.pricing;
+          
+          showToast({
+            type: 'success',
+            title: 'Booking Rescheduled!',
+            message: `Dates updated successfully! New amount: ₱${newAmount.toLocaleString()} (${nightsCount} nights). Click "Upload Payment Proof" button or wait for redirect.`,
+            duration: 5000
+          });
+
+          // Redirect to payment upload using Next.js router
+          setTimeout(() => {
+            console.log('🔄 Redirecting to payment upload for booking ID:', selectedBooking.id);
+            router.push(`/upload-payment-proof?bookingId=${selectedBooking.id}`);
+          }, 1000); // 1 second delay
+        } else {
+          showToast({
+            type: 'success',
+            title: 'Booking Rescheduled!',
+            message: 'Your booking dates have been updated successfully',
+            duration: 4000
+          });
+        }
       } else {
         showToast({
           type: 'error',
@@ -1868,6 +1893,7 @@ function BookingsPageContent() {
                     onDateSelect={handleCalendarDateSelect}
                     excludeBookingId={selectedBooking.id}
                     minDate={new Date().toISOString().split('T')[0]}
+                    isRescheduling={true}
                   />
                 </div>
               ) : (

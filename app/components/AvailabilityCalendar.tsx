@@ -9,6 +9,7 @@ interface AvailabilityCalendarProps {
   onDateSelect: (checkIn: string, checkOut: string) => void;
   excludeBookingId?: number; // Exclude current booking from availability check
   minDate?: string; // Minimum selectable date
+  isRescheduling?: boolean; // Allow more flexible date selection during reschedule
 }
 
 interface BookedDate {
@@ -22,7 +23,8 @@ export default function AvailabilityCalendar({
   selectedCheckOut,
   onDateSelect,
   excludeBookingId,
-  minDate
+  minDate,
+  isRescheduling = false
 }: AvailabilityCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookedDates, setBookedDates] = useState<BookedDate[]>([]);
@@ -245,6 +247,9 @@ export default function AvailabilityCalendar({
 
   // Check if a date should be blocked (current booking dates that can't be selected for reschedule)
   const isDateBlocked = (date: Date): boolean => {
+    // If we're in rescheduling mode, don't block current booking dates - allow flexible selection
+    if (isRescheduling) return false;
+    
     if (!selectedCheckIn || !selectedCheckOut || !excludeBookingId) return false;
     
     // Use local date components to avoid timezone conversion issues
@@ -372,6 +377,7 @@ export default function AvailabilityCalendar({
       classes += 'text-gray-500 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-40 ';
     } else if (isBlocked) {
       // Blocked dates (current booking) - distinctive blocked styling with no pointer cursor
+      // Note: In reschedule mode, isDateBlocked() returns false, so this won't trigger
       classes += 'bg-gradient-to-br from-gray-400 to-gray-500 text-white cursor-not-allowed border-gray-400 opacity-75 pointer-events-none ';
     } else if (!isSelectable) {
       // Handle booking status display for non-selectable dates (but show proper colors)
@@ -438,6 +444,7 @@ export default function AvailabilityCalendar({
     const isBlocked = isDateBlocked(date);
 
     // Priority order: Blocked dates, Past dates, Selected dates, Range, Booking status
+    // Note: In reschedule mode, isDateBlocked() returns false, so BLOCKED won't show
     if (isBlocked) return 'BLOCKED';
     if (isPast) return 'N/A';
     if (isSelected && newCheckIn === dateStr) return 'NEW IN';
@@ -628,7 +635,7 @@ export default function AvailabilityCalendar({
                 <p><strong>OUT (Red):</strong> Check-out dates - guests leave at 1:00 PM</p>
                 <p><strong>Busy (Yellow):</strong> Resort fully occupied</p>
                 <p><strong>FULL (Purple):</strong> Same-day booking (check-in and check-out on same date)</p>
-                <p><strong>BLOCKED (Gray):</strong> Your current booking dates that can't be selected</p>
+                <p><strong>BLOCKED (Gray):</strong> Your current booking dates that cannot be selected</p>
                 <p><strong>Selected dates show in orange when picked</strong></p>
               </div>
             </div>

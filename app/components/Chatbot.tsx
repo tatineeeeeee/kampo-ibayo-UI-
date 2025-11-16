@@ -21,21 +21,199 @@ interface ChatbotProps {
 }
 
 const FAQ_DATABASE: FAQItem[] = [
-  // PRICING & PACKAGES
+  // PRICING & PACKAGES (English & Tagalog)
   {
-    keywords: ["price", "cost", "rate", "how much", "payment", "fee", "charge"],
-    question: "What are your rates?",
-    answer: "Our rates are ₱9,000 for 22 hours (Mon-Thu) with a ₱3,000 discount, and ₱12,000 for weekends/holidays (Fri-Sun). This includes accommodation for up to 15 guests with all amenities included."
+    keywords: ["price", "cost", "rate", "how much", "payment", "fee", "charge", "magkano", "presyo", "bayad", "singil", "halaga", "rates", "gastos", "bili", "kabayaran"],
+    question: "What are your rates? / Magkano po ang rate?",
+    answer: "**English:** The rate is ₱9,000 for 22 hours. Check-in is at 3:00 PM and check-out is at 1:00 PM the next day. The ₱9,000 package is good for up to 15 guests, and there's an additional ₱300 per extra person.\n\n**Tagalog:** Ang rate po ay ₱9,000 para sa 22 oras. Check-in ay 3:00 PM at check-out ay 1:00 PM kinabukasan. Ang ₱9,000 ay para sa 15 katao, at may dagdag na ₱300 bawat ulo kung lalampas."
   },
+  // LOCATION & DIRECTIONS (English & Tagalog)
   {
-    keywords: ["inclusive", "included", "what's in", "package includes"],
-    question: "What's included in the rate?",
-    answer: "Everything! 2 AC family rooms, swimming pool, kitchen with appliances, videoke, arcade, camping area, treehouse, WiFi, parking for 8 vehicles, and 1st gallon of water FREE. Just bring food and personal items."
+    keywords: ["location", "where", "address", "how to get", "directions", "saan", "nasaan", "lokasyon", "lugar", "daan", "paano pumunta", "paano makarating", "address nyo"],
+    question: "Where is Kampo Ibayo located? / Saan po matatagpuan ang Kampo Ibayo?",
+    answer: "**English:** Kampo Ibayo is located at Brgy. Tapia, General Trias, Cavite, near Dali. Once you're nearby, one of our staff members will personally accompany you to the resort.\n\n**Tagalog:** Ang Kampo Ibayo ay matatagpuan sa Brgy. Tapia, General Trias, Cavite, malapit sa Dali. Kapag malapit na po kayo sa lokasyon, sasamahan kayo ng aming staff papunta sa resort."
   },
+
+  // CHECK-IN & CHECK-OUT TIMES (English & Tagalog)
   {
-    keywords: ["extra", "additional", "exceed", "more than 15", "additional guest"],
-    question: "Can we bring more than 15 guests?",
-    answer: "15 guests is our maximum capacity for safety and comfort. This ensures everyone can enjoy the facilities comfortably. Please stick to the guest limit in your booking."
+    keywords: ["check in", "check out", "time", "hours", "arrival", "oras", "anong oras", "kailan", "pasok", "labas", "open", "close", "bukas", "sarado"],
+    question: "What are check-in/check-out times? / Anong oras po ang check-in at check-out?",
+    answer: "**English:** Check-in starts at 3:00 PM and check-out is at 1:00 PM the next day. The total stay is good for 22 hours.\n\n**Tagalog:** Ang check-in po ay 3:00 PM at check-out ay 1:00 PM kinabukasan. Ang stay ay good for 22 oras."
+  },
+
+  // VIDEOKE/KARAOKE (English & Tagalog)
+  {
+    keywords: ["videoke", "karaoke", "sing", "singing", "sound", "kanta", "kumanta", "tugtog", "music", "hanggang anong oras", "videoke time", "karaoke time"],
+    question: "Until what time can we use videoke? / Hanggang anong oras po pwedeng gamitin ang videoke?",
+    answer: "**English:** You can use the videoke until 10:00 PM only to avoid disturbing nearby houses.\n\n**Tagalog:** Ang videoke po ay pwedeng gamitin hanggang 10:00 PM lamang upang hindi makaistorbo sa mga kalapit na bahay."
+  },
+
+  // PETS (English & Tagalog)
+  {
+    keywords: ["pet", "aso", "cat", "dog", "allowed", "pusa", "alaga", "hayop", "dala", "pets", "pet friendly", "magdala ng aso", "pwede ba pet", "dalhin ang alaga"],
+    question: "Are pets allowed? / Pwede po bang magdala ng alagang hayop?",
+    answer: "**English:** Yes, Kampo Ibayo is pet-friendly. Guests may bring their pets as long as they're leashed and clean. No additional charges for pets!\n\n**Tagalog:** Opo, pet-friendly po ang Kampo Ibayo. Maaaring magdala ng alaga basta naka-leash at malinis. Walang dagdag na bayad para sa mga alaga!"
+  },
+
+  // SWIMMING POOL (English & Tagalog)
+  {
+    keywords: ["pool", "swimming", "swim", "swimming pool", "ligo", "maligo", "tubig", "palangoy", "may pool ba", "swimming pool ba", "pwede maligo"],
+    question: "Do you have a swimming pool? / May swimming pool po ba?",
+    answer: "**English:** Yes, we have a clean and well-maintained swimming pool available for all guests. Proper swimwear is required to keep the water clean.\n\n**Tagalog:** Opo, may malinis na swimming pool po kami na puwedeng gamitin ng lahat ng guests. Kailangan po ng tamang swimwear para mapanatiling malinis ang tubig."
+  },
+
+  // ROOMS/ACCOMMODATION (English & Tagalog)
+  {
+    keywords: ["room", "bedroom", "sleep", "accommodation", "aircon", "kwarto", "tulog", "matulog", "kama", "ilan ang kwarto", "cottage", "may kwarto ba"],
+    question: "How many rooms are available? / Ilan po ang available na kwarto?",
+    answer: "**English:** We have two air-conditioned family rooms located near the pool, each can accommodate multiple guests.\n\n**Tagalog:** Mayroon kaming dalawang air-conditioned family rooms na malapit sa pool, na pwedeng matulugan ng maraming tao."
+  },
+
+  // CAMPING (English & Tagalog)
+  {
+    keywords: ["camping", "tent", "camp", "bonfire", "tolda", "kamping", "apoy", "campfire", "mag-camping", "pwede mag bonfire", "may camping site ba"],
+    question: "Can we go camping? / Pwede po bang mag-camping?",
+    answer: "**English:** Yes! We have a camping site with an open shower and lounge area. You may also bring your own tent. Bonfires are allowed with staff supervision for safety.\n\n**Tagalog:** Opo! May camping site po kami na may open shower at lounge area. Pwede rin kayong magdala ng sarili ninyong tent. Pinapayagan po ang bonfire basta may kasamang staff para sa kaligtasan."
+  },
+
+  // KITCHEN/COOKING (English & Tagalog)
+  {
+    keywords: ["kitchen", "cooking", "cook", "food preparation", "luto", "magluto", "kusina", "ihaw", "grill"],
+    question: "Can we cook at the resort? / Pwede po bang magluto sa resort?",
+    answer: "**English:** Yes! We have an open kitchen where guests can cook or grill their own food. Fully equipped with cooking utensils and appliances.\n\n**Tagalog:** Opo! May open kitchen po kami na pwedeng gamitin ng guests para magluto o mag-ihaw. Kumpleto po ng mga gamit sa pagluluto."
+  },
+
+  // DINING AREA/GAZEBO (English & Tagalog)
+  {
+    keywords: ["gazebo", "kainan", "dining", "eating area", "kumain", "dining area"],
+    question: "Do you have a dining area? / May dining area po ba?",
+    answer: "**English:** Yes, we have a dining gazebo available for guests to enjoy their meals and relax.\n\n**Tagalog:** Opo, may dining gazebo po kami na pwedeng gamitin ng guests habang kumakain at nagrerelax."
+  },
+
+  // TREEHOUSE (English & Tagalog)
+  {
+    keywords: ["treehouse", "tree house", "puno", "bahay kubo"],
+    question: "Do you have a treehouse? / May treehouse po ba?",
+    answer: "**English:** Yes, we have an electric treehouse where guests can climb and take photos.\n\n**Tagalog:** Opo, mayroon kaming electric treehouse na pwedeng akyatin at pag-selfie-han ng guests."
+  },
+
+  // GAMES/ARCADE (English & Tagalog)
+  {
+    keywords: ["arcade", "game", "board game", "laro", "games", "entertainment", "libangan"],
+    question: "Do you have games or entertainment? / May mga laro po ba sa resort?",
+    answer: "**English:** Yes, we have an arcade machine and board games for guests to enjoy.\n\n**Tagalog:** Opo, mayroon kaming arcade machine at board games para sa mga bisita."
+  },
+
+  // BOOKING/RESERVATION (English & Tagalog)
+  {
+    keywords: ["book", "booking", "reserve", "reservation", "magpa-reserve", "magbook", "reserve", "kumuha"],
+    question: "How can I make a reservation? / Paano po magpa-reserve?",
+    answer: "**English:** You can book through our website or Facebook page. Only the date can be selected, and you'll need to upload your payment screenshot to confirm the reservation.\n\n**Tagalog:** Maaari po kayong mag-book sa aming website o Facebook page. Petsa lamang po ang maaaring piliin at i-upload ang screenshot ng bayad para makumpirma ang reservation."
+  },
+
+  // PARKING (English & Tagalog)
+  {
+    keywords: ["parking", "park", "car", "vehicle", "sasakyan", "paradahan", "kotse"],
+    question: "Do you have parking? / May parking po ba sa resort?",
+    answer: "**English:** Yes, we offer free parking for guests inside the resort's compound for safety and convenience.\n\n**Tagalog:** Opo, may libreng parking area po kami para sa mga guests. Ligtas at nasa loob ng compound ang parking space."
+  },
+
+  // PAYMENT METHODS (English & Tagalog)
+  {
+    keywords: ["payment", "bayad", "gcash", "mode of payment", "paano magbayad", "transfer", "bank"],
+    question: "How can we pay? / Paano po ang bayad?",
+    answer: "**English:** You can pay via GCash or bank transfer. Just upload a screenshot of your payment on the booking form to confirm your reservation.\n\n**Tagalog:** Maaari po kayong magbayad sa pamamagitan ng GCash o bank transfer. I-upload lamang po ang screenshot ng bayad sa booking form upang makumpirma ang reservation."
+  },
+
+  // BRINGING FOOD (English & Tagalog)
+  {
+    keywords: ["food", "pagkain", "baon", "magdala ng pagkain", "bring food", "dala", "foods"],
+    question: "Can we bring our own food? / Pwede po bang magdala ng sariling pagkain?",
+    answer: "**English:** Yes! You may bring your own food and drinks. We also have an open kitchen if you wish to cook or grill.\n\n**Tagalog:** Opo! Puwede po kayong magdala ng sariling pagkain at inumin. May open kitchen din kami kung gusto ninyong magluto o mag-ihaw."
+  },
+
+  // TOWELS & TOILETRIES (English & Tagalog)
+  {
+    keywords: ["towel", "gamit", "bring", "dalhin", "tuwalya", "toiletries", "sabon", "shampoo"],
+    question: "Are towels provided? / May tuwalya po ba kayong provided?",
+    answer: "**English:** Please bring your own towels and toiletries. We don't provide personal items to maintain hygiene standards.\n\n**Tagalog:** Maaari po kayong magdala ng sariling tuwalya at toiletries. Hindi po kami nagbibigay ng personal items para masiguro ang kalinisan."
+  },
+
+  // WEATHER/RAIN (English & Tagalog)
+  {
+    keywords: ["ulan", "weather", "rainy", "rain", "panahon", "maulan"],
+    question: "What if it rains? / Ano po kung umulan?",
+    answer: "**English:** If it rains on your booking date, your reservation will still continue. You may reschedule depending on date availability.\n\n**Tagalog:** Kung umulan po sa inyong booking date, tuloy pa rin po ang reservation. Maaaring magpa-reschedule depende sa availability ng petsa."
+  },
+
+  // KIDS/CHILDREN (English & Tagalog)
+  {
+    keywords: ["kids", "bata", "children", "mga bata", "anak", "family"],
+    question: "Can we bring kids? / Pwede po bang magdala ng bata?",
+    answer: "**English:** Yes! Kampo Ibayo is family-friendly. Children must be accompanied by an adult, especially near the pool.\n\n**Tagalog:** Opo! Family-friendly po ang Kampo Ibayo. Ang mga bata ay dapat laging may kasamang magulang lalo na sa pool area."
+  },
+
+  // WIFI/INTERNET (English & Tagalog)
+  {
+    keywords: ["wifi", "internet", "connection", "signal", "wi-fi", "net"],
+    question: "Do you have Wi-Fi? / May Wi-Fi po ba?",
+    answer: "**English:** Yes, Kampo Ibayo offers free Wi-Fi access for all guests. All major networks also have strong signal in the area.\n\n**Tagalog:** Opo, may libreng Wi-Fi po sa loob ng resort para sa lahat ng guests. Malakas po din ang signal ng mga major networks sa lugar."
+  },
+
+  // CONTACT INFORMATION (English & Tagalog)
+  {
+    keywords: ["contact", "phone", "email", "reach", "call", "message", "tawagan", "kontak", "facebook"],
+    question: "How can I contact you? / Paano po kayo makontak?",
+    answer: "**English:** You can contact us through our Facebook page Kampo Ibayo, via email at kampoibayo@gmail.com, or by phone at 0966-281-5123.\n\n**Tagalog:** Maaari po kaming makontak sa aming Facebook page na Kampo Ibayo, sa email na kampoibayo@gmail.com, o sa cellphone number na 0966-281-5123."
+  },
+
+  // TABLES & CHAIRS (English & Tagalog)
+  {
+    keywords: ["tables", "upuan", "chairs", "rent", "mesa", "silya"],
+    question: "Are tables and chairs included? / May tables at chairs po ba?",
+    answer: "**English:** Yes, tables and chairs are already included in your rent. You may also request extras if needed.\n\n**Tagalog:** Opo, may tables at chairs na po kasama sa inyong renta. Maaari rin kayong mag-request kung kailangan ng dagdag."
+  },
+
+  // CLEANING (English & Tagalog)
+  {
+    keywords: ["clean", "linisin", "trash", "basura", "malinis", "linis"],
+    question: "Who cleans after checkout? / Sino po naglilinis?",
+    answer: "**English:** Guests are encouraged to keep the place clean, but our staff will handle full cleaning after check-out.\n\n**Tagalog:** Ang mga guests po ay hinihikayat na panatilihing malinis ang lugar. May staff po kami na maglilinis pagkatapos ng check-out."
+  },
+
+  // COTTAGES (English & Tagalog)
+  {
+    keywords: ["cottage", "kubo", "rest area", "pahingahan"],
+    question: "Do you have cottages? / May mga cottage po ba?",
+    answer: "**English:** Yes, we have cottages and resting areas near the pool for guests who want to relax.\n\n**Tagalog:** Opo, may mga kubo at resting area po kami malapit sa pool para sa mga bisitang gusto lang mag-relax."
+  },
+
+  // ELECTRICITY/POWER OUTLETS (English & Tagalog)
+  {
+    keywords: ["electricity", "saksakan", "power outlet", "charge", "kuryente", "plug"],
+    question: "Are there power outlets? / May saksakan po ba?",
+    answer: "**English:** Yes, there are power outlets available in the open area and inside the rooms for charging devices.\n\n**Tagalog:** Opo, may mga available na saksakan sa open area at sa kwarto para mag-charge ng gadgets."
+  },
+
+  // COMFORT ROOMS/RESTROOMS (English & Tagalog)
+  {
+    keywords: ["cr", "comfort room", "banyo", "restroom", "toilet", "palikuran"],
+    question: "Where are the restrooms? / Nasaan po ang CR?",
+    answer: "**English:** There's a clean restroom near the pool and another one near the open kitchen.\n\n**Tagalog:** Opo, may malinis na comfort room po malapit sa pool at isa pa malapit sa open kitchen."
+  },
+
+  // REFUND/CANCELLATION (English & Tagalog)
+  {
+    keywords: ["refund", "cancel", "i-cancel", "cancellation", "policy"],
+    question: "Can I get a refund? / Pwede po bang magpa-refund?",
+    answer: "**English:** Refunds depend on our resort's cancellation policy. Please contact the admin for more information.\n\n**Tagalog:** Ang refund ay depende po sa cancellation policy ng resort. Makipag-ugnayan po sa admin para sa detalye."
+  },
+
+  // CAPACITY & ADDITIONAL GUESTS (English & Tagalog)
+  {
+    keywords: ["capacity", "how many", "guests", "people", "maximum", "ilan", "kasya", "tao", "dagdag"],
+    question: "How many guests maximum? / Ilan po ang maximum na tao?",
+    answer: "**English:** Maximum 15 guests. The ₱9,000 package is good for up to 15 guests, and there's an additional ₱300 per extra person.\n\n**Tagalog:** Maximum 15 guests po. Ang ₱9,000 ay para sa 15 katao, at may dagdag na ₱300 bawat ulo kung lalampas."
   },
   
   // BOOKING PROCESS
@@ -206,11 +384,48 @@ const FAQ_DATABASE: FAQItem[] = [
     answer: "Yes! Dali Grocery is our landmark (very close). There are also sari-sari stores nearby for basics. We recommend bringing most of your supplies, but you can get essentials if needed."
   },
   
+  // ADDITIONAL TAGALOG ENTRIES
+  
+  // ALCOHOL/DRINKS (English & Tagalog)
+  {
+    keywords: ["alcohol", "drink", "liquor", "beer", "alak", "inumin", "serbesa", "pwede ba mag-alak"],
+    question: "Can we bring alcohol? / Pwede po bang magdala ng alak?",
+    answer: "**English:** Yes, you can bring your own alcoholic beverages. Please drink responsibly and keep noise levels down especially after 10 PM. No selling of alcohol allowed on premises.\n\n**Tagalog:** Opo, pwedeng magdala ng sariling alak o inumin. Mag-ingat lang sa pag-inom at huwag masyadong maingay lalo na pagkatapos ng 10 PM. Bawal po magbenta ng alak sa loob."
+  },
+
+  // ADVANCE BOOKING (English & Tagalog)  
+  {
+    keywords: ["advance", "how far", "book ahead", "reservation time", "gaano katagal", "maaga ba", "ilang araw"],
+    question: "How far in advance should I book? / Gaano po katagal dapat mag-advance booking?",
+    answer: "**English:** We recommend booking at least 1-2 weeks in advance, especially for weekends and holidays. Peak season (summer, Holy Week) books up fast, so earlier is better!\n\n**Tagalog:** Inirerekomenda po namin na mag-book ng 1-2 linggo nang maaga, lalo na sa weekends at holidays. Sa peak season (summer, Holy Week) mabilis mapuno, kaya mas maaga mas maganda!"
+  },
+
+  // EMERGENCY/HELP (English & Tagalog)
+  {
+    keywords: ["emergency", "urgent", "help", "problem", "tulong", "emerhensya", "may problema"],
+    question: "What if there's an emergency? / Paano po kung may emergency?",
+    answer: "**English:** Our caretaker is on-site 24/7 during your stay. For emergencies, contact them immediately. We also provide emergency contact numbers upon check-in. Your safety is our priority!\n\n**Tagalog:** May caretaker po kami na nandito 24/7 habang nandito kayo. Kung may emergency, makipag-ugnayan agad sa kanila. Bibigay din po namin ang emergency contact numbers sa check-in. Ang inyong kaligtasan ang una naming priority!"
+  },
+
+  // GROCERY/NEARBY STORES (English & Tagalog)
+  {
+    keywords: ["grocery", "store", "buy", "nearby", "tindahan", "malapit na tindahan", "bibili"],
+    question: "Are there nearby stores? / May malapit ba na tindahan?",
+    answer: "**English:** Yes! Dali Grocery is our landmark (very close). There are also sari-sari stores nearby for basics. We recommend bringing most of your supplies, but you can get essentials if needed.\n\n**Tagalog:** Opo! Ang Dali Grocery ay malapit lang (landmark po namin yan). May mga sari-sari stores din para sa basic needs. Pero mas maganda kung magdala na kayo ng mga kailangan, pwede lang bumili kung kulang."
+  },
+
+  // TEAM BUILDING (English & Tagalog)
+  {
+    keywords: ["team building", "company", "corporate", "group", "team", "grupo", "kompanya"],
+    question: "Good for team building? / Maganda ba para sa team building?",
+    answer: "**English:** Yes! Great for corporate team building and group activities. We have open spaces, function hall, and various activities. Can accommodate up to 15 guests. Contact us for special arrangements.\n\n**Tagalog:** Opo! Napakaganda para sa corporate team building at group activities. May malawak na space, function hall, at iba't ibang activities. Pwede hanggang 15 guests. Makipag-ugnayan sa amin para sa special arrangements."
+  },
+
   // COMBINATION QUERIES (for better multi-keyword handling)
   {
-    keywords: ["pet", "cost", "bring pets", "pets cost", "pet fee", "pets price"],
-    question: "Can I bring pets and what's the cost?",
-    answer: "YES, absolutely! We're completely pet-friendly with NO additional charges for your furbabies! 🐕🐱\n\n• **Pet Policy**: All pets welcome - dogs, cats, and other well-behaved pets\n• **Cost**: FREE - no extra fees for pets!\n• **Requirements**: Just let us know in advance how many pets you're bringing\n• **Guidelines**: Please supervise them and clean up after them\n\nBring your whole family - including the furry members! 🐾"
+    keywords: ["pet", "cost", "bring pets", "pets cost", "pet fee", "pets price", "alaga bayad", "dagdag bayad sa alaga"],
+    question: "Can I bring pets and what's the cost? / Pwede magdala ng alaga at magkano?",
+    answer: "**English:** YES, absolutely! We're completely pet-friendly with NO additional charges for your furbabies! 🐕🐱\n\n• **Pet Policy**: All pets welcome - dogs, cats, and other well-behaved pets\n• **Cost**: FREE - no extra fees for pets!\n• **Requirements**: Just let us know in advance how many pets you're bringing\n• **Guidelines**: Please supervise them and clean up after them\n\nBring your whole family - including the furry members! 🐾\n\n**Tagalog:** OPO, sobrang welcome ang mga alaga! WALANG dagdag na bayad para sa mga furbabies! 🐕🐱\n\n• **Pet Policy**: Lahat ng alaga welcome - aso, pusa, at iba pang mabait na hayop\n• **Bayad**: LIBRE - walang extra fee!\n• **Requirements**: Sabihan lang kami kung ilan ang dadalhin\n• **Guidelines**: Bantayan lang at linisin kung may kalat\n\nDalhin ang buong pamilya - kasama na ang mga furry members! 🐾"
   },
   {
     keywords: ["price", "pet", "additional", "extra cost"],
@@ -319,17 +534,128 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
     }
   }, [isOpen, messages.length]);
 
+  // Enhanced language detection function with Taglish support
+  const detectLanguage = (message: string): 'tagalog' | 'english' | 'taglish' => {
+    const tagalogIndicators = [
+      'po', 'ba', 'mga', 'ang', 'sa', 'ng', 'na', 'ay', 'si', 'ni', 'kay', 'para',
+      'magkano', 'saan', 'nasaan', 'ano', 'oras', 'pwede', 'paano', 'ilan',
+      'may', 'meron', 'wala', 'hindi', 'opo', 'oo', 'tayo', 'kayo', 'kami',
+      'namin', 'natin', 'inyong', 'kailangan', 'gusto', 'ayaw', 'ibig',
+      'dapat', 'pwedeng', 'maaari', 'puwede', 'yung', 'yong', 'nyo', 'nila'
+    ];
+    
+    const englishIndicators = [
+      'the', 'and', 'or', 'but', 'with', 'from', 'what', 'where', 'when', 'how', 
+      'can', 'do', 'does', 'are', 'is', 'will', 'would', 'could', 'should', 'have', 'has'
+    ];
+    
+    // Common Taglish patterns and words
+    const taglishPatterns = [
+      'naman', 'kasi', 'talaga', 'sobrang', 'grabe', 'galing', 'diba', 'eh',
+      'kaya', 'sige', 'ok lang', 'okay naman', 'sure na', 'alam mo',
+      'ano ba', 'parang', 'ganun', 'ganyan', 'yun', 'yan', 'dun', 'dyan'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    let tagalogScore = 0;
+    let englishScore = 0;
+    let taglishScore = 0;
+    
+    // Count Tagalog indicators
+    tagalogIndicators.forEach(indicator => {
+      if (lowerMessage.includes(indicator)) {
+        tagalogScore++;
+      }
+    });
+    
+    // Count English indicators
+    englishIndicators.forEach(indicator => {
+      const pattern = new RegExp(`\\b${indicator}\\b`, 'i');
+      if (pattern.test(lowerMessage)) {
+        englishScore++;
+      }
+    });
+    
+    // Count Taglish patterns
+    taglishPatterns.forEach(pattern => {
+      if (lowerMessage.includes(pattern)) {
+        taglishScore++;
+      }
+    });
+    
+    // Check for mixed language patterns (English + Tagalog particles)
+    const hasTagalogParticles = /\b(po|ba|naman|kasi|eh)\b/i.test(message);
+    const hasEnglishWords = /\b(what|where|how|can|do|is|are|the)\b/i.test(message);
+    
+    if (hasTagalogParticles && hasEnglishWords) {
+      taglishScore += 2; // Boost Taglish score for mixed patterns
+    }
+    
+    // Decision logic
+    if (taglishScore > 0 && (tagalogScore > 0 || englishScore > 0)) {
+      return 'taglish';
+    } else if (tagalogScore > englishScore) {
+      return 'tagalog';
+    } else if (englishScore > tagalogScore) {
+      return 'english';
+    } else {
+      // If scores are equal, check for Filipino context clues
+      return hasTagalogParticles ? 'tagalog' : 'english';
+    }
+  };
+
+  // Extract language-specific answer from bilingual response with Taglish support
+  const extractLanguageAnswer = (fullAnswer: string, language: 'tagalog' | 'english' | 'taglish'): string => {
+    const englishMatch = fullAnswer.match(/\*\*English:\*\*\s*([\s\S]*?)(?:\n\n\*\*Tagalog:\*\*|$)/);
+    const tagalogMatch = fullAnswer.match(/\*\*Tagalog:\*\*\s*([\s\S]*?)(?:\n\n\*\*English:\*\*|$)/);
+    
+    if (language === 'tagalog' && tagalogMatch) {
+      return tagalogMatch[1].trim();
+    } else if (language === 'english' && englishMatch) {
+      return englishMatch[1].trim();
+    } else if (language === 'taglish') {
+      // For Taglish users, provide a mixed response that's more natural
+      if (tagalogMatch && englishMatch) {
+        const tagalogAnswer = tagalogMatch[1].trim();
+        const englishAnswer = englishMatch[1].trim();
+        
+        // Create a Taglish-style response by mixing key info from both
+        return `${tagalogAnswer}\n\n*In English: ${englishAnswer.split('.')[0]}.*`;
+      } else if (tagalogMatch) {
+        return tagalogMatch[1].trim();
+      } else if (englishMatch) {
+        return englishMatch[1].trim();
+      }
+    }
+    
+    // Fallback to full answer if extraction fails
+    return fullAnswer;
+  };
+
   const findBestAnswer = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
+    const detectedLanguage = detectLanguage(userMessage);
     
     // Check for greetings
-    if (/(hi|hello|hey|good morning|good afternoon)/i.test(userMessage)) {
-      return "Hello! How can I help you today? You can ask me about our rates, amenities, booking process, location, or any other questions about Kampo Ibayo.";
+    if (/(hi|hello|hey|good morning|good afternoon|kumusta|kamusta|mabuhay|sup|yo)/i.test(userMessage)) {
+      if (detectedLanguage === 'tagalog') {
+        return "Kumusta! Ako po ang Kampo Ibayo assistant. Narito ako para tumulong sa inyong mga tanong tungkol sa resort. Ano po ang gusto ninyong malaman?";
+      } else if (detectedLanguage === 'taglish') {
+        return "Hi! Kumusta naman! I'm the Kampo Ibayo assistant po. I can help you with questions about our resort. Ano bang gusto ninyong malaman?";
+      } else {
+        return "Hello! How can I help you today? You can ask me about our rates, amenities, booking process, location, or any other questions about Kampo Ibayo.";
+      }
     }
 
     // Check for help requests
-    if (/(help|what can you|topics|menu|options|categories)/i.test(userMessage)) {
-      return HELP_MESSAGE;
+    if (/(help|what can you|topics|menu|options|categories|tulong|ano pwede|mga topic|ano ba|what topics)/i.test(userMessage)) {
+      if (detectedLanguage === 'tagalog') {
+        return "Narito po ang mga topic na makakatulong ko sa inyo:\n\n📋 Booking at Reservations\n💰 Pricing at Packages\n🏊 Amenities at Facilities\n📍 Location at Directions\n📅 Cancellation at Rescheduling\n🐕 Pet Policy\n📝 House Rules at Guidelines\n🎉 Events at Parties\n📞 Contact Information\n\nTanungin lang ako tungkol sa Kampo Ibayo Resort!";
+      } else if (detectedLanguage === 'taglish') {
+        return "Sure! Here are the topics na makakatulong ko sa inyo:\n\n📋 Booking and Reservations\n💰 Pricing and Packages\n🏊 Amenities and Facilities\n📍 Location and Directions\n📅 Cancellation and Rescheduling\n🐕 Pet Policy\n📝 House Rules and Guidelines\n🎉 Events and Parties\n📞 Contact Information\n\nJust ask me anything about Kampo Ibayo Resort!";
+      } else {
+        return HELP_MESSAGE;
+      }
     }
 
     // Enhanced matching with scoring system - optimized with keyword index
@@ -430,13 +756,27 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
       
       if (distinctTopics.length > 1) {
         // User asked about multiple topics, show all relevant answers
-        let multiTopicResponse = "I found information for multiple topics in your question:\n\n";
+        let multiTopicResponse = "";
+        if (detectedLanguage === 'tagalog') {
+          multiTopicResponse = "Nahanap ko po ang information para sa maraming topics sa inyong tanong:\n\n";
+        } else if (detectedLanguage === 'taglish') {
+          multiTopicResponse = "I found information para sa multiple topics na na-mention ninyo:\n\n";
+        } else {
+          multiTopicResponse = "I found information for multiple topics in your question:\n\n";
+        }
         
         distinctTopics.forEach((topic, index) => {
-          multiTopicResponse += `**${index + 1}. ${topic.faq.question}**\n${topic.faq.answer}\n\n`;
+          const topicAnswer = extractLanguageAnswer(topic.faq.answer, detectedLanguage);
+          multiTopicResponse += `**${index + 1}. ${topic.faq.question}**\n${topicAnswer}\n\n`;
         });
         
-        multiTopicResponse += "Does this cover everything you wanted to know?";
+        if (detectedLanguage === 'tagalog') {
+          multiTopicResponse += "Nasaklaw na po ba nito lahat ng gusto ninyong malaman?";
+        } else if (detectedLanguage === 'taglish') {
+          multiTopicResponse += "Does this cover everything na gusto ninyong malaman?";
+        } else {
+          multiTopicResponse += "Does this cover everything you wanted to know?";
+        }
         return multiTopicResponse;
       }
       
@@ -446,25 +786,87 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
           bestMatch.score - secondBest.score < 15 && 
           bestMatch.keywordCount >= 1) {
         
-        return `I found information related to your question. Here's what I can help with:
+        const primaryAnswer = extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
+        const secondaryAnswer = extractLanguageAnswer(secondBest.faq.answer, detectedLanguage);
+        
+        if (detectedLanguage === 'tagalog') {
+          return `Nahanap ko po ang information related sa inyong tanong:
 
 **${bestMatch.faq.question}**
-${bestMatch.faq.answer}
+${primaryAnswer}
+
+**Baka ito rin po ang tinatanong ninyo:**
+**${secondBest.faq.question}**
+${secondaryAnswer}
+
+Isa po ba sa mga ito ang hinahanap ninyo?`;
+        } else if (detectedLanguage === 'taglish') {
+          return `I found information related sa inyong tanong. Here's what I can help with:
+
+**${bestMatch.faq.question}**
+${primaryAnswer}
 
 **You might also be asking about:**
 **${secondBest.faq.question}**
-${secondBest.faq.answer}
+${secondaryAnswer}
+
+Isa ba sa mga ito ang hanap ninyo?`;
+        } else {
+          return `I found information related to your question. Here's what I can help with:
+
+**${bestMatch.faq.question}**
+${primaryAnswer}
+
+**You might also be asking about:**
+**${secondBest.faq.question}**
+${secondaryAnswer}
 
 Was one of these what you were looking for?`;
+        }
       }
       
-      return bestMatch.faq.answer;
+      // Extract the appropriate language response
+      const languageSpecificAnswer = extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
+      return languageSpecificAnswer;
     }
 
-    // Enhanced default response with suggestions
+    // Enhanced default response with suggestions based on detected language
     const suggestedTopics = getSuggestedTopics(lowerMessage);
     
-    return `I apologize, but I don't have specific information about that topic. However, I can help you with:
+    if (detectedLanguage === 'tagalog') {
+      return `Pasensya na po, wala akong specific information tungkol sa topic na yan. Pero makakatulong ako sa:
+
+📋 Resort rates at packages
+🏊 Amenities at facilities  
+📍 Location at directions
+📅 Booking at availability
+📞 Contact information
+
+${suggestedTopics ? `\n💡 **Baka interested kayo sa:** ${suggestedTopics}` : ''}
+
+Para sa mga detalyadong tanong na hindi ko alam, makipag-ugnayan sa amin:
+• Phone: +63 966 281 5123
+• Email: kampoibayo@gmail.com
+
+May iba pa po bang tungkol sa Kampo Ibayo na makakatulong ako?`;
+    } else if (detectedLanguage === 'taglish') {
+      return `Sorry, wala akong specific information about that topic. But I can help you with:
+
+📋 Resort rates and packages
+🏊 Amenities and facilities  
+📍 Location and directions
+📅 Booking and availability
+📞 Contact information
+
+${suggestedTopics ? `\n💡 **You might be interested sa:** ${suggestedTopics}` : ''}
+
+Para sa detailed questions na hindi ko alam, you can contact us:
+• Phone: +63 966 281 5123
+• Email: kampoibayo@gmail.com
+
+May iba pa bang about Kampo Ibayo na makakatulong ako?`;
+    } else {
+      return `I apologize, but I don't have specific information about that topic. However, I can help you with:
 
 📋 Resort rates and packages
 🏊 Amenities and facilities  
@@ -479,6 +881,7 @@ For detailed inquiries beyond my knowledge, please contact us directly:
 • Email: kampoibayo@gmail.com
 
 Is there anything else about Kampo Ibayo I can help you with?`;
+    }
   };
 
   // Helper function to calculate question similarity
