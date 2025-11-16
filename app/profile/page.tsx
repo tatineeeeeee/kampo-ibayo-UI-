@@ -401,9 +401,19 @@ function ProfilePageContent({ user }: { user: User }) {
               </div>
             </div>
             <div className="text-xs sm:text-sm text-gray-400 text-right">
-              <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                ● Active
-              </span>
+              {loading ? (
+                <span className="inline-block bg-gray-600 text-gray-300 px-2 py-1 rounded-full text-xs font-medium">
+                  ● Loading...
+                </span>
+              ) : user ? (
+                <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  ● Signed In
+                </span>
+              ) : (
+                <span className="inline-block bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  ● Guest
+                </span>
+              )}
             </div>
           </div>
         </div>

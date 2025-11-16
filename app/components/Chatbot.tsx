@@ -1176,13 +1176,13 @@ Is there anything else about Kampo Ibayo I can help you with?`;
             {!isMinimized && (
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-white text-sm sm:text-base truncate">Kampo Ibayo Assistant</h3>
-                <p className="text-xs text-red-100 truncate">Online • {FAQ_DATABASE.length}+ answers ready</p>
+                <p className="text-xs text-red-100 truncate">Ready • {FAQ_DATABASE.length}+ answers available</p>
               </div>
             )}
             {isMinimized && (
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-white text-xs sm:text-sm truncate">Assistant</h3>
-                <p className="text-xs text-green-400 truncate">Online</p>
+                <p className="text-xs text-green-400 truncate">Ready</p>
               </div>
             )}
           </div>

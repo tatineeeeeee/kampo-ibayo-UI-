@@ -19,7 +19,7 @@ import {
 import { useToast } from "../components/Toast";
 import { Tables } from '../../database.types';
 
-import { CheckCircle, XCircle, PawPrint, MessageCircle, Clock, AlertTriangle, Ban, HourglassIcon, CheckCircle2, PhilippinePeso, Calendar, Users, Phone, Upload, Lightbulb, CreditCard, Smartphone, Home, Plus, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, PawPrint, MessageCircle, Clock, AlertTriangle, Ban, HourglassIcon, CheckCircle2, PhilippinePeso, Calendar, Users, Phone, Upload, Lightbulb, CreditCard, Smartphone, Home, Plus, ChevronLeft, ChevronRight, RotateCcw, MessageSquare } from "lucide-react";
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 
 type Booking = Tables<'bookings'>;
@@ -374,44 +374,44 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
     switch (status) {
       case 'pending':
         return {
-          color: 'bg-yellow-900/30 border-yellow-600/50 text-yellow-300',
-          icon: <HourglassIcon className="w-4 h-4" />,
+          color: 'bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200',
+          icon: <HourglassIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
           title: 'Payment Under Review',
-          message: 'Admin is reviewing your payment proof',
-          messageColor: 'text-yellow-200'
+          message: 'We are reviewing your payment proof',
+          messageColor: 'text-amber-600 dark:text-amber-300'
         };
       case 'approved':
       case 'verified':
         return {
-          color: 'bg-green-900/30 border-green-600/50 text-green-300',
-          icon: <CheckCircle2 className="w-4 h-4" />,
+          color: 'bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-200',
+          icon: <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />,
           title: 'Payment Verified',
-          message: 'Your payment has been verified! Waiting for final booking confirmation.',
-          messageColor: 'text-green-200'
+          message: 'Your payment has been approved successfully',
+          messageColor: 'text-green-600 dark:text-green-300'
         };
       case 'rejected':
         return {
-          color: 'bg-red-900/20 border-red-500/30 text-red-400',
-          icon: <XCircle className="w-4 h-4" />,
+          color: 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/40 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-100',
+          icon: <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />,
           title: 'Payment Rejected',
-          message: 'Upload a corrected payment proof',
-          messageColor: 'text-red-300'
+          message: 'Your payment proof needs correction',
+          messageColor: 'text-red-600 dark:text-red-300'
         };
       case 'cancelled':
         return {
-          color: 'bg-gray-900/20 border-gray-500/30 text-gray-400',
-          icon: <Ban className="w-4 h-4" />,
+          color: 'bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300',
+          icon: <Ban className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
           title: 'Payment Cancelled',
-          message: 'Payment proof was cancelled (booking may have been cancelled)',
-          messageColor: 'text-gray-300'
+          message: 'This payment proof has been cancelled',
+          messageColor: 'text-gray-500 dark:text-gray-400'
         };
       default:
         return {
-          color: 'bg-gray-800/50 border-gray-600/50 text-gray-300',
-          icon: <AlertTriangle className="w-4 h-4" />,
+          color: 'bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300',
+          icon: <AlertTriangle className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
           title: 'Unknown Status',
-          message: 'Contact admin for assistance',
-          messageColor: 'text-gray-400'
+          message: 'Please contact support for assistance',
+          messageColor: 'text-gray-500 dark:text-gray-400'
         };
     }
   };
@@ -419,16 +419,20 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
   const statusInfo = getStatusInfo(paymentProof.status);
 
   return (
-    <div className={`border rounded-lg p-3 mb-3 ${statusInfo.color}`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
+    <div className={`rounded-xl p-4 mb-4 shadow-sm ${statusInfo.color}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
           {statusInfo.icon}
-          <span className="text-sm font-medium">{statusInfo.title}</span>
+          <div>
+            <h3 className="text-sm font-semibold">{statusInfo.title}</h3>
+            <p className="text-xs opacity-75 mt-0.5">{statusInfo.message}</p>
+          </div>
         </div>
         {paymentProof.status === 'rejected' && (
           <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-            <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">
-              Upload New
+            <button className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transform">
+              <Upload className="w-4 h-4" />
+              Upload New Proof
             </button>
           </Link>
         )}
@@ -450,24 +454,57 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
             }
             
             return (
-              <>
-                <div className="bg-red-900/20 p-2 rounded">
-                  {rejectionReason}
+              <div className="space-y-3 mt-3">
+                {/* Rejection Reason Card */}
+                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/30 border border-red-200/60 dark:border-red-800/30 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/60 rounded-xl flex items-center justify-center shadow-sm">
+                      <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="text-sm font-bold text-red-900 dark:text-red-100">Rejection Reason</h4>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">Action Required</span>
+                      </div>
+                      <p className="text-sm text-red-800 dark:text-red-200 leading-relaxed font-medium">{rejectionReason}</p>
+                    </div>
+                  </div>
                 </div>
+                
+                {/* Admin Notes Card */}
                 {adminNotes && (
-                  <div className="bg-gray-800/30 p-2 rounded text-gray-400">
-                    <span className="font-medium">Admin notes: </span>{adminNotes}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/30 border border-blue-200/60 dark:border-blue-800/30 rounded-2xl p-5 shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/60 rounded-xl flex items-center justify-center shadow-sm">
+                        <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">Additional Notes</h4>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">From Admin</span>
+                        </div>
+                        <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">{adminNotes}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </>
+              </div>
             );
           })()}
         </div>
       )}
       
       {paymentProof.admin_notes && paymentProof.status !== 'rejected' && (
-        <div className="text-xs text-gray-400 bg-gray-800/30 p-2 rounded mb-2">
-          {paymentProof.admin_notes}
+        <div className="mt-3 bg-blue-50/90 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">Admin Notes</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">{paymentProof.admin_notes}</p>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -520,26 +557,8 @@ function BookingsPageContent() {
     setRefreshTrigger(prev => prev + 1); // Force refresh bookings data
   };
 
-  // Add window focus listener to refresh data when user returns to the page
-  useEffect(() => {
-    let lastFocusTime = 0;
-    
-    const handleFocus = () => {
-      const now = Date.now();
-      // Throttle focus events to prevent rapid refreshes (min 2 seconds between refreshes)
-      if (now - lastFocusTime > 2000) {
-        console.log('🔄 Page focused - refreshing bookings...');
-        lastFocusTime = now;
-        setRefreshTrigger(prev => prev + 1);
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
+  // Note: Removed window focus refresh to prevent loading states when Alt+Tabbing
+  // Real-time subscriptions handle updates automatically, so manual refresh on focus is not needed
 
   // Load maintenance mode settings
   useEffect(() => {

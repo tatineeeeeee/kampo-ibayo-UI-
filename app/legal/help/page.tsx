@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { ArrowLeft, Phone, Mail, MessageCircle, AlertTriangle, Clock, MapPin, Shield, Users, Wifi } from "lucide-react";
 import LegalNavigation from "../../components/LegalNavigation";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function HelpPage() {
+  const { user, loading } = useAuth();
   const contactMethods = [
     {
       type: "Emergency",
@@ -153,7 +155,13 @@ export default function HelpPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Mobile-First Sticky Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+      export default function HelpPage() {
+  const { user, loading } = useAuth();
+  
+  return (
+    <>
+      {/* Navigation Bar */}
+      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -169,9 +177,19 @@ export default function HelpPage() {
               </div>
             </div>
             <div className="text-xs sm:text-sm text-gray-400 text-right">
-              <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                Support
-              </span>
+              {loading ? (
+                <span className="inline-block bg-gray-600 text-gray-300 px-2 py-1 rounded-full text-xs font-medium">
+                  ● Loading...
+                </span>
+              ) : user ? (
+                <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  ● Signed In
+                </span>
+              ) : (
+                <span className="inline-block bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  ● Guest
+                </span>
+              )}
             </div>
           </div>
         </div>
