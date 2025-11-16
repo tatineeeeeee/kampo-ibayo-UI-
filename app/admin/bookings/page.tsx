@@ -455,7 +455,7 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
     };
 
     fetchPaymentProof();
-  }, [booking.id]);
+  }, [booking.id, booking.payment_status, booking.status]);
 
   if (loading) {
     if (variant === 'modal') {
