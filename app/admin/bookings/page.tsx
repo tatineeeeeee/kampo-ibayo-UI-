@@ -1129,7 +1129,7 @@ export default function BookingsPage() {
               
               // Update the selected payment proof to reflect status change immediately
               if (selectedPaymentProof && selectedPaymentProof.id === newProof.id) {
-                setSelectedPaymentProof(newProof);
+                setSelectedPaymentProof(newProof as PaymentProof);
                 console.log('✅ Modal updated with status change');
               }
               

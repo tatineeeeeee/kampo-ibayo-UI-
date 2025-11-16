@@ -61,6 +61,7 @@ const validateAndRefreshSession = async (maxRetries = 3) => {
 };
 
 function ProfilePageContent({ user }: { user: User }) {
+  const { loading } = useAuth();
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [editingPhone, setEditingPhone] = useState(false);
