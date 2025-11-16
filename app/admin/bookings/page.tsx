@@ -84,7 +84,7 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         step: 'payment_review',
         priority: 5,
         badge: 'bg-amber-100 text-amber-800',
-        text: 'Payment Review',
+        text: 'Under Review',
         description: 'Payment proof uploaded, admin review needed',
         actionNeeded: 'Review payment proof immediately'
       };
@@ -95,7 +95,7 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         step: 'payment_rejected',
         priority: 6,
         badge: 'bg-red-100 text-red-800',
-        text: 'Payment Rejected',
+        text: 'Rejected',
         description: 'Payment proof was rejected by admin',
         actionNeeded: 'Guest needs to upload new payment proof or booking should be cancelled'
       };
@@ -105,7 +105,7 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         step: 'ready_to_confirm',
         priority: 3,
         badge: 'bg-blue-100 text-blue-800',
-        text: 'Payment Verified - Ready to Confirm',
+        text: 'Ready to Confirm',
         description: 'Payment verified, booking can now be confirmed',
         actionNeeded: 'Click Confirm button to finalize booking'
       };
@@ -136,7 +136,7 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
         step: 'confirmed_pending_payment',
         priority: 6,
         badge: 'bg-yellow-100 text-yellow-800',
-        text: 'Confirmed - Payment Pending',
+        text: 'Pending Payment',
         description: 'Booking confirmed but payment still under review',
         actionNeeded: 'Verify payment proof to complete workflow'
       };
@@ -271,22 +271,22 @@ function PaymentStatusCell({ booking, refreshKey }: { booking: Booking; refreshK
       switch (paymentProof.status) {
         case 'pending':
           return {
-            text: 'Payment Review',
+            text: 'Under Review',
             badge: 'bg-orange-500 text-white'
           };
         case 'verified':
           return {
-            text: 'Payment Verified',
+            text: 'Verified',
             badge: 'bg-green-500 text-white'
           };
         case 'rejected':
           return {
-            text: 'Payment Rejected',
+            text: 'Rejected',
             badge: 'bg-red-500 text-white'
           };
         case 'cancelled':
           return {
-            text: 'Payment Cancelled',
+            text: 'Cancelled',
             badge: 'bg-gray-500 text-white'
           };
         default:
@@ -300,17 +300,17 @@ function PaymentStatusCell({ booking, refreshKey }: { booking: Booking; refreshK
     // If no payment proof exists, check booking payment_status
     if (booking.payment_status === 'payment_review') {
       return {
-        text: 'Payment Review',
+        text: 'Under Review',
         badge: 'bg-orange-500 text-white'
       };
     } else if (booking.payment_status === 'rejected') {
       return {
-        text: 'Payment Rejected',
+        text: 'Rejected',
         badge: 'bg-red-500 text-white'
       };
     } else if (booking.payment_status === 'paid') {
       return {
-        text: 'Payment Verified',
+        text: 'Verified',
         badge: 'bg-green-500 text-white'
       };
     } else {
@@ -325,7 +325,7 @@ function PaymentStatusCell({ booking, refreshKey }: { booking: Booking; refreshK
   
   return (
     <div className="flex items-center justify-center">
-      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.badge}`}>
+      <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${statusInfo.badge}`}>
         {statusInfo.text}
       </span>
     </div>
@@ -406,7 +406,7 @@ function SmartWorkflowStatusCell({ booking, refreshKey }: { booking: Booking; re
   
   return (
     <div>
-      <span className={`px-2 py-1 rounded text-xs font-medium ${workflowStatus.badge}`}>
+      <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${workflowStatus.badge}`}>
         {workflowStatus.text}
       </span>
     </div>
@@ -414,7 +414,7 @@ function SmartWorkflowStatusCell({ booking, refreshKey }: { booking: Booking; re
 }
 
 // Smart Confirm Button - Only allows confirmation after payment verification
-function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking: Booking; onConfirm: (bookingId: number) => void; variant?: 'table' | 'modal' }) {
+function SmartConfirmButton({ booking, onConfirm, variant = 'table', refreshKey }: { booking: Booking; onConfirm: (bookingId: number) => void; variant?: 'table' | 'modal'; refreshKey?: number }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -455,7 +455,7 @@ function SmartConfirmButton({ booking, onConfirm, variant = 'table' }: { booking
     };
 
     fetchPaymentProof();
-  }, [booking.id, booking.payment_status, booking.status]);
+  }, [booking.id, booking.payment_status, booking.status, refreshKey]);
 
   if (loading) {
     if (variant === 'modal') {
@@ -2191,7 +2191,7 @@ export default function BookingsPage() {
                     <th className="p-3 w-16 text-center">Guests</th>
                     <th className="p-3 min-w-[100px]">Amount</th>
                     <th className="p-3 min-w-[120px]">Status</th>
-                    <th className="p-3 min-w-[90px]">Payment</th>
+                    <th className="p-3 min-w-[110px]">Payment</th>
                     <th className="p-3 min-w-[140px]">Actions</th>
                   </tr>
                 </thead>
@@ -2270,25 +2270,30 @@ export default function BookingsPage() {
                           
                           <PaymentProofButton 
                             key={`proof-${booking.id}-${refreshTrigger}-${booking.payment_status || 'none'}`}
-                            bookingId={booking.id} 
+                            bookingId={booking.id}
                             onViewProof={async (proof) => {
                               setSelectedPaymentProof(proof);
                               setShowPaymentProofModal(true);
                               if (proof.id > 0) { // Only fetch history for real proofs, not dummy ones
                                 await fetchPaymentHistory(booking.id);
                                 
-                                // Also fetch the latest payment proof to ensure modal shows current data
+                                // Fetch the correct payment proof using priority logic
                                 try {
-                                  const { data: latestProof } = await supabase
+                                  const { data: allProofs } = await supabase
                                     .from('payment_proofs')
                                     .select('*')
                                     .eq('booking_id', booking.id)
-                                    .order('uploaded_at', { ascending: false })
-                                    .limit(1)
-                                    .single();
+                                    .order('uploaded_at', { ascending: false });
                                   
-                                  if (latestProof) {
-                                    setSelectedPaymentProof(latestProof);
+                                  if (allProofs && allProofs.length > 0) {
+                                    // Priority: pending > verified > rejected > cancelled
+                                    const pendingProof = allProofs.find(p => p.status === 'pending');
+                                    const verifiedProof = allProofs.find(p => p.status === 'verified');
+                                    const rejectedProof = allProofs.find(p => p.status === 'rejected');
+                                    const cancelledProof = allProofs.find(p => p.status === 'cancelled');
+                                    
+                                    const prioritizedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || allProofs[0];
+                                    setSelectedPaymentProof(prioritizedProof);
                                   }
                                 } catch (error) {
                                   console.log('No payment proof found or error:', error);
@@ -2305,6 +2310,7 @@ export default function BookingsPage() {
                             <SmartConfirmButton 
                               booking={booking}
                               onConfirm={(bookingId) => updateBookingStatus(bookingId, 'confirmed')}
+                              refreshKey={refreshTrigger}
                             />
                             <button 
                               onClick={() => {
@@ -2594,18 +2600,23 @@ export default function BookingsPage() {
                           if (proof.id > 0) { // Only fetch history for real proofs, not dummy ones
                             await fetchPaymentHistory(selectedBooking.id);
                             
-                            // Fetch the latest payment proof to ensure modal shows current data
+                            // Fetch the correct payment proof using priority logic
                             try {
-                              const { data: latestProof } = await supabase
+                              const { data: allProofs } = await supabase
                                 .from('payment_proofs')
                                 .select('*')
                                 .eq('booking_id', selectedBooking.id)
-                                .order('uploaded_at', { ascending: false })
-                                .limit(1)
-                                .single();
+                                .order('uploaded_at', { ascending: false });
                               
-                              if (latestProof) {
-                                setSelectedPaymentProof(latestProof);
+                              if (allProofs && allProofs.length > 0) {
+                                // Priority: pending > verified > rejected > cancelled
+                                const pendingProof = allProofs.find(p => p.status === 'pending');
+                                const verifiedProof = allProofs.find(p => p.status === 'verified');
+                                const rejectedProof = allProofs.find(p => p.status === 'rejected');
+                                const cancelledProof = allProofs.find(p => p.status === 'cancelled');
+                                
+                                const prioritizedProof = pendingProof || verifiedProof || rejectedProof || cancelledProof || allProofs[0];
+                                setSelectedPaymentProof(prioritizedProof);
                               }
                             } catch (error) {
                               console.log('No payment proof found or error:', error);
@@ -2626,6 +2637,7 @@ export default function BookingsPage() {
                         <SmartConfirmButton 
                           booking={selectedBooking}
                           variant="modal"
+                          refreshKey={refreshTrigger}
                           onConfirm={(bookingId) => {
                             updateBookingStatus(bookingId, 'confirmed');
                             closeModal();

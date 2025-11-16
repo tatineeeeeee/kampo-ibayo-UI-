@@ -1147,6 +1147,22 @@ function BookingsPageContent() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Check if the new dates are the same as current booking dates
+    const currentCheckIn = new Date(selectedBooking.check_in_date).toDateString();
+    const currentCheckOut = new Date(selectedBooking.check_out_date).toDateString();
+    const newCheckInString = checkIn.toDateString();
+    const newCheckOutString = checkOut.toDateString();
+
+    if (currentCheckIn === newCheckInString && currentCheckOut === newCheckOutString) {
+      showToast({
+        type: 'warning',
+        title: 'Same Dates Selected',
+        message: 'The new dates are the same as your current booking. Please select different dates to reschedule.',
+        duration: 5000
+      });
+      return;
+    }
+
     if (checkIn < today) {
       showToast({
         type: 'warning',
