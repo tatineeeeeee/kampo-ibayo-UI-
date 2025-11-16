@@ -21,7 +21,7 @@ interface PaymentProof {
 
 export async function GET(    
   request: Request,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     const { bookingId: bookingIdParam } = await params;
