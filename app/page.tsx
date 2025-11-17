@@ -1019,17 +1019,21 @@ function Home() {
         .react-datepicker__day--checkin::after,
         .react-datepicker__day--checkin.react-datepicker__day--today::after,
         .react-datepicker__day--checkin.react-datepicker__day--selected::after {
-          content: 'IN' !important;
+          content: '✓' !important;
           position: absolute !important;
-          bottom: 0px !important;
-          right: 0px !important;
-          font-size: 0.6rem !important;
-          background: rgba(0,0,0,0.8) !important;
+          bottom: 1px !important;
+          right: 1px !important;
+          font-size: 0.7rem !important;
+          background: rgba(37, 99, 235, 0.9) !important;
           color: white !important;
           padding: 1px 3px !important;
-          border-radius: 2px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
           font-weight: 700 !important;
+          width: auto !important;
+          min-width: 12px !important;
+          text-align: center !important;
+          z-index: 10 !important;
         }
 
         .react-datepicker__day--checkout,
@@ -1049,17 +1053,21 @@ function Home() {
         .react-datepicker__day--checkout::after,
         .react-datepicker__day--checkout.react-datepicker__day--today::after,
         .react-datepicker__day--checkout.react-datepicker__day--selected::after {
-          content: 'OUT' !important;
+          content: '✗' !important;
           position: absolute !important;
-          bottom: 0px !important;
-          right: 0px !important;
-          font-size: 0.6rem !important;
-          background: rgba(0,0,0,0.8) !important;
+          bottom: 1px !important;
+          right: 1px !important;
+          font-size: 0.7rem !important;
+          background: rgba(220, 38, 38, 0.9) !important;
           color: white !important;
           padding: 1px 3px !important;
-          border-radius: 2px !important;
+          border-radius: 3px !important;
           line-height: 1 !important;
           font-weight: 700 !important;
+          width: auto !important;
+          min-width: 12px !important;
+          text-align: center !important;
+          z-index: 10 !important;
         }
 
         .react-datepicker__day--occupied,

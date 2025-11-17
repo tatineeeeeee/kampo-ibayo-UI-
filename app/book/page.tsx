@@ -165,9 +165,10 @@ function BookingPage() {
   // Data loading useEffect  
   useEffect(() => {
     const today = new Date();
-    // Convert to Philippines timezone (UTC+8)
-    const philippinesTime = new Date(today.getTime() + (8 * 60 * 60 * 1000));
-    setMinDate(philippinesTime);
+    // Set minimum date to today (local timezone) - avoid timezone conversion issues
+    // The booking system should work with the user's local timezone for date selection
+    const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    setMinDate(todayLocal);
     
     // Run all data loading operations in parallel for faster loading
     const loadAllData = async () => {
@@ -917,7 +918,7 @@ function BookingPage() {
           box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
         }
         .react-datepicker__day::after {
-          content: 'OPEN' !important;
+          content: 'AVAILABLE' !important;
           position: absolute !important;
           bottom: 1px !important;
           left: 50% !important;
@@ -932,10 +933,10 @@ function BookingPage() {
           white-space: nowrap !important;
         }
         
-        /* 📱 MOBILE: Keep OPEN readable */
+        /* 📱 MOBILE: Keep AVAILABLE readable */
         @media (max-width: 768px) {
           .react-datepicker__day::after {
-            content: 'OPEN' !important;
+            content: 'AVAILABLE' !important;
             font-size: 8px !important;
             padding: 1px 2px !important;
             bottom: 2px !important;
@@ -1040,16 +1041,14 @@ function BookingPage() {
           bottom: 1px !important;
           left: 50% !important;
           transform: translateX(-50%) !important;
-          font-size: 10px !important;
+          font-size: 8px !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: bold !important;
           white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
         }
         
         /* 📱 MOBILE: Shorter labels for better readability */
@@ -1078,16 +1077,14 @@ function BookingPage() {
           bottom: 1px !important;
           left: 50% !important;
           transform: translateX(-50%) !important;
-          font-size: 10px !important;
+          font-size: 8px !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: bold !important;
           white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
         }
         
         /* 📱 MOBILE: Shorter labels for better readability */
@@ -1112,29 +1109,27 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--checkin::after {
-          content: 'IN' !important;
+          content: 'CHECK-IN' !important;
           position: absolute !important;
           bottom: 1px !important;
           left: 50% !important;
           transform: translateX(-50%) !important;
-          font-size: 10px !important;
+          font-size: 8px !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: bold !important;
           white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
         }
         
         /* 📱 MOBILE: Shorter labels for better readability */
         @media (max-width: 768px) {
           .react-datepicker__day--checkin::after {
-            content: 'IN' !important;
-            font-size: 10px !important;
-            padding: 2px 3px !important;
+            content: 'CHECK-IN' !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
             bottom: 2px !important;
           }
         }
@@ -1150,29 +1145,27 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--checkout::after {
-          content: 'OUT' !important;
+          content: 'CHECK-OUT' !important;
           position: absolute !important;
           bottom: 1px !important;
           left: 50% !important;
           transform: translateX(-50%) !important;
-          font-size: 10px !important;
+          font-size: 8px !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: bold !important;
           white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
         }
         
         /* 📱 MOBILE: Shorter labels for better readability */
         @media (max-width: 768px) {
           .react-datepicker__day--checkout::after {
-            content: 'OUT' !important;
-            font-size: 10px !important;
-            padding: 2px 3px !important;
+            content: 'CHECK-OUT' !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
             bottom: 2px !important;
           }
         }
@@ -1193,16 +1186,14 @@ function BookingPage() {
           bottom: 1px !important;
           left: 50% !important;
           transform: translateX(-50%) !important;
-          font-size: 10px !important;
+          font-size: 8px !important;
           background: rgba(0,0,0,0.8) !important;
           color: white !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+          padding: 1px 2px !important;
+          border-radius: 2px !important;
           line-height: 1 !important;
           font-weight: bold !important;
           white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
         }
         
         /* 📱 MOBILE: Shorter labels for better readability */
@@ -1749,21 +1740,26 @@ function BookingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Half Payment Option */}
                 <button
+                  key="half-payment"
                   type="button"
-                  onClick={() => setPaymentType('half')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                  onClick={() => {
+                    console.log('Setting payment type to half'); // Debug log
+                    setPaymentType('half');
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
                     paymentType === 'half'
-                      ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-500/30'
+                      ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-500/30 scale-[1.02]'
                       : 'bg-gray-800/50 border-gray-600 hover:border-blue-500 hover:bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                       paymentType === 'half' ? 'border-white bg-white' : 'border-gray-400'
                     }`}>
                       {paymentType === 'half' && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
                     </div>
                     <span className="font-bold text-white">50% Down Payment</span>
+                    {paymentType === 'half' && <span className="text-blue-300 text-sm">✓ Selected</span>}
                   </div>
                   <div className="text-sm text-gray-300 ml-7">
                     Pay half now, settle the balance on check-in
@@ -1777,21 +1773,26 @@ function BookingPage() {
 
                 {/* Full Payment Option */}
                 <button
+                  key="full-payment"
                   type="button"
-                  onClick={() => setPaymentType('full')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                  onClick={() => {
+                    console.log('Setting payment type to full'); // Debug log
+                    setPaymentType('full');
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
                     paymentType === 'full'
-                      ? 'bg-green-600 border-green-500 shadow-lg shadow-green-500/30'
+                      ? 'bg-green-600 border-green-500 shadow-lg shadow-green-500/30 scale-[1.02]'
                       : 'bg-gray-800/50 border-gray-600 hover:border-green-500 hover:bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                       paymentType === 'full' ? 'border-white bg-white' : 'border-gray-400'
                     }`}>
                       {paymentType === 'full' && <div className="w-2 h-2 bg-green-600 rounded-full"></div>}
                     </div>
                     <span className="font-bold text-white">Full Payment</span>
+                    {paymentType === 'full' && <span className="text-green-300 text-sm">✓ Selected</span>}
                   </div>
                   <div className="text-sm text-gray-300 ml-7">
                     Pay the complete amount upfront
@@ -1943,14 +1944,14 @@ function BookingPage() {
                   <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Check-in</span>
-                    <span className="sm:hidden">In</span>
+                    <span className="sm:hidden">CHECK-IN</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded" style={{background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'}}></span>
                   <span className="text-gray-300">
                     <span className="hidden sm:inline">Check-out</span>
-                    <span className="sm:hidden">Out</span>
+                    <span className="sm:hidden">CHECK-OUT</span>
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
@@ -2057,22 +2058,7 @@ function BookingPage() {
                         </div>
                       </div>
                     </div>
-                  </>
-                ) : estimatedPrice && formData.checkIn ? (
-                  <>
-                    {/* Single day or incomplete selection */}
-                    <div className="flex justify-between items-center p-2.5 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-300 text-sm font-medium">Rate Type:</span>
-                      <span className="text-white font-semibold text-sm">
-                        {calculatePrice(formData.checkIn, 15) === 12000 ? '🌴 Weekend/Holiday' : '📅 Weekday'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-2.5 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-300 text-sm font-medium">Base Rate:</span>
-                      <span className="text-white font-semibold">
-                        ₱{calculatePrice(formData.checkIn, 15).toLocaleString()}
-                      </span>
-                    </div>
+
                     <div className={`flex justify-between items-center p-2.5 rounded-lg border ${
                       formData.guests && parseInt(formData.guests) > 15
                         ? 'bg-yellow-900/20 border-yellow-600/30'
@@ -2092,8 +2078,6 @@ function BookingPage() {
                       }`}>
                         {formData.guests && parseInt(formData.guests) > 15 && pricingBreakdown
                           ? `+₱${pricingBreakdown.excessGuestFee.toLocaleString()}`
-                          : formData.guests && parseInt(formData.guests) > 15
-                          ? `+₱${((parseInt(formData.guests) - 15) * 300).toLocaleString()}`
                           : '₱0'
                         }
                       </span>
@@ -2105,43 +2089,65 @@ function BookingPage() {
                         ℹ️ Extra guest fee: ₱300 × {parseInt(formData.guests) - 15} guests × {pricingBreakdown.totalNights} nights
                       </div>
                     )}
-                    <div className="pt-3 mt-2 border-t-2 border-gray-700 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-white">Total Amount:</span>
-                        <span className="text-xl font-bold text-gray-300">
-                          ₱{estimatedPrice.toLocaleString()}
-                        </span>
-                      </div>
-                      
+                    <div className="pt-3 mt-2 border-t-2 border-gray-700">
                       {/* Payment breakdown based on selected payment type */}
-                      {paymentType === 'half' ? (
-                        <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-blue-300">Down Payment (Pay Now):</span>
-                            <span className="text-lg font-bold text-blue-300">
-                              ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
-                            </span>
+                      <div key={paymentType} className="transition-all duration-300">
+                        {paymentType === 'half' ? (
+                          <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3 shadow-lg">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                              <span className="text-sm font-medium text-blue-300">50% Down Payment Option</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-base font-bold text-blue-300">Payment Amount (50%):</span>
+                              <span className="text-xl font-bold text-blue-300">
+                                ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-blue-200">Balance (on Arrival):</span>
+                              <span className="text-sm text-blue-200">
+                                ₱{(estimatedPrice - Math.round(estimatedPrice * 0.5)).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-t border-blue-500/30 pt-2">
+                              <span className="text-blue-200">Full Booking Cost:</span>
+                              <span className="text-blue-200">
+                                ₱{estimatedPrice.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-blue-500/30">
+                              <div className="flex items-center gap-1 text-xs text-blue-200">
+                                <span>💡</span>
+                                <span>Secure your booking with 50% down payment</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-blue-200">Balance (Pay on Arrival):</span>
-                            <span className="text-sm text-blue-200">
-                              ₱{(estimatedPrice - Math.round(estimatedPrice * 0.5)).toLocaleString()}
-                            </span>
+                        ) : (
+                          <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-3 shadow-lg">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                              <span className="text-sm font-medium text-green-300">Full Payment Option</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-base font-bold text-green-300">Total Payment (100%):</span>
+                              <span className="text-xl font-bold text-green-300">
+                                ₱{estimatedPrice.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-green-200 mb-2">
+                              <span>✓</span>
+                              <span>No additional payment required on arrival</span>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-green-500/30">
+                              <div className="flex items-center gap-1 text-xs text-green-200">
+                                <span>✨</span>
+                                <span>Complete payment - no worries on check-in!</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-3">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-green-300">Full Payment (Pay Now):</span>
-                            <span className="text-lg font-bold text-green-300">
-                              ₱{estimatedPrice.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-green-200">✓ No additional payment required</span>
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </>
                 ) : (

@@ -78,9 +78,9 @@ function UploadPaymentProofContent() {
   // Calculate remaining balance after verified payments and pending payments
   const verifiedPaidAmount = paymentSummary.totalPaid;
   const pendingAmount = paymentSummary.pendingAmount;
-  const currentDetectedAmount = ocrResult?.amount || 0;
-  const remainingAmount = booking ? Math.max(0, booking.total_amount - verifiedPaidAmount - pendingAmount) : 0;
-  const remainingAfterCurrent = Math.max(0, remainingAmount - currentDetectedAmount);
+  // Use payment_amount (the amount they need to pay based on payment type) instead of total_amount
+  const expectedPaymentAmount = booking?.payment_amount || booking?.total_amount || 0;
+  const remainingAmount = booking ? Math.max(0, expectedPaymentAmount - verifiedPaidAmount - pendingAmount) : 0;
   
   // Function to fetch payment history
   const fetchPaymentHistory = useCallback(async (bookingId: string) => {
@@ -787,11 +787,20 @@ function UploadPaymentProofContent() {
                         )}
                       </>
                     ) : (
-                      // Show simple amount when no payments made
+                      // Show payment amount based on payment type when no payments made
                       <>
-                        <div className="text-gray-400 text-sm mb-1">Amount to Pay</div>
-                        <div className="text-white font-bold text-2xl">₱{booking.total_amount.toLocaleString()}</div>
-                        <div className="text-gray-400 text-xs mt-1">Full booking amount</div>
+                        <div className="text-gray-400 text-sm mb-1">
+                          {booking.payment_type === 'half' ? '50% Down Payment' : 'Amount to Pay'}
+                        </div>
+                        <div className="text-white font-bold text-2xl">
+                          ₱{(booking.payment_amount || booking.total_amount).toLocaleString()}
+                        </div>
+                        <div className="text-gray-400 text-xs mt-1">
+                          {booking.payment_type === 'half' 
+                            ? `Half payment • Full amount: ₱${booking.total_amount.toLocaleString()}`
+                            : 'Full booking amount'
+                          }
+                        </div>
                       </>
                     )}
                   </div>
@@ -1000,7 +1009,8 @@ function UploadPaymentProofContent() {
                 {remainingAmount > 0 && (
                   <div className="mt-2 p-2 bg-blue-900/20 border border-blue-600/50 rounded">
                     <p className="text-blue-200 text-xs">
-                      <strong>Required payment:</strong> ₱{remainingAmount.toLocaleString()} (remaining balance)
+                      <strong>Required payment:</strong> ₱{remainingAmount.toLocaleString()}
+                      {booking?.payment_type === 'half' ? ' (50% down payment)' : ' (remaining balance)'}
                     </p>
                   </div>
                 )}
@@ -1040,58 +1050,128 @@ function UploadPaymentProofContent() {
                 {/* Payment Summary - moved below Amount Paid */}
                 <div className="mt-4">
                   <div className="p-3 bg-gray-800/50 border border-gray-600/50 rounded-lg space-y-2">
-                    <h3 className="text-sm font-medium text-gray-300 mb-2">Payment Summary</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-gray-300">Payment Summary</h3>
+                      {remainingAmount > 0 && (
+                        <div className="text-xs text-blue-300 bg-blue-900/20 px-2 py-1 rounded border border-blue-600/30">
+                          💡 Partial payments allowed
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Total Booking Amount:</span>
                       <span className="text-white font-medium">₱{booking?.total_amount.toLocaleString() || '0'}</span>
                     </div>
                     
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">
+                        {booking?.payment_type === 'half' ? 'Required Down Payment (50%):' : 'Required Payment (100%):'}
+                      </span>
+                      <span className="text-blue-400 font-medium">₱{expectedPaymentAmount.toLocaleString()}</span>
+                    </div>
+                    
                     {paymentSummary.totalPaid > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Already Paid:</span>
+                        <span className="text-gray-400">Already Verified:</span>
                         <span className="text-green-400 font-medium">₱{paymentSummary.totalPaid.toLocaleString()}</span>
                       </div>
                     )}
                     
-                    {amount && parseFloat(amount) > 0 && (
+                    {paymentSummary.pendingAmount > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Current Payment:</span>
-                        <span className="text-blue-400 font-medium">₱{parseFloat(amount).toLocaleString()}</span>
+                        <span className="text-gray-400">Pending Verification:</span>
+                        <span className="text-yellow-400 font-medium">₱{paymentSummary.pendingAmount.toLocaleString()}</span>
                       </div>
                     )}
                     
                     <div className="border-t border-gray-600 pt-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-300 font-medium">Remaining After This:</span>
-                        <span className={`font-bold ${
-                          (amount && parseFloat(amount) > 0 ? remainingAfterCurrent : remainingAmount) <= 0 ? 'text-green-400' : 'text-orange-400'
-                        }`}>
-                          ₱{(amount && parseFloat(amount) > 0 ? Math.max(0, remainingAfterCurrent) : remainingAmount).toLocaleString()}
+                        <span className="text-gray-300 font-medium">
+                          {remainingAmount > 0 ? 'Still Need to Pay (minimum):' : 'Payment Status:'}
+                        </span>
+                        <span className={`font-bold ${remainingAmount <= 0 ? 'text-green-400' : 'text-orange-400'}`}>
+                          {remainingAmount > 0 ? `₱${remainingAmount.toLocaleString()}` : '✓ Complete'}
                         </span>
                       </div>
+                      {remainingAmount > 0 && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          Admin will verify that your payment proof matches the amount entered
+                        </div>
+                      )}
                     </div>
                     
-                    {/* Single Validation Message */}
+                    {/* Clear payment expectation message */}
+                    {remainingAmount > 0 && (
+                      <div className="mt-2 p-2 bg-blue-900/20 border border-blue-600/30 rounded">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                          <div className="text-blue-200 text-xs">
+                            {booking?.payment_type === 'half' ? (
+                              <p><strong>50% Down Payment:</strong> Pay ₱{remainingAmount.toLocaleString()} now. Remaining ₱{((booking?.total_amount || 0) - expectedPaymentAmount).toLocaleString()} due on arrival.</p>
+                            ) : (
+                              <p><strong>Full Payment:</strong> Pay ₱{remainingAmount.toLocaleString()} to complete your booking.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show success message when fully paid */}
+                    {remainingAmount <= 0 && (
+                      <div className="mt-2 p-2 bg-green-900/20 border border-green-600/30 rounded">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <div className="text-green-200 text-xs">
+                            <p><strong>Payment Complete!</strong> {booking?.payment_type === 'half' ? 'Down payment verified. Balance due on arrival.' : 'Booking fully paid!'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Payment preview - shows what will happen after this payment */}
                     {amount && parseFloat(amount) > 0 && remainingAmount > 0 && (
-                      <>
-                        {/* Show validation warning only if not paying full amount OR screenshot doesn't match */}
-                        {(Math.abs(parseFloat(amount) - remainingAmount) > 0.01 || 
-                          (ocrResult?.amount && Math.abs(parseFloat(amount) - ocrResult.amount) > 0.01)) && (
-                          <div className="mt-2 p-2 bg-red-900/20 border border-red-600/30 rounded">
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-3 h-3 text-red-400" />
-                              <div className="text-red-300 text-xs">
-                                {Math.abs(parseFloat(amount) - remainingAmount) > 0.01 ? (
-                                  <p>You must pay the full remaining balance of ₱{remainingAmount.toLocaleString()}</p>
-                                ) : ocrResult?.amount && Math.abs(parseFloat(amount) - ocrResult.amount) > 0.01 ? (
-                                  <p>Amount doesn&apos;t match screenshot (₱{ocrResult.amount.toLocaleString()})</p>
-                                ) : null}
-                              </div>
+                      <div className="mt-2 space-y-2">
+                        {/* Current payment preview */}
+                        <div className="p-2 bg-blue-900/20 border border-blue-600/30 rounded">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                            <div className="text-blue-200 text-xs">
+                              <p><strong>This Payment:</strong> ₱{parseFloat(amount).toLocaleString()}</p>
                             </div>
                           </div>
-                        )}
-                      </>
+                        </div>
+                        
+                        {/* After payment preview */}
+                        <div className="p-2 bg-gray-800/30 border border-gray-600/30 rounded">
+                          <div className="text-gray-300 text-xs">
+                            <div className="flex justify-between items-center">
+                              <span>After this payment:</span>
+                              <span className="font-medium">
+                                {Math.max(0, remainingAmount - parseFloat(amount)) > 0 ? (
+                                  <span className="text-yellow-400">₱{Math.max(0, remainingAmount - parseFloat(amount)).toLocaleString()} still needed</span>
+                                ) : (
+                                  <span className="text-green-400">✓ Payment requirement met</span>
+                                )}
+                              </span>
+                            </div>
+                            
+                            {/* Show overpayment warning if applicable */}
+                            {parseFloat(amount) > remainingAmount && (
+                              <div className="mt-1 text-orange-300">
+                                <strong>Note:</strong> You&apos;re paying ₱{(parseFloat(amount) - remainingAmount).toLocaleString()} more than required.
+                              </div>
+                            )}
+                            
+                            {/* Show partial payment note */}
+                            {parseFloat(amount) < remainingAmount && parseFloat(amount) > 0 && (
+                              <div className="mt-1 text-blue-300">
+                                <strong>Partial Payment:</strong> Admin will verify this amount matches your proof. Submit additional payments later if needed.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                   </div>

@@ -454,8 +454,8 @@ export default function AvailabilityCalendar({
     // Booking status indicators - EXACT SAME AS HOMEPAGE
     switch (bookingStatus) {
       case 'available': return 'AVAILABLE';
-      case 'checkin': return 'IN';
-      case 'checkout': return 'OUT';
+      case 'checkin': return 'CHECK-IN';
+      case 'checkout': return 'CHECK-OUT';
       case 'busy': return 'BUSY';
       case 'full': return 'FULL';
       default: return null;
@@ -538,7 +538,7 @@ export default function AvailabilityCalendar({
               >
                 <span className="relative z-10">{date.getDate()}</span>
                 {statusIndicator && (
-                  <span className="absolute bottom-0 right-0 text-[0.6rem] lg:text-[0.65rem] bg-black/80 text-white px-1 py-0.5 rounded-tl-md font-bold leading-none">
+                  <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 text-[0.5rem] lg:text-[0.55rem] bg-black/80 text-white px-1 py-0.5 rounded font-bold leading-none whitespace-nowrap">
                     {statusIndicator}
                   </span>
                 )}

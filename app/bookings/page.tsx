@@ -50,6 +50,7 @@ function SearchParamsHandler({ onPaymentUploaded }: { onPaymentUploaded: () => v
 function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   const [proofStatus, setProofStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const fallbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkPaymentProof = async () => {
@@ -126,14 +127,22 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
         console.log(`🔗 User payment button subscription for booking ${bookingId}:`, status);
         if (status === 'SUBSCRIBED') {
           console.log(`✅ Real-time payment button updates ACTIVE for booking ${bookingId}`);
-        }
-        if (status === 'CHANNEL_ERROR') {
-          console.error(`❌ Real-time button subscription ERROR for booking ${bookingId}`);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn(`⚠️ Real-time button subscription connection issue for booking ${bookingId} - falling back to manual refresh`);
+          // Fallback: Set up a simple polling mechanism if real-time fails
+          fallbackIntervalRef.current = setInterval(() => {
+            checkPaymentProof();
+          }, 10000); // Check every 10 seconds
         }
       });
 
     return () => {
       console.log(`🔌 Unsubscribing payment button real-time for booking ${bookingId}`);
+      // Clean up fallback interval if it exists
+      if (fallbackIntervalRef.current) {
+        clearInterval(fallbackIntervalRef.current);
+        fallbackIntervalRef.current = null;
+      }
       subscription.unsubscribe();
     };
   }, [bookingId]);
@@ -269,6 +278,7 @@ function PaymentAmountInfo({ bookingId }: { bookingId: number }) {
 function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
   const [paymentProof, setPaymentProof] = useState<Tables<'payment_proofs'> | null>(null);
   const [loading, setLoading] = useState(true);
+  const fallbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchPaymentProof = async () => {
@@ -341,14 +351,22 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
         console.log(`🔗 User payment status subscription for booking ${bookingId}:`, status);
         if (status === 'SUBSCRIBED') {
           console.log(`✅ Real-time payment updates ACTIVE for booking ${bookingId}`);
-        }
-        if (status === 'CHANNEL_ERROR') {
-          console.error(`❌ Real-time subscription ERROR for booking ${bookingId}`);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn(`⚠️ Real-time payment status connection issue for booking ${bookingId} - falling back to manual refresh`);
+          // Fallback: Set up a simple polling mechanism if real-time fails
+          fallbackIntervalRef.current = setInterval(() => {
+            fetchPaymentProof();
+          }, 15000); // Check every 15 seconds
         }
       });
 
     return () => {
       console.log(`🔌 Unsubscribing payment status real-time for booking ${bookingId}`);
+      // Clean up fallback interval if it exists
+      if (fallbackIntervalRef.current) {
+        clearInterval(fallbackIntervalRef.current);
+        fallbackIntervalRef.current = null;
+      }
       subscription.unsubscribe();
     };
   }, [bookingId]);
@@ -1652,8 +1670,12 @@ function BookingsPageContent() {
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
                         <PhilippinePeso className="w-3 h-3 text-red-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">Total Amount</p>
-                          <p className="font-semibold text-green-400 text-xs">{booking.total_amount.toLocaleString()}</p>
+                          <p className="text-xs text-gray-400">
+                            {booking.payment_type === 'full' ? 'Payment Required' : 'Down Payment (50%)'}
+                          </p>
+                          <p className="font-semibold text-green-400 text-xs">
+                            ₱{(booking.payment_amount || (booking.payment_type === 'full' ? booking.total_amount : booking.total_amount * 0.5)).toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -2216,8 +2238,12 @@ function BookingsPageContent() {
                     <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
                       <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400">Total Amount</p>
-                        <p className="font-semibold text-green-400 text-sm sm:text-base">{selectedBooking.total_amount.toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">
+                          {selectedBooking.payment_type === 'full' ? 'Payment Required' : 'Down Payment (50%)'}
+                        </p>
+                        <p className="font-semibold text-green-400 text-sm sm:text-base">
+                          ₱{(selectedBooking.payment_amount || (selectedBooking.payment_type === 'full' ? selectedBooking.total_amount : selectedBooking.total_amount * 0.5)).toLocaleString()}
+                        </p>
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DollarSign, BarChart3, Clock, X } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DollarSign, BarChart3, Clock } from "lucide-react";
 import { exportPaymentsCSV } from "../../utils/csvExport";
 import { useToastHelpers } from "../../components/Toast";
 import { formatBookingNumber } from "../../utils/bookingNumber";
@@ -23,6 +23,8 @@ interface Payment {
   verified_by: string | null;
   admin_notes: string | null;
   has_payment_proof: boolean;
+  payment_type: string | null;
+  total_amount: number | null;
 }
 
 export default function PaymentsPage() {
@@ -43,6 +45,26 @@ export default function PaymentsPage() {
   // Toast helpers
   const { success, error: showError } = useToastHelpers();
 
+  // Function to fix missing payment types
+  const fixMissingPaymentTypes = async () => {
+    try {
+      const response = await fetch('/api/admin/fix-payment-types', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        success(`Fixed ${data.updated} payments with missing types!`);
+        fetchPayments(); // Refresh the data
+      } else {
+        showError('Failed to fix payment types');
+      }
+    } catch (error) {
+      console.error('Error fixing payment types:', error);
+      showError('Failed to fix payment types');
+    }
+  };
+
   useEffect(() => {
     fetchPayments();
   }, []);
@@ -61,6 +83,10 @@ export default function PaymentsPage() {
           return status === 'pending' || status === 'pending_verification';
         } else if (statusFilter === 'cancelled') {
           return status === 'cancelled' || status === 'rejected';
+        } else if (statusFilter === 'half') {
+          return payment.payment_type === 'half';
+        } else if (statusFilter === 'full') {
+          return payment.payment_type === 'full';
         }
         return status === statusFilter.toLowerCase();
       });
@@ -237,6 +263,26 @@ export default function PaymentsPage() {
             >
               Cancelled ({payments.filter(p => p.status?.toLowerCase() === 'cancelled' || p.status?.toLowerCase() === 'rejected').length})
             </button>
+            <button
+              onClick={() => setStatusFilter('half')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'half'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Down Payments ({payments.filter(p => p.payment_type === 'half').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('full')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'full'
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              Full Payments ({payments.filter(p => p.payment_type === 'full').length})
+            </button>
           </div>
           {(statusFilter !== 'all' || searchTerm) && (
             <p className="text-sm text-gray-600 mt-2">
@@ -266,8 +312,22 @@ export default function PaymentsPage() {
               <BarChart3 className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Transactions{searchTerm && ' (filtered)'}</p>
-              <p className="text-xl font-bold text-gray-900">{filteredPayments.length}</p>
+              <p className="text-sm font-medium text-gray-600">Down Payments{searchTerm && ' (filtered)'}</p>
+              <p className="text-xl font-bold text-gray-900">{filteredPayments.filter(p => p.payment_type === 'half').length}</p>
+              <p className="text-xs text-gray-500">₱{filteredPayments.filter(p => p.payment_type === 'half' && (p.status?.toLowerCase() === 'paid' || p.status?.toLowerCase() === 'verified')).reduce((sum, p) => sum + p.amount, 0).toLocaleString()} paid</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <BarChart3 className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-600">Full Payments{searchTerm && ' (filtered)'}</p>
+              <p className="text-xl font-bold text-gray-900">{filteredPayments.filter(p => p.payment_type === 'full').length}</p>
+              <p className="text-xs text-gray-500">₱{filteredPayments.filter(p => p.payment_type === 'full' && (p.status?.toLowerCase() === 'paid' || p.status?.toLowerCase() === 'verified')).reduce((sum, p) => sum + p.amount, 0).toLocaleString()} paid</p>
             </div>
           </div>
         </div>
@@ -281,20 +341,6 @@ export default function PaymentsPage() {
               <p className="text-sm font-medium text-gray-600">Pending{searchTerm && ' (filtered)'}</p>
               <p className="text-xl font-bold text-gray-900">
                 {filteredPayments.filter(p => p.status?.toLowerCase() === 'pending' || p.status?.toLowerCase() === 'pending_verification').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <X className="w-6 h-6 text-red-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Cancelled{searchTerm && ' (filtered)'}</p>
-              <p className="text-xl font-bold text-gray-900">
-                {filteredPayments.filter(p => p.status?.toLowerCase() === 'cancelled' || p.status?.toLowerCase() === 'rejected').length}
               </p>
             </div>
           </div>
@@ -331,6 +377,15 @@ export default function PaymentsPage() {
                 <Download className="w-4 h-4 mr-1" />
                 Export CSV
               </button>
+              
+              {/* Fix Payment Types Button */}
+              <button
+                onClick={fixMissingPaymentTypes}
+                className="inline-flex items-center px-3 py-1 border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md text-sm font-medium transition-colors"
+                title="Fix missing payment types"
+              >
+                🔧 Fix Types
+              </button>
             </div>
           </div>
         </div>
@@ -352,6 +407,7 @@ export default function PaymentsPage() {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Guest</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Reference</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Method</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date Uploaded</th>
@@ -370,6 +426,75 @@ export default function PaymentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-lg font-bold text-green-600">₱{payment.amount.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        {(() => {
+                          // Smart payment type detection
+                          const paymentType = payment.payment_type;
+                          const amount = payment.amount;
+                          const totalAmount = payment.total_amount;
+                          
+                          // If payment_type is explicitly set, use it
+                          if (paymentType === 'half') {
+                            return (
+                              <div>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  50% Down Payment
+                                </span>
+                                {totalAmount && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Total: ₱{totalAmount.toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          } else if (paymentType === 'full') {
+                            return (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Full Payment (100%)
+                              </span>
+                            );
+                          }
+                          
+                          // Try to infer from amounts if payment_type is missing
+                          if (totalAmount && amount) {
+                            const percentage = (amount / totalAmount) * 100;
+                            if (percentage >= 45 && percentage <= 55) {
+                              return (
+                                <div>
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    50% Down Payment (inferred)
+                                  </span>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Total: ₱{totalAmount.toLocaleString()}
+                                  </div>
+                                </div>
+                              );
+                            } else if (percentage >= 95) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Full Payment (100%)
+                                </span>
+                              );
+                            }
+                          }
+                          
+                          // Fallback for unknown cases
+                          return (
+                            <div>
+                              <span className="text-gray-400 italic text-xs">
+                                Type not specified
+                              </span>
+                              {totalAmount && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Total: ₱{totalAmount.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-700 font-mono">

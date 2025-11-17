@@ -10,6 +10,8 @@ export async function GET() {
       .select(`
         id,
         total_amount,
+        payment_amount,
+        payment_type,
         payment_status,
         payment_intent_id,
         created_at,
@@ -55,12 +57,22 @@ export async function GET() {
     const payments = bookings.map((booking) => {
       const proof = proofsByBookingId.get(booking.id);
       
+      // Debug logging for payment type issues
+      if (!booking.payment_type) {
+        console.log(`⚠️ Missing payment_type for booking ${booking.id}:`, {
+          id: booking.id,
+          payment_type: booking.payment_type,
+          payment_amount: booking.payment_amount,
+          total_amount: booking.total_amount
+        });
+      }
+      
       return {
         id: booking.id,
         user: booking.guest_name || booking.guest_email || 'Unknown User',
         email: booking.guest_email,
-        amount: booking.total_amount || 0,
-        date: new Date(booking.created_at || '').toLocaleDateString('en-US', {
+        amount: proof?.amount || booking.payment_amount || booking.total_amount || 0,
+        date: new Date(proof?.uploaded_at || booking.created_at || '').toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
@@ -76,6 +88,8 @@ export async function GET() {
         verified_by: proof?.verified_by || null,
         admin_notes: proof?.admin_notes || null,
         has_payment_proof: !!proof,
+        payment_type: booking.payment_type || 'full', // Default to 'full' if not specified
+        total_amount: booking.total_amount,
         updated_at: booking.updated_at
       };
     });
