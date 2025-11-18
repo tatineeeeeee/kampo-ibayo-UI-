@@ -4,17 +4,35 @@ import { Tables } from '../../../../database.types';
 
 // Type definition for consolidated payment data
 interface ConsolidatedPayment {
+  id: number;
   booking_id: number;
-  guest_name: string;
+  user: string;
+  guest_name?: string;
   email: string;
+  amount: number;
+  date: string;
+  status: string;
+  payment_intent_id: string | null;
+  booking_status: string | null;
+  payment_status: string | null;
   total_amount: number;
   original_amount: number | null;
   payment_type: 'half' | 'full';
   original_reference: string | null;
+  original_method: string | null;
   balance_reference: string | null;
-  original_status: 'pending' | 'verified' | 'rejected';
+  balance_method: string | null;
+  balance_amount: number | null;
+  original_status: 'pending' | 'verified' | 'rejected' | null;
   balance_status: 'pending' | 'verified' | 'rejected' | null;
-  check_in_date: string;
+  check_in_date?: string;
+  verified_at: string | null;
+  verified_by: string | null;
+  admin_notes: string | null;
+  has_payment_proof: boolean;
+  updated_at: string;
+  total_proofs: number;
+  payment_proof_id: number | null;
   all_payment_proofs: Array<{
     id: number;
     reference_number: string;
@@ -147,20 +165,20 @@ export async function GET() {
         original_reference: originalProof?.reference_number || null,
         original_method: originalProof?.payment_method || null,
         original_amount: originalProof?.amount || null,
-        original_status: originalProof?.status || null,
+        original_status: (originalProof?.status as 'pending' | 'verified' | 'rejected') || 'pending',
         
         // Balance payment reference  
         balance_reference: balanceProof?.reference_number || null,
         balance_method: balanceProof?.payment_method || null,
         balance_amount: balanceProof?.amount || null,
-        balance_status: balanceProof?.status || null,
+        balance_status: (balanceProof?.status as 'pending' | 'verified' | 'rejected') || null,
         
         booking_id: booking.id,
         verified_at: originalProof?.verified_at || balanceProof?.verified_at || null,
         verified_by: originalProof?.verified_by || balanceProof?.verified_by || null,
         admin_notes: originalProof?.admin_notes || balanceProof?.admin_notes || null,
         has_payment_proof: proofs.length > 0,
-        payment_type: booking.payment_type || 'full',
+        payment_type: (booking.payment_type as 'half' | 'full') || 'full',
         total_amount: booking.total_amount,
         updated_at: booking.updated_at,
         total_proofs: proofs.length,
