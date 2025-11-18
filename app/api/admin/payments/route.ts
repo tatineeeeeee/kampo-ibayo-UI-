@@ -35,12 +35,14 @@ interface ConsolidatedPayment {
   payment_proof_id: number | null;
   all_payment_proofs: Array<{
     id: number;
-    reference_number: string;
+    reference_number: string | null;
     amount: number;
     status: string;
-    submitted_at: string;
+    uploaded_at: string;
     payment_method: string;
-    proof_url?: string;
+    verified_at: string | null;
+    admin_notes: string | null;
+    sequence: number;
   }>;
 }
 
