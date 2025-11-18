@@ -44,18 +44,20 @@ export async function GET() {
       paymentProofs = [];
     }
 
-    // Step 3: Create efficient lookup map (latest proof per booking)
-    const proofsByBookingId = new Map<number, Tables<'payment_proofs'>>();
+    // Step 3: Get ALL payment proofs (don't limit to latest)
+    const allProofsByBookingId = new Map<number, Tables<'payment_proofs'>[]>();
     paymentProofs.forEach((proof) => {
-      // Only keep the first (latest) proof for each booking due to ordering
-      if (!proofsByBookingId.has(proof.booking_id)) {
-        proofsByBookingId.set(proof.booking_id, proof);
+      if (!allProofsByBookingId.has(proof.booking_id)) {
+        allProofsByBookingId.set(proof.booking_id, []);
       }
+      allProofsByBookingId.get(proof.booking_id)!.push(proof);
     });
 
-    // Step 4: Transform bookings with proof data
-    const payments = bookings.map((booking) => {
-      const proof = proofsByBookingId.get(booking.id);
+    // Step 4: Transform bookings with consolidated payment data (ONE ROW PER BOOKING)
+    const payments: any[] = [];
+    
+    bookings.forEach((booking) => {
+      const proofs = allProofsByBookingId.get(booking.id) || [];
       
       // Debug logging for payment type issues
       if (!booking.payment_type) {
@@ -67,34 +69,89 @@ export async function GET() {
         });
       }
       
-      return {
+      // Separate payment types
+      const originalProof = proofs.find(p => p.payment_method !== 'cash_on_arrival') || null;
+      const balanceProof = proofs.find(p => p.payment_method === 'cash_on_arrival') || null;
+      const allProofs = proofs.map((proof, index) => ({
+        id: proof.id,
+        amount: proof.amount,
+        reference_number: proof.reference_number,
+        payment_method: proof.payment_method,
+        status: proof.status,
+        uploaded_at: proof.uploaded_at,
+        verified_at: proof.verified_at,
+        admin_notes: proof.admin_notes,
+        sequence: index + 1
+      }));
+      
+      // Calculate consolidated amounts and status
+      const totalPaidAmount = proofs
+        .filter(p => p.status === 'verified')
+        .reduce((sum, p) => sum + p.amount, 0);
+      const hasPendingProofs = proofs.some(p => p.status === 'pending');
+      const hasRejectedProofs = proofs.some(p => p.status === 'rejected');
+      
+      // Determine overall booking status
+      let consolidatedStatus = 'pending';
+      if (totalPaidAmount >= (booking.total_amount || 0)) {
+        consolidatedStatus = 'paid';
+      } else if (originalProof && originalProof.status === 'verified') {
+        consolidatedStatus = 'partially_paid';
+      } else if (hasPendingProofs) {
+        consolidatedStatus = 'pending';
+      } else if (hasRejectedProofs) {
+        consolidatedStatus = 'needs_resubmission';
+      }
+      
+      // Create single consolidated entry per booking
+      payments.push({
         id: booking.id,
         user: booking.guest_name || booking.guest_email || 'Unknown User',
         email: booking.guest_email,
-        amount: proof?.amount || booking.payment_amount || booking.total_amount || 0,
-        date: new Date(proof?.uploaded_at || booking.created_at || '').toLocaleDateString('en-US', {
+        amount: totalPaidAmount || booking.payment_amount || booking.total_amount || 0,
+        date: booking.created_at ? new Date(booking.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
-        }),
-        status: getPaymentDisplayStatus(booking.payment_status, booking.status, proof),
+        }) : 'N/A',
+        status: consolidatedStatus,
         payment_intent_id: booking.payment_intent_id,
         booking_status: booking.status,
         payment_status: booking.payment_status,
-        reference_number: proof?.reference_number || null,
-        payment_method: proof?.payment_method || (booking.payment_intent_id ? 'PayMongo' : null),
+        
+        // Original payment reference
+        original_reference: originalProof?.reference_number || null,
+        original_method: originalProof?.payment_method || null,
+        original_amount: originalProof?.amount || null,
+        original_status: originalProof?.status || null,
+        
+        // Balance payment reference  
+        balance_reference: balanceProof?.reference_number || null,
+        balance_method: balanceProof?.payment_method || null,
+        balance_amount: balanceProof?.amount || null,
+        balance_status: balanceProof?.status || null,
+        
         booking_id: booking.id,
-        verified_at: proof?.verified_at || null,
-        verified_by: proof?.verified_by || null,
-        admin_notes: proof?.admin_notes || null,
-        has_payment_proof: !!proof,
-        payment_type: booking.payment_type || 'full', // Default to 'full' if not specified
+        verified_at: originalProof?.verified_at || balanceProof?.verified_at || null,
+        verified_by: originalProof?.verified_by || balanceProof?.verified_by || null,
+        admin_notes: originalProof?.admin_notes || balanceProof?.admin_notes || null,
+        has_payment_proof: proofs.length > 0,
+        payment_type: booking.payment_type || 'full',
         total_amount: booking.total_amount,
-        updated_at: booking.updated_at
-      };
+        updated_at: booking.updated_at,
+        total_proofs: proofs.length,
+        all_payment_proofs: allProofs, // Include all proofs for modal display
+        payment_proof_id: originalProof?.id || proofs[0]?.id || null
+      });
     });
 
-    return NextResponse.json({ payments });
+    return NextResponse.json({
+      success: true,
+      payments,
+      total: payments.length,
+      bookings_count: bookings.length,
+      payment_proofs_count: paymentProofs.length
+    });
 
   } catch (error) {
     console.error('API error:', error);
@@ -105,7 +162,7 @@ export async function GET() {
   }
 }
 
-// SAFE Helper function to determine display status for bookings
+// Helper function to determine display status for bookings
 function getPaymentDisplayStatus(paymentStatus: string | null, bookingStatus: string | null, proof?: Tables<'payment_proofs'>): string {
   // PRIORITY 1: If manual payment proof exists, use its status
   if (proof) {

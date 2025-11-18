@@ -9,15 +9,28 @@ import { formatBookingNumber } from "../../utils/bookingNumber";
 interface Payment {
   id: number;
   user: string;
+  guest_name?: string; // Alias for user in new structure
   email: string;
   amount: number;
   date: string;
+  check_in_date?: string; // Check-in date for bookings
   status: string;
   payment_intent_id: string | null;
   booking_status: string | null;
   payment_status: string | null;
-  reference_number: string | null;
-  payment_method: string | null;
+  
+  // Original payment info
+  original_reference: string | null;
+  original_method: string | null;
+  original_amount: number | null;
+  original_status: string | null;
+  
+  // Balance payment info
+  balance_reference: string | null;
+  balance_method: string | null;
+  balance_amount: number | null;
+  balance_status: string | null;
+  
   booking_id: number;
   verified_at: string | null;
   verified_by: string | null;
@@ -25,6 +38,24 @@ interface Payment {
   has_payment_proof: boolean;
   payment_type: string | null;
   total_amount: number | null;
+  payment_proof_id: number | null;
+  total_proofs: number;
+  
+  // Legacy properties for backwards compatibility
+  reference_number?: string;
+  payment_method?: string;
+  
+  all_payment_proofs: Array<{
+    id: number;
+    amount: number;
+    reference_number: string | null;
+    payment_method: string;
+    status: string;
+    uploaded_at: string;
+    verified_at: string | null;
+    admin_notes: string | null;
+    sequence: number;
+  }>;
 }
 
 export default function PaymentsPage() {
@@ -44,6 +75,118 @@ export default function PaymentsPage() {
   
   // Toast helpers
   const { success, error: showError } = useToastHelpers();
+  
+  // Balance payment modal state
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [processingBalance, setProcessingBalance] = useState(false);
+  
+  // Payment history modal state
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+  const [selectedPaymentHistory, setSelectedPaymentHistory] = useState<Payment | null>(null);
+
+  // Function to debug specific payment
+  const debugPayment = (payment: Payment) => {
+    console.group(`🔍 Payment Debug Analysis - ID: ${payment.id}`);
+    console.log('Basic Info:', {
+      id: payment.id,
+      bookingId: payment.booking_id,
+      user: payment.user,
+      status: payment.status
+    });
+    console.log('Amount Analysis:', {
+      amount: payment.amount,
+      totalAmount: payment.total_amount,
+      paymentType: payment.payment_type,
+      difference: payment.total_amount ? payment.total_amount - payment.amount : 'N/A',
+      isFullyPaid: payment.amount >= (payment.total_amount || 0)
+    });
+    console.log('Eligibility Check:', {
+      isHalfPayment: payment.payment_type === 'half',
+      isVerified: payment.status?.toLowerCase() === 'paid' || payment.status?.toLowerCase() === 'verified',
+      hasValidAmounts: payment.total_amount && payment.amount && payment.total_amount > 0 && payment.amount > 0,
+      hasRemainingBalance: payment.total_amount && payment.amount && payment.amount < payment.total_amount,
+      canMarkBalance: canMarkBalanceAsPaid(payment)
+    });
+    console.groupEnd();
+  };
+
+  // Function to test API connectivity
+  const testApiConnectivity = async () => {
+    try {
+      console.log('🧪 Testing mark-balance-paid API connectivity...');
+      
+      // Test 1: GET on mark-balance-paid
+      console.log('1️⃣ Testing GET /api/admin/mark-balance-paid');
+      const getResponse = await fetch('/api/admin/mark-balance-paid', {
+        method: 'GET',
+      });
+      console.log('GET Response:', getResponse.status, getResponse.statusText);
+      
+      if (getResponse.ok) {
+        const getData = await getResponse.json();
+        console.log('GET Data:', getData);
+      } else {
+        console.error('❌ GET test failed');
+        showError('GET method test failed');
+        return;
+      }
+      
+      // Test 2: POST with real-world test data
+      console.log('2️⃣ Testing POST /api/admin/mark-balance-paid with realistic data');
+      const testBookingId = 1; // Use a small number that should exist
+      const testPaymentId = 1; // Use a small number that should exist
+      const postResponse = await fetch('/api/admin/mark-balance-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          bookingId: testBookingId,
+          originalPaymentId: testPaymentId,
+          balanceAmount: 4500, // Half of 9000
+          totalAmount: 9000,
+          paymentMethod: 'cash_on_arrival'
+        })
+      });
+      console.log('POST Response:', postResponse.status, postResponse.statusText);
+      
+      if (postResponse.ok) {
+        const postData = await postResponse.json();
+        console.log('POST Data:', postData);
+        success('🎉 API endpoint is working! Test was successful.');
+      } else {
+        try {
+          const errorText = await postResponse.text();
+          console.log('POST Error Response:', errorText);
+          
+          // Parse the error if it's JSON
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+          
+          if (postResponse.status === 404 && errorText.includes('not found')) {
+            console.log('✅ POST method reached API but returned expected validation error (test records not found)');
+            success('🎉 API endpoint is working correctly! Ready for real data.');
+          } else if (postResponse.status === 400) {
+            console.log('✅ POST method working - returned validation error as expected:', errorData.error);
+            success('🎉 API endpoint is working correctly! Validation is functioning.');
+          } else {
+            console.error('❌ Unexpected POST error:', errorData);
+            showError(`API test failed: ${postResponse.status} - ${errorData.error || errorText}`);
+          }
+        } catch (parseError) {
+          console.error('❌ Could not parse error response:', parseError);
+          showError(`API test failed: ${postResponse.status} - Could not parse response`);
+        }
+      }
+      
+    } catch (error) {
+      console.error('🧪 Test API error:', error);
+      showError('API connectivity test failed - network or connection error');
+    }
+  };
 
   // Function to fix missing payment types
   const fixMissingPaymentTypes = async () => {
@@ -65,6 +208,136 @@ export default function PaymentsPage() {
     }
   };
 
+  // Function to mark remaining balance as paid (for half payments)
+  const markBalanceAsPaid = async (payment: Payment) => {
+    // Enhanced validation for safety
+    if (!payment.total_amount || payment.payment_type !== 'half') {
+      showError('This feature is only available for half payments');
+      return;
+    }
+
+    if (!canMarkBalanceAsPaid(payment)) {
+      showError('Payment is not eligible for balance marking');
+      return;
+    }
+
+    const balanceAmount = payment.total_amount - (payment.original_amount || 0);
+    if (balanceAmount <= 0) {
+      showError('No remaining balance to mark as paid');
+      return;
+    }
+
+    // Additional validation to prevent API errors
+    if (!payment.booking_id) {
+      showError('Invalid payment data - missing booking ID');
+      return;
+    }
+
+    setProcessingBalance(true);
+    
+    try {
+      console.log('🔄 Marking balance as paid:', {
+        bookingId: payment.booking_id,
+        balanceAmount,
+        totalAmount: payment.total_amount,
+        originalAmount: payment.original_amount
+      });
+      
+      const requestBody = {
+        bookingId: Number(payment.booking_id),
+        balanceAmount: Number(balanceAmount),
+        totalAmount: Number(payment.total_amount),
+        paymentMethod: 'cash_on_arrival'
+      };
+
+      console.log('📤 Sending request:', requestBody);
+      
+      const response = await fetch('/api/admin/mark-balance-paid', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('📡 Response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to mark balance as paid';
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error('❌ API Error:', errorData);
+        } catch (parseError) {
+          console.error('❌ Response parse error:', parseError);
+          errorMessage = `Server error (${response.status})`;
+        }
+        
+        showError(errorMessage);
+        return;
+      }
+
+      // Parse successful response
+      const result = await response.json();
+      console.log('✅ Success:', result);
+      
+      success(`Balance of ₱${balanceAmount.toLocaleString()} marked as paid on arrival!`);
+      fetchPayments(); // Refresh the data
+      setShowBalanceModal(false);
+      setSelectedPayment(null);
+      
+    } catch (error) {
+      console.error('💥 Network error:', error);
+      showError('Network error. Please check your connection and try again.');
+    } finally {
+      setProcessingBalance(false);
+    }
+  };
+
+  // Function to check if balance can be marked as paid
+  const canMarkBalanceAsPaid = (payment: Payment) => {
+    // Only allow for half payments that are verified and have remaining balance
+    const isHalfPayment = payment.payment_type === 'half';
+    const isOriginalVerified = payment.original_status === 'verified';
+    const hasValidAmounts = payment.total_amount && payment.original_amount && payment.total_amount > 0 && payment.original_amount > 0;
+    const hasRemainingBalance = hasValidAmounts && (payment.original_amount || 0) < (payment.total_amount || 0);
+    const balanceAmount = hasValidAmounts && payment.total_amount ? payment.total_amount - (payment.original_amount || 0) : 0;
+    
+    // Check for overpayment
+    const isOverpaid = hasValidAmounts && (payment.original_amount || 0) > (payment.total_amount || 0);
+    
+    // NEW: Check if there's already a balance payment
+    const hasExistingBalancePayment = payment.balance_reference !== null && payment.balance_status === 'verified';
+    
+    // Don't allow if balance payment already exists
+    if (hasExistingBalancePayment) {
+      return false;
+    }
+    
+    // Only log debug info if conditions aren't met to reduce console spam
+    if (isHalfPayment && !hasRemainingBalance && payment.id) {
+      console.log(`🔍 Payment ${payment.id} (Booking: ${payment.booking_id}) cannot be marked:`, {
+        paymentType: payment.payment_type,
+        originalAmount: payment.original_amount,
+        totalAmount: payment.total_amount,
+        balanceAmount,
+        isOriginalVerified,
+        hasValidAmounts,
+        isOverpaid,
+        hasExistingBalancePayment,
+        reason: hasExistingBalancePayment ? 'Balance payment already exists' :
+                isOverpaid ? 'OVERPAID - Customer paid more than total amount' :
+                (payment.original_amount || 0) === payment.total_amount ? 'Already paid in full' : 
+                (payment.original_amount || 0) > (payment.total_amount || 0) ? 'Overpaid' : 
+                'Invalid amounts or missing data'
+      });
+    }
+    
+    // Don't allow marking balance as paid for overpaid bookings or if balance already exists
+    return isHalfPayment && isOriginalVerified && hasRemainingBalance && balanceAmount > 0 && !isOverpaid && !hasExistingBalancePayment;
+  };
+
   useEffect(() => {
     fetchPayments();
   }, []);
@@ -76,19 +349,28 @@ export default function PaymentsPage() {
     // First filter by status with grouped logic
     if (statusFilter !== 'all') {
       filtered = filtered.filter(payment => {
-        const status = payment.status?.toLowerCase();
+        // For consolidated payments, check both original and balance statuses
+        const originalStatus = payment.original_status?.toLowerCase();
+        const balanceStatus = payment.balance_status?.toLowerCase();
+        
         if (statusFilter === 'paid') {
-          return status === 'paid' || status === 'verified';
+          // Both payments verified or completed
+          return originalStatus === 'verified' && 
+                 (payment.payment_type === 'full' || balanceStatus === 'verified');
         } else if (statusFilter === 'pending') {
-          return status === 'pending' || status === 'pending_verification';
+          // Either payment is pending
+          return originalStatus === 'pending' || originalStatus === 'pending_verification' ||
+                 (payment.balance_reference && (balanceStatus === 'pending' || balanceStatus === 'pending_verification'));
         } else if (statusFilter === 'cancelled') {
-          return status === 'cancelled' || status === 'rejected';
+          // Either payment is cancelled/rejected
+          return originalStatus === 'cancelled' || originalStatus === 'rejected' ||
+                 balanceStatus === 'cancelled' || balanceStatus === 'rejected';
         } else if (statusFilter === 'half') {
           return payment.payment_type === 'half';
         } else if (statusFilter === 'full') {
           return payment.payment_type === 'full';
         }
-        return status === statusFilter.toLowerCase();
+        return originalStatus === statusFilter.toLowerCase() || balanceStatus === statusFilter.toLowerCase();
       });
     }
     
@@ -96,16 +378,21 @@ export default function PaymentsPage() {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(payment => 
-        // Search by user name
+        // Search by guest name or user name
+        payment.guest_name?.toLowerCase().includes(searchLower) ||
         payment.user?.toLowerCase().includes(searchLower) ||
         // Search by email
         payment.email?.toLowerCase().includes(searchLower) ||
-        // Search by payment ID
-        payment.id?.toString().includes(searchTerm.trim()) ||
-        // Search by reference number
+        // Search by reference number (both original and balance)
+        payment.original_reference?.toLowerCase().includes(searchLower) ||
+        payment.balance_reference?.toLowerCase().includes(searchLower) ||
         payment.reference_number?.toLowerCase().includes(searchLower) ||
         // Search by booking ID
-        payment.booking_id?.toString().includes(searchTerm.trim())
+        payment.booking_id?.toString().includes(searchTerm.trim()) ||
+        // Search by amounts
+        payment.total_amount?.toString().includes(searchTerm.trim()) ||
+        payment.original_amount?.toString().includes(searchTerm.trim()) ||
+        payment.amount?.toString().includes(searchTerm.trim())
       );
     }
     
@@ -386,6 +673,15 @@ export default function PaymentsPage() {
               >
                 🔧 Fix Types
               </button>
+
+              {/* Test API Connectivity Button */}
+              <button
+                onClick={testApiConnectivity}
+                className="inline-flex items-center px-3 py-1 border border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md text-sm font-medium transition-colors"
+                title="Test API connectivity"
+              >
+                🧪 Test API
+              </button>
             </div>
           </div>
         </div>
@@ -406,31 +702,45 @@ export default function PaymentsPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Guest</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total Paid</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Reference</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date Uploaded</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Original Reference</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Balance Reference</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {paginatedPayments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={`booking-${payment.booking_id}`} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{payment.user}</div>
+                        <div className="text-sm font-medium text-gray-900">{payment.guest_name || payment.user}</div>
                         <div className="text-xs text-gray-500">{payment.email}</div>
                         <div className="text-xs text-gray-400">{formatBookingNumber(payment.booking_id)}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-lg font-bold text-green-600">₱{payment.amount.toLocaleString()}</span>
+                      <span className="text-lg font-bold text-green-600">₱{(payment.original_amount || 0).toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
                         {(() => {
-                          // Smart payment type detection
+                          // Check if this is a balance payment first
+                          if (payment.reference_number?.startsWith('ARRIVAL-')) {
+                            return (
+                              <div>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                  Balance Payment (50%)
+                                </span>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Cash on arrival
+                                </div>
+                              </div>
+                            );
+                          }
+                          
+                          // Smart payment type detection for original payments
                           const paymentType = payment.payment_type;
                           const amount = payment.amount;
                           const totalAmount = payment.total_amount;
@@ -497,41 +807,146 @@ export default function PaymentsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-700 font-mono">
-                        {payment.reference_number || (
-                          <span className="text-gray-400 italic">
-                            {payment.has_payment_proof ? 'No reference provided' : 'Not uploaded yet'}
-                          </span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-700 capitalize">
-                        {payment.payment_method ? (
-                          payment.payment_method === 'PayMongo' ? (
-                            <span className="text-blue-600 font-medium">PayMongo</span>
-                          ) : (
-                            <span className="capitalize">{payment.payment_method.replace('_', ' ')}</span>
-                          )
+                      <div className="text-sm">
+                        {payment.original_reference ? (
+                          <div className="font-mono text-gray-700 bg-blue-50 px-2 py-1 rounded text-xs">
+                            💳 {payment.original_reference}
+                          </div>
                         ) : (
-                          <span className="text-gray-400 italic">
-                            {payment.has_payment_proof ? 'Not specified' : 'Pending upload'}
-                          </span>
+                          <span className="text-gray-400 italic text-xs">No reference provided</span>
                         )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        {payment.balance_reference ? (
+                          <div className="font-mono text-amber-700 bg-amber-50 px-2 py-1 rounded text-xs">
+                            🏨 {payment.balance_reference}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">Not specified</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        payment.original_status === 'verified' && 
+                        (payment.payment_type === 'full' || payment.balance_status === 'verified')
+                          ? 'bg-green-100 text-green-800'
+                          : payment.original_status === 'verified' && payment.payment_type === 'half'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : payment.original_status === 'rejected'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {payment.payment_type === 'full' && payment.original_status === 'verified' ? 'paid' : 
+                         payment.payment_type === 'half' && payment.original_status === 'verified' && payment.balance_status === 'verified' ? 'paid' :
+                         payment.payment_type === 'half' && payment.original_status === 'verified' ? 'partially_paid' :
+                         payment.original_status || 'pending'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-700">{payment.date}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}
-                      >
-                        {payment.status === 'paid' ? 'Paid' :
-                         payment.status === 'pending' ? 'Pending' :
-                         payment.status === 'cancelled' ? 'Cancelled' :
-                         payment.status}
-                      </span>
+                      {(() => {
+                        const amount = payment.amount;
+                        const totalAmount = payment.total_amount;
+                        const isOverpaid = totalAmount && amount > totalAmount;
+                        
+                        // Check if this is a balance payment
+                        if (payment.reference_number?.startsWith('ARRIVAL-')) {
+                          return (
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                BALANCE PAID
+                              </span>
+                              <span className="text-xs text-gray-500">Cash on arrival</span>
+                            </div>
+                          );
+                        }
+                        
+                        if (canMarkBalanceAsPaid(payment)) {
+                          return (
+                            <button
+                              onClick={() => {
+                                setSelectedPayment(payment);
+                                setShowBalanceModal(true);
+                              }}
+                              className="inline-flex items-center px-3 py-1 border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md text-xs font-medium transition-colors shadow-sm"
+                              title="Mark remaining 50% balance as paid on arrival"
+                            >
+                              Mark Balance Paid
+                            </button>
+                          );
+                        }
+                        
+                        // Check if balance payment already exists for this booking
+                        const hasBalancePayment = payments.some(p => 
+                          p.booking_id === payment.booking_id && 
+                          p.reference_number?.startsWith('ARRIVAL-')
+                        );
+                        
+                        if (payment.payment_type === 'half' && hasBalancePayment) {
+                          return (
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                FULLY PAID
+                              </span>
+                              <span className="text-xs text-gray-500">50% + Balance</span>
+                            </div>
+                          );
+                        }
+                        
+                        if (payment.payment_type === 'half' && isOverpaid) {
+                          return (
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                OVERPAID
+                              </span>
+                              <button
+                                onClick={() => debugPayment(payment)}
+                                className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                                title="Debug this payment"
+                              >
+                                🔍
+                              </button>
+                            </div>
+                          );
+                        }
+                        
+                        if (payment.payment_type === 'half') {
+                          const balanceAmount = totalAmount ? totalAmount - amount : 0;
+                          if (balanceAmount <= 0) {
+                            return (
+                              <div className="flex items-center gap-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  PAID IN FULL
+                                </span>
+                                <button
+                                  onClick={() => debugPayment(payment)}
+                                  className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                                  title="Debug this payment"
+                                >
+                                  🔍
+                                </button>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-400">Balance: ₱{balanceAmount.toLocaleString()}</span>
+                                <button
+                                  onClick={() => debugPayment(payment)}
+                                  className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                                  title="Debug this payment"
+                                >
+                                  🔍
+                                </button>
+                              </div>
+                            );
+                          }
+                        }
+                        
+                        return <span className="text-xs text-gray-400">-</span>;
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -639,6 +1054,260 @@ export default function PaymentsPage() {
         )}
 
       </div>
+      
+      {/* Balance Payment Confirmation Modal */}
+      {showBalanceModal && selectedPayment && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full border border-gray-200">
+            {/* Modal Header */}
+            <div className="bg-gray-50 p-6 rounded-t-lg border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">Mark Balance as Paid</h2>
+                  <p className="text-gray-600 text-sm">Confirm on-arrival payment</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowBalanceModal(false);
+                    setSelectedPayment(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:shadow-md transition"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Payment Details */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="text-sm font-semibold text-blue-800 mb-3">Payment Details</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Guest:</span>
+                    <span className="font-medium text-gray-900">{selectedPayment.user}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Booking:</span>
+                    <span className="font-medium text-gray-900">{formatBookingNumber(selectedPayment.booking_id)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="font-bold text-gray-900">₱{selectedPayment.total_amount?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Already Paid (50%):</span>
+                    <span className="font-medium text-green-600">₱{selectedPayment.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-blue-200 pt-2 mt-2">
+                    <span className="text-gray-600">Balance Due:</span>
+                    <span className="font-bold text-orange-600">
+                      ₱{selectedPayment.total_amount ? (selectedPayment.total_amount - selectedPayment.amount).toLocaleString() : '0'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirmation Message */}
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center text-white text-sm font-bold">!</div>
+                  <h4 className="font-semibold text-amber-800">Confirm On-Arrival Payment</h4>
+                </div>
+                <p className="text-amber-700 text-sm leading-relaxed">
+                  This will mark the remaining 50% balance as <strong>&quot;Paid on Arrival&quot;</strong>. 
+                  Only confirm this action if the guest has physically paid the balance amount at check-in.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 p-6 rounded-b-lg border-t border-gray-200">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => markBalanceAsPaid(selectedPayment)}
+                  disabled={processingBalance}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition shadow-sm ${
+                    processingBalance
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  } text-white`}
+                >
+                  {processingBalance ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </span>
+                  ) : (
+                    `Mark ₱${selectedPayment.total_amount ? (selectedPayment.total_amount - selectedPayment.amount).toLocaleString() : '0'} as Paid`
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBalanceModal(false);
+                    setSelectedPayment(null);
+                  }}
+                  disabled={processingBalance}
+                  className="py-2 px-4 bg-gray-500 text-white rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Payment History Modal */}
+      {showPaymentHistoryModal && selectedPaymentHistory && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full border border-gray-200 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="bg-gray-50 p-6 rounded-t-lg border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">Payment History</h2>
+                  <p className="text-gray-600 text-sm">
+                    {selectedPaymentHistory.user} - {formatBookingNumber(selectedPaymentHistory.booking_id)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPaymentHistoryModal(false);
+                    setSelectedPaymentHistory(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:shadow-md transition"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {/* Summary Info */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                <h3 className="text-sm font-semibold text-blue-800 mb-3">Booking Summary</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="font-bold text-gray-900 ml-2">₱{selectedPaymentHistory.total_amount?.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Total Paid:</span>
+                    <span className="font-bold text-green-600 ml-2">₱{selectedPaymentHistory.amount.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Payment Type:</span>
+                    <span className="font-medium text-gray-900 ml-2">
+                      {selectedPaymentHistory.payment_type === 'half' ? '50% Down Payment' : 'Full Payment'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Total Submissions:</span>
+                    <span className="font-medium text-gray-900 ml-2">{selectedPaymentHistory.total_proofs}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Proofs Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800">All Payment Proofs</h3>
+                
+                {selectedPaymentHistory.all_payment_proofs && selectedPaymentHistory.all_payment_proofs.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Sequence</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Reference</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Method</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {selectedPaymentHistory.all_payment_proofs.map((proof) => (
+                          <tr key={`proof-${proof.id}`} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                #{proof.sequence}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              ₱{proof.amount.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {proof.reference_number ? (
+                                <div className={`font-mono px-2 py-1 rounded text-xs ${
+                                  proof.reference_number.startsWith('ARRIVAL-') 
+                                    ? 'text-amber-700 bg-amber-50' 
+                                    : 'text-blue-700 bg-blue-50'
+                                }`}>
+                                  {proof.reference_number.startsWith('ARRIVAL-') ? '🏨' : '💳'} {proof.reference_number}
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 italic">No reference</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700 capitalize">
+                              {proof.payment_method?.replace('_', ' ')}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(proof.status)}`}>
+                                {proof.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {new Date(proof.uploaded_at).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {proof.admin_notes && (
+                                <div className="max-w-xs truncate" title={proof.admin_notes}>
+                                  {proof.admin_notes}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">📝</div>
+                    <p>No payment proofs uploaded yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 p-4 rounded-b-lg border-t border-gray-200">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    setShowPaymentHistoryModal(false);
+                    setSelectedPaymentHistory(null);
+                  }}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md text-sm font-medium hover:bg-gray-600 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
