@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DollarSign, BarChart3, Clock } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, BarChart3, Clock, PhilippinePeso } from "lucide-react";
 import { exportPaymentsCSV } from "../../utils/csvExport";
 import { useToastHelpers } from "../../components/Toast";
 import { formatBookingNumber } from "../../utils/bookingNumber";
@@ -582,12 +582,12 @@ export default function PaymentsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-600" />
+              <PhilippinePeso className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-600">Total Revenue{searchTerm && ' (filtered)'}</p>
               <p className="text-xl font-bold text-gray-900">
-                ₱{filteredPayments.filter(p => p.status?.toLowerCase() === 'paid' || p.status?.toLowerCase() === 'verified').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+                {filteredPayments.filter(p => p.status?.toLowerCase() === 'paid' || p.status?.toLowerCase() === 'verified').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
               </p>
             </div>
           </div>
