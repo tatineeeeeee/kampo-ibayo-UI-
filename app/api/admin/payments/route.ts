@@ -2,6 +2,30 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
 import { Tables } from '../../../../database.types';
 
+// Type definition for consolidated payment data
+interface ConsolidatedPayment {
+  booking_id: number;
+  guest_name: string;
+  email: string;
+  total_amount: number;
+  original_amount: number | null;
+  payment_type: 'half' | 'full';
+  original_reference: string | null;
+  balance_reference: string | null;
+  original_status: 'pending' | 'verified' | 'rejected';
+  balance_status: 'pending' | 'verified' | 'rejected' | null;
+  check_in_date: string;
+  all_payment_proofs: Array<{
+    id: number;
+    reference_number: string;
+    amount: number;
+    status: string;
+    submitted_at: string;
+    payment_method: string;
+    proof_url?: string;
+  }>;
+}
+
 export async function GET() {
   try {
     // Step 1: Get all bookings (main data source)
