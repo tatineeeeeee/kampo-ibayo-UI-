@@ -52,28 +52,41 @@ function getSmartWorkflowStatus(booking: Booking, paymentProof?: PaymentProof | 
   const paymentStatus = booking.payment_status || 'pending';
   const proofStatus = paymentProof?.status || null;
 
-  // Handle USER cancellations FIRST - these should show as "Cancelled" and block payments
-  if (bookingStatus === 'cancelled' && booking.cancelled_by === 'user') {
-    return {
-      step: 'user_cancelled',
-      priority: 0,
-      badge: 'bg-gray-100 text-gray-800',
-      text: 'Cancelled',
-      description: 'Booking cancelled by guest',
-      actionNeeded: 'None - booking cancelled by guest'
-    };
-  }
-
-  // Handle ADMIN cancellations - full booking cancellation by admin
-  if (bookingStatus === 'cancelled' && booking.cancelled_by === 'admin') {
-    return {
-      step: 'admin_cancelled',
-      priority: 6,
-      badge: 'bg-red-100 text-red-800',
-      text: 'Admin Cancelled',
-      description: 'Booking cancelled by administrator',
-      actionNeeded: 'None - booking cancelled by admin'
-    };
+  // ✅ CRITICAL FIX: Handle ALL cancellations FIRST - these should block any payment review actions
+  if (bookingStatus === 'cancelled') {
+    // Handle USER cancellations
+    if (booking.cancelled_by === 'user') {
+      return {
+        step: 'user_cancelled',
+        priority: 0,
+        badge: 'bg-gray-100 text-gray-800',
+        text: 'Cancelled',
+        description: 'Booking cancelled by guest',
+        actionNeeded: 'None - booking cancelled by guest'
+      };
+    }
+    // Handle ADMIN cancellations
+    else if (booking.cancelled_by === 'admin') {
+      return {
+        step: 'admin_cancelled',
+        priority: 0,
+        badge: 'bg-red-100 text-red-800',
+        text: 'Admin Cancelled',
+        description: 'Booking cancelled by administrator',
+        actionNeeded: 'None - booking cancelled by admin'
+      };
+    }
+    // Handle any other cancellations (fallback)
+    else {
+      return {
+        step: 'cancelled',
+        priority: 0,
+        badge: 'bg-gray-100 text-gray-800',
+        text: 'Cancelled',
+        description: 'Booking has been cancelled',
+        actionNeeded: 'None - booking cancelled'
+      };
+    }
   }
 
   // Handle active booking payment workflow
@@ -258,7 +271,7 @@ function PaymentStatusCell({ booking, refreshKey }: { booking: Booking; refreshK
 
   // Determine the overall payment status based on booking status and payment proof
   const getPaymentStatusDisplay = () => {
-    // If booking is cancelled, show cancelled
+    // ✅ CRITICAL FIX: If booking is cancelled, always show cancelled regardless of payment proof status
     if (booking.status === 'cancelled') {
       return {
         text: 'Cancelled',
@@ -266,7 +279,7 @@ function PaymentStatusCell({ booking, refreshKey }: { booking: Booking; refreshK
       };
     }
 
-    // If there's a payment proof, use its status
+    // If there's a payment proof, use its status (only for non-cancelled bookings)
     if (paymentProof) {
       switch (paymentProof.status) {
         case 'pending':
@@ -551,12 +564,14 @@ function PaymentProofButton({
   bookingId, 
   onViewProof,
   variant = 'table',
-  refreshKey
+  refreshKey,
+  booking
 }: { 
   bookingId: number;
   onViewProof: (proof: PaymentProof) => void;
   variant?: 'table' | 'modal';
   refreshKey?: number;
+  booking?: Booking; // Add booking prop to check cancellation status
 }) {
   const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
   const [loading, setLoading] = useState(true);
@@ -627,6 +642,9 @@ function PaymentProofButton({
     };
   }, [bookingId, refreshKey]);
 
+  // ✅ CRITICAL FIX: Check if booking is cancelled and prevent review actions
+  const isBookingCancelled = booking?.status === 'cancelled';
+  
   if (loading) {
     if (variant === 'modal') {
       return (
@@ -645,6 +663,21 @@ function PaymentProofButton({
         className="h-7 w-full px-2 py-1 bg-gray-300 text-gray-500 rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
       >
         Loading...
+      </button>
+    );
+  }
+  
+  // ✅ If booking is cancelled, show cancelled status instead of review action
+  if (isBookingCancelled) {
+    return (
+      <button 
+        disabled
+        className={variant === 'modal' 
+          ? "w-full px-4 py-2 bg-gray-400 text-white rounded-md text-sm cursor-not-allowed text-center" 
+          : "h-7 w-full px-2 py-1 bg-gray-400 text-white rounded text-xs cursor-not-allowed text-center flex items-center justify-center"}
+        title="Booking cancelled - no review needed"
+      >
+        Cancelled
       </button>
     );
   }
@@ -889,7 +922,10 @@ export default function BookingsPage() {
   const { success, error: showError, warning } = useToastHelpers();
   useEffect(() => {
     // Delayed fetch to not block navigation
-    const timer = setTimeout(() => fetchBookings(), 100);
+    const timer = setTimeout(() => {
+      console.log('🚀 Starting initial fetchBookings...');
+      fetchBookings();
+    }, 100);
 
     // Set up real-time subscriptions for instant updates
     setRealTimeStatus('connecting');
@@ -922,26 +958,30 @@ export default function BookingsPage() {
             
             // ⚡ CRITICAL: Handle ANY cancellation - auto-cancel payment proofs when booking is cancelled
             if (payload.old?.status !== 'cancelled' && payload.new.status === 'cancelled') {
-              // Automatically cancel any pending payment proofs for this cancelled booking
+              // Automatically cancel ALL payment proofs (pending/verified/rejected) for this cancelled booking
               const cancelPaymentProofs = async () => {
                 try {
+                  const cancelledBy = payload.new.cancelled_by || 'system';
+                  const adminNote = `Booking cancelled by ${cancelledBy} - Payment proof automatically cancelled`;
+                  
                   const { error } = await supabase
                     .from('payment_proofs')
                     .update({
                       status: 'cancelled',
-                      admin_notes: `Automatically cancelled - booking cancelled by ${payload.new.cancelled_by || 'system'}`,
-                      verified_at: new Date().toISOString()
+                      admin_notes: adminNote,
+                      verified_at: new Date().toISOString(),
+                      verified_by: `auto_${cancelledBy}`
                     })
                     .eq('booking_id', payload.new.id)
-                    .in('status', ['pending']);
+                    .in('status', ['pending', 'verified', 'rejected']); // Cancel ALL non-cancelled proofs
                   
                   if (error) {
-                    console.error('Failed to cancel payment proofs:', error);
+                    console.error('❌ Failed to cancel payment proofs:', error);
                   } else {
-                    console.log(`✅ Auto-cancelled payment proofs for booking ${payload.new.id}`);
+                    console.log(`✅ Auto-cancelled ALL payment proofs for booking ${payload.new.id} (cancelled by ${cancelledBy})`);
                   }
                 } catch (error) {
-                  console.error('Error cancelling payment proofs:', error);
+                  console.error('💥 Error cancelling payment proofs:', error);
                 }
               };
               
@@ -1294,7 +1334,7 @@ export default function BookingsPage() {
       supabase.removeChannel(paymentProofsSubscription);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty - setupRealtime should only run once
+  }, [statusFilter]); // Include statusFilter to avoid stale closure in fetchBookings sort function
 
   // Filter bookings based on user preference AND search term
   useEffect(() => {
@@ -1404,7 +1444,8 @@ export default function BookingsPage() {
           setLoading(true);
         }
       }
-      // Step 1: Get all bookings
+      
+      // Step 1: Get all bookings with error handling
       const { data: bookingsData, error } = await supabase
         .from('bookings')
         .select('*')
@@ -1412,6 +1453,8 @@ export default function BookingsPage() {
 
       if (error) {
         console.error('❌ Error fetching bookings:', error);
+        // Show user-friendly error message
+        showError(`Failed to fetch bookings: ${error.message || 'Unknown error'}`);
         return;
       }
 
@@ -1422,35 +1465,38 @@ export default function BookingsPage() {
       }
 
       // Step 2: Get all unique user IDs from bookings
-      const userIds = Array.from(new Set(bookingsData.map(booking => booking.user_id)));
+      const userIds = Array.from(new Set(bookingsData.map(booking => booking.user_id).filter(Boolean)));
       
       // Step 3: Single query to check which users exist (MUCH faster than N queries)
-      const { data: existingUsers, error: usersError } = await supabase
-        .from('users')
-        .select('auth_id')
-        .in('auth_id', userIds);
-
-      if (usersError) {
-        console.error('❌ Error fetching users:', usersError);
-        // Continue anyway, just mark all as existing to preserve functionality
-        const bookingsWithUserStatus = bookingsData.map(booking => ({
-          ...booking,
-          user_exists: true
-        }));
-        setBookings(bookingsWithUserStatus as Booking[]);
-        return;
-      }
-
-      // Step 4: Create a Set of existing user IDs for O(1) lookup performance
-      const existingUserIds = new Set(existingUsers?.map(user => user.auth_id) || []);
+      let existingUserIds = new Set<string>();
       
-      // Step 5: Add user_exists flag efficiently (same result as before, much faster)
+      if (userIds.length > 0) {
+        const { data: existingUsers, error: usersError } = await supabase
+          .from('users')
+          .select('auth_id')
+          .in('auth_id', userIds);
+
+        if (usersError) {
+          console.warn('⚠️ Error fetching users (continuing with default):', usersError);
+          // Continue with all users marked as existing
+          existingUserIds = new Set(userIds);
+        } else {
+          existingUserIds = new Set(
+            existingUsers?.map(user => user.auth_id).filter((id): id is string => Boolean(id)) || []
+          );
+        }
+      }
+      
+      // Step 4: Add user_exists flag efficiently
       const bookingsWithUserStatus = bookingsData.map(booking => ({
         ...booking,
-        user_exists: existingUserIds.has(booking.user_id)
+        user_exists: existingUserIds.has(booking.user_id) || !booking.user_id // Handle null user_id
       }));
 
-      // Step 6: Sort bookings by workflow priority to put active bookings at the top
+      // Step 5: Sort bookings by workflow priority to put active bookings at the top
+      // Get current filter to use in sorting (avoid stale closure)
+      const currentStatusFilter = statusFilter;
+      
       const sortedBookings = bookingsWithUserStatus.sort((a, b) => {
         // Get workflow statuses (we'll calculate them here for sorting)
         const statusA = a.status || 'pending';
@@ -1461,7 +1507,7 @@ export default function BookingsPage() {
         // Priority order: payment reviews > pending bookings > confirmed > completed > ALL cancelled (bottom)
         const getPriority = (status: string, paymentStatus: string, cancelledBy: string | null) => {
           // SPECIAL CASE: When viewing cancelled filter, all cancelled bookings get same priority for pure date sorting
-          if (statusFilter === 'cancelled' && status === 'cancelled') {
+          if (currentStatusFilter === 'cancelled' && status === 'cancelled') {
             return 90; // Same priority for all cancelled bookings when filtered
           }
           
@@ -1494,7 +1540,9 @@ export default function BookingsPage() {
         
         // If priorities are the same, sort by created_at (newest first)
         if (priorityA === priorityB) {
-          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+          const timeA = new Date(a.created_at || '').getTime();
+          const timeB = new Date(b.created_at || '').getTime();
+          return timeB - timeA; // Newest first
         }
         
         return priorityA - priorityB;
@@ -1502,7 +1550,10 @@ export default function BookingsPage() {
 
       setBookings(sortedBookings as Booking[]);
     } catch (error) {
-      console.error('💥 Unexpected error:', error);
+      console.error('💥 Unexpected error in fetchBookings:', error);
+      // Enhanced error reporting
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      showError(`Failed to load bookings: ${errorMessage}`);
     } finally {
       if (!silent) {
         setLoading(false);
@@ -2271,6 +2322,7 @@ export default function BookingsPage() {
                           <PaymentProofButton 
                             key={`proof-${booking.id}-${refreshTrigger}-${booking.payment_status || 'none'}`}
                             bookingId={booking.id}
+                            booking={booking}
                             onViewProof={async (proof) => {
                               setSelectedPaymentProof(proof);
                               setShowPaymentProofModal(true);
@@ -2593,6 +2645,7 @@ export default function BookingsPage() {
                       <PaymentProofButton 
                         key={`modal-proof-${selectedBooking.id}-${refreshTrigger}-${selectedBooking.payment_status || 'none'}`}
                         bookingId={selectedBooking.id}
+                        booking={selectedBooking}
                         variant="modal"
                         onViewProof={async (proof) => {
                           setSelectedPaymentProof(proof);
@@ -3132,7 +3185,7 @@ export default function BookingsPage() {
               )}
 
               {/* Enhanced Admin Verification Interface */}
-              {selectedPaymentProof.status === 'pending' && (
+              {selectedPaymentProof.status === 'pending' && selectedBooking?.status !== 'cancelled' && (
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-5 space-y-5">
                   {/* Rejection Reason Selection */}
                   <div className="space-y-3">
@@ -3223,7 +3276,7 @@ export default function BookingsPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-4 pt-2">
-                {selectedPaymentProof.status === 'pending' ? (
+                {selectedPaymentProof.status === 'pending' && selectedBooking?.status !== 'cancelled' ? (
                   <>
                     <button
                       onClick={() => handlePaymentProofAction('approve', selectedPaymentProof.id)}
@@ -3275,6 +3328,18 @@ export default function BookingsPage() {
                       </span>
                     </button>
                   </>
+                ) : selectedBooking?.status === 'cancelled' ? (
+                  <div className="w-full text-center py-4 px-4 bg-gray-100 text-gray-600 rounded-md text-sm font-medium border border-gray-200">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span>Booking Cancelled</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Payment review actions are disabled for cancelled bookings
+                    </p>
+                  </div>
                 ) : (
                   <div className="w-full text-center py-2 px-4 bg-gray-100 text-gray-600 rounded-md text-sm font-medium">
                     Payment has been {selectedPaymentProof.status}

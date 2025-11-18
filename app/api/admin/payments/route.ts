@@ -54,7 +54,7 @@ export async function GET() {
     });
 
     // Step 4: Transform bookings with consolidated payment data (ONE ROW PER BOOKING)
-    const payments: any[] = [];
+    const payments: ConsolidatedPayment[] = [];
     
     bookings.forEach((booking) => {
       const proofs = allProofsByBookingId.get(booking.id) || [];
@@ -162,28 +162,5 @@ export async function GET() {
   }
 }
 
-// Helper function to determine display status for bookings
-function getPaymentDisplayStatus(paymentStatus: string | null, bookingStatus: string | null, proof?: Tables<'payment_proofs'>): string {
-  // PRIORITY 1: If manual payment proof exists, use its status
-  if (proof) {
-    if (proof.status === 'verified') return 'paid';
-    if (proof.status === 'pending') return 'pending';
-    if (proof.status === 'rejected') return 'cancelled';
-  }
-  
-  // PRIORITY 2: PayMongo payment status (legacy)
-  if (paymentStatus === 'paid') return 'paid';
-  if (paymentStatus === 'processing') return 'pending';
-  if (paymentStatus === 'pending') return 'pending';
-  if (paymentStatus === 'failed') return 'cancelled';
-  if (paymentStatus === 'refunded') return 'cancelled';
-  
-  // PRIORITY 3: Fallback to booking status
-  if (bookingStatus === 'confirmed') return 'paid';
-  if (bookingStatus === 'cancelled') return 'cancelled';
-  if (bookingStatus === 'pending') return 'pending';
-  if (bookingStatus === 'completed') return 'paid';
-  
-  return 'pending';
-}
+
 
