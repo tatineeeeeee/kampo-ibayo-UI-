@@ -8,14 +8,14 @@ interface ConsolidatedPayment {
   booking_id: number;
   user: string;
   guest_name?: string;
-  email: string;
+  email: string | null;
   amount: number;
   date: string;
   status: string;
   payment_intent_id: string | null;
   booking_status: string | null;
   payment_status: string | null;
-  total_amount: number;
+  total_amount: number | null;
   original_amount: number | null;
   payment_type: 'half' | 'full';
   original_reference: string | null;
@@ -30,7 +30,7 @@ interface ConsolidatedPayment {
   verified_by: string | null;
   admin_notes: string | null;
   has_payment_proof: boolean;
-  updated_at: string;
+  updated_at: string | null;
   total_proofs: number;
   payment_proof_id: number | null;
   all_payment_proofs: Array<{
@@ -149,7 +149,7 @@ export async function GET() {
       payments.push({
         id: booking.id,
         user: booking.guest_name || booking.guest_email || 'Unknown User',
-        email: booking.guest_email,
+        email: booking.guest_email || null,
         amount: totalPaidAmount || booking.payment_amount || booking.total_amount || 0,
         date: booking.created_at ? new Date(booking.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
