@@ -40,6 +40,40 @@ interface PaymentSummary {
   totalSubmissions: number;
 }
 
+interface EnhancedOCRResult {
+  referenceNumber: string | null;
+  amount: number | null;
+  confidence: number;
+  method: string;
+  warnings: string[];
+  suggestions: Array<{ type: string; expectedAmount?: number; }>;
+  processingTime?: number;
+}
+
+interface OCRProgress {
+  stage: 'idle' | 'preprocessing' | 'analyzing' | 'extracting' | 'validating' | 'complete' | 'error';
+  progress: number;
+  detected: {
+    amount?: number;
+    reference?: string;
+    method?: string;
+  };
+  message?: string;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  warnings: string[];
+  suggestions: Array<{ type: string; expectedAmount?: number; }>;
+}
+
+interface ExtractedPaymentData {
+  service: string;
+  amount: number | null;
+  reference: string | null;
+  confidence: number;
+}
+
 
 
 function UploadPaymentProofContent() {
@@ -54,7 +88,13 @@ function UploadPaymentProofContent() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isResubmission, setIsResubmission] = useState(false);
-  const [ocrResult, setOcrResult] = useState<{referenceNumber: string | null; amount: number | null; confidence: number; method: string} | null>(null);
+  const [ocrResult, setOcrResult] = useState<EnhancedOCRResult | null>(null);
+  const [ocrProgress, setOcrProgress] = useState<OCRProgress>({
+    stage: 'idle',
+    progress: 0,
+    detected: {}
+  });
+  const [showOCREditor, setShowOCREditor] = useState(false);
   
   // Payment history state
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryEntry[]>([]);
@@ -81,23 +121,201 @@ function UploadPaymentProofContent() {
   // Use payment_amount (the amount they need to pay based on payment type) instead of total_amount
   const expectedPaymentAmount = booking?.payment_amount || booking?.total_amount || 0;
   const remainingAmount = booking ? Math.max(0, expectedPaymentAmount - verifiedPaidAmount - pendingAmount) : 0;
+
+  // Enhanced OCR preprocessing function
+  const preprocessImage = useCallback(async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = new globalThis.Image();
+      
+      img.onload = () => {
+        // Set optimal size for OCR (1200-2000px width works best)
+        const maxWidth = 1600;
+        const scale = Math.min(maxWidth / img.width, maxWidth / img.height, 2); // Cap at 2x upscaling
+        
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        
+        // Apply image enhancements for better OCR
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Enhance contrast and reduce noise for better text recognition
+        ctx.filter = 'contrast(1.3) brightness(1.1) saturate(0.7) blur(0.3px)';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: file.lastModified }));
+          } else {
+            resolve(file); // Fallback to original if preprocessing fails
+          }
+        }, 'image/jpeg', 0.92);
+      };
+      
+      img.onerror = () => resolve(file); // Fallback to original on error
+      img.src = URL.createObjectURL(file);
+    });
+  }, []);
   
-  // Function to fetch payment history
+  // Enhanced pattern matching for different payment services
+  const extractPaymentDataEnhanced = useCallback((ocrText: string): ExtractedPaymentData | null => {
+    const patterns = {
+      gcash: {
+        amount: /(?:amount|total|you\s+sent|php|₱)\s*:?\s*₱?\s*([\d,]+\.?\d*)/gi,
+        reference: /(?:reference|ref|transaction|trx)\s*(?:no|number|id)?\s*:?\s*([A-Z0-9]{8,})/gi
+      },
+      maya: {
+        amount: /(?:you\s+paid|amount|total|sent)\s*₱?\s*([\d,]+\.?\d*)/gi,
+        reference: /(?:reference|receipt|transaction)\s*(?:number|no|id)?\s*:?\s*([A-Z0-9]{6,})/gi
+      },
+      bank: {
+        amount: /(?:amount|php|₱|credit)\s*:?\s*₱?\s*([\d,]+\.?\d*)/gi,
+        reference: /(?:reference|confirmation|transaction|trace)\s*(?:number|no|code|id)?\s*:?\s*([A-Z0-9]{6,})/gi
+      }
+    };
+
+    const results = [];
+    for (const [service, servicePatterns] of Object.entries(patterns)) {
+      let amountMatch;
+      let refMatch;
+      let confidence = 0;
+
+      // Try multiple matches for amount
+      const amounts: number[] = [];
+      while ((amountMatch = servicePatterns.amount.exec(ocrText)) !== null) {
+        const amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+        if (amount > 0 && amount < 1000000) { // Reasonable range check
+          amounts.push(amount);
+          confidence += 25;
+        }
+      }
+
+      // Try multiple matches for reference
+      const references: string[] = [];
+      while ((refMatch = servicePatterns.reference.exec(ocrText)) !== null) {
+        if (refMatch[1].length >= 6) {
+          references.push(refMatch[1]);
+          confidence += 25;
+        }
+      }
+
+      if (amounts.length > 0 || references.length > 0) {
+        results.push({
+          service,
+          amount: amounts.length > 0 ? amounts[0] : null, // Take first valid amount
+          reference: references.length > 0 ? references[0] : null, // Take first valid reference
+          confidence: Math.min(confidence, 100)
+        });
+      }
+    }
+
+    return results.sort((a, b) => b.confidence - a.confidence)[0] || null;
+  }, []);
+
+  // Smart validation against booking data
+  const validateOCRResult = useCallback((result: ExtractedPaymentData | null, booking: Booking): ValidationResult => {
+    const warnings: string[] = [];
+    const suggestions: Array<{ type: string; expectedAmount?: number; }> = [];
+
+    if (!result || !booking) {
+      return { isValid: false, warnings: ['Invalid data for validation'], suggestions: [] };
+    }
+
+    // Validate amount against expected payment
+    if (result.amount && typeof result.amount === 'number') {
+      const expectedAmount = booking.payment_amount || (booking.total_amount * 0.5);
+      const difference = Math.abs(result.amount - expectedAmount);
+      const percentDiff = (difference / expectedAmount) * 100;
+
+      if (percentDiff > 50) {
+        warnings.push(`Detected amount (₱${result.amount.toLocaleString()}) differs significantly from expected (₱${expectedAmount.toLocaleString()})`);
+        suggestions.push({ type: 'amount', expectedAmount });
+      } else if (percentDiff > 10) {
+        warnings.push('Amount differs slightly from expected - please verify');
+      }
+
+      // Check for common amount mistakes
+      if (result.amount < 100) {
+        warnings.push('Detected amount seems unusually low');
+      }
+      if (result.amount > booking.total_amount * 2) {
+        warnings.push('Detected amount seems unusually high');
+      }
+    }
+
+    // Validate reference number format
+    if (result.reference && typeof result.reference === 'string') {
+      const refPattern = /^[A-Z0-9]{6,}$/;
+      if (!refPattern.test(result.reference)) {
+        warnings.push('Reference number format may be incorrect');
+      }
+      if (result.reference.length < 6) {
+        warnings.push('Reference number seems too short');
+      }
+    }
+
+    return {
+      isValid: warnings.length === 0,
+      warnings,
+      suggestions
+    };
+  }, []);
+
+  // Function to fetch payment history - now optional with graceful degradation
   const fetchPaymentHistory = useCallback(async (bookingId: string) => {
     if (!user?.id) return;
     
     try {
+      console.log('🔍 Fetching payment history for booking:', bookingId);
       const response = await fetch(`/api/user/payment-history/${bookingId}?userId=${user.id}`);
+      
+      if (!response.ok) {
+        console.warn('⚠️ Payment history API returned error:', response.status, response.statusText);
+        
+        // If it's a 404, the API route might not exist - that's ok for basic functionality
+        if (response.status === 404) {
+          console.log('💡 Payment history API not available - continuing without history');
+          return;
+        }
+        
+        // For other errors, try to get more details but don't fail the entire page
+        try {
+          const errorText = await response.text();
+          console.error('🔍 Payment history API error details:', errorText.substring(0, 200));
+        } catch (textError) {
+          console.warn('Could not read error response text:', textError);
+        }
+        return;
+      }
+      
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('⚠️ Payment history API returned non-JSON response:', contentType);
+        const text = await response.text();
+        console.warn('Response text (first 200 chars):', text.substring(0, 200));
+        return;
+      }
+      
       const data = await response.json();
+      console.log('✅ Payment history data received:', data);
       
       if (data.success) {
         setPaymentHistory(data.paymentHistory || []);
         setPaymentSummary(data.paymentSummary || { totalPaid: 0, pendingAmount: 0, totalSubmissions: 0 });
+        console.log('📊 Payment summary updated:', data.paymentSummary);
       } else {
-        console.error('Failed to fetch payment history:', data.error);
+        console.warn('⚠️ Payment history API returned success=false:', data.error);
       }
     } catch (error) {
-      console.error('Error fetching payment history:', error);
+      console.warn('⚠️ Non-critical error fetching payment history (page will continue):', error);
+      if (error instanceof SyntaxError && error.message.includes('JSON')) {
+        console.warn('💡 JSON parsing failed - server may have returned HTML error page or malformed JSON');
+      }
+      
+      // Don't propagate this error - payment history is optional for core functionality
     }
   }, [user?.id]);
 
@@ -142,8 +360,14 @@ function UploadPaymentProofContent() {
         // const calculatedPaymentAmount = data.payment_amount || (data.total_amount * 0.5);
         // setAmount(calculatedPaymentAmount.toString());
         
-        // Fetch payment history for balance calculations
-        await fetchPaymentHistory(bookingId);
+        // Try to fetch payment history for balance calculations (non-critical)
+        try {
+          await fetchPaymentHistory(bookingId);
+          console.log('✅ Payment history loaded successfully');
+        } catch (historyError) {
+          console.warn('⚠️ Payment history failed to load (non-critical):', historyError);
+          // Continue without payment history - core functionality still works
+        }
       } catch (error) {
         setError('Failed to fetch booking details');
         console.error('Error fetching booking:', error);
@@ -185,7 +409,7 @@ function UploadPaymentProofContent() {
   // Cleanup OCR worker on unmount
   useEffect(() => {
     return () => {
-      // Dynamic import to avoid loading OCR service if not used
+      // Cleanup the enhanced OCR service worker
       import('../utils/ocrService').then(({ OCRService }) => {
         OCRService.terminateWorker().catch(console.warn);
       }).catch(() => {
@@ -196,7 +420,9 @@ function UploadPaymentProofContent() {
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    try {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('File size must be less than 5MB');
@@ -213,65 +439,191 @@ function UploadPaymentProofContent() {
       setProofImage(file);
       setError('');
       
-      // Reset OCR result and amount for new image
+      // Reset OCR state for new image
       setOcrResult(null);
-      setAmount(''); // Clear amount field for new image
-      setIsManualAmountSet(false); // Reset manual flag for new image
+      setAmount('');
+      setIsManualAmountSet(false);
+      setShowOCREditor(false);
       
       // Create preview URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
 
-      // Auto-process with OCR
+      // Start enhanced OCR processing
+      setOcrProgress({ stage: 'preprocessing', progress: 10, detected: {}, message: 'Enhancing image quality...' });
+      
+      const startTime = Date.now();
+      
+      // Step 1: Preprocess image for better OCR accuracy
+      const processedImage = await preprocessImage(file);
+      setOcrProgress({ stage: 'analyzing', progress: 30, detected: {}, message: 'Analyzing payment details...' });
+      
+      // Step 2: Enhanced OCR Processing using professional OCR service
+      let ocrResult: EnhancedOCRResult = {
+        referenceNumber: null,
+        amount: null,
+        confidence: 0,
+        method: 'unknown',
+        warnings: [],
+        suggestions: [],
+        processingTime: 0
+      };
+      
       try {
-        console.log('🤖 Starting automatic OCR processing...');
+        // Import and use the enhanced OCR service
         const { OCRService } = await import('../utils/ocrService');
-        const result = await OCRService.processPaymentImage(file);
         
-        // Store OCR result for display
-        setOcrResult({
-          referenceNumber: result.referenceNumber,
-          amount: result.amount,
-          confidence: result.confidence,
-          method: result.method
-        });
+        // Set up progress tracking for the advanced OCR
+        setOcrProgress(prev => ({ 
+          ...prev, 
+          progress: 35, 
+          message: 'Starting advanced OCR analysis...' 
+        }));
         
-        let fieldsUpdated = 0;
+        // Use the professional OCR service for better accuracy
+        const ocrServiceResult = await OCRService.processPaymentImage(processedImage);
         
-        if (result.referenceNumber) {
-          setReferenceNumber(result.referenceNumber);
+        // Map OCR service result to our interface
+        ocrResult = {
+          referenceNumber: ocrServiceResult.referenceNumber,
+          amount: ocrServiceResult.amount,
+          confidence: ocrServiceResult.confidence,
+          method: ocrServiceResult.method,
+          warnings: ocrServiceResult.warnings || [],
+          suggestions: ocrServiceResult.suggestions || [],
+          processingTime: ocrServiceResult.processingTime || (Date.now() - startTime)
+        };
+        
+        console.log('🎯 Enhanced OCR Service Result:', ocrResult);
+        
+      } catch (ocrError) {
+        console.error('❌ Enhanced OCR service failed, falling back to basic processing:', ocrError);
+        
+        // Fallback to basic OCR if the enhanced service fails
+        try {
+          const { createWorker } = await import('tesseract.js');
+          const worker = await createWorker('eng', 1, {
+            logger: (m: { status: string; progress?: number }) => {
+              if (m.status === 'recognizing text') {
+                const progress = Math.round((m.progress || 0) * 100);
+                setOcrProgress(prev => ({ 
+                  ...prev, 
+                  progress: 30 + (progress * 0.4), 
+                  message: `Fallback processing... ${progress}%` 
+                }));
+              }
+            }
+          });
+          
+          const { data: { text } } = await worker.recognize(processedImage);
+          await worker.terminate();
+          
+          // Extract payment data using basic pattern matching
+          const extracted = extractPaymentDataEnhanced(text);
+          
+          ocrResult = {
+            referenceNumber: extracted?.reference || null,
+            amount: extracted?.amount || null,
+            confidence: extracted?.confidence || 0,
+            method: extracted?.service || 'unknown',
+            warnings: ['Using fallback OCR processing'],
+            suggestions: [],
+            processingTime: Date.now() - startTime
+          };
+        } catch (fallbackError) {
+          console.error('❌ Fallback OCR also failed:', fallbackError);
+          ocrResult.warnings = ['OCR processing failed - please enter details manually'];
+        }
+      }
+      
+      setOcrProgress({ stage: 'validating', progress: 70, detected: {
+        amount: ocrResult.amount ?? undefined,
+        reference: ocrResult.referenceNumber ?? undefined,
+        method: ocrResult.method !== 'unknown' ? ocrResult.method : undefined
+      }, message: 'Validating detected information...' });
+      
+      // Step 3: Validate results against booking data
+      if (booking && ocrResult) {
+        const extractedData: ExtractedPaymentData = {
+          service: ocrResult.method || 'unknown',
+          amount: ocrResult.amount,
+          reference: ocrResult.referenceNumber,
+          confidence: ocrResult.confidence
+        };
+        const validation = validateOCRResult(extractedData, booking);
+        ocrResult.warnings = [...(ocrResult.warnings || []), ...validation.warnings];
+        ocrResult.suggestions = [...(ocrResult.suggestions || []), ...validation.suggestions];
+      }
+      
+      // Step 4: Update progress with detected data
+      const detectedData: { amount?: number; reference?: string; method?: string } = {};
+      if (ocrResult.amount) detectedData.amount = ocrResult.amount;
+      if (ocrResult.referenceNumber) detectedData.reference = ocrResult.referenceNumber;
+      if (ocrResult.method && ocrResult.method !== 'unknown') detectedData.method = ocrResult.method;
+      
+      setOcrProgress({ 
+        stage: 'complete', 
+        progress: 100, 
+        detected: detectedData,
+        message: Object.keys(detectedData).length > 0 
+          ? `Successfully detected ${Object.keys(detectedData).length} field(s)` 
+          : 'Analysis complete - please fill details manually'
+      });
+      
+      // Step 5: Auto-populate form fields
+      let fieldsUpdated = 0;
+      
+      if (ocrResult.referenceNumber && typeof ocrResult.referenceNumber === 'string') {
+        setReferenceNumber(ocrResult.referenceNumber);
+        fieldsUpdated++;
+      }
+      
+      if (ocrResult.amount && typeof ocrResult.amount === 'number' && ocrResult.amount > 0) {
+        setAmount(ocrResult.amount.toString());
+        setIsManualAmountSet(false);
+        fieldsUpdated++;
+      }
+      
+      if (ocrResult.method && ocrResult.method !== 'unknown') {
+        const methodMap: { [key: string]: string } = {
+          'gcash': 'gcash',
+          'maya': 'maya',
+          'bank': 'bank_transfer'
+        };
+        const mappedMethod = methodMap[ocrResult.method.toLowerCase()];
+        if (mappedMethod) {
+          setPaymentMethod(mappedMethod);
           fieldsUpdated++;
         }
-        
-        // Auto-fill amount if detected (OCR takes priority over any existing value)
-        if (result.amount) {
-          setAmount(result.amount.toString());
-          setIsManualAmountSet(false); // Reset manual flag since this is OCR auto-fill
-        }
-        
-        if (result.method && result.method !== 'unknown') {
-          const methodMap: { [key: string]: string } = {
-            'gcash': 'gcash',
-            'maya': 'maya',
-            'bank': 'bank_transfer'
-          };
-          const mappedMethod = methodMap[result.method];
-          if (mappedMethod) {
-            setPaymentMethod(mappedMethod);
-            fieldsUpdated++;
-          }
-        }
-        
-        // Auto-fill completed silently
-        if (fieldsUpdated > 0) {
-          console.log('✅ Auto-filled', fieldsUpdated, 'field(s) successfully');
-        }
-        
-      } catch (error) {
-        console.warn('OCR processing failed:', error);
-        setOcrResult(null);
-        // Silently fail - user can still fill form manually
       }
+      
+      // Store final result
+      setOcrResult(ocrResult);
+      
+      console.log('✅ Enhanced OCR completed:', {
+        fieldsUpdated,
+        confidence: ocrResult.confidence,
+        processingTime: ocrResult.processingTime,
+        warnings: ocrResult.warnings?.length || 0
+      });
+      
+    } catch (error) {
+      console.error('OCR processing failed:', error);
+      setOcrProgress({ 
+        stage: 'error', 
+        progress: 0, 
+        detected: {}, 
+        message: 'Processing failed - please enter details manually' 
+      });
+      setOcrResult({
+        referenceNumber: null,
+        amount: null,
+        confidence: 0,
+        method: 'unknown',
+        warnings: ['Processing failed - please enter details manually'],
+        suggestions: [],
+        processingTime: 0
+      });
     }
   };
 
@@ -703,6 +1055,25 @@ function UploadPaymentProofContent() {
               </div>
               Booking Summary
             </h2>
+            
+            {/* OCR Disclaimer */}
+            <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="bg-yellow-600/30 p-1 rounded-full mt-0.5">
+                  <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="text-xs text-yellow-200">
+                  <p className="font-medium mb-1">⚠️ OCR Detection Notice</p>
+                  <p className="leading-relaxed">
+                    The system tries to automatically read payment details from your screenshot, but 
+                    <span className="font-medium text-yellow-100"> OCR is not perfect</span>. 
+                    Please double-check and correct any detected amounts, references, or payment methods before submitting.
+                  </p>
+                </div>
+              </div>
+            </div>
             {booking && (
               <div className="space-y-3">
                 {/* Guest Information */}
@@ -908,31 +1279,144 @@ function UploadPaymentProofContent() {
                 )}
               </div>
               }
-              {/* Compact OCR Summary - Only show key detection status */}
-              {ocrResult && proofImage && (ocrResult.referenceNumber || ocrResult.amount) && (
+              {/* Enhanced OCR Progress and Results */}
+              {ocrProgress.stage !== 'idle' && proofImage && (
                 <div className="mt-3 p-3 bg-gray-800/40 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-400 flex items-center gap-2">
-                      🤖 Auto-Detected
+                      🤖 {ocrProgress.stage === 'preprocessing' ? 'Enhancing image...' : 
+                          ocrProgress.stage === 'analyzing' ? 'Analyzing content...' :
+                          ocrProgress.stage === 'extracting' ? 'Extracting details...' :
+                          ocrProgress.stage === 'validating' ? 'Validating data...' :
+                          ocrProgress.stage === 'complete' ? 'Analysis complete!' :
+                          ocrProgress.stage === 'error' ? 'Processing failed' : 'Processing...'}
                     </span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-green-900/30 text-green-400">
-                      {ocrResult.confidence.toFixed(0)}% confidence
-                    </span>
-                  </div>
-                  <div className="flex gap-4 text-sm">
-                    {ocrResult.referenceNumber && (
-                      <span className="text-green-400 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Reference: {ocrResult.referenceNumber}
-                      </span>
-                    )}
-                    {ocrResult.amount && (
-                      <span className="text-green-400 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Amount: ₱{ocrResult.amount.toLocaleString()}
+                    {ocrProgress.progress > 0 && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-900/30 text-blue-400">
+                        {ocrProgress.progress}%
                       </span>
                     )}
                   </div>
+                  
+                  {/* Progress bar */}
+                  {ocrProgress.progress > 0 && (
+                    <div className="w-full bg-gray-700 rounded-full h-1.5 mb-2">
+                      <div 
+                        className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                        style={{ width: `${ocrProgress.progress}%` }}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Live detection feedback */}
+                  {Object.keys(ocrProgress.detected).length > 0 && (
+                    <div className="flex gap-4 text-sm mb-2">
+                      {ocrProgress.detected.amount && (
+                        <span className="text-green-400 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Amount: ₱{ocrProgress.detected.amount.toLocaleString()}
+                        </span>
+                      )}
+                      {ocrProgress.detected.reference && (
+                        <span className="text-green-400 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Reference: {ocrProgress.detected.reference}
+                        </span>
+                      )}
+                      {ocrProgress.detected.method && (
+                        <span className="text-blue-400 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Method: {ocrProgress.detected.method}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Status message */}
+                  {ocrProgress.message && (
+                    <p className="text-xs text-gray-400">{ocrProgress.message}</p>
+                  )}
+                  
+                  {/* Final OCR Results with Confidence and Actions */}
+                  {ocrResult && ocrProgress.stage === 'complete' && (
+                    <div className="mt-3 pt-3 border-t border-gray-600">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                          ✨ Final Results
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-900/30 text-green-400">
+                            {ocrResult.confidence.toFixed(0)}% confidence
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => setShowOCREditor(!showOCREditor)}
+                          className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded border border-blue-400/30"
+                        >
+                          {showOCREditor ? 'Hide Editor' : 'Edit Results'}
+                        </button>
+                      </div>
+                      
+                      {showOCREditor ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={ocrResult.referenceNumber || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              setOcrResult(prev => prev ? {...prev, referenceNumber: newValue} : null);
+                              setReferenceNumber(newValue);
+                            }}
+                            placeholder="Reference Number"
+                            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm text-white"
+                          />
+                          <input
+                            type="number"
+                            value={ocrResult.amount || ''}
+                            onChange={(e) => {
+                              const newValue = parseFloat(e.target.value) || null;
+                              setOcrResult(prev => prev ? {...prev, amount: newValue} : null);
+                              setAmount(e.target.value);
+                              setIsManualAmountSet(true);
+                            }}
+                            placeholder="Amount"
+                            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm text-white"
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-sm space-y-1">
+                          {ocrResult.amount && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Amount:</span>
+                              <span className="text-white font-mono">₱{ocrResult.amount.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {ocrResult.referenceNumber && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Reference:</span>
+                              <span className="text-white font-mono">{ocrResult.referenceNumber}</span>
+                            </div>
+                          )}
+                          {ocrResult.processingTime && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Processing time:</span>
+                              <span className="text-gray-300">{(ocrResult.processingTime / 1000).toFixed(1)}s</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Validation warnings */}
+                  {ocrResult?.warnings && ocrResult.warnings.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {ocrResult.warnings.map((warning, idx) => (
+                        <div key={idx} className="p-2 bg-yellow-900/20 border border-yellow-600/30 rounded text-xs text-yellow-300 flex items-start gap-2">
+                          <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          {warning}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
