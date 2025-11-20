@@ -1,0 +1,239 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { ModernReceiptService } from '../../../utils/modernReceiptService';
+import nodemailer from 'nodemailer';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { bookingId, userEmail, userName } = await request.json();
+
+    // Validate required fields
+    if (!bookingId || !userEmail || !userName) {
+      return NextResponse.json({
+        success: false,
+        error: 'Missing required fields: bookingId, userEmail, userName'
+      }, { status: 400 });
+    }
+
+    // Create Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Fetch booking details
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      console.error('Booking fetch error:', bookingError);
+      return NextResponse.json({
+        success: false,
+        error: 'Booking not found or access denied'
+      }, { status: 404 });
+    }
+
+    // Security: Verify booking is confirmed
+    if (booking.status !== 'confirmed') {
+      return NextResponse.json({
+        success: false,
+        error: 'Receipt only available for confirmed bookings'
+      }, { status: 403 });
+    }
+
+    // Fetch verified payment proof
+    const { data: paymentProofs, error: paymentError } = await supabase
+      .from('payment_proofs')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .eq('status', 'verified')
+      .order('verified_at', { ascending: false })
+      .limit(1);
+
+    if (paymentError) {
+      console.error('Payment proof fetch error:', paymentError);
+      return NextResponse.json({
+        success: false,
+        error: 'Error fetching payment proof'
+      }, { status: 500 });
+    }
+
+    if (!paymentProofs || paymentProofs.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No verified payment found for this booking'
+      }, { status: 404 });
+    }
+
+    const paymentProof = paymentProofs[0];
+
+    // Check if booking has been rescheduled
+    const isRescheduled = booking.updated_at &&
+      new Date(booking.updated_at).getTime() > new Date(booking.created_at).getTime() + (5 * 60 * 1000);
+
+    // Generate receipt data with reschedule detection
+    const receiptNumber = ModernReceiptService.generateReceiptNumber(bookingId, isRescheduled);
+    const receiptData = {
+      booking,
+      paymentProof,
+      userEmail,
+      userName,
+      receiptNumber,
+      generatedAt: new Date().toISOString(),
+      companyDetails: {
+        name: 'Kampo Ibayo Resort',
+        address: 'Brgy. Tapia, General Trias, Cavite',
+        phone: '+63 966 281 5123',
+        email: 'kampoibayo@gmail.com'
+      }
+    };
+
+    // Validate receipt data
+    if (!ModernReceiptService.validateReceiptData(receiptData)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid receipt data'
+      }, { status: 400 });
+    }
+
+    // Generate PDF buffer with modern HTML/CSS design and your logo
+    const pdfBuffer = await ModernReceiptService.generateReceiptBlob(receiptData);
+
+    // Setup email transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    // Email content
+    const paymentAmount = booking.payment_amount || (booking.total_amount * 0.5);
+    const paymentType = booking.payment_type === 'full' ? 'Full Payment' : 'Down Payment';
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">Kampo Ibayo Resort</h1>
+            <p style="color: #64748b; margin: 5px 0;">Your Official Payment Receipt</p>
+          </div>
+
+          <!-- Greeting -->
+          <h2 style="color: #1e293b; margin-bottom: 20px;">Hello ${userName}!</h2>
+          
+          <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
+            Thank you for your payment! Your booking has been confirmed and your official receipt is attached to this email.
+            ${isRescheduled ? '<br><strong style="color: #f59e0b;">Note: This receipt reflects your updated booking dates after rescheduling.</strong>' : ''}
+          </p>
+
+          <!-- Booking Summary -->
+          <div style="background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1e293b; margin: 0 0 15px 0;">Booking Summary</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Booking ID:</td>
+                <td style="padding: 5px 0; color: #1e293b; font-weight: bold;">#${booking.id}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Receipt No:</td>
+                <td style="padding: 5px 0; color: #1e293b; font-weight: bold;">${receiptNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Check-in:</td>
+                <td style="padding: 5px 0; color: #1e293b;">${new Date(booking.check_in_date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Check-out:</td>
+                <td style="padding: 5px 0; color: #1e293b;">${new Date(booking.check_out_date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Guests:</td>
+                <td style="padding: 5px 0; color: #1e293b;">${booking.number_of_guests} guest(s)</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Payment Type:</td>
+                <td style="padding: 5px 0; color: #1e293b;">${paymentType}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #64748b;">Amount Paid:</td>
+                <td style="padding: 5px 0; color: #059669; font-weight: bold; font-size: 18px;">₱${paymentAmount.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Important Notes -->
+          <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #92400e; margin: 0 0 10px 0;">Important Reminders:</h4>
+            <ul style="color: #92400e; margin: 0; padding-left: 20px;">
+              <li>Please bring a printed copy or screenshot of this receipt during check-in</li>
+              <li>Check-in time is 3:00 PM, Check-out time is 1:00 PM</li>
+              ${booking.payment_type !== 'full' ? `<li>Remaining balance of ₱${(booking.total_amount - paymentAmount).toLocaleString()} is payable upon arrival</li>` : ''}
+              <li>For any concerns, contact us 24 hours before your check-in date</li>
+            </ul>
+          </div>
+
+          <!-- Contact Information -->
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #64748b; margin: 5px 0;">📍 Brgy. Tapia, General Trias, Cavite</p>
+            <p style="color: #64748b; margin: 5px 0;">📞 +63 966 281 5123 | 📧 kampoibayo@gmail.com</p>
+            <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">
+              This is an automated email. Please do not reply to this message.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Send email with PDF attachment
+    const mailOptions = {
+      from: `"Kampo Ibayo Resort" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to: userEmail,
+      subject: `Payment Receipt - Booking #${bookingId} | Kampo Ibayo Resort`,
+      html: emailHtml,
+      attachments: [
+        {
+          filename: `Kampo-Ibayo-Receipt-${receiptNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    // Log receipt generation
+    console.log(`✅ Receipt generated and emailed for booking ${bookingId} to ${userEmail}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Receipt generated and sent successfully',
+      receiptNumber,
+      sentTo: userEmail
+    });
+
+  } catch (error) {
+    console.error('Error generating/sending receipt:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to generate or send receipt'
+    }, { status: 500 });
+  }
+}

@@ -18,6 +18,7 @@ import {
 } from "../utils/bookingUtils";
 import { useToast } from "../components/Toast";
 import { Tables } from '../../database.types';
+import { ReceiptManager } from '../components/ReceiptManager';
 
 import { CheckCircle, XCircle, PawPrint, MessageCircle, Clock, AlertTriangle, Ban, HourglassIcon, CheckCircle2, PhilippinePeso, Calendar, Users, Phone, Upload, Lightbulb, CreditCard, Smartphone, Home, Plus, ChevronLeft, ChevronRight, RotateCcw, MessageSquare } from "lucide-react";
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
@@ -437,7 +438,8 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
   const statusInfo = getStatusInfo(paymentProof.status);
 
   return (
-    <div className={`rounded-xl p-4 mb-4 shadow-sm ${statusInfo.color}`}>
+    <>
+      <div className={`rounded-xl p-4 mb-4 shadow-sm ${statusInfo.color}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           {statusInfo.icon}
@@ -526,6 +528,7 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
         </div>
       )}
     </div>
+    </>
   );
 }
 
@@ -1721,6 +1724,17 @@ function BookingsPageContent() {
                         >
                           View Details
                         </button>
+                        
+                        {/* Receipt Buttons - Show only for confirmed bookings with verified payment */}
+                        {booking.status === 'confirmed' && (
+                          <ReceiptManager
+                            booking={booking}
+                            userEmail={user?.email || ''}
+                            userName={user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest'}
+                            hasVerifiedPayment={true}
+                            key={`receipt-${booking.id}-${booking.updated_at || booking.created_at}`}
+                          />
+                        )}
                         
                         {/* Upload Payment Proof Button - Only show if pending */}
                         {booking.status === 'pending' && (
