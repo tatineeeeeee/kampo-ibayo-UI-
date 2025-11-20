@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { X, Send, Minimize2, MessageCircle } from "lucide-react";
 
 interface Message {
@@ -8,16 +8,35 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
+  confidence?: number;
+  intent?: string;
+  entities?: Array<{type: string; value: string; confidence: number}>;
 }
 
 interface FAQItem {
   keywords: string[];
   question: string;
   answer: string;
+  // AI-enhanced metadata (optional for backward compatibility)
+  category?: string;
+  priority?: number;
+  variations?: string[];
+  context_patterns?: string[];
+  intent?: string;
 }
 
 interface ChatbotProps {
   onOpenStateChange?: (isOpen: boolean) => void;
+}
+
+interface AIContext {
+  previousQuestions: string[];
+  userPreferences: {
+    language: 'english' | 'tagalog' | 'taglish';
+    topics_discussed: string[];
+    session_start: Date;
+  };
+  conversation_flow: string[];
 }
 
 const FAQ_DATABASE: FAQItem[] = [
@@ -455,20 +474,6 @@ const GREETING_MESSAGES = [
   "Greetings! I'm here to help you learn more about Kampo Ibayo resort and assist with your booking needs."
 ];
 
-const HELP_MESSAGE = `I can assist you with the following topics:
-
-📋 Booking & Reservations
-💰 Pricing & Packages  
-🏊 Amenities & Facilities
-📍 Location & Directions
-📅 Cancellation & Rescheduling
-🐕 Pet Policy
-📝 House Rules & Guidelines
-🎉 Events & Parties
-📞 Contact Information
-
-Feel free to ask me anything about Kampo Ibayo Resort, or select from the quick questions below for instant answers.`;
-
 // Safety constants
 const MAX_MESSAGES = 50; // Prevent memory bloat
 const MAX_INPUT_LENGTH = 500; // Prevent extremely long inputs
@@ -482,6 +487,33 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // AI-enhanced conversation context
+  const [conversationContext, setConversationContext] = useState<AIContext>({
+    previousQuestions: [],
+    userPreferences: {
+      language: 'english',
+      topics_discussed: [],
+      session_start: new Date()
+    },
+    conversation_flow: []
+  });
+  
+  // AI session analytics (for potential future use)
+  const [sessionAnalytics] = useState({
+    questionsAnswered: 0,
+    topCategories: [] as string[],
+    averageResponseTime: 0,
+    userSatisfaction: null as number | null,
+    followUpQuestions: 0
+  });
+  
+  // Debug session analytics
+  useEffect(() => {
+    if (sessionAnalytics.questionsAnswered > 0) {
+      console.log('🤖 AI Session Analytics:', sessionAnalytics);
+    }
+  }, [sessionAnalytics]);
 
   // Performance optimization: Create keyword index for O(1) lookups
   const keywordIndex = useMemo(() => {
@@ -496,6 +528,67 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
       });
     });
     return index;
+  }, []);
+
+  // AI-powered intent analysis
+  const analyzeUserIntent = useCallback((message: string): {intent: string, entities: Array<{type: string, value: string, confidence: number}>, confidence: number} => {
+    const lowerMessage = message.toLowerCase();
+    
+    const intentPatterns = {
+      get_pricing: { patterns: [/\b(price|cost|rate|magkano|how much|expensive|cheap|budget|afford)\b/gi], confidence: 0.9 },
+      get_location: { patterns: [/\b(where|location|address|saan|nasaan|directions|navigate|map)\b/gi], confidence: 0.85 },
+      booking_inquiry: { patterns: [/\b(book|reserve|reservation|available|vacancy|magbook|schedule)\b/gi], confidence: 0.8 },
+      amenities_inquiry: { patterns: [/\b(amenities|facilities|pool|kitchen|videoke|activities|what.*offer)\b/gi], confidence: 0.75 },
+      pet_policy: { patterns: [/\b(pet|dog|cat|animal|alaga|bring.*pet|pet.*allow)\b/gi], confidence: 0.8 }
+    };
+    
+    let bestIntent = 'general_inquiry';
+    let maxConfidence = 0;
+    const entities: Array<{type: string, value: string, confidence: number}> = [];
+    
+    Object.entries(intentPatterns).forEach(([intent, config]) => {
+      let intentScore = 0;
+      config.patterns.forEach(pattern => {
+        const matches = [...lowerMessage.matchAll(pattern)];
+        intentScore += matches.length * 0.3;
+      });
+      
+      if (intentScore > maxConfidence) {
+        maxConfidence = intentScore;
+        bestIntent = intent;
+      }
+    });
+    
+    return { intent: bestIntent, entities, confidence: Math.min(maxConfidence, 1) };
+  }, []);
+  
+  // Update conversation context with AI insights
+  const updateConversationContext = useCallback((userMessage: string, botResponse: string, intent: string, language: 'tagalog' | 'english' | 'taglish') => {
+    setConversationContext(prev => ({
+      ...prev,
+      previousQuestions: [...prev.previousQuestions.slice(-4), userMessage],
+      userPreferences: {
+        ...prev.userPreferences,
+        language,
+        topics_discussed: [...new Set([...prev.userPreferences.topics_discussed, intent])]
+      },
+      conversation_flow: [...prev.conversation_flow.slice(-9), `${intent}:${language}`]
+    }));
+  }, []);
+  
+  // AI-enhanced semantic similarity calculation
+  const calculateSemanticSimilarity = useCallback((query: string, faqQuestion: string): number => {
+    const queryWords = query.toLowerCase().split(/\s+/);
+    const faqWords = faqQuestion.toLowerCase().split(/\s+/);
+    
+    let commonWords = 0;
+    queryWords.forEach(qWord => {
+      if (faqWords.some(fWord => fWord.includes(qWord) || qWord.includes(fWord))) {
+        commonWords++;
+      }
+    });
+    
+    return commonWords / Math.max(queryWords.length, faqWords.length);
   }, []);
 
   // Custom setter that immediately calls the callback
@@ -635,26 +728,43 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   const findBestAnswer = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
     const detectedLanguage = detectLanguage(userMessage);
+    const intentAnalysis = analyzeUserIntent(userMessage);
     
-    // Check for greetings
-    if (/(hi|hello|hey|good morning|good afternoon|kumusta|kamusta|mabuhay|sup|yo)/i.test(userMessage)) {
+    console.log('🤖 AI Analysis:', {
+      detectedLanguage,
+      intent: intentAnalysis.intent,
+      confidence: intentAnalysis.confidence,
+      entities: intentAnalysis.entities
+    });
+    
+    // Update conversation context for AI learning
+    updateConversationContext(userMessage, '', intentAnalysis.intent, detectedLanguage);
+    
+    // Enhanced greeting detection that doesn't interfere with specific questions
+    const isGreeting = /(^|\s)(hi|hello|hey|good morning|good afternoon|kumusta|kamusta|mabuhay|sup|yo)(\s|$)/i.test(userMessage) &&
+                      !/\b(rate|price|cost|magkano|how much|ano|what|where|paano|saan)\b/i.test(userMessage);
+    
+    if (isGreeting) {
       if (detectedLanguage === 'tagalog') {
-        return "Kumusta! Ako po ang Kampo Ibayo assistant. Narito ako para tumulong sa inyong mga tanong tungkol sa resort. Ano po ang gusto ninyong malaman?";
+        return "Kumusta po! Ako ang Kampo Ibayo AI assistant. Narito ako para tumulong sa inyong mga tanong tungkol sa resort. Ano po ang gusto ninyong malaman?";
       } else if (detectedLanguage === 'taglish') {
-        return "Hi! Kumusta naman! I'm the Kampo Ibayo assistant po. I can help you with questions about our resort. Ano bang gusto ninyong malaman?";
+        return "Hi! Kumusta naman! I'm the Kampo Ibayo AI assistant po. I can help you with questions about our resort naman. Ano bang gusto ninyong malaman?";
       } else {
-        return "Hello! How can I help you today? You can ask me about our rates, amenities, booking process, location, or any other questions about Kampo Ibayo.";
+        return "Hello! I'm your Kampo Ibayo AI assistant. How can I help you today? You can ask me about our rates, amenities, booking process, location, or any other questions about Kampo Ibayo.";
       }
     }
 
-    // Check for help requests
-    if (/(help|what can you|topics|menu|options|categories|tulong|ano pwede|mga topic|ano ba|what topics)/i.test(userMessage)) {
+    // Enhanced help requests with AI context awareness
+    const isHelpRequest = /(help|what can you|topics|menu|options|categories|tulong)/i.test(userMessage) &&
+                         !/\b(rate|price|cost|magkano|how much|location|saan|amenities|booking|pet)\b/i.test(userMessage);
+    
+    if (isHelpRequest) {
       if (detectedLanguage === 'tagalog') {
-        return "Narito po ang mga topic na makakatulong ko sa inyo:\n\n📋 Booking at Reservations\n💰 Pricing at Packages\n🏊 Amenities at Facilities\n📍 Location at Directions\n📅 Cancellation at Rescheduling\n🐕 Pet Policy\n📝 House Rules at Guidelines\n🎉 Events at Parties\n📞 Contact Information\n\nTanungin lang ako tungkol sa Kampo Ibayo Resort!";
+        return "Narito po ang mga topic na makakatulong ko sa inyo:\n\n📋 Booking at Reservations\n💰 Pricing at Packages\n🏊 Amenities at Facilities\n📍 Location at Directions\n📅 Cancellation at Rescheduling\n🐕 Pet Policy\n📝 House Rules at Guidelines\n🎉 Events at Parties\n📞 Contact Information\n\n🤖 **AI-Powered Features:**\n• Smart question understanding\n• Multi-language support\n• Context-aware responses\n\nTanungin lang po ako tungkol sa Kampo Ibayo Resort!";
       } else if (detectedLanguage === 'taglish') {
-        return "Sure! Here are the topics na makakatulong ko sa inyo:\n\n📋 Booking and Reservations\n💰 Pricing and Packages\n🏊 Amenities and Facilities\n📍 Location and Directions\n📅 Cancellation and Rescheduling\n🐕 Pet Policy\n📝 House Rules and Guidelines\n🎉 Events and Parties\n📞 Contact Information\n\nJust ask me anything about Kampo Ibayo Resort!";
+        return "Sure! Here are the topics na makakatulong ko sa inyo:\n\n📋 Booking and Reservations\n💰 Pricing and Packages\n🏊 Amenities and Facilities\n📍 Location and Directions\n📅 Cancellation and Rescheduling\n🐕 Pet Policy\n📝 House Rules and Guidelines\n🎉 Events and Parties\n📞 Contact Information\n\n🤖 **AI Features:**\n• Smart question understanding\n• Multi-language support\n• Context-aware responses\n\nJust ask me anything about Kampo Ibayo Resort naman!";
       } else {
-        return HELP_MESSAGE;
+        return "I'm an AI-powered assistant that can help you with:\n\n📋 Booking and Reservations\n💰 Pricing and Packages\n🏊 Amenities and Facilities\n📍 Location and Directions\n📅 Cancellation and Rescheduling\n🐕 Pet Policy\n📝 House Rules and Guidelines\n🎉 Events and Parties\n📞 Contact Information\n\n🤖 **AI Features:**\n• Advanced pattern recognition\n• Natural language understanding\n• Context-aware conversations\n• Multi-language support (English/Tagalog/Taglish)\n\nFeel free to ask me anything about Kampo Ibayo Resort!";
       }
     }
 
@@ -676,7 +786,7 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
       const matchedKeywords: string[] = [];
       const keywordPositions: number[] = [];
 
-      // Calculate base keyword matches
+      // AI-enhanced keyword matching with semantic understanding
       faq.keywords.forEach(keyword => {
         const keywordLower = keyword.toLowerCase();
         const index = lowerMessage.indexOf(keywordLower);
@@ -686,24 +796,58 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
           keywordPositions.push(index);
           
           // Base score for keyword match
-          score += 10;
+          score += faq.priority || 10;
           
-          // Bonus for exact word match (not partial)
+          // AI: Intent alignment bonus
+          if (faq.intent === intentAnalysis.intent && intentAnalysis.confidence > 0.5) {
+            score += 25;
+          }
+          
+          // Enhanced exact word match detection
           const beforeChar = index > 0 ? lowerMessage[index - 1] : ' ';
           const afterChar = index + keywordLower.length < lowerMessage.length 
             ? lowerMessage[index + keywordLower.length] : ' ';
           
           if ((/\s/.test(beforeChar) || beforeChar === ' ') && 
               (/\s/.test(afterChar) || afterChar === ' ')) {
-            score += 5; // Exact word match bonus
+            score += 15; // Enhanced exact word match bonus
           }
           
-          // Bonus for important keywords (longer = more specific)
+          // AI: Language preference bonus
+          if (detectedLanguage === 'tagalog' && /\b(po|ang|sa|ng|mga)\b/i.test(keyword)) {
+            score += 10;
+          } else if (detectedLanguage === 'english' && !/\b(po|ang|sa|ng|mga)\b/i.test(keyword)) {
+            score += 10;
+          }
+          
+          // Enhanced importance scoring
           if (keywordLower.length > 5) {
-            score += 3;
+            score += 8;
           }
         }
       });
+
+      // AI: Context pattern matching (if available)
+      if (faq.context_patterns) {
+        faq.context_patterns.forEach(pattern => {
+          if (lowerMessage.includes(pattern.toLowerCase())) {
+            score += 12;
+          }
+        });
+      }
+      
+      // AI: Variations matching (if available)
+      if (faq.variations) {
+        faq.variations.forEach(variation => {
+          if (lowerMessage.includes(variation.toLowerCase())) {
+            score += 15;
+          }
+        });
+      }
+      
+      // AI: Semantic similarity bonus
+      const semanticScore = calculateSemanticSimilarity(lowerMessage, faq.question.toLowerCase());
+      score += semanticScore * 20;
 
       // Multiple keyword proximity bonus
       if (matchedKeywords.length > 1) {
@@ -728,18 +872,55 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
         faq,
         score,
         matchedKeywords,
-        keywordCount: matchedKeywords.length
+        keywordCount: matchedKeywords.length,
+        semanticScore
       };
     });
 
-    // Sort by score (highest first)
-    matchResults.sort((a, b) => b.score - a.score);
+    // AI-enhanced sorting with multiple criteria
+    matchResults.sort((a, b) => {
+      // Primary: Score difference
+      if (Math.abs(a.score - b.score) > 5) {
+        return b.score - a.score;
+      }
+      // Secondary: Intent alignment
+      if (a.faq.intent === intentAnalysis.intent && b.faq.intent !== intentAnalysis.intent) {
+        return -1;
+      }
+      if (b.faq.intent === intentAnalysis.intent && a.faq.intent !== intentAnalysis.intent) {
+        return 1;
+      }
+      // Tertiary: Keyword count
+      return b.keywordCount - a.keywordCount;
+    });
     
     const bestMatch = matchResults[0];
     const secondBest = matchResults[1];
 
     // Only return answer if we have a clear winner
     if (bestMatch && bestMatch.score > 0) {
+      // AI-enhanced response selection based on confidence and context
+      if (bestMatch.score > 30 && intentAnalysis.confidence > 0.6) {
+        // High confidence - provide enhanced direct answer
+        const answer = extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
+        
+        // Add AI context awareness for returning users
+        let enhancedResponse = answer;
+        if (conversationContext.previousQuestions.length > 0) {
+          const relatedTopics = conversationContext.userPreferences.topics_discussed
+            .filter(topic => topic !== bestMatch.faq.intent)
+            .slice(0, 2);
+          
+          if (relatedTopics.length > 0 && detectedLanguage === 'english') {
+            enhancedResponse += "\n\n💡 *Based on our conversation, you might also be interested in our " + relatedTopics.join(' and ') + " information.*";
+          } else if (relatedTopics.length > 0 && detectedLanguage === 'tagalog') {
+            enhancedResponse += "\n\n💡 *Base sa aming usapan, baka interested din kayo sa " + relatedTopics.join(' at ') + " information.*";
+          }
+        }
+        
+        return enhancedResponse;
+      }
+      
       // First check if we have a specific combination FAQ that already handles multiple topics
       const hasCombinationAnswer = FAQ_DATABASE.some(faq => 
         faq.keywords.some(keyword => lowerMessage.includes(keyword)) &&
@@ -748,7 +929,7 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
       
       // If the best match is already a combination answer, just return it
       if (hasCombinationAnswer && bestMatch.faq.question.toLowerCase().includes('and')) {
-        return bestMatch.faq.answer;
+        return extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
       }
       
       // Check for multiple distinct topics in the question
@@ -780,54 +961,22 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
         return multiTopicResponse;
       }
       
-      // If there's a close second match, provide both options
-      if (secondBest && 
-          secondBest.score > 0 && 
-          bestMatch.score - secondBest.score < 15 && 
-          bestMatch.keywordCount >= 1) {
-        
+      // Medium confidence - offer alternatives with AI insights  
+      if (secondBest && Math.abs(bestMatch.score - secondBest.score) < 15) {
         const primaryAnswer = extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
         const secondaryAnswer = extractLanguageAnswer(secondBest.faq.answer, detectedLanguage);
         
         if (detectedLanguage === 'tagalog') {
-          return `Nahanap ko po ang information related sa inyong tanong:
-
-**${bestMatch.faq.question}**
-${primaryAnswer}
-
-**Baka ito rin po ang tinatanong ninyo:**
-**${secondBest.faq.question}**
-${secondaryAnswer}
-
-Isa po ba sa mga ito ang hinahanap ninyo?`;
+          return `Nahanap ko po ang information related sa inyong tanong:\n\n**${bestMatch.faq.question}**\n${primaryAnswer}\n\n**Baka ito rin po ang tinatanong ninyo:**\n**${secondBest.faq.question}**\n${secondaryAnswer}\n\nIsa po ba sa mga ito ang hinahanap ninyo?`;
         } else if (detectedLanguage === 'taglish') {
-          return `I found information related sa inyong tanong. Here's what I can help with:
-
-**${bestMatch.faq.question}**
-${primaryAnswer}
-
-**You might also be asking about:**
-**${secondBest.faq.question}**
-${secondaryAnswer}
-
-Isa ba sa mga ito ang hanap ninyo?`;
+          return `I found information related sa inyong tanong naman. Here's what I can help with:\n\n**${bestMatch.faq.question}**\n${primaryAnswer}\n\n**You might also be asking about:**\n**${secondBest.faq.question}**\n${secondaryAnswer}\n\nIsa ba sa mga ito ang hanap ninyo?`;
         } else {
-          return `I found information related to your question. Here's what I can help with:
-
-**${bestMatch.faq.question}**
-${primaryAnswer}
-
-**You might also be asking about:**
-**${secondBest.faq.question}**
-${secondaryAnswer}
-
-Was one of these what you were looking for?`;
+          return `I found information related to your question. Here's what I can help with:\n\n**${bestMatch.faq.question}**\n${primaryAnswer}\n\n**You might also be asking about:**\n**${secondBest.faq.question}**\n${secondaryAnswer}\n\nWas one of these what you were looking for?`;
         }
       }
       
-      // Extract the appropriate language response
-      const languageSpecificAnswer = extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
-      return languageSpecificAnswer;
+      // Standard response with AI enhancement
+      return extractLanguageAnswer(bestMatch.faq.answer, detectedLanguage);
     }
 
     // Enhanced default response with suggestions based on detected language

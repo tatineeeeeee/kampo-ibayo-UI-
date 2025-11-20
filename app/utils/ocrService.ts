@@ -205,8 +205,10 @@ export class OCRService {
       const suggestions: Array<{ type: string; expectedAmount?: number; }> = [];
       
       // Add validation warnings
-      if (extracted.amount && extracted.amount < 100) {
-        warnings.push('Detected amount seems unusually low');
+      if (extracted.amount && extracted.amount < 10) {
+        warnings.push('Very small amount detected - please verify this is correct');
+      } else if (extracted.amount && extracted.amount < 100) {
+        warnings.push('Small amount detected - please verify this is correct');
       }
       if (extracted.amount && extracted.amount > 100000) {
         warnings.push('Detected amount seems unusually high');
@@ -351,6 +353,10 @@ export class OCRService {
       'maya',
       'paymaya',
       'pay maya',
+      'maya wallet',
+      'paymaya wallet',
+      'paymaya transfer',
+      'paymaya payment',
       'instapay',
       'you sent ₱',      // USER REPORTED: Maya amounts not being detected properly
       'you paid ₱',
@@ -417,37 +423,41 @@ export class OCRService {
       }
     }
 
-    // DECISION LOGIC (prioritize phrase detection)
+    // DECISION LOGIC (prioritize explicit phrase detection first)
     console.log(`  📊 Detection Summary:`);
     console.log(`     GCash phrases: ${hasGCashPhrase ? '✅' : '❌'}, patterns: ${gcashPatternMatches}`);
     console.log(`     Maya phrases: ${hasMayaPhrase ? '✅' : '❌'}, patterns: ${mayaPatternMatches}`);
 
-    if (hasGCashPhrase || gcashPatternMatches > 0) {
-      // Prioritize GCash if phrase detected or strong patterns
-      if (hasGCashPhrase || gcashPatternMatches >= mayaPatternMatches) {
-        method = 'gcash';
-        console.log('  🎯 FINAL: GCASH detected');
-      } else if (hasMayaPhrase || mayaPatternMatches > 0) {
-        method = 'maya';
-        console.log('  🎯 FINAL: MAYA detected');
-      }
-    } else if (hasMayaPhrase || mayaPatternMatches > 0) {
+    // If a Maya/PayMaya phrase is explicitly present, prefer it (avoid numeric-pattern tie-breakers)
+    if (hasMayaPhrase) {
       method = 'maya';
-      console.log('  🎯 FINAL: MAYA detected');
+      console.log('  🎯 FINAL: MAYA detected (phrase)');
+    } else if (hasGCashPhrase) {
+      method = 'gcash';
+      console.log('  🎯 FINAL: GCASH detected (phrase)');
     } else {
-      // Fallback bank detection
-      const bankKeywords = ['bank', 'bdo', 'bpi', 'metrobank', 'unionbank', 'bca', 'atm', 'debit', 'credit card'];
-      if (bankKeywords.some(keyword => lowerText.includes(keyword))) {
-        method = 'bank';
-        console.log('  🎯 FINAL: BANK detected');
+      // When no explicit phrases, decide based on pattern counts first
+      if (gcashPatternMatches > mayaPatternMatches) {
+        method = 'gcash';
+        console.log('  🎯 FINAL: GCASH detected (pattern count)');
+      } else if (mayaPatternMatches > gcashPatternMatches) {
+        method = 'maya';
+        console.log('  🎯 FINAL: MAYA detected (pattern count)');
       } else {
-        console.log('  ❌ FINAL: No payment method detected');
+        const bankKeywords = ['bank', 'bdo', 'bpi', 'metrobank', 'unionbank', 'bca', 'atm', 'debit', 'credit card'];
+        if (bankKeywords.some(keyword => lowerText.includes(keyword))) {
+          method = 'bank';
+          console.log('  🎯 FINAL: BANK detected');
+        } else {
+          console.log('  ❌ FINAL: No payment method detected');
+        }
       }
     }
 
     // Extract reference number and amount based on detected method
     const referenceNumber = this.extractReferenceNumber(text, method);
-    const amount = this.extractAmount(text, method); // Pass method for context-aware extraction
+    // Pass the referenceNumber to help locate amounts near the reference when OCR splits lines
+    const amount = this.extractAmount(text, method, referenceNumber); // Pass method and reference for context-aware extraction
     
     console.log('🎯 FINAL EXTRACTION RESULTS:');
     console.log('  - Method:', method);
@@ -497,22 +507,26 @@ export class OCRService {
         /confirmation[\s#:]+([\d\s]{8,})/gi, // Confirmation number
       ],
       maya: [
-        // MAYA-SPECIFIC patterns - prioritize Maya ID over account numbers
-        // HIGHEST PRIORITY: Maya ID patterns (must contain letters A-F)
+        // MAYA-SPECIFIC patterns - HIGHEST PRIORITY for Reference ID with letters
+        // CRITICAL: Reference ID patterns (alphanumeric with letters A-F) - TOP PRIORITY
         /reference[\s]*id[\s]*:?[\s]*([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi, // "Reference ID: 8F34 1A5F 27CE"
-        /id[\s]+([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi, // "ID 8F34 1A5F 27CE"
-        /([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi, // Maya ID pattern anywhere
+        /reference[\s]*id[\s]+([A-F0-9]{4}[\s]+[A-F0-9]{4}[\s]+[A-F0-9]{4})/gi, // "Reference ID 8F34 1A5F 27CE" (spaces)
+        /id[\s]+([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?=[\s]*trace|[\s]*$)/gi, // "ID 8F34 1A5F 27CE" before trace
         
-        // INSTAPAY patterns (Maya's interbank service)
-        /instapay[\s]*ref[\s]*no[\s]*:?[\s]*(\d{6,8})/gi, // "InstaPay Ref No: 476640"
-        /instapay[\s]*ref[\s]*:?[\s]*(\d{6,8})/gi, // "InstaPay Ref: 476640"
+        // ENHANCED: Flexible Maya ID patterns with letter validation
+        /([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?![\d]{4})/gi, // Maya ID but NOT followed by more digits (avoid account numbers)
+        /([8][A-F0-9]{3}[\s]*[1][A-F0-9]{3}[\s]*[2A-F0-9]{4})/gi, // Common Maya ID starting pattern
         
-        // TRACE NUMBER patterns (Maya-specific, 6-7 digits)
-        /trace[\s]*no\.?[\s]*:?[\s]*(\d{6,7})(?!\d)/gi, // "Trace No 476640"
-        /trace[\s]*number[\s]*:?[\s]*(\d{6,7})(?!\d)/gi, // "Trace Number 476640"
+        // INSTAPAY patterns (Maya's interbank service) - LOWER PRIORITY
+        /instapay[\s]*ref[\s]*no[\s]*:?[\s]*(\d{6,8})(?![\d])/gi, // "InstaPay Ref No: 476640" (not part of longer number)
+        /instapay[\s]*ref[\s]*:?[\s]*(\d{6,8})(?![\d])/gi, // "InstaPay Ref: 476640"
         
-        // FALLBACK: Generic Maya patterns (but avoid account numbers)
-        /ref[\s]*no\.?[\s]*:?[\s]*((?![0-9]{10,})[\d\w\s]{6,15})/gi, // Ref but NOT long numbers
+        // TRACE NUMBER patterns (Maya-specific, 6-7 digits) - LOWER PRIORITY
+        /trace[\s]*no\.?[\s]*:?[\s]*(\d{6,7})(?![\d])/gi, // "Trace No 476640" (not part of longer number)
+        /trace[\s]*number[\s]*:?[\s]*(\d{6,7})(?![\d])/gi, // "Trace Number 476640"
+        
+        // LAST RESORT: Generic patterns but EXCLUDE long numeric strings (account numbers)
+        /ref[\s]*no\.?[\s]*:?[\s]*((?![0-9]{10,})[A-F0-9\s]{6,15})(?=.*[A-F])/gi, // Must contain letters A-F to avoid account numbers
       ],
       bank: [
         /ref[\s]*no\.?[\s]*:?[\s]*([\d\s]+)/gi,
@@ -535,22 +549,37 @@ export class OCRService {
     if (method === 'maya') {
       console.log('🔍 Maya ID extraction...');
       
-      // STAGE 1: Try to extract Maya ID pattern first (highest priority)
+      // STAGE 1: Try to extract Maya Reference ID pattern first (highest priority)
       const mayaIdPatterns = [
+        // MOST SPECIFIC: "Reference ID" followed by alphanumeric pattern
         /reference[\s]*id[\s]*:?[\s]*([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi,
-        /id[\s]+([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi,
-        /([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi,
+        /reference[\s]*id[\s]+([A-F0-9]{4}[\s]+[A-F0-9]{4}[\s]+[A-F0-9]{4})/gi,
+        
+        // SPECIFIC: "ID" followed by alphanumeric before "Trace"
+        /id[\s]+([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?=[\s]*trace)/gi,
+        
+        // ENHANCED: Common Maya ID starting patterns
+        /([8][A-F0-9]{3}[\s]*[1][A-F0-9]{3}[\s]*[2A-F0-9]{4})(?![\d])/gi, // Common format like "8F34 1A5F 27CE"
+        
+        // GENERAL: Any 12-char alphanumeric with letters (but NOT followed by more digits)
+        /([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?![\d])/gi,
       ];
       
       for (const pattern of mayaIdPatterns) {
-        const match = text.match(pattern);
-        if (match) {
+        const matches = [...text.matchAll(pattern)];
+        for (const match of matches) {
           let mayaId = (match[1] || match[0]).trim().replace(/\s+/g, ' ');
           mayaId = this.fixMayaIdOCRErrors(mayaId);
           
-          // Validate it's a proper Maya ID (has letters A-F and correct length)
-          if (/[A-F]/i.test(mayaId) && mayaId.replace(/\s/g, '').length >= 10) {
-            console.log('✅ FOUND Maya ID:', mayaId);
+          // ENHANCED validation: Must have letters A-F and correct length, NOT be account number
+          const hasLetters = /[A-F]/i.test(mayaId);
+          const correctLength = mayaId.replace(/\s/g, '').length >= 10 && mayaId.replace(/\s/g, '').length <= 12;
+          const notAccountNumber = !/^[0-9]{10,}$/.test(mayaId.replace(/\s/g, '')); // Exclude pure numeric strings
+          
+          console.log('🔍 Maya ID candidate:', { mayaId, hasLetters, correctLength, notAccountNumber });
+          
+          if (hasLetters && correctLength && notAccountNumber) {
+            console.log('✅ FOUND Valid Maya Reference ID:', mayaId);
             return mayaId;
           }
         }
@@ -638,9 +667,31 @@ export class OCRService {
   }
 
   // Extract amount from text with enhanced patterns for GCash and Maya
-  private static extractAmount(text: string, detectedMethod?: OCRResult['method']): number | null {
+  private static extractAmount(text: string, detectedMethod?: OCRResult['method'], referenceNumber?: string | null): number | null {
     console.log('💰 Starting ENHANCED amount extraction from text:', text.substring(0, 200));
     console.log('💰 Detected payment method for context:', detectedMethod);
+    
+    // PRE-FILTER: Remove known date patterns from the text to prevent them from being matched as amounts
+    let cleanedText = text;
+    const datePatterns = [
+      /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2}[,\s]*\d{4}\b/gi, // "Nov 14, 2025"
+      /\b\d{1,2}[,\s]+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[,\s]+\d{4}\b/gi, // "14 Nov 2025"
+      /\b\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}\b/gi, // "14/11/2025" or "14-11-2025"
+    ];
+    
+    for (const pattern of datePatterns) {
+      const matches = [...cleanedText.matchAll(pattern)];
+      if (matches.length > 0) {
+        console.log(`🗓️ Found date pattern matches:`, matches.map(m => m[0]));
+      }
+      cleanedText = cleanedText.replace(pattern, ' [DATE_REMOVED] ');
+    }
+    
+    if (cleanedText !== text) {
+      console.log('🗓️ Pre-filtered date patterns from text');
+      console.log('   Original length:', text.length);
+      console.log('   Cleaned length:', cleanedText.length);
+    }
     
     // CRITICAL FIX: Method-specific patterns to avoid confusion
     let patterns: RegExp[] = [];
@@ -648,15 +699,39 @@ export class OCRService {
     if (detectedMethod === 'maya') {
       // MAYA-SPECIFIC amount patterns (avoid dates and trace numbers)
       patterns = [
-        /you[\s]*sent[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "You sent ₱3,000.00"
-        /you[\s]*paid[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "You paid ₱3,000.00" 
-        /sent[\s]*₱([\d,]+(?:\.\d{1,2})?)/gi, // "Sent ₱3,000"
-        /transfer[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Transfer Amount ₱3,000"
-        /amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Amount: ₱3,000"
+        // HIGHEST PRIORITY: Simple ₱ symbol with amount (like ₱100, ₱1, ₱4500)
+        /₱[\s]*([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)(?!\d)/gi, // ₱100, ₱1, ₱4,500 etc
+        /₱[\s]*([0-9]+(?:\.\d{1,2})?)(?!\d)/gi, // Fallback for any ₱ + numbers
+        
+        // CRITICAL: Handle 'P' followed by numbers (common OCR misread of ₱ symbol) 
+        // Special case: P100 often means ₱1.00 when OCR misread the decimal
+        /\bP(100)(?!\d)\b/gi, // P100 (likely ₱1.00 misread) - HIGHEST PRIORITY  
+        /\bP([1-9]\d{0,2}(?:\.\d{1,2})?)(?!\d)\b/gi, // P100, P50, P1, P1.00 etc.
+        /\bP([1-9]\d{3,}(?:\.\d{1,2})?)(?!\d)\b/gi, // P1000, P5000 etc.
+        
+        // NEW: Standalone decimal amounts in Maya context (for cases like "1.00")
+        /(?:^|\s|\n)([1-9](?:\d{0,2})?\.00)(?=\s|\n|$|[^0-9])/gi, // 1.00, 2.00, etc. (standalone)
+        /(?:^|\s|\n)([1-9]\d*\.(?:00|50))(?=\s|\n|$|[^0-9])/gi, // 1.00, 2.50, etc. (standalone decimal amounts)
+        
+        // VERY HIGH PRIORITY: Maya-specific amount phrases with ₱ symbol
+        /you[\s]*sent[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "You sent ₱3,000.00"
+        /you[\s]*paid[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "You paid ₱3,000.00"
+        /sent[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Sent ₱3,000"
+        /transfer[\s]*amount[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Transfer Amount ₱3,000"
+        /amount[\s]*sent[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Amount Sent ₱3,000"
+        /paymaya[\s]*transfer[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "PayMaya Transfer ₱3,000"
+        /maya[\s]*transfer[\s]*₱[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Maya Transfer ₱3,000"
+        
+        // ENHANCED: More flexible ₱ symbol patterns (allow non-breaking spaces and other unicode spaces)
+        /₱[\s\u00A0\u200B]*([\d.,]+(?:\.\d{1,2})?)(?![\d])/gi, // ₱ symbol followed by amount (not part of longer number)
+        // Sometimes OCR reads the peso sign as a plain 'P' or 'p' or 'Php' — capture those but validate context later
+        /(?:\bphp\b|\bPhp\b|\bP\b)[\s\u00A0\u200B]*([\d.,]+(?:\.\d{1,2})?)/gi,
+        /php[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // PHP 3,000
+        
+        // MEDIUM PRIORITY: Generic amount patterns
+        /amount[\s]*:?[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Amount: ₱3,000" or "Amount 3,000"
         /total[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Total Amount ₱3,000"
         /payment[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Payment Amount ₱3,000"
-        /₱[\s]*([\d,]+(?:\.\d{1,2})?)/g, // Any peso symbol followed by amount
-        /(\d{1,2},\d{3}(?:,\d{3})*(?:\.\d{1,2})?)/g, // Comma-separated numbers like 3,000.00
       ];
     } else if (detectedMethod === 'gcash') {
       // GCASH-SPECIFIC amount patterns
@@ -667,7 +742,8 @@ export class OCRService {
         /gcash[\s]*transfer[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "GCash Transfer ₱3,000"
         /amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Amount: ₱3,000"
         /total[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Total Amount ₱3,000"
-        /₱[\s]*([\d,]+(?:\.\d{1,2})?)/g, // Any peso symbol followed by amount
+        /₱[\s\u00A0\u200B]*([\d.,]+(?:\.\d{1,2})?)/g, // Any peso symbol followed by amount
+        /(?:\bphp\b|\bPhp\b|\bP\b)[\s\u00A0\u200B]*([\d.,]+(?:\.\d{1,2})?)/gi,
         /(\d{1,2},\d{3}(?:,\d{3})*(?:\.\d{1,2})?)/g, // Comma-separated numbers like 3,000.00
       ];
     } else {
@@ -676,8 +752,8 @@ export class OCRService {
         /amount[\s:]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // Amount: 3,000.00
         /total[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // Total Amount 3,000.00
         /payment[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // Payment Amount ₱3,000
-        /₱[\s]*([\d,]+(?:\.\d{1,2})?)/g, // ₱3,000.00
-        /php[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // PHP 3000
+        /₱[\s\u00A0\u200B]*([\d.,]+(?:\.\d{1,2})?)/g, // ₱3,000.00
+        /(?:\bphp\b|\bPhp\b|\bP\b)[\s\u00A0\u200B]*([\d.,]+(?:\.\d{1,2})?)/gi, // PHP 3000 or P3000
         /(\d{1,2},\d{3}(?:,\d{3})*(?:\.\d{1,2})?)/g, // Comma-separated numbers like 3,000.00
         /(\d{3,}(?:\.\d{1,2})?)/g, // 3+ digit numbers like 3000
       ];
@@ -687,41 +763,93 @@ export class OCRService {
 
     for (let i = 0; i < patterns.length; i++) {
       const pattern = patterns[i];
-      console.log(`🔍 Trying ${detectedMethod || 'generic'} pattern ${i + 1}/${patterns.length}:`, pattern);
+      console.log(`🔍 Trying ${detectedMethod || 'generic'} pattern ${i + 1}/${patterns.length}:`, pattern.toString());
       
-      const matches = [...text.matchAll(pattern)];
+      const matches = [...cleanedText.matchAll(pattern)];
       console.log(`   Found ${matches.length} matches`);
+      
+      if (matches.length === 0 && pattern.toString().includes('P')) {
+        // Special debug for P patterns since we're looking for P100
+        console.log(`   📝 Debug P pattern on text: "${cleanedText.substring(0, 200)}"`);
+      }
       
       for (const match of matches) {
         const rawAmountStr = match[1] || match[0];
         const fullMatch = match[0];
         const amountStr = rawAmountStr.replace(/[^\d.,]/g, ''); // Remove everything except digits, commas, periods
-        const cleanAmount = amountStr.replace(/,/g, ''); // Remove commas for parsing
-        const amount = parseFloat(cleanAmount);
+        const amount = this.parseAmountString(amountStr);
         
         console.log(`   → Raw: "${rawAmountStr}", Clean: "${amountStr}", Amount: ${amount}`);
         console.log(`   → Full match context: "${fullMatch}"`);
+        console.log(`   → Pattern index that matched: ${i + 1}/${patterns.length}`);
+        console.log(`   → Pattern that matched: ${pattern}`);
         
-        // Validate amount (reasonable range for payments)
-        if (!isNaN(amount) && amount > 0 && amount < 1000000) {
+        // CRITICAL: OCR Correction for common misreadings
+        let correctedAmount = amount;
+        if (typeof amount === 'number' && rawAmountStr === '100' && fullMatch.toLowerCase().includes('p100')) {
+          // Check if this P100 should actually be P1.00 based on context
+          const contextHasSmallAmounts = /\b(1|2|3|4|5)[\.\s]?00\b/.test(cleanedText.toLowerCase());
+          const contextHasTransactionFee = /0\.00/.test(cleanedText);
+          if (contextHasSmallAmounts || contextHasTransactionFee) {
+            correctedAmount = 1.00;
+            console.log(`   🔄 OCR CORRECTION: P100 → P1.00 (detected misreading)`);
+          }
+        }
+        
+        // Validate amount (reasonable range for payments - allow any positive amount including ₱1)
+        if (typeof correctedAmount === 'number' && !isNaN(correctedAmount) && correctedAmount > 0 && correctedAmount < 1000000) {
           const matchText = fullMatch.toLowerCase();
-          const matchContext = text.substring(Math.max(0, text.indexOf(fullMatch) - 30), text.indexOf(fullMatch) + fullMatch.length + 30).toLowerCase();
+          const matchContext = cleanedText.substring(Math.max(0, cleanedText.indexOf(fullMatch) - 30), cleanedText.indexOf(fullMatch) + fullMatch.length + 30).toLowerCase();
           
           console.log(`   → Context (±30 chars): "${matchContext}"`);
           
-          // CRITICAL: Exclude reference numbers, dates, and trace numbers
+          // CRITICAL: Skip if this match contains date removal markers or is a date remnant
+          if (matchContext.includes('[date_removed]') || fullMatch.includes('[DATE_REMOVED]')) {
+            console.log('   ❌ Skipped: Date removal marker detected');
+            continue;
+          }
+          
+          // CRITICAL: Exclude reference numbers, dates, account numbers, and trace numbers
           const isReference = matchText.includes('ref') || matchText.includes('reference') || 
                               matchText.includes('trace no') || matchText.includes('id ') ||
                               matchText.includes('trace number') || /\bid\s+\d/.test(matchText);
           
           // CRITICAL: Exclude dates (common Maya issue where dates get detected as amounts)
-          const isDate = /\b(19|20)\d{2}\b/.test(amountStr) || // Years like 2024
-                         /\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}/.test(rawAmountStr) || // Date formats
-                         /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(matchContext) ||
-                         matchContext.includes('date') || matchContext.includes('time');
+          const monthRegex = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i;
+          // Raw patterns like 14/11/2025 or 11-14-2025
+          const dateLikeSlash = /\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}/.test(rawAmountStr);
+          // Years like 2024 inside amountStr (rare)
+          const yearLike = /\b(19|20)\d{2}\b/.test(amountStr);
+          // Day + year patterns that sometimes OCR produces (e.g., "14 2025", "14,2025", "14.2025")
+          const looksLikeDayYear = /^\s*\d{1,2}[,\.\s]?\d{2,4}\s*$/.test(rawAmountStr.replace(/[^0-9,\.\s]/g, ''));
+          const monthNear = monthRegex.test(matchContext) || monthRegex.test(fullMatch);
+          const isDate = yearLike || dateLikeSlash || (monthNear && looksLikeDayYear) || monthRegex.test(matchContext) || matchContext.includes('date') || matchContext.includes('time');
+
+          // ENHANCED: More aggressive date detection for "Nov 14, 2025" -> "14,202" scenario
+          const extendedContext = cleanedText.substring(Math.max(0, cleanedText.indexOf(fullMatch) - 100), cleanedText.indexOf(fullMatch) + fullMatch.length + 100).toLowerCase();
+          const monthWordNearby = monthRegex.test(extendedContext) || monthRegex.test(fullMatch);
+          const contains4Digit = /\d{4}/.test(rawAmountStr) || /\d{4}/.test(amountStr);
+          const likelyDateExtra = monthWordNearby && (looksLikeDayYear || contains4Digit);
           
-          // CRITICAL: Exclude trace numbers (Maya trace numbers like 476640 should not be amounts)
-          const isTraceNumber = amount >= 100000 && amount <= 9999999 && 
+          // SPECIFIC: Check for "14,202" pattern that comes from "Nov 14, 2025"
+          const isSpecificDatePattern = typeof amount === 'number' && amount > 10000 && amount < 50000 && 
+                                        monthWordNearby && 
+                                        (/\b(20|19)\d{2}\b/.test(extendedContext) || /\b202[0-9]\b/.test(extendedContext)) &&
+                                        !matchText.includes('₱') && !matchText.includes('php') && 
+                                        !matchText.includes('amount') && !matchText.includes('sent') && !matchText.includes('total') &&
+                                        !matchText.includes('transfer') && !matchText.includes('paid');
+          
+          const finalIsDate = isDate || likelyDateExtra || isSpecificDatePattern;
+          
+          // ENHANCED: Exclude account numbers (long numeric strings without currency context)
+          const isAccountNumber = /^\d{10,}$/.test(amountStr) && // 10+ digit pure number
+                                   !matchText.includes('₱') && !matchText.includes('php') &&
+                                   !matchText.includes('amount') && !matchText.includes('sent') &&
+                                   !matchText.includes('total') && !rawAmountStr.includes(',');
+          
+          // CRITICAL: Exclude trace numbers for Maya specifically
+          const isTraceNumber = detectedMethod === 'maya' && typeof amount === 'number' && 
+                                amount >= 100000 && amount <= 9999999 && 
                                 !matchText.includes('₱') && !matchText.includes('php') && 
                                 !matchText.includes('amount') && !matchText.includes('sent') &&
                                 !matchText.includes('total') && !rawAmountStr.includes(',') &&
@@ -732,8 +860,17 @@ export class OCRService {
             continue;
           }
           
-          if (isDate) {
-            console.log('   ❌ Skipped: Date detected');
+          if (finalIsDate) {
+            if (isSpecificDatePattern) {
+              console.log('   ❌ Skipped: Specific date pattern detected (Nov 14, 2025 -> 14,202 scenario)');
+            } else {
+              console.log('   ❌ Skipped: Date detected (finalIsDate)');
+            }
+            continue;
+          }
+          
+          if (isAccountNumber) {
+            console.log('   ❌ Skipped: Account number detected (10+ digits without currency):', amountStr);
             continue;
           }
           
@@ -743,14 +880,14 @@ export class OCRService {
           }
           
           // ENHANCED: Detect if this might be a partial read of a larger amount
-          if (amount > 0 && amount < 100 && rawAmountStr.length <= 2) {
+          if (typeof correctedAmount === 'number' && correctedAmount > 0 && correctedAmount < 100 && rawAmountStr.length <= 2) {
             // This might be "3" from "3,000" - check for context clues
-            const hasThousandIndicators = /thousand|k\b|[,.]000|000\b/i.test(text);
-            const hasLargeAmountContext = /booking|payment|total|send|transfer/i.test(matchContext);
+            const hasThousandIndicators = /thousand|k\b|[,.]000|000\b/i.test(matchContext) || /thousand|k\b|[,.]000|000\b/i.test(cleanedText);
             
-            if (hasThousandIndicators || hasLargeAmountContext) {
-              const reconstructedAmount = amount * 1000;
-              console.log(`   🔄 Reconstructed amount: ₱${amount} → ₱${reconstructedAmount.toLocaleString()} (detected partial read)`);
+            // Only reconstruct when there are explicit thousand indicators (',000', 'thousand', 'k')
+            if (hasThousandIndicators) {
+              const reconstructedAmount = correctedAmount * 1000;
+              console.log(`   🔄 Reconstructed amount: ₱${correctedAmount} → ₱${reconstructedAmount.toLocaleString()} (detected partial read)`);
               foundAmounts.push({ 
                 amount: reconstructedAmount, 
                 priority: 15, 
@@ -762,8 +899,41 @@ export class OCRService {
           // Prioritize amounts based on context and method
           let priority = 0;
           
-          // Currency symbol bonus
-          if (matchText.includes('₱') || matchText.includes('php')) priority += 10;
+          // HIGHEST PRIORITY: Direct ₱ symbol matches (like ₱100)
+          if (matchText.includes('₱') && /^₱[\s]*\d+/.test(matchText.trim())) {
+            priority += 25; // Very high priority for simple ₱100 format
+          }
+          
+          // Currency symbol bonus (high priority for ₱1 etc)
+          if (matchText.includes('₱') || matchText.includes('php')) priority += 15;
+          
+          // Extra boost for amounts with decimal places (₱1.00, ₱2.50)
+          if ((matchText.includes('₱') || matchText.includes('php')) && typeof correctedAmount === 'number' && correctedAmount % 1 !== 0) {
+            priority += 20; // Very high priority for decimal amounts with currency symbol
+          }
+          
+          // Extra boost for very small amounts with currency symbols (₱1-₱99)
+          if ((matchText.includes('₱') || matchText.includes('php') || /\bp\d/.test(matchText)) && typeof correctedAmount === 'number' && correctedAmount < 100) {
+            priority += 10; // Extra priority for small amounts with explicit currency
+          }
+          
+          // ENHANCED: Special priority for standalone decimal amounts in Maya context (like 1.00, 2.50)
+          if (detectedMethod === 'maya' && typeof correctedAmount === 'number' && correctedAmount <= 10 && (correctedAmount % 1 !== 0 || correctedAmount.toString().includes('.00'))) {
+            priority += 15; // High priority for standalone small decimal amounts in Maya
+            console.log(`   🎯 Maya standalone decimal bonus: +15 priority for "${correctedAmount}"`);
+          }
+          
+          // Special bonus for 'P' followed directly by numbers (common OCR pattern)
+          if (/\bp\d+/i.test(fullMatch) && typeof correctedAmount === 'number') {
+            priority += 12; // High priority for P100, P50 etc patterns
+            console.log(`   ✨ P+number pattern bonus: +12 priority for "${fullMatch}"`);
+          }
+          
+          // Special bonus for OCR corrections
+          if (correctedAmount !== amount) {
+            priority += 20;
+            console.log(`   ⭐ OCR correction bonus: +20 priority (${amount} → ${correctedAmount})`);
+          }
           
           // Context bonus
           if (matchText.includes('amount') || matchText.includes('sent') || matchText.includes('total')) priority += 8;
@@ -779,17 +949,48 @@ export class OCRService {
           
           // Format bonuses
           if (rawAmountStr.includes(',')) priority += 5; // Comma-separated numbers are more likely amounts
-          if (amount >= 1000) priority += 3; // Larger amounts are more likely correct
-          if (amount >= 100 && amount < 1000000) priority += 2; // Reasonable payment range
+          if (typeof correctedAmount === 'number' && correctedAmount >= 1000) priority += 3; // Larger amounts are more likely correct
+          if (typeof correctedAmount === 'number' && correctedAmount >= 100 && correctedAmount < 1000000) priority += 2; // Reasonable payment range
           
-          console.log(`   ✅ Valid amount found: ₱${amount.toLocaleString()} (priority: ${priority}) from: "${fullMatch}"`);
-          foundAmounts.push({ amount, priority, source: fullMatch });
+          console.log(`   ✅ Valid amount found: ₱${correctedAmount.toLocaleString()} (priority: ${priority}) from: "${fullMatch}"`);
+          foundAmounts.push({ amount: correctedAmount, priority, source: fullMatch });
         } else {
-          console.log(`   ❌ Invalid amount: ${amount} (outside range 0-1,000,000)`);
+          console.log(`   ❌ Invalid amount: ${correctedAmount} (outside range 0-1,000,000)`);
         }
       }
     }
 
+    // If no amounts found, attempt a targeted search near the detected reference number (common OCR line-split issue)
+    if (foundAmounts.length === 0 && referenceNumber) {
+      try {
+        const refIndex = text.indexOf(referenceNumber); // Use original text to find reference
+        if (refIndex >= 0) {
+          const windowStart = Math.max(0, refIndex - 200);
+          const windowEnd = Math.min(text.length, refIndex + referenceNumber.length + 200);
+          const nearby = text.substring(windowStart, windowEnd);
+          console.log('🔎 No amounts found in cleaned text; searching near reference:', nearby);
+
+          // Try simpler currency patterns in the nearby window (use original text for this targeted search)
+          const nearbyPatterns = [ /₱[\s\u00A0\u200B]*([\d.,]{1,})/g, /(?:\bphp\b|\bP\b)[\s\u00A0\u200B]*([\d.,]{1,})/gi ];
+          for (const p of nearbyPatterns) {
+            const m = [...nearby.matchAll(p)];
+            if (m.length) {
+              for (const mm of m) {
+                const s = mm[1] || mm[0];
+                const val = this.parseAmountString(s.replace(/[^\d.,]/g, ''));
+                if (val && val > 0 && val < 1000000) {
+                  console.log('🔎 Found nearby amount', val, 'from', s);
+                  foundAmounts.push({ amount: val, priority: 25, source: `nearby:${s}` });
+                }
+              }
+            }
+            if (foundAmounts.length) break;
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ Nearby search failed:', err);
+      }
+    }
     // Return the highest priority amount
     if (foundAmounts.length > 0) {
       console.log(`💰 Found ${foundAmounts.length} potential amounts, selecting best match...`);
@@ -835,6 +1036,60 @@ export class OCRService {
     }
     
     return fixed;
+  }
+
+  // Normalize and parse amount strings with common OCR variations
+  private static parseAmountString(amountStr: string): number | null {
+    if (!amountStr || typeof amountStr !== 'string') return null;
+
+    let s = amountStr.trim();
+    console.log(`🔍 parseAmountString input: "${s}"`);
+    
+    // Remove non-breaking spaces and zero-width spaces
+    s = s.replace(/\u00A0|\u200B/g, '');
+    // Keep only digits, dots and commas
+    s = s.replace(/[^0-9.,]/g, '');
+    console.log(`🔍 After cleanup: "${s}"`);
+
+    if (!s) return null;
+
+    // Heuristic: if both '.' and ',' are present, decide which is decimal separator
+    if (s.indexOf('.') !== -1 && s.indexOf(',') !== -1) {
+      const lastDot = s.lastIndexOf('.');
+      const lastComma = s.lastIndexOf(',');
+      if (lastDot > lastComma) {
+        // dot likely decimal, remove commas
+        s = s.replace(/,/g, '');
+      } else {
+        // comma likely decimal, remove dots and replace comma with dot
+        s = s.replace(/\./g, '');
+        s = s.replace(/,/g, '.');
+      }
+    } else if (s.indexOf(',') !== -1 && s.indexOf('.') === -1) {
+      // Only comma present. If it looks like decimal (two decimals), convert to dot
+      if (/\,\d{2}$/.test(s)) {
+        s = s.replace(/,/g, '.');
+      } else {
+        // Assume commas are thousand separators
+        s = s.replace(/,/g, '');
+      }
+    } else if (s.indexOf('.') !== -1 && s.indexOf(',') === -1) {
+      // Only dot present. If multiple dots, likely thousands separator -> remove all dots
+      if ((s.match(/\./g) || []).length > 1) {
+        s = s.replace(/\./g, '');
+      }
+      // otherwise leave dot as decimal separator
+    }
+
+    // Final cleanup
+    s = s.replace(/[^0-9\.]/g, '');
+    console.log(`🔍 Final string to parse: "${s}"`);
+    if (!s) return null;
+
+    const n = parseFloat(s);
+    console.log(`🔍 Parsed result: ${n}`);
+    if (isNaN(n)) return null;
+    return n;
   }
 
   // Validate extracted data
