@@ -597,7 +597,7 @@ export class ModernReceiptService {
     // Payment summary box - full width
     pdf.setFillColor(...goldColor);
     pdf.rect(10, 170, 190, 40, 'F');
-    
+
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
@@ -607,7 +607,7 @@ export class ModernReceiptService {
     pdf.setFontSize(12);
     pdf.text(`Accommodation: ₱${data.booking.total_amount.toLocaleString()}`, 25, 193);
     pdf.text(`Service Fee: ₱0.00`, 25, 199);
-    
+
     // Total
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
@@ -628,7 +628,7 @@ export class ModernReceiptService {
     pdf.setFontSize(8);
     pdf.setTextColor(127, 140, 141);
     pdf.text(`Hours: ${this.COMPANY_DETAILS.hours} | Check-in: ${this.COMPANY_DETAILS.checkIn} | Check-out: ${this.COMPANY_DETAILS.checkOut}`, 25, 250);
-    pdf.text(`Follow us: ${this.COMPANY_DETAILS.facebook}`, 25, 255);    return Buffer.from(pdf.output('arraybuffer'));
+    pdf.text(`Follow us: ${this.COMPANY_DETAILS.facebook}`, 25, 255); return Buffer.from(pdf.output('arraybuffer'));
   }
 
   /**
