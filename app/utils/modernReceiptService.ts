@@ -638,11 +638,17 @@ export class ModernReceiptService {
     let browser: Browser | null = null;
 
     try {
-      console.log('Starting Puppeteer PDF generation...');
+      console.log('🚀 Starting Puppeteer PDF generation...');
+      console.log('📊 Environment check:', {
+        NODE_ENV: process.env.NODE_ENV,
+        VERCEL: !!process.env.VERCEL,
+        platform: process.platform,
+        hasChromium: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD !== 'true'
+      });
 
-      // Launch browser with Windows-optimized settings
+      // Enhanced Vercel-optimized browser launch
       browser = await puppeteer.launch({
-        headless: true,
+        headless: true, // Fixed: use boolean instead of 'new'
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -657,11 +663,21 @@ export class ModernReceiptService {
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding',
-          '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection'
+          '--disable-features=TranslateUI,VizDisplayCompositor',
+          '--disable-ipc-flooding-protection',
+          '--disable-web-security',
+          '--disable-features=site-per-process',
+          '--single-process', // Critical for Vercel
+          '--memory-pressure-off'
         ],
-        timeout: 30000
+        timeout: 30000,
+        // Force Puppeteer to use bundled Chromium on Vercel
+        ...(process.env.VERCEL && {
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser'
+        })
       });
+
+      console.log('✅ Browser launched successfully');
 
       const page = await browser.newPage();
 
@@ -672,6 +688,8 @@ export class ModernReceiptService {
         deviceScaleFactor: 2
       });
 
+      console.log('📄 Setting page content...');
+
       // Generate and set HTML content
       const html = this.generateReceiptHTML(data);
       await page.setContent(html, {
@@ -679,13 +697,20 @@ export class ModernReceiptService {
         timeout: 20000
       });
 
-      // Wait for fonts to load
-      await page.evaluate(() => {
-        return Promise.all([
-          document.fonts.ready,
-          new Promise(resolve => setTimeout(resolve, 1000))
-        ]);
-      });
+      console.log('⏳ Waiting for fonts to load...');
+
+      // Wait for fonts to load with timeout
+      await Promise.race([
+        page.evaluate(() => {
+          return Promise.all([
+            document.fonts.ready,
+            new Promise(resolve => setTimeout(resolve, 2000))
+          ]);
+        }),
+        new Promise(resolve => setTimeout(resolve, 5000)) // 5 second max wait
+      ]);
+
+      console.log('🖨️ Generating PDF...');
 
       // Generate PDF with luxury settings
       const pdfBuffer = await page.pdf({
@@ -701,7 +726,8 @@ export class ModernReceiptService {
         timeout: 30000
       });
 
-      console.log('Puppeteer PDF generated successfully');
+      console.log('✅ Puppeteer PDF generated successfully!');
+      console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
       return Buffer.from(pdfBuffer);
 
     } catch (error) {
