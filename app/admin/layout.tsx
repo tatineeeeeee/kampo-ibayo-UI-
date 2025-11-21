@@ -9,7 +9,6 @@ import {
   CreditCard, 
   BarChart3, 
   Settings, 
-  HelpCircle,
   Star,
   Home,
   Camera
@@ -63,9 +62,6 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
             <Settings className="w-5 h-5" /> Settings
-          </Link>
-          <Link href="/admin/help" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/help') ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50'}`}>
-            <HelpCircle className="w-5 h-5" /> Help
           </Link>
         </nav>
         
@@ -189,9 +185,6 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
             <Settings className="w-5 h-5" /> Settings
-          </Link>
-          <Link href="/admin/help" className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive('/admin/help') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}>
-            <HelpCircle className="w-5 h-5" /> Help
           </Link>
         </nav>
         
