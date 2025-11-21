@@ -99,8 +99,22 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log('📄 Starting PDF generation for email...');
+    console.log('🔍 Receipt data validation passed');
+    console.log('🛠️ Calling ModernReceiptService.generateReceiptBlob...');
+
     // Generate PDF buffer with modern HTML/CSS design and your logo
     const pdfBuffer = await ModernReceiptService.generateReceiptBlob(receiptData);
+
+    console.log('✅ PDF generation for email completed!');
+    console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
+    
+    // Check if we got the fallback PDF (jsPDF is typically smaller)
+    if (pdfBuffer.length < 50000) {
+      console.log('⚠️ WARNING: Email PDF size suggests fallback jsPDF was used instead of Puppeteer');
+    } else {
+      console.log('🎉 SUCCESS: Email PDF size suggests Puppeteer was used (high quality)');
+    }
 
     // Setup email transporter
     const transporter = nodemailer.createTransport({

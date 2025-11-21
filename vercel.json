@@ -11,7 +11,11 @@
   },
   "build": {
     "env": {
-      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
+      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true",
+      "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/google-chrome-stable"
     }
+  },
+  "env": {
+    "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/google-chrome-stable"
   }
 }

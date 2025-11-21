@@ -3,6 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 import { ModernReceiptService } from '../../../utils/modernReceiptService';
 
 export async function POST(request: NextRequest) {
+  console.log('🚀 PDF Download API - Starting receipt generation...');
+  console.log('📊 Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL: !!process.env.VERCEL,
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
+    timestamp: new Date().toISOString()
+  });
+
   try {
     const { bookingId, userEmail, userName } = await request.json();
 
@@ -98,8 +106,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log('📄 Starting PDF generation process...');
+    console.log('🔍 Receipt data validation passed');
+    console.log('🛠️ Calling ModernReceiptService.generatePDFReceipt...');
+
     // Generate PDF with modern HTML/CSS design and your logo
     const pdfBuffer = await ModernReceiptService.generatePDFReceipt(receiptData);
+
+    console.log('✅ PDF generation completed successfully!');
+    console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
+    console.log('🔍 PDF buffer type:', typeof pdfBuffer);
+
+    // Check if we got the fallback PDF (jsPDF is typically smaller)
+    if (pdfBuffer.length < 50000) {
+      console.log('⚠️ WARNING: PDF size suggests fallback jsPDF was used instead of Puppeteer');
+    } else {
+      console.log('🎉 SUCCESS: PDF size suggests Puppeteer was used (high quality)');
+    }
 
     // Return PDF as downloadable response  
     const uint8Array = new Uint8Array(pdfBuffer);

@@ -3,6 +3,7 @@
  * Uses Puppeteer for professional PDF generation with luxury design
  */
 import puppeteer, { Browser } from 'puppeteer';
+import chromium from '@sparticuz/chromium';
 import { jsPDF } from 'jspdf';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -648,33 +649,17 @@ export class ModernReceiptService {
 
       // Enhanced Vercel-optimized browser launch
       browser = await puppeteer.launch({
-        headless: true, // Fixed: use boolean instead of 'new'
-        args: [
+        headless: true,
+        args: process.env.VERCEL ? chromium.args : [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
           '--no-first-run',
-          '--no-default-browser-check',
-          '--disable-default-apps',
-          '--disable-extensions',
-          '--disable-sync',
-          '--disable-translate',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-features=TranslateUI,VizDisplayCompositor',
-          '--disable-ipc-flooding-protection',
-          '--disable-web-security',
-          '--disable-features=site-per-process',
-          '--single-process', // Critical for Vercel
-          '--memory-pressure-off'
+          '--no-default-browser-check'
         ],
         timeout: 30000,
-        // Force Puppeteer to use bundled Chromium on Vercel
-        ...(process.env.VERCEL && {
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser'
-        })
+        executablePath: process.env.VERCEL ? await chromium.executablePath() : undefined
       });
 
       console.log('✅ Browser launched successfully');
@@ -731,19 +716,24 @@ export class ModernReceiptService {
       return Buffer.from(pdfBuffer);
 
     } catch (error) {
-      console.error('Puppeteer PDF generation failed:', error);
-      console.error('Error details:', {
+      console.error('🚨 PUPPETEER PDF GENERATION FAILED:', error);
+      console.error('🔍 Error details:', {
         name: error instanceof Error ? error.name : 'Unknown',
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         environment: process.env.NODE_ENV,
         platform: process.platform,
-        vercel: !!process.env.VERCEL
+        vercel: !!process.env.VERCEL,
+        puppeteerSkip: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
+        timestamp: new Date().toISOString()
       });
-      console.log('Falling back to luxury jsPDF implementation...');
+      console.log('🔄 Falling back to luxury jsPDF implementation...');
 
       // Use luxury jsPDF fallback
-      return this.generateLuxuryFallbackPDF(data);
+      const fallbackBuffer = this.generateLuxuryFallbackPDF(data);
+      console.log('✅ Fallback PDF generated successfully');
+      console.log('📊 Fallback PDF size:', fallbackBuffer.length, 'bytes');
+      return fallbackBuffer;
 
     } finally {
       if (browser) {
