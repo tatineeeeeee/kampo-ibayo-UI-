@@ -706,6 +706,14 @@ export class ModernReceiptService {
 
     } catch (error) {
       console.error('Puppeteer PDF generation failed:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        environment: process.env.NODE_ENV,
+        platform: process.platform,
+        vercel: !!process.env.VERCEL
+      });
       console.log('Falling back to luxury jsPDF implementation...');
 
       // Use luxury jsPDF fallback

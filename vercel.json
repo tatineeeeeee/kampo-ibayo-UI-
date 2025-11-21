@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "app/api/user/generate-receipt/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/user/download-receipt/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
