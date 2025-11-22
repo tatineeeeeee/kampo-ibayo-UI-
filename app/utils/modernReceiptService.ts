@@ -82,9 +82,7 @@ export class ModernReceiptService {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt - ${data.receiptNumber}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
-        
+    <style>        
         * {
             margin: 0;
             padding: 0;
@@ -92,7 +90,7 @@ export class ModernReceiptService {
         }
         
         body {
-            font-family: 'Inter', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.4;
             color: #2c3e50;
             background: white;
@@ -157,7 +155,7 @@ export class ModernReceiptService {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
             font-size: 10px;
             text-align: center;
@@ -173,7 +171,7 @@ export class ModernReceiptService {
         }
         
         .company-name {
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 5px;
@@ -205,7 +203,7 @@ export class ModernReceiptService {
         }
         
         .receipt-title h1 {
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 28px;
             font-weight: 600;
             color: #2c3e50;
@@ -233,7 +231,7 @@ export class ModernReceiptService {
         }
         
         .info-section h3 {
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 16px;
             color: #2c3e50;
             margin-bottom: 12px;
@@ -269,7 +267,7 @@ export class ModernReceiptService {
         }
         
         .summary-title {
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 20px;
             color: #2c3e50;
             text-align: center;
@@ -304,7 +302,7 @@ export class ModernReceiptService {
         }
         
         .total-amount {
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 18px;
             font-weight: 700;
             color: #d4af37;
@@ -320,7 +318,7 @@ export class ModernReceiptService {
         }
         
         .thank-you {
-            font-family: 'Playfair Display', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 18px;
             color: #2c3e50;
             margin-bottom: 10px;
@@ -650,7 +648,14 @@ export class ModernReceiptService {
       // Enhanced Vercel-optimized browser launch
       browser = await puppeteer.launch({
         headless: true,
-        args: process.env.VERCEL ? chromium.args : [
+        args: process.env.VERCEL ? [
+          ...chromium.args,
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding'
+        ] : [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
@@ -682,18 +687,10 @@ export class ModernReceiptService {
         timeout: 20000
       });
 
-      console.log('⏳ Waiting for fonts to load...');
+      console.log('⏳ Page content loaded, generating PDF immediately...');
 
-      // Wait for fonts to load with timeout
-      await Promise.race([
-        page.evaluate(() => {
-          return Promise.all([
-            document.fonts.ready,
-            new Promise(resolve => setTimeout(resolve, 2000))
-          ]);
-        }),
-        new Promise(resolve => setTimeout(resolve, 5000)) // 5 second max wait
-      ]);
+      // No need to wait for fonts since we're using system fonts
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay to ensure rendering
 
       console.log('🖨️ Generating PDF...');
 

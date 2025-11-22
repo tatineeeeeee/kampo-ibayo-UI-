@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ PDF generation for email completed!');
     console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
-    
+
     // Check if we got the fallback PDF (jsPDF is typically smaller)
     if (pdfBuffer.length < 50000) {
       console.log('⚠️ WARNING: Email PDF size suggests fallback jsPDF was used instead of Puppeteer');

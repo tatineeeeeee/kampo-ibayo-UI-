@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const paymentProof = paymentProofs[0];
 
     // Check if booking has been rescheduled by comparing created_at with updated_at
-    const isRescheduled = booking.updated_at && 
+    const isRescheduled = booking.updated_at &&
       new Date(booking.updated_at).getTime() > new Date(booking.created_at).getTime() + (5 * 60 * 1000); // 5 min buffer
 
     // Generate receipt data with reschedule detection
