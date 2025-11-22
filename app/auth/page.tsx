@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useToastHelpers } from "../components/Toast";
 import { cleanPhoneForDatabase, formatPhoneForDisplay, validatePhilippinePhone } from "../utils/phoneUtils";
+import { withAuthTimeout, TimeoutError } from "../utils/apiTimeout";
 import Image from "next/image";
 
 export default function AuthPage() {
@@ -26,6 +27,7 @@ export default function AuthPage() {
   const [formKey, setFormKey] = useState(0); // Force form refresh
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [forcePasswordReset, setForcePasswordReset] = useState(() => {
     // Check localStorage on initial load for password reset state
     if (typeof window !== 'undefined') {
@@ -597,7 +599,7 @@ export default function AuthPage() {
   }
 }
 
-  // 🔹 Handle forgot password
+  // 🔹 Handle forgot password - OPTIMIZED with timeout protection
   const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -608,10 +610,17 @@ export default function AuthPage() {
       return;
     }
 
+    setIsSendingResetEmail(true);
+
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
-      });
+      // Use timeout protection for faster response
+      const { error } = await withAuthTimeout(
+        () => supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth`,
+        }),
+        8000, // 8 second timeout for email operations
+        1 // 1 retry attempt
+      );
 
       if (error) {
         console.error("Password reset error:", error);
@@ -622,15 +631,23 @@ export default function AuthPage() {
         } else {
           showError("Reset Failed", error.message);
         }
-        return;
+      } else {
+        setResetEmailSent(true);
+        passwordResetSent();
+        console.log("✅ Password reset email sent successfully");
       }
-
-      setResetEmailSent(true);
-      passwordResetSent();
-      console.log("✅ Password reset email sent successfully");
     } catch (error: unknown) {
-      console.error("Unexpected password reset error:", error);
-      showError("Reset Error", "An unexpected error occurred. Please try again.");
+      console.error("Password reset error:", error);
+      
+      if (error instanceof TimeoutError) {
+        // Always show success message for timeouts to prevent email enumeration
+        info("Reset Email Sent", "If an account with this email exists, you will receive a password reset link shortly. This may take up to 5 minutes.");
+        setResetEmailSent(true);
+      } else {
+        showError("Reset Error", "An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsSendingResetEmail(false);
     }
   }
 
@@ -1281,14 +1298,15 @@ export default function AuthPage() {
           {showForgotPassword && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
               <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl mx-2">
-                <div className="text-center mb-4 sm:mb-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Reset Password</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">
-                    Enter your email address and we&apos;ll send you a link to reset your password.
-                  </p>
-                </div>
-
-                {resetEmailSent ? (
+                  <div className="text-center mb-4 sm:mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Reset Password</h3>
+                    <p className="text-gray-600 text-xs sm:text-sm mb-2">
+                      Enter your email address and we&apos;ll send you a link to reset your password.
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      📧 Email delivery may take 2-5 minutes. Check your spam folder if needed.
+                    </p>
+                  </div>                {resetEmailSent ? (
                   <div className="text-center">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
                       <div className="text-green-600 font-semibold mb-1 text-sm sm:text-base">Email Sent!</div>
@@ -1332,9 +1350,17 @@ export default function AuthPage() {
                       </button>
                       <button
                         type="submit"
-                        className="w-full sm:w-1/2 bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-red-600 transition text-xs sm:text-sm order-1 sm:order-2"
+                        disabled={isSendingResetEmail}
+                        className="w-full sm:w-1/2 bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-red-600 transition text-xs sm:text-sm order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
-                        Send Reset Link
+                        {isSendingResetEmail ? (
+                          <>
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            Sending...
+                          </>
+                        ) : (
+                          'Send Reset Link'
+                        )}
                       </button>
                     </div>
                   </form>

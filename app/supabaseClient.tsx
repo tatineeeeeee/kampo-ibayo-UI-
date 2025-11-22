@@ -12,4 +12,13 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'supabase.auth.token',
   },
+  global: {
+    headers: {
+      'x-application-name': 'kampo-ibayo-resort',
+    },
+  },
+  // Add timeout configuration for better performance
+  realtime: {
+    timeout: 30000, // 30 seconds
+  },
 });
