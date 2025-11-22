@@ -12,6 +12,9 @@ import {
 // Professional Receipt Data Interfaces
 export interface Booking {
   id: string;
+  guest_name: string; // Guest name from booking form
+  guest_email: string; // Guest email from booking
+  guest_phone?: string; // Guest phone number
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
@@ -44,8 +47,7 @@ export interface CompanyDetails {
 export interface ReceiptData {
   booking: Booking;
   paymentProof: PaymentProof;
-  userEmail: string;
-  userName: string;
+  userEmail: string; // User's account email (for system reference)
   userPhone?: string; // For SMS notifications
   receiptNumber: string;
   generatedAt: string;
@@ -577,18 +579,18 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
 
                   <View style={styles.dataRow}>
                     <Text style={styles.dataLabel}>Guest Name:</Text>
-                    <Text style={styles.dataValue}>{data.userName}</Text>
+                    <Text style={styles.dataValue}>{data.booking.guest_name}</Text>
                   </View>
 
                   <View style={styles.dataRow}>
                     <Text style={styles.dataLabel}>Email Address:</Text>
-                    <Text style={styles.dataValue}>{data.userEmail}</Text>
+                    <Text style={styles.dataValue}>{data.booking.guest_email}</Text>
                   </View>
 
-                  {data.userPhone && (
+                  {data.booking.guest_phone && (
                     <View style={styles.dataRow}>
                       <Text style={styles.dataLabel}>Phone Number:</Text>
-                      <Text style={styles.dataValue}>{data.userPhone}</Text>
+                      <Text style={styles.dataValue}>{data.booking.guest_phone}</Text>
                     </View>
                   )}
 
@@ -915,9 +917,10 @@ export class ReactPdfReceiptService {
       // Required field validation
       if (
         !data?.booking?.id ||
+        !data?.booking?.guest_name ||
+        !data?.booking?.guest_email ||
         !data?.paymentProof ||
         !data?.userEmail ||
-        !data?.userName ||
         !data?.receiptNumber ||
         !data?.companyDetails
       ) {
@@ -948,8 +951,13 @@ export class ReactPdfReceiptService {
 
       // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.booking.guest_email)) {
+        console.error("❌ Invalid guest email format");
+        return false;
+      }
+
       if (!emailRegex.test(data.userEmail)) {
-        console.error("❌ Invalid email format");
+        console.error("❌ Invalid user email format");
         return false;
       }
 
