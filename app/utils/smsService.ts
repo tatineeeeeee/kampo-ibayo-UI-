@@ -1,4 +1,5 @@
 import { formatPhoneToInternational } from './phoneUtils';
+import { formatBookingNumber } from './bookingNumber';
 
 export interface SMSData {
   phone: string;
@@ -62,9 +63,9 @@ export const sendSMS = async (smsData: SMSData): Promise<SMSResponse> => {
 
   } catch (error) {
     console.error('❌ SMS sending failed:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Network error sending SMS' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Network error sending SMS'
     };
   }
 };
@@ -78,7 +79,8 @@ export const createBookingConfirmationSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Dear ${guestName}, your booking ${bookingId} is confirmed! Check-in date: ${checkInDate} at 3:00 PM. Contact us: 09662815123`;
+  const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Booking ${formattedBookingNumber} received. Please upload payment proof to complete. Check-in: ${checkInDate} 3PM. Thanks!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -87,7 +89,18 @@ export const createBookingApprovalSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Hi ${guestName}! Great news - booking ${bookingId} approved by admin. Check-in: ${checkInDate} 3PM. We can't wait to see you!`;
+  const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
+  const baseMessage = `KAMPO IBAYO: Great news ${guestName}! Booking ${formattedBookingNumber} CONFIRMED! Your getaway awaits on ${checkInDate} at 3PM. See you soon!`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
+};
+
+export const createPaymentApprovedSMS = (
+  bookingId: string,
+  guestName: string,
+  checkInDate: string
+): string => {
+  const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
+  const baseMessage = `KAMPO IBAYO: Hello ${guestName}! Payment approved for ${formattedBookingNumber}. Booking confirmation pending. Check-in: ${checkInDate} 3PM. Contact: 09662815123`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -95,7 +108,7 @@ export const createBookingReminderSMS = (
   guestName: string,
   checkInDate: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Hello ${guestName}! Friendly reminder: Your amazing stay begins tomorrow ${checkInDate}. Check-in starts at 3PM. Safe travels!`;
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Your relaxing getaway starts tomorrow ${checkInDate} at 3PM. Pool is ready, rooms are clean. Drive safe!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -103,6 +116,35 @@ export const createBookingCancellationSMS = (
   bookingId: string,
   guestName: string
 ): string => {
-  const baseMessage = `KAMPO IBAYO RESORT: Dear ${guestName}, booking ${bookingId} has been cancelled. Refund will be processed within 5-10 business days. Call: 09662815123`;
+  const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}, booking ${formattedBookingNumber} cancelled. Refund processing 5-10 days. Hope to welcome you soon! Call: 09662815123`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
+};
+
+export const createBookingRescheduleSMS = (
+  bookingId: string,
+  guestName: string,
+  newCheckInDate: string
+): string => {
+  const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Booking ${formattedBookingNumber} rescheduled to ${newCheckInDate}. Upload new payment proof if needed. See you then!`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
+};
+
+export const createPaymentRejectedSMS = (
+  bookingId: string,
+  guestName: string,
+  reason?: string
+): string => {
+  const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}, payment for ${formattedBookingNumber} needs review. Please resubmit payment proof. Contact: 09662815123`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
+};
+
+export const createCheckInDaySMS = (
+  guestName: string,
+  checkInTime: string = "3PM"
+): string => {
+  const baseMessage = `KAMPO IBAYO: Welcome day ${guestName}! Your room is ready for ${checkInTime} check-in. Pool towels & amenities prepared. Drive safe, see you soon!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };

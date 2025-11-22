@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       'approve': 'verified',  // Changed from 'approved' to 'verified'
       'reject': 'rejected'
     };
-    
+
     const newStatus = statusMap[action as keyof typeof statusMap];
     console.log('📝 Server: Mapping action to status:', { action, newStatus });
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Update payment proof with service role permissions (without verified_by field)
     console.log('💾 Server: Attempting database update with status:', newStatus);
-    
+
     const { data: paymentProof, error: updateError } = await supabase
       .from('payment_proofs')
       .update({
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       .eq('id', proofId)
       .select('*, bookings(id, user_id, guest_email, check_in_date, check_out_date, number_of_guests, total_amount)')
       .single();
-      
+
     console.log('💾 Server: Database update result:', { paymentProof, updateError });
 
     if (updateError) {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     // Update booking status based on payment proof action
     try {
       let bookingStatusUpdate = null;
-      
+
       if (action === 'approve') {
         // When payment is approved, keep booking as 'pending' but mark payment as verified
         // Admin can then manually confirm the booking through separate action
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     // Send email notifications
     try {
       console.log('📧 Server: Sending email notification...');
-      
+
       if (action === 'approve') {
         // Email user about approved payment
         const approveEmailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/send`, {
@@ -172,7 +172,36 @@ export async function POST(request: NextRequest) {
         } else {
           console.log('✅ Server: Approval email sent successfully');
         }
-        
+
+        // Send SMS notification for payment approval (if phone number available)
+        if (paymentProof.bookings && typeof paymentProof.bookings === 'object' && 'guest_phone' in paymentProof.bookings && paymentProof.bookings.guest_phone) {
+          try {
+            console.log('📱 Server: Sending payment approval SMS...');
+            const { sendSMS, createPaymentApprovedSMS } = await import('@/app/utils/smsService');
+
+            const smsMessage = createPaymentApprovedSMS(
+              paymentProof.booking_id.toString(),
+              // Extract guest name from email (fallback if not available)
+              typeof paymentProof.bookings === 'object' && 'guest_name' in paymentProof.bookings
+                ? paymentProof.bookings.guest_name as string
+                : paymentProof.bookings.guest_email.split('@')[0],
+              new Date(paymentProof.bookings.check_in_date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+              })
+            );
+
+            const smsResult = await sendSMS({
+              phone: paymentProof.bookings.guest_phone as string,
+              message: smsMessage
+            });
+
+            console.log('📱 Server: SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
+          } catch (smsError) {
+            console.error('📱 Server: SMS Error (non-critical):', smsError);
+          }
+        }
+
       } else if (action === 'reject') {
         // Email user about rejected payment with resubmission instructions
         const rejectEmailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/send`, {
@@ -236,7 +265,7 @@ export async function POST(request: NextRequest) {
           console.log('✅ Server: Rejection email sent successfully');
         }
       }
-      
+
     } catch (emailError) {
       console.warn('⚠️ Server: Email notification failed:', emailError);
       // Continue execution even if email fails
