@@ -70,19 +70,26 @@ export async function POST(request: NextRequest) {
 
     const paymentProof = paymentProofs[0];
 
-    // Check if booking has been rescheduled
-    const isRescheduled = booking.updated_at &&
-      new Date(booking.updated_at).getTime() > new Date(booking.created_at).getTime() + (5 * 60 * 1000);
-
-    // Generate receipt data with reschedule detection
-    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, isRescheduled);
+    // Generate receipt data
+    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, 'payment');
     const receiptData = {
-      booking,
-      paymentProof,
+      booking: {
+        ...booking,
+        booking_status: booking.status, // Map status to booking_status
+      },
+      paymentProof: {
+        payment_method: paymentProof.payment_method,
+        reference_number: paymentProof.reference_number,
+        payment_date: paymentProof.created_at,
+        amount_paid: paymentProof.amount,
+        verification_status: 'verified' as const
+      },
       userEmail,
       userName,
       receiptNumber,
       generatedAt: new Date().toISOString(),
+      receiptType: 'payment' as const,
+      generatedBy: 'system',
       companyDetails: {
         name: 'Kampo Ibayo Resort',
         address: 'Brgy. Tapia, General Trias, Cavite',
@@ -145,7 +152,6 @@ export async function POST(request: NextRequest) {
           
           <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
             Thank you for your payment! Your booking has been confirmed and your official receipt is attached to this email.
-            ${isRescheduled ? '<br><strong style="color: #f59e0b;">Note: This receipt reflects your updated booking dates after rescheduling.</strong>' : ''}
           </p>
 
           <!-- Booking Summary -->

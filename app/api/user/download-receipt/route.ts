@@ -77,19 +77,26 @@ export async function POST(request: NextRequest) {
 
     const paymentProof = paymentProofs[0];
 
-    // Check if booking has been rescheduled by comparing created_at with updated_at
-    const isRescheduled = booking.updated_at &&
-      new Date(booking.updated_at).getTime() > new Date(booking.created_at).getTime() + (5 * 60 * 1000); // 5 min buffer
-
-    // Generate receipt data with reschedule detection
-    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, isRescheduled);
+    // Generate receipt data
+    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, 'payment');
     const receiptData = {
-      booking,
-      paymentProof,
+      booking: {
+        ...booking,
+        booking_status: booking.status, // Map status to booking_status
+      },
+      paymentProof: {
+        payment_method: paymentProof.payment_method,
+        reference_number: paymentProof.reference_number,
+        payment_date: paymentProof.created_at,
+        amount_paid: paymentProof.amount,
+        verification_status: 'verified' as const
+      },
       userEmail,
       userName,
       receiptNumber,
       generatedAt: new Date().toISOString(),
+      receiptType: 'payment' as const,
+      generatedBy: 'system',
       companyDetails: {
         name: 'Kampo Ibayo Resort',
         address: 'Brgy. Tapia, General Trias, Cavite',
