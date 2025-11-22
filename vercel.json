@@ -1,21 +1,13 @@
 {
   "functions": {
     "app/api/user/generate-receipt/route.ts": {
-      "maxDuration": 30,
-      "memory": 1024
+      "maxDuration": 15,
+      "memory": 512
     },
     "app/api/user/download-receipt/route.ts": {
-      "maxDuration": 30,
-      "memory": 1024
+      "maxDuration": 15,
+      "memory": 512
     }
   },
-  "crons": [],
-  "build": {
-    "env": {
-      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
-    }
-  },
-  "env": {
-    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
-  }
+  "crons": []
 }

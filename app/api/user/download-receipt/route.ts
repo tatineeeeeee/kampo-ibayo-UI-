@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { ModernReceiptService } from '../../../utils/modernReceiptService';
+import { ReactPdfReceiptService } from '../../../utils/reactPdfReceiptService';
 
 export async function POST(request: NextRequest) {
   console.log('🚀 PDF Download API - Starting receipt generation...');
   console.log('📊 Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
     VERCEL: !!process.env.VERCEL,
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
     timestamp: new Date().toISOString()
   });
 
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
       new Date(booking.updated_at).getTime() > new Date(booking.created_at).getTime() + (5 * 60 * 1000); // 5 min buffer
 
     // Generate receipt data with reschedule detection
-    const receiptNumber = ModernReceiptService.generateReceiptNumber(bookingId, isRescheduled);
+    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, isRescheduled);
     const receiptData = {
       booking,
       paymentProof,
@@ -99,7 +98,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Validate receipt data
-    if (!ModernReceiptService.validateReceiptData(receiptData)) {
+    if (!ReactPdfReceiptService.validateReceiptData(receiptData)) {
       return NextResponse.json({
         success: false,
         error: 'Invalid receipt data'
@@ -108,10 +107,10 @@ export async function POST(request: NextRequest) {
 
     console.log('📄 Starting PDF generation process...');
     console.log('🔍 Receipt data validation passed');
-    console.log('🛠️ Calling ModernReceiptService.generatePDFReceipt...');
+    console.log('🛠️ Calling ReactPdfReceiptService.generatePDFReceipt...');
 
-    // Generate PDF with modern HTML/CSS design and your logo
-    const pdfBuffer = await ModernReceiptService.generatePDFReceipt(receiptData);
+    // Generate PDF with React-PDF (Vercel optimized)
+    const pdfBuffer = await ReactPdfReceiptService.generatePDFReceipt(receiptData);
 
     console.log('✅ PDF generation completed successfully!');
     console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
@@ -119,9 +118,9 @@ export async function POST(request: NextRequest) {
 
     // Check if we got the fallback PDF (jsPDF is typically smaller)
     if (pdfBuffer.length < 50000) {
-      console.log('⚠️ WARNING: PDF size suggests fallback jsPDF was used instead of Puppeteer');
+      console.log('⚠️ WARNING: Unusually small PDF size from React-PDF');
     } else {
-      console.log('🎉 SUCCESS: PDF size suggests Puppeteer was used (high quality)');
+      console.log('🎉 SUCCESS: React-PDF generated successfully (high quality)');
     }
 
     // Return PDF as downloadable response  
