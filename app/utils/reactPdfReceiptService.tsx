@@ -579,18 +579,24 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
 
                   <View style={styles.dataRow}>
                     <Text style={styles.dataLabel}>Guest Name:</Text>
-                    <Text style={styles.dataValue}>{data.booking.guest_name}</Text>
+                    <Text style={styles.dataValue}>
+                      {data.booking.guest_name}
+                    </Text>
                   </View>
 
                   <View style={styles.dataRow}>
                     <Text style={styles.dataLabel}>Email Address:</Text>
-                    <Text style={styles.dataValue}>{data.booking.guest_email}</Text>
+                    <Text style={styles.dataValue}>
+                      {data.booking.guest_email}
+                    </Text>
                   </View>
 
                   {data.booking.guest_phone && (
                     <View style={styles.dataRow}>
                       <Text style={styles.dataLabel}>Phone Number:</Text>
-                      <Text style={styles.dataValue}>{data.booking.guest_phone}</Text>
+                      <Text style={styles.dataValue}>
+                        {data.booking.guest_phone}
+                      </Text>
                     </View>
                   )}
 
