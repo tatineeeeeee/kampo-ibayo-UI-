@@ -682,7 +682,17 @@ export class ModernReceiptService {
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding',
-          '--disable-ipc-flooding-protection'
+          '--disable-ipc-flooding-protection',
+          '--disable-extensions',
+          '--disable-plugins',
+          '--virtual-time-budget=5000',
+          '--run-all-compositor-stages-before-draw',
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-sync',
+          '--metrics-recording-only',
+          '--no-report-upload',
+          '--disable-crash-reporter'
         ] : [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -692,7 +702,9 @@ export class ModernReceiptService {
           '--no-default-browser-check'
         ],
         timeout: 30000,
-        executablePath: isVercel ? await chromium.executablePath() : puppeteer.executablePath()
+        defaultViewport: null,
+        ignoreDefaultArgs: ['--disable-extensions'],
+        executablePath: isVercel ? await chromium.executablePath() : undefined
       });
 
       console.log('✅ Browser launched successfully');

@@ -2,21 +2,20 @@
   "functions": {
     "app/api/user/generate-receipt/route.ts": {
       "maxDuration": 30,
-      "memory": 1024
+      "memory": 3008
     },
     "app/api/user/download-receipt/route.ts": {
       "maxDuration": 30,
-      "memory": 1024
+      "memory": 3008
     }
   },
   "crons": [],
   "build": {
     "env": {
-      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true",
-      "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/google-chrome-stable"
+      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
     }
   },
   "env": {
-    "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/google-chrome-stable"
+    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
   }
 }
