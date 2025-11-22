@@ -638,23 +638,51 @@ export class ModernReceiptService {
 
     try {
       console.log('🚀 Starting Puppeteer PDF generation...');
+      
+      // Enhanced Vercel detection
+      const isVercel = !!process.env.VERCEL || !!process.env.LAMBDA_TASK_ROOT;
+      
       console.log('📊 Environment check:', {
         NODE_ENV: process.env.NODE_ENV,
         VERCEL: !!process.env.VERCEL,
+        LAMBDA_TASK_ROOT: !!process.env.LAMBDA_TASK_ROOT,
+        isVercelDetected: isVercel,
         platform: process.platform,
-        hasChromium: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD !== 'true'
+        puppeteerSkip: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
+        puppeteerExecutable: process.env.PUPPETEER_EXECUTABLE_PATH
       });
+      
+      // Test chromium path availability
+      if (isVercel) {
+        try {
+          const chromiumPath = await chromium.executablePath();
+          console.log('✅ Chromium executable path found:', chromiumPath);
+        } catch (chromiumError) {
+          console.error('🚨 CHROMIUM PATH ERROR:', chromiumError);
+          throw new Error('Chromium executable not available on Vercel');
+        }
+      }
 
       // Enhanced Vercel-optimized browser launch
+      
       browser = await puppeteer.launch({
         headless: true,
-        args: process.env.VERCEL ? [
+        args: isVercel ? [
           ...chromium.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu',
           '--disable-web-security',
           '--disable-features=VizDisplayCompositor',
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
+          '--disable-renderer-backgrounding',
+          '--disable-ipc-flooding-protection'
         ] : [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -664,7 +692,7 @@ export class ModernReceiptService {
           '--no-default-browser-check'
         ],
         timeout: 30000,
-        executablePath: process.env.VERCEL ? await chromium.executablePath() : undefined
+        executablePath: isVercel ? await chromium.executablePath() : puppeteer.executablePath()
       });
 
       console.log('✅ Browser launched successfully');
@@ -721,9 +749,19 @@ export class ModernReceiptService {
         environment: process.env.NODE_ENV,
         platform: process.platform,
         vercel: !!process.env.VERCEL,
+        lambdaTask: !!process.env.LAMBDA_TASK_ROOT,
         puppeteerSkip: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
+        puppeteerExecutable: process.env.PUPPETEER_EXECUTABLE_PATH,
+        chromiumPath: process.env.VERCEL ? 'Attempting chromium.executablePath()' : 'Using system Puppeteer',
         timestamp: new Date().toISOString()
       });
+      
+      // Log specifically if it's a Chromium path issue
+      if (error instanceof Error && (error.message.includes('Chromium') || error.message.includes('executable'))) {
+        console.error('🔧 CHROMIUM PATH ERROR - This is likely why fallback PDF is being used');
+        console.error('💡 Suggestion: Check if @sparticuz/chromium is properly installed and executablePath is accessible');
+      }
+      
       console.log('🔄 Falling back to luxury jsPDF implementation...');
 
       // Use luxury jsPDF fallback
