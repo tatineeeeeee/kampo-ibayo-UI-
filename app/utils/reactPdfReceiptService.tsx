@@ -35,7 +35,7 @@ export interface ReceiptData {
   companyDetails: CompanyDetails;
 }
 
-// Create styles that match your luxury design
+// Create luxury receipt styles matching the premium design
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -43,147 +43,246 @@ const styles = StyleSheet.create({
     padding: 0,
     fontFamily: 'Helvetica',
   },
+  
+  // Luxury header with dark blue/black background
   header: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1e293b', // Dark slate background
     color: '#ffffff',
-    padding: 30,
+    padding: 25,
     textAlign: 'center',
+    position: 'relative',
   },
-  logo: {
-    width: 60,
-    height: 60,
+  
+  // Logo placeholder (using text for now since React-PDF has image limitations)
+  logoSection: {
     marginBottom: 15,
-    alignSelf: 'center',
+    alignItems: 'center',
   },
-  companyName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#f59e0b',
-    marginBottom: 5,
+  
+  logoCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#f59e0b', // Gold color
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  tagline: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginBottom: 5,
-  },
-  address: {
-    fontSize: 10,
-    color: '#cbd5e1',
-  },
-  content: {
-    padding: 40,
-  },
-  title: {
+  
+  logoText: {
     fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-    color: '#1e293b',
+    color: '#ffffff',
   },
-  receiptNumber: {
+  
+  companyName: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#f59e0b', // Gold color matching your design
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  
+  tagline: {
     fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#64748b',
+    color: '#cbd5e1', // Light gray
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
-  section: {
+  
+  headerAddress: {
+    fontSize: 10,
+    color: '#94a3b8', // Muted gray
+    lineHeight: 1.3,
+  },
+  
+  // Main content area
+  content: {
+    padding: 30,
+  },
+  
+  // Receipt title section
+  titleSection: {
+    textAlign: 'center',
+    marginBottom: 25,
+    paddingBottom: 15,
+    borderBottom: '1 solid #e2e8f0',
+  },
+  
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  
+  receiptNumber: {
+    fontSize: 11,
+    color: '#64748b',
+    backgroundColor: '#f1f5f9',
+    padding: '6 12',
+    borderRadius: 4,
+  },
+  
+  // Two-column layout for booking and payment info
+  columnsContainer: {
+    flexDirection: 'row',
     marginBottom: 25,
   },
+  
+  column: {
+    width: '48%',
+    marginRight: '4%',
+  },
+  
+  columnLast: {
+    width: '48%',
+    marginRight: 0,
+  },
+  
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 15,
     color: '#1e293b',
-    borderBottom: '2 solid #e2e8f0',
-    paddingBottom: 5,
+    marginBottom: 12,
+    paddingBottom: 6,
+    borderBottom: '2 solid #f59e0b', // Gold underline
   },
-  row: {
+  
+  // Data rows
+  dataRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottom: '1 solid #f1f5f9',
+    paddingVertical: 6,
+    alignItems: 'flex-start',
   },
+  
   label: {
-    width: '40%',
-    fontSize: 11,
+    width: '45%',
+    fontSize: 10,
     color: '#64748b',
+    lineHeight: 1.4,
   },
+  
   value: {
-    width: '60%',
-    fontSize: 11,
+    width: '55%',
+    fontSize: 10,
     color: '#1e293b',
     fontWeight: 'bold',
+    lineHeight: 1.4,
   },
-  statusConfirmed: {
+  
+  // Status badge
+  statusContainer: {
+    alignItems: 'flex-start',
+    width: '55%',
+  },
+  
+  statusBadge: {
     backgroundColor: '#dcfce7',
     color: '#166534',
-    padding: '4 8',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
     borderRadius: 4,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
+  
+  // Payment summary section with golden border
   summarySection: {
-    backgroundColor: '#f8fafc',
-    padding: 20,
+    backgroundColor: '#fffbeb', // Light gold background
+    border: '2 solid #f59e0b', // Gold border
     borderRadius: 8,
+    padding: 20,
     marginTop: 20,
   },
+  
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: 15,
+    paddingBottom: 8,
+    borderBottom: '1 solid #f59e0b',
+  },
+  
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 8,
+    borderBottom: '1 solid #fef3c7',
   },
+  
   summaryLabel: {
     fontSize: 12,
-    color: '#475569',
+    color: '#92400e', // Dark gold
+    fontWeight: 'normal',
   },
+  
   summaryValue: {
     fontSize: 12,
     color: '#1e293b',
     fontWeight: 'bold',
   },
+  
+  // Total amount - highlighted
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderTop: '2 solid #e2e8f0',
+    paddingVertical: 12,
+    paddingTop: 15,
+    borderTop: '3 solid #f59e0b',
     marginTop: 10,
+    backgroundColor: '#f59e0b',
+    paddingHorizontal: 15,
+    marginHorizontal: -15,
+    borderRadius: 6,
   },
   totalLabel: {
     fontSize: 14,
-    color: '#1e293b',
+    color: '#ffffff',
     fontWeight: 'bold',
   },
+  
   totalValue: {
     fontSize: 16,
-    color: '#059669',
+    color: '#ffffff',
     fontWeight: 'bold',
   },
+  
+  // Footer styles
   footer: {
     marginTop: 40,
     textAlign: 'center',
     borderTop: '1 solid #e2e8f0',
     paddingTop: 20,
   },
+  
   thankYou: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1e293b',
     marginBottom: 10,
   },
+  
   disclaimer: {
     fontSize: 10,
     color: '#64748b',
     marginBottom: 15,
     lineHeight: 1.4,
+    textAlign: 'center',
   },
+  
   contact: {
     fontSize: 9,
     color: '#94a3b8',
     lineHeight: 1.3,
+    textAlign: 'center',
   },
 });
 
-// React-PDF Document Component
+// Luxury Receipt Document Component
 const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
   const formatCurrency = (amount: number) => `₱${amount.toLocaleString()}`;
   
@@ -199,91 +298,107 @@ const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
+        {/* Luxury Header with Logo */}
         <View style={styles.header}>
-          <Text style={styles.companyName}>KAMPO IBAYO RESORT</Text>
+          <View style={styles.logoSection}>
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoText}>KI</Text>
+            </View>
+          </View>
+          
+          <Text style={styles.companyName}>Kampo Ibayo Resort</Text>
           <Text style={styles.tagline}>Luxury • Tranquility • Excellence</Text>
-          <Text style={styles.address}>
+          <Text style={styles.headerAddress}>
             Brgy. Tapia, General Trias, Cavite{'\n'}
             +63 966 281 5123 • kampoibayo@gmail.com
           </Text>
         </View>
 
-        {/* Content */}
+        {/* Main Content */}
         <View style={styles.content}>
-          <Text style={styles.title}>Payment Receipt</Text>
-          <Text style={styles.receiptNumber}>Receipt #{data.receiptNumber}</Text>
+          {/* Title Section */}
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>Payment Receipt</Text>
+            <View style={styles.receiptNumber}>
+              <Text>Receipt #{data.receiptNumber}</Text>
+            </View>
+          </View>
 
-          {/* Booking Information */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Booking Information</Text>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Booking ID:</Text>
-              <Text style={styles.value}>#{data.booking.id}</Text>
+          {/* Two-column layout matching your design */}
+          <View style={styles.columnsContainer}>
+            {/* Left Column - Booking Details */}
+            <View style={styles.column}>
+              <Text style={styles.sectionTitle}>Booking Details</Text>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Booking ID:</Text>
+                <Text style={styles.value}>#{data.booking.id}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Guest Name:</Text>
+                <Text style={styles.value}>{data.userName}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Email:</Text>
+                <Text style={styles.value}>{data.userEmail}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Check-in:</Text>
+                <Text style={styles.value}>{formatDate(data.booking.check_in_date)}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Check-out:</Text>
+                <Text style={styles.value}>{formatDate(data.booking.check_out_date)}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Guests:</Text>
+                <Text style={styles.value}>{data.booking.number_of_guests}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Status:</Text>
+                <View style={styles.statusContainer}>
+                  <View style={styles.statusBadge}>
+                    <Text>CONFIRMED</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Guest Name:</Text>
-              <Text style={styles.value}>{data.userName}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Email:</Text>
-              <Text style={styles.value}>{data.userEmail}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Check-in:</Text>
-              <Text style={styles.value}>{formatDate(data.booking.check_in_date)}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Check-out:</Text>
-              <Text style={styles.value}>{formatDate(data.booking.check_out_date)}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Guests:</Text>
-              <Text style={styles.value}>{data.booking.number_of_guests} guest(s)</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Status:</Text>
-              <View style={styles.statusConfirmed}>
-                <Text>CONFIRMED</Text>
+
+            {/* Right Column - Payment Information */}
+            <View style={styles.columnLast}>
+              <Text style={styles.sectionTitle}>Payment Information</Text>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Payment Method:</Text>
+                <Text style={styles.value}>{data.paymentProof.payment_method}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Reference Number:</Text>
+                <Text style={styles.value}>{data.paymentProof.reference_number}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Payment Date:</Text>
+                <Text style={styles.value}>{formatDate(data.paymentProof.payment_date)}</Text>
+              </View>
+              
+              <View style={styles.dataRow}>
+                <Text style={styles.label}>Receipt Generated:</Text>
+                <Text style={styles.value}>{formatDate(data.generatedAt)}</Text>
               </View>
             </View>
           </View>
 
-          {/* Payment Information */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Payment Information</Text>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Payment Method:</Text>
-              <Text style={styles.value}>{data.paymentProof.payment_method}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Reference Number:</Text>
-              <Text style={styles.value}>{data.paymentProof.reference_number}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Payment Date:</Text>
-              <Text style={styles.value}>{formatDate(data.paymentProof.payment_date)}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <Text style={styles.label}>Receipt Generated:</Text>
-              <Text style={styles.value}>{formatDate(data.generatedAt)}</Text>
-            </View>
-          </View>
-
-          {/* Payment Summary */}
+          {/* Payment Summary - Golden Bordered Box */}
           <View style={styles.summarySection}>
-            <Text style={styles.sectionTitle}>Payment Summary</Text>
+            <Text style={styles.summaryTitle}>Payment Summary</Text>
             
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Accommodation:</Text>
@@ -295,21 +410,22 @@ const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
               <Text style={styles.summaryValue}>₱0.00</Text>
             </View>
             
+            {/* Highlighted Total */}
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>TOTAL PAID:</Text>
+              <Text style={styles.totalLabel}>Total Paid:</Text>
               <Text style={styles.totalValue}>{formatCurrency(data.booking.payment_amount || data.booking.total_amount)}</Text>
             </View>
           </View>
 
-          {/* Footer */}
+          {/* Elegant Footer */}
           <View style={styles.footer}>
             <Text style={styles.thankYou}>Thank You for Choosing Kampo Ibayo Resort!</Text>
             <Text style={styles.disclaimer}>
-              This receipt serves as confirmation of your payment.{'\n'}
-              For any inquiries, contact us during business hours.
+              We appreciate your trust in our services. This receipt serves as confirmation of your payment.{'\n'}
+              For any inquiries, please contact us during business hours.
             </Text>
             <Text style={styles.contact}>
-              Hours: 8:00 AM - 9:00 PM Daily | Check-in: 3:00 PM | Check-out: 1:00 PM{'\n'}
+              Hours: 8:00 AM - 8:00 PM Daily | Check-in: 3:00 PM | Check-out: 1:00 PM{'\n'}
               Follow us: Kampo Ibayo (Facebook)
             </Text>
           </View>

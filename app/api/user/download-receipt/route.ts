@@ -3,10 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import { ReactPdfReceiptService } from '../../../utils/reactPdfReceiptService';
 
 export async function POST(request: NextRequest) {
-  console.log('🚀 PDF Download API - Starting receipt generation...');
+  console.log('🚀 PDF Download API - Starting receipt generation with React-PDF...');
   console.log('📊 Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
     VERCEL: !!process.env.VERCEL,
+    REACT_PDF_MIGRATION: 'v2.0',
     timestamp: new Date().toISOString()
   });
 
