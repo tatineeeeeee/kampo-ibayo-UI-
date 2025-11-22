@@ -638,10 +638,10 @@ export class ModernReceiptService {
 
     try {
       console.log('🚀 Starting Puppeteer PDF generation...');
-      
+
       // Enhanced Vercel detection
       const isVercel = !!process.env.VERCEL || !!process.env.LAMBDA_TASK_ROOT;
-      
+
       console.log('📊 Environment check:', {
         NODE_ENV: process.env.NODE_ENV,
         VERCEL: !!process.env.VERCEL,
@@ -651,7 +651,7 @@ export class ModernReceiptService {
         puppeteerSkip: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
         puppeteerExecutable: process.env.PUPPETEER_EXECUTABLE_PATH
       });
-      
+
       // Test chromium path availability
       if (isVercel) {
         try {
@@ -664,7 +664,7 @@ export class ModernReceiptService {
       }
 
       // Enhanced Vercel-optimized browser launch
-      
+
       browser = await puppeteer.launch({
         headless: true,
         args: isVercel ? [
@@ -767,13 +767,13 @@ export class ModernReceiptService {
         chromiumPath: process.env.VERCEL ? 'Attempting chromium.executablePath()' : 'Using system Puppeteer',
         timestamp: new Date().toISOString()
       });
-      
+
       // Log specifically if it's a Chromium path issue
       if (error instanceof Error && (error.message.includes('Chromium') || error.message.includes('executable'))) {
         console.error('🔧 CHROMIUM PATH ERROR - This is likely why fallback PDF is being used');
         console.error('💡 Suggestion: Check if @sparticuz/chromium is properly installed and executablePath is accessible');
       }
-      
+
       console.log('🔄 Falling back to luxury jsPDF implementation...');
 
       // Use luxury jsPDF fallback
