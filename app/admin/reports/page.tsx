@@ -1008,7 +1008,7 @@ export default function ReportsPage() {
                 .reduce((sum, b) => {
                   // For 50% downpayments, F2F portion is always 50% of total
                   const totalAmount = b.total_amount || 0;
-                  return sum + (totalAmount * 0.5); // 50% F2F portion
+                  return sum + totalAmount * 0.5; // 50% F2F portion
                 }, 0)
                 .toLocaleString()}`,
               "✅ F2F Done",
@@ -1599,6 +1599,23 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        {/* Daily Operations Report Description */}
+        {selectedReport.id === "daily-operations" && (
+          <div className="text-center py-12 max-w-2xl mx-auto">
+            <Clock className="w-16 h-16 mx-auto mb-4 text-blue-600" />
+            <h3 className="text-lg font-semibold text-black mb-2">
+              Daily Operations Report
+            </h3>
+            <p className="text-gray-600 mb-4">
+              This report shows today&apos;s check-ins, check-outs, and current guests for staff planning and operational management.
+            </p>
+            <p className="text-sm text-gray-500">
+              Click the <strong>Export</strong> button above to download the
+              complete daily operations report as CSV.
+            </p>
+          </div>
+        )}
+
         {/* Daily Operations Charts */}
         {selectedReport.id === "daily-operations" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2057,6 +2074,23 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Guest Database Report Description */}
+        {selectedReport.id === "guest-database" && (
+          <div className="text-center py-12 max-w-2xl mx-auto">
+            <Users className="w-16 h-16 mx-auto mb-4 text-purple-600" />
+            <h3 className="text-lg font-semibold text-black mb-2">
+              Guest Database Report
+            </h3>
+            <p className="text-gray-600 mb-4">
+              This report shows your complete guest database with contact information, visit history, and spending patterns for marketing and customer service.
+            </p>
+            <p className="text-sm text-gray-500">
+              Click the <strong>Export</strong> button above to download the
+              complete guest database report as CSV.
+            </p>
           </div>
         )}
 

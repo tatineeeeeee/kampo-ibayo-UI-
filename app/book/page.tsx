@@ -47,9 +47,7 @@ function BookingPage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [paymentType, setPaymentType] = useState<'half' | 'full'>('half'); // Default to half payment
   
-  // Track displayed month for calendar overflow fix
-  const [displayedMonth, setDisplayedMonth] = useState(new Date().getMonth());
-  const [displayedYear, setDisplayedYear] = useState(new Date().getFullYear());
+
 
   // Calculate 2 years from today for max booking date
   const maxBookingDate = new Date();
@@ -1329,37 +1327,17 @@ function BookingPage() {
           justify-content: space-around !important;
         }
         
-        /* 🛡️ ENHANCED: Hide and disable outside month dates with maximum protection */
+        /* Style for adjacent month dates - slightly dimmed but still selectable */
         .react-datepicker__day--outside-month {
-          visibility: hidden !important;
-          pointer-events: none !important;
-          opacity: 0 !important;
-          user-select: none !important;
-          cursor: default !important;
-          position: relative !important;
+          opacity: 0.4 !important;
+          color: #9ca3af !important;
         }
         
-        /* Ensure outside month dates can't be hovered or interacted with */
-        .react-datepicker__day--outside-month:hover,
-        .react-datepicker__day--outside-month:focus,
-        .react-datepicker__day--outside-month:active {
-          background-color: transparent !important;
-          transform: none !important;
-          box-shadow: none !important;
-          cursor: default !important;
-          pointer-events: none !important;
-        }
-        
-        /* 🚀 PERFORMANCE: Block any potential click events on outside dates */
-        .react-datepicker__day--outside-month::before {
-          content: '' !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
-          z-index: 10 !important;
-          pointer-events: none !important;
+        /* Allow interaction with outside month dates */
+        .react-datepicker__day--outside-month:hover {
+          opacity: 0.6 !important;
+          transform: scale(1.05) !important;
+          box-shadow: 0 4px 6px -1px rgba(156, 163, 175, 0.3) !important;
         }
         
         /* Force consistent 6-row calendar layout */
@@ -1834,20 +1812,8 @@ function BookingPage() {
                     if (Array.isArray(dates)) {
                       const [start, end] = dates;
                       
-                      // 🛡️ SAFETY: Double protection against outside month date selection
-                      // Validate start date is within displayed month
-                      if (start && (start.getMonth() !== displayedMonth || start.getFullYear() !== displayedYear)) {
-                        console.warn('Prevented outside month date selection:', start);
-                        return; // Early return - don't update state
-                      }
-                      
-                      // Validate end date is within displayed month (if exists)
-                      if (end && (end.getMonth() !== displayedMonth || end.getFullYear() !== displayedYear)) {
-                        console.warn('Prevented outside month date selection:', end);
-                        return; // Early return - don't update state
-                      }
-                      
-                      // ✅ Safe to update - dates are within current month
+                      // ✅ Allow cross-month date selection
+                      // Simply update the dates without month restrictions
                       setFormData({ ...formData, checkIn: start, checkOut: end });
                     }
                   }}
@@ -1857,31 +1823,10 @@ function BookingPage() {
                   minDate={minDate}
                   maxDate={maxBookingDate}
                   excludeDates={getUnavailableDates()}
-                  // Track month changes to prevent overflow date selection
-                  onMonthChange={(date) => {
-                    setDisplayedMonth(date.getMonth());
-                    setDisplayedYear(date.getFullYear());
-                  }}
                   // Force 6 weeks to be shown for consistent layout
                   fixedHeight
                   showWeekNumbers={false}
                   dayClassName={(date) => {
-                    // 🛡️ PRIORITY 1: Hide dates from outside the displayed month (HIGHEST PRIORITY)
-                    if (date.getMonth() !== displayedMonth || date.getFullYear() !== displayedYear) {
-                      return 'react-datepicker__day--outside-month';
-                    }
-                    
-                    // 🔍 SAFETY CHECK: Validate date is actually within current month view
-                    const currentMonthStart = new Date(displayedYear, displayedMonth, 1);
-                    const currentMonthEnd = new Date(displayedYear, displayedMonth + 1, 0);
-                    
-                    if (date < currentMonthStart || date > currentMonthEnd) {
-                      console.warn('Date outside month range detected:', date);
-                      return 'react-datepicker__day--outside-month';
-                    }
-                    
-                    // ✅ SAFE ZONE: Date is confirmed within current month
-                    
                     // Check if this date is selected (check-in or check-out)
                     const isSelected = (formData.checkIn && date.toDateString() === formData.checkIn.toDateString()) ||
                                      (formData.checkOut && date.toDateString() === formData.checkOut.toDateString());
@@ -1891,7 +1836,7 @@ function BookingPage() {
                       return 'react-datepicker__day--selected';
                     }
                     
-                    // Otherwise show booking status
+                    // Show booking status for all visible dates (including adjacent month dates)
                     const capacity = getDateCapacity(date);
                     if (capacity === 'same-day') return 'react-datepicker__day--same-day';
                     if (capacity === 'checkin') return 'react-datepicker__day--checkin';
