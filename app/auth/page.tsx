@@ -29,9 +29,25 @@ export default function AuthPage() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [forcePasswordReset, setForcePasswordReset] = useState(() => {
-    // Check localStorage on initial load for password reset state
+    // Check localStorage on initial load for password reset state with validation
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('in_password_reset') === 'true';
+      const hasPasswordResetFlag = localStorage.getItem('in_password_reset') === 'true';
+      
+      // Only trust the flag if we also have indicators of a real password reset flow
+      if (hasPasswordResetFlag) {
+        const hash = window.location.hash.slice(1);
+        const hashParams = new URLSearchParams(hash);
+        const hasRecoveryTokens = hashParams.get('access_token') || hashParams.get('type') === 'recovery';
+        
+        if (!hasRecoveryTokens) {
+          // Clear potentially stale flag immediately
+          console.log('🧹 Clearing potentially stale password reset flag on page load');
+          localStorage.removeItem('in_password_reset');
+          return false;
+        }
+      }
+      
+      return hasPasswordResetFlag;
     }
     return false;
   });
@@ -41,6 +57,17 @@ export default function AuthPage() {
   // Prevent infinite loops in recovery detection
   const recoveryHandled = useRef(false);
   const authStateChangeDebounce = useRef<NodeJS.Timeout | null>(null);
+
+  // Utility function to completely clear all password reset related storage
+  const clearPasswordResetState = () => {
+    console.log('🧹 Clearing all password reset state and storage');
+    localStorage.removeItem('in_password_reset');
+    sessionStorage.removeItem('recovery_access_token');
+    sessionStorage.removeItem('recovery_refresh_token');
+    sessionStorage.removeItem('recovery-info-shown');
+    setForcePasswordReset(false);
+    setIsPasswordReset(false);
+  };
 
   // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
@@ -95,9 +122,7 @@ export default function AuthPage() {
 
             if (sessionError) {
               console.error('❌ Failed to set recovery session:', sessionError);
-              setForcePasswordReset(false);
-              setIsPasswordReset(false);
-              localStorage.removeItem('in_password_reset');
+              clearPasswordResetState();
               showError('Invalid Reset Link', 'This password reset link is invalid or expired. Please request a new password reset.');
               setIsLoading(false);
               return;
@@ -109,18 +134,14 @@ export default function AuthPage() {
               info('Ready!', 'Please set your new password below.');
             } else {
               console.error('❌ No session created from recovery tokens');
-              setForcePasswordReset(false);
-              setIsPasswordReset(false);
-              localStorage.removeItem('in_password_reset');
+              clearPasswordResetState();
               showError('Invalid Reset Link', 'Failed to establish reset session. Please request a new password reset.');
               setIsLoading(false);
             }
           } catch (error) {
             console.error('❌ Error setting recovery session:', error);
             // Reset states on error
-            setForcePasswordReset(false);
-            setIsPasswordReset(false);
-            localStorage.removeItem('in_password_reset');
+            clearPasswordResetState();
             showError('Reset Error', 'An error occurred while processing your reset link. Please try again.');
             setIsLoading(false);
           }
@@ -141,12 +162,37 @@ export default function AuthPage() {
       try {
         // FIRST PRIORITY: Check if we're in password reset mode from localStorage or state
         const inPasswordReset = localStorage.getItem('in_password_reset') === 'true';
-        if (forcePasswordReset || inPasswordReset) {
-          console.log('🔒 Already in password reset mode - skipping session recovery');
-          setIsPasswordReset(true);
-          setForcePasswordReset(true);
-          setIsLoading(false);
-          return;
+        
+        // SAFETY CHECK: If password reset flag exists but no session, it might be stale
+        if ((forcePasswordReset || inPasswordReset) && typeof window !== 'undefined') {
+          // Check if we actually have recovery tokens or a valid reset session
+          const hash = window.location.hash.slice(1);
+          const hashParams = new URLSearchParams(hash);
+          const hasValidRecoveryTokens = hashParams.get('access_token') || hashParams.get('type') === 'recovery';
+          
+          // If no recovery tokens in URL, check if we have a valid session
+          if (!hasValidRecoveryTokens) {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            // If no valid session and no recovery tokens, clear the stale password reset state
+            if (!session) {
+              console.log('🧹 Clearing stale password reset state - no valid session or recovery tokens');
+              clearPasswordResetState();
+              // Continue with normal flow instead of returning
+            } else {
+              console.log('🔒 Valid session found with password reset flag - continuing password reset');
+              setIsPasswordReset(true);
+              setForcePasswordReset(true);
+              setIsLoading(false);
+              return;
+            }
+          } else {
+            console.log('🔒 Valid recovery tokens found - continuing password reset');
+            setIsPasswordReset(true);
+            setForcePasswordReset(true);
+            setIsLoading(false);
+            return;
+          }
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -685,6 +731,32 @@ export default function AuthPage() {
 
       if (error) {
         console.error("❌ Password update error:", error);
+        
+        // Check if the error indicates the user no longer exists (account was deleted)
+        if (error.message.includes('not found') || error.message.includes('User not found') || 
+            error.message.includes('invalid') || error.message.includes('expired')) {
+          console.log('🧹 User account appears to be deleted - clearing password reset state');
+          
+          // Clear all password reset flags and storage
+          clearPasswordResetState();
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Sign out and redirect to fresh auth page
+          await supabase.auth.signOut();
+          
+          showError("Account Not Found", "This account may have been deleted. Please create a new account or contact support.");
+          
+          // Reset all states and redirect to clean auth page
+          setTimeout(() => {
+            clearPasswordResetState();
+            window.location.href = '/auth';
+          }, 3000);
+          
+          setIsUpdatingPassword(false);
+          return;
+        }
+        
         showError("Update Failed", error.message || "Please try again.");
         setIsUpdatingPassword(false);
         return;
@@ -696,13 +768,13 @@ export default function AuthPage() {
       info("Success!", "Password updated successfully! Redirecting to login...");
       
       // Clear all password reset states and storage
-      localStorage.removeItem('in_password_reset');
-      sessionStorage.clear();
+      console.log('🧹 Clearing all password reset data after successful password update');
+      clearPasswordResetState();
       
       // Sign out completely to clear session
       await supabase.auth.signOut();
       
-      // Clear browser storage
+      // Clear browser storage completely
       localStorage.clear();
       sessionStorage.clear();
       

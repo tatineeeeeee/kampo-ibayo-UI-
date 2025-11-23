@@ -214,8 +214,7 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false); // ✅ Start false for instant modal
 
-  // Toast helpers for modal
-  const { error: showError } = useToastHelpers();
+  // Toast helpers removed as we handle errors silently in modal
 
   useEffect(() => {
     const fetchUserBookings = async () => {
@@ -234,22 +233,21 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
 
         if (error) {
           console.error('Error fetching user bookings:', error);
-          showError('Error loading user bookings');
         } else {
           setBookings(data || []);
         }
       } catch (error) {
         console.error('Error:', error);
-        showError('Failed to load bookings');
       } finally {
         setLoading(false);
       }
     };
 
-    // ✅ OPTIMIZED: Delayed fetch for modal - UI opens instantly, data loads after
-    const timer = setTimeout(fetchUserBookings, 150);
-    return () => clearTimeout(timer);
-  }, [user.auth_id, showError]);
+    // Only fetch once when user.auth_id is available
+    if (user.auth_id) {
+      fetchUserBookings();
+    }
+  }, [user.auth_id]); // Remove showError dependency to prevent infinite loop
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -266,64 +264,130 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Bookings for {user.name}
-          </h2>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/30 w-full max-w-5xl max-h-[85vh] overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Bookings for {user.name}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {user.email} • User ID: {user.id}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all duration-200"
           >
-            ×
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3">Loading bookings...</span>
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No bookings found for this user.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <div key={booking.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-medium text-gray-900">
-                      Booking #{booking.id}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {formatDate(booking.check_in_date)} - {formatDate(booking.check_out_date)}
-                    </p>
-                  </div>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(booking.status || 'pending')}`}>
-                    {booking.status}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Guests:</span> {booking.number_of_guests}
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Total:</span> ₱{booking.total_amount?.toLocaleString()}
-                  </div>
-                </div>
-                {booking.special_requests && (
-                  <div className="mt-2">
-                    <span className="text-gray-500 text-sm">Special Requests:</span>
-                    <p className="text-sm text-gray-700">{booking.special_requests}</p>
-                  </div>
-                )}
+        <div className="p-6 overflow-y-auto max-h-[calc(85vh-120px)]">
+          {loading ? (
+            <div className="flex flex-col justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+              <span className="text-gray-600 font-medium">Loading bookings...</span>
+              <span className="text-gray-400 text-sm mt-1">Please wait while we fetch the data</span>
+            </div>
+          ) : bookings.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
               </div>
-            ))}
-          </div>
-        )}
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Bookings Found</h3>
+              <p className="text-gray-500">This user hasn&apos;t made any bookings yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h3 className="text-sm font-medium text-blue-800 mb-1">Booking Summary</h3>
+                <p className="text-sm text-blue-700">Total bookings: <span className="font-semibold">{bookings.length}</span></p>
+              </div>
+              
+              {bookings.map((booking) => (
+                <div key={booking.id} className="bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        Booking #{booking.id}
+                      </h3>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {formatDate(booking.check_in_date)} - {formatDate(booking.check_out_date)}
+                      </div>
+                    </div>
+                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadge(booking.status || 'pending')}`}>
+                      {booking.status?.toUpperCase()}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                      <div>
+                        <p className="text-xs text-gray-500">Guests</p>
+                        <p className="font-medium text-gray-900">{booking.number_of_guests}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      <div>
+                        <p className="text-xs text-gray-500">Total Amount</p>
+                        <p className="font-semibold text-green-600">₱{booking.total_amount?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <div>
+                        <p className="text-xs text-gray-500">Created</p>
+                        <p className="font-medium text-gray-700">{booking.created_at ? formatDate(booking.created_at) : 'N/A'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <div>
+                        <p className="text-xs text-gray-500">Booking ID</p>
+                        <p className="font-mono text-sm text-gray-600">#{booking.id}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {booking.special_requests && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="flex items-start">
+                        <svg className="w-4 h-4 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        <div>
+                          <p className="text-xs font-medium text-yellow-800 mb-1">Special Requests</p>
+                          <p className="text-sm text-yellow-700">{booking.special_requests}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -638,12 +702,12 @@ export default function UsersPage() {
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'moderator':
-        return 'bg-blue-100 text-blue-800';
-      case 'guest':
+        return 'bg-red-100 text-red-800 border border-red-200';
+      case 'staff':
+        return 'bg-blue-100 text-blue-800 border border-blue-200';
+      case 'user':
       default:
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border border-green-200';
     }
   };
 
@@ -700,7 +764,7 @@ export default function UsersPage() {
               onClick={() => setRoleFilter('staff')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 roleFilter === 'staff'
-                  ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
               }`}
             >
@@ -710,11 +774,11 @@ export default function UsersPage() {
               onClick={() => setRoleFilter('user')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 roleFilter === 'user'
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  ? 'bg-green-100 text-green-700 border border-green-200'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
               }`}
             >
-              User ({users.filter(u => u.role === 'user').length})
+              Users ({users.filter(u => u.role === 'user').length})
             </button>
           </div>
           {(roleFilter !== 'all' || searchTerm) && (
@@ -828,8 +892,8 @@ export default function UsersPage() {
                       <div className="text-sm text-gray-500">{user.phone}</div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(user.role || 'guest')}`}>
-                        {user.role}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(user.role || 'user')}`}>
+                        {user.role || 'user'}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -850,7 +914,7 @@ export default function UsersPage() {
                           <button
                             onClick={() => {
                               setSelectedUser(user);
-                              setEditRole(user.role || 'guest');
+                              setEditRole(user.role || 'user');
                               setShowEditModal(true);
                             }}
                             className="text-indigo-600 hover:text-indigo-900"
@@ -978,17 +1042,24 @@ export default function UsersPage() {
             </p>
             
             <div className="space-y-3">
-              {['guest', 'moderator', 'admin'].map((role) => (
-                <label key={role} className="flex items-center">
+              {[
+                { value: 'user', label: 'User', description: 'Regular customer access' },
+                { value: 'staff', label: 'Staff', description: 'Admin panel access + user management' },
+                { value: 'admin', label: 'Admin', description: 'Full system access + all permissions' }
+              ].map((role) => (
+                <label key={role.value} className="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                   <input
                     type="radio"
                     name="role"
-                    value={role}
-                    checked={editRole === role}
+                    value={role.value}
+                    checked={editRole === role.value}
                     onChange={(e) => setEditRole(e.target.value)}
-                    className="mr-2"
+                    className="mt-1 mr-3 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="capitalize">{role}</span>
+                  <div>
+                    <span className="font-medium text-gray-900">{role.label}</span>
+                    <p className="text-sm text-gray-500 mt-1">{role.description}</p>
+                  </div>
                 </label>
               ))}
             </div>

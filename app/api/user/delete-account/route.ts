@@ -220,7 +220,9 @@ export async function DELETE(request: NextRequest) {
         profileDeleted: true,
         authDeleted: true,
         bookingsAnonymized: bookings ? bookings.length : 0
-      }
+      },
+      // Instruct frontend to clear all session data
+      clearStorage: true
     })
 
   } catch (error) {

@@ -391,7 +391,7 @@ export default function SettingsPage() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const headerOffset = 100; // Offset for sticky header
+      const headerOffset = 100;
       const elementPosition = element.offsetTop;
       const offsetPosition = elementPosition - headerOffset;
 
@@ -547,6 +547,19 @@ export default function SettingsPage() {
       if (result.success) {
         if (result.warning) {
           warning(result.warning);
+        }
+
+        // Clear ALL localStorage and sessionStorage data
+        if (result.clearStorage) {
+          console.log('🧹 Clearing all browser storage after account deletion');
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Clear specific password reset flags explicitly
+          localStorage.removeItem('in_password_reset');
+          sessionStorage.removeItem('recovery_access_token');
+          sessionStorage.removeItem('recovery_refresh_token');
+          sessionStorage.removeItem('recovery-info-shown');
         }
 
         // Sign out the user
