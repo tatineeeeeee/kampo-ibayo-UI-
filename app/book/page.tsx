@@ -1398,7 +1398,7 @@ function BookingPage() {
           transform: scale(1.05) !important;
         }
         .react-datepicker__day--occupied::after {
-          content: "BUSY" !important;
+          content: "OCCUPIED" !important;
           position: absolute !important;
           bottom: 1px !important;
           left: 50% !important;
@@ -1416,7 +1416,7 @@ function BookingPage() {
         /* 📱 MOBILE: Shorter labels for better readability */
         @media (max-width: 768px) {
           .react-datepicker__day--occupied::after {
-            content: "BUSY" !important;
+            content: "OCCUPIED" !important;
             font-size: 8px !important;
             padding: 1px 2px !important;
             bottom: 2px !important;
@@ -2248,8 +2248,8 @@ function BookingPage() {
                       }}
                     ></span>
                     <span className="text-gray-300">
-                      <span className="hidden sm:inline">Busy</span>
-                      <span className="sm:hidden">Busy</span>
+                      <span className="hidden sm:inline">Occupied</span>
+                      <span className="sm:hidden">Occupied</span>
                     </span>
                   </span>
                   <span className="flex items-center gap-2">
