@@ -1607,7 +1607,8 @@ export default function ReportsPage() {
               Daily Operations Report
             </h3>
             <p className="text-gray-600 mb-4">
-              This report shows today&apos;s check-ins, check-outs, and current guests for staff planning and operational management.
+              This report shows today&apos;s check-ins, check-outs, and current
+              guests for staff planning and operational management.
             </p>
             <p className="text-sm text-gray-500">
               Click the <strong>Export</strong> button above to download the
@@ -2085,7 +2086,9 @@ export default function ReportsPage() {
               Guest Database Report
             </h3>
             <p className="text-gray-600 mb-4">
-              This report shows your complete guest database with contact information, visit history, and spending patterns for marketing and customer service.
+              This report shows your complete guest database with contact
+              information, visit history, and spending patterns for marketing
+              and customer service.
             </p>
             <p className="text-sm text-gray-500">
               Click the <strong>Export</strong> button above to download the
