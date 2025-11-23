@@ -6,8 +6,8 @@ export async function DELETE(request: NextRequest) {
     // Validate environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing environment variables for account deletion')
-      return NextResponse.json({ 
-        error: 'Server configuration error' 
+      return NextResponse.json({
+        error: 'Server configuration error'
       }, { status: 500 })
     }
 
@@ -65,8 +65,8 @@ export async function DELETE(request: NextRequest) {
 
     // Safety check: Don't delete admin accounts through this endpoint
     if (existingUser.role === 'admin') {
-      return NextResponse.json({ 
-        error: 'Admin accounts cannot be self-deleted. Contact support.' 
+      return NextResponse.json({
+        error: 'Admin accounts cannot be self-deleted. Contact support.'
       }, { status: 403 })
     }
 
@@ -78,8 +78,8 @@ export async function DELETE(request: NextRequest) {
 
     if (bookingsError) {
       console.error('Error checking bookings:', bookingsError)
-      return NextResponse.json({ 
-        error: 'Unable to verify account eligibility for deletion' 
+      return NextResponse.json({
+        error: 'Unable to verify account eligibility for deletion'
       }, { status: 500 })
     }
 
@@ -88,9 +88,9 @@ export async function DELETE(request: NextRequest) {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    const activeBookings = bookings?.filter(b => 
-      b.status === 'pending' || 
-      b.status === 'confirmed' || 
+    const activeBookings = bookings?.filter(b =>
+      b.status === 'pending' ||
+      b.status === 'confirmed' ||
       b.status === 'paid'
     ) || []
 
@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest) {
 
     // Enforce business rules
     if (activeBookings.length > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: `Cannot delete account: ${activeBookings.length} active booking(s) found`,
         details: 'Please cancel or complete all pending/confirmed/paid bookings first',
         activeBookings: activeBookings.map(b => ({
@@ -119,7 +119,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (upcomingBookings.length > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: `Cannot delete account: ${upcomingBookings.length} upcoming booking(s) found`,
         details: 'Please cancel all future bookings first',
         upcomingBookings: upcomingBookings.map(b => ({
@@ -131,7 +131,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (recentBookings.length > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: `Cannot delete account: ${recentBookings.length} recent booking(s) within 30 days`,
         details: 'Please contact support for accounts with recent bookings',
         requiresSupport: true
@@ -140,7 +140,7 @@ export async function DELETE(request: NextRequest) {
 
     // If they have old bookings, require confirmation token
     if (bookings && bookings.length > 0 && confirmationToken !== 'DELETE') {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Additional confirmation required',
         details: `Account has ${bookings.length} historical booking(s)`,
         requiresConfirmation: true,
@@ -154,7 +154,7 @@ export async function DELETE(request: NextRequest) {
     if (bookings && bookings.length > 0) {
       const { error: anonymizeError } = await supabaseAdmin
         .from('bookings')
-        .update({ 
+        .update({
           guest_name: 'Deleted User',
           guest_email: 'deleted@privacy.local',
           guest_phone: null,
@@ -164,8 +164,8 @@ export async function DELETE(request: NextRequest) {
 
       if (anonymizeError) {
         console.error('Error anonymizing booking records:', anonymizeError)
-        return NextResponse.json({ 
-          error: 'Failed to process booking data anonymization' 
+        return NextResponse.json({
+          error: 'Failed to process booking data anonymization'
         }, { status: 500 })
       }
 
@@ -180,8 +180,8 @@ export async function DELETE(request: NextRequest) {
 
     if (dbError) {
       console.error('Database deletion error:', dbError)
-      return NextResponse.json({ 
-        error: 'Failed to delete user profile' 
+      return NextResponse.json({
+        error: 'Failed to delete user profile'
       }, { status: 500 })
     }
 
@@ -192,8 +192,8 @@ export async function DELETE(request: NextRequest) {
 
     if (authError) {
       console.error('Auth deletion error:', authError)
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         message: 'Account partially deleted. Authentication cleanup may be incomplete.',
         warning: 'Contact support if you experience login issues'
       }, { status: 200 })
@@ -213,8 +213,8 @@ export async function DELETE(request: NextRequest) {
       ipAddress: request.headers.get('x-forwarded-for') || 'unknown'
     })
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: 'Account successfully deleted',
       details: {
         profileDeleted: true,
@@ -227,9 +227,9 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error) {
     console.error('Unexpected error in account deletion:', error)
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error during account deletion',
       message: errorMessage
     }, { status: 500 })

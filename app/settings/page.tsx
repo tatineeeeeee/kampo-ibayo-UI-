@@ -551,15 +551,15 @@ export default function SettingsPage() {
 
         // Clear ALL localStorage and sessionStorage data
         if (result.clearStorage) {
-          console.log('🧹 Clearing all browser storage after account deletion');
+          console.log("🧹 Clearing all browser storage after account deletion");
           localStorage.clear();
           sessionStorage.clear();
-          
+
           // Clear specific password reset flags explicitly
-          localStorage.removeItem('in_password_reset');
-          sessionStorage.removeItem('recovery_access_token');
-          sessionStorage.removeItem('recovery_refresh_token');
-          sessionStorage.removeItem('recovery-info-shown');
+          localStorage.removeItem("in_password_reset");
+          sessionStorage.removeItem("recovery_access_token");
+          sessionStorage.removeItem("recovery_refresh_token");
+          sessionStorage.removeItem("recovery-info-shown");
         }
 
         // Sign out the user
