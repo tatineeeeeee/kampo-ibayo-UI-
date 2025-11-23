@@ -131,10 +131,9 @@ export const createBookingRescheduleSMS = (
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
-export const createPaymentRejectedSMS = (
+export const createPaymentReviewSMS = (
   bookingId: string,
-  guestName: string,
-  reason?: string
+  guestName: string
 ): string => {
   const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
   const baseMessage = `KAMPO IBAYO: Hi ${guestName}, payment for ${formattedBookingNumber} needs review. Please resubmit payment proof. Contact: 09662815123`;
