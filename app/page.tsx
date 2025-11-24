@@ -1593,32 +1593,32 @@ function Home() {
           .react-datepicker__day--checkin.react-datepicker__day--today::after,
           .react-datepicker__day--checkin.react-datepicker__day--selected::after {
             content: "IN" !important;
-            font-size: 0.45rem !important;
-            padding: 0.5px 1.5px !important;
+            font-size: 0.5rem !important;
+            padding: 1px 2px !important;
           }
 
           .react-datepicker__day--checkout::after,
           .react-datepicker__day--checkout.react-datepicker__day--today::after,
           .react-datepicker__day--checkout.react-datepicker__day--selected::after {
             content: "OUT" !important;
-            font-size: 0.45rem !important;
-            padding: 0.5px 1.5px !important;
+            font-size: 0.5rem !important;
+            padding: 1px 2px !important;
           }
 
           .react-datepicker__day--occupied::after,
           .react-datepicker__day--occupied.react-datepicker__day--today::after,
           .react-datepicker__day--occupied.react-datepicker__day--selected::after {
             content: "BUSY" !important;
-            font-size: 0.45rem !important;
-            padding: 0.5px 1.5px !important;
+            font-size: 0.5rem !important;
+            padding: 1px 2px !important;
           }
 
           .react-datepicker__day--same-day::after,
           .react-datepicker__day--same-day.react-datepicker__day--today::after,
           .react-datepicker__day--same-day.react-datepicker__day--selected::after {
             content: "FULL" !important;
-            font-size: 0.45rem !important;
-            padding: 0.5px 1.5px !important;
+            font-size: 0.5rem !important;
+            padding: 1px 2px !important;
           }
         }
       `}</style>
