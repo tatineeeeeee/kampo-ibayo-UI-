@@ -1877,66 +1877,86 @@ function Home() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
               {/* Summer Promo */}
-              <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-5 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-red-600/30 hover:border-red-500/50">
+              <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-red-600/30 hover:border-red-500/50">
                 <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse">
                   SAVE ₱3K
                 </div>
-                <div className="relative z-10 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold mb-1">Summer Special</h3>
-                    <p className="text-2xl font-extrabold mb-1">₱9,000</p>
-                    <p className="text-red-100 text-sm">
-                      22hrs • Up to 15 pax • Mon-Thu
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {maintenanceActive ? (
-                      <div className="bg-gray-500 text-gray-300 px-4 py-2 rounded-xl font-bold text-sm cursor-not-allowed opacity-50">
-                        Booking Disabled
+                <div className="relative z-10">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2 text-white">
+                        Summer Special
+                      </h3>
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <p className="text-2xl sm:text-3xl font-extrabold text-white">
+                          ₱9,000
+                        </p>
+                        <span className="text-red-200 text-sm line-through opacity-75">
+                          ₱12,000
+                        </span>
                       </div>
-                    ) : (
-                      <Link
-                        href="/book"
-                        className="bg-white/90 backdrop-blur text-red-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-white transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-                      >
-                        Book Now
-                      </Link>
-                    )}
+                      <p className="text-red-100 text-sm opacity-90">
+                        22 hours stay • Up to 15 guests • Monday to Thursday
+                      </p>
+                    </div>
+                    <div className="w-full">
+                      {maintenanceActive ? (
+                        <div className="bg-gray-600/80 text-gray-300 px-6 py-3 rounded-xl font-semibold text-sm cursor-not-allowed opacity-50 w-full text-center border border-gray-500/50">
+                          Temporarily Unavailable
+                        </div>
+                      ) : (
+                        <Link
+                          href="/book"
+                          className="group bg-white/80 backdrop-blur-sm hover:bg-white/90 text-red-800 hover:text-red-900 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 w-full text-center touch-manipulation min-h-[48px] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        >
+                          <span>Book This Deal</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Weekend Rate */}
-              <div className="bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 p-5 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-gray-600">
+              <div className="bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-gray-600 hover:border-gray-500">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold mb-1 text-yellow-400">
-                      Weekend & Holidays
-                    </h3>
-                    <p className="text-2xl font-extrabold mb-1 text-yellow-400">
-                      ₱12,000
-                    </p>
-                    <p className="text-gray-300 text-sm">
-                      22hrs • Up to 15 pax • Fri-Sun
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {maintenanceActive ? (
-                      <div className="bg-gray-500 text-gray-300 px-4 py-2 rounded-xl font-bold text-sm cursor-not-allowed opacity-50">
-                        Booking Disabled
+                <div className="relative z-10">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2 text-yellow-400">
+                        Weekend & Holidays
+                      </h3>
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <p className="text-2xl sm:text-3xl font-extrabold text-yellow-400">
+                          ₱12,000
+                        </p>
+                        <span className="bg-yellow-400/20 text-yellow-300 text-xs px-2 py-1 rounded-full font-medium">
+                          Standard Rate
+                        </span>
                       </div>
-                    ) : (
-                      <Link
-                        href="/book"
-                        className="bg-yellow-400/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-                      >
-                        Book Now
-                      </Link>
-                    )}
+                      <p className="text-gray-300 text-sm opacity-90">
+                        22 hours stay • Up to 15 guests • Friday to Sunday
+                      </p>
+                    </div>
+                    <div className="w-full">
+                      {maintenanceActive ? (
+                        <div className="bg-gray-600/80 text-gray-300 px-6 py-3 rounded-xl font-semibold text-sm cursor-not-allowed opacity-50 w-full text-center border border-gray-500/50">
+                          Temporarily Unavailable
+                        </div>
+                      ) : (
+                        <Link
+                          href="/book"
+                          className="group bg-yellow-400/95 hover:bg-yellow-400 text-gray-900 hover:text-black px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 w-full text-center touch-manipulation min-h-[48px] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] border-2 border-yellow-400/20 hover:border-yellow-400/40"
+                        >
+                          <span>Reserve Weekend</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
