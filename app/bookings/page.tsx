@@ -9,6 +9,7 @@ import { displayPhoneNumber } from "../utils/phoneUtils";
 import { formatBookingNumber } from "../utils/bookingNumber";
 import {
   checkAndExpirePendingBookings,
+  autoCompleteFinishedBookings,
   getDaysPending,
   shouldShowExpirationWarning,
   getExpirationWarningMessage,
@@ -1060,6 +1061,18 @@ function BookingsPageContent() {
         }
       } catch (error) {
         console.error("Error checking pending bookings:", error);
+      }
+
+      // Auto-complete confirmed bookings that have passed their checkout date
+      try {
+        const completedCount = await autoCompleteFinishedBookings();
+        if (completedCount > 0) {
+          console.log(
+            `Auto-completed ${completedCount} booking(s) past checkout date`
+          );
+        }
+      } catch (error) {
+        console.error("Error auto-completing bookings:", error);
       }
 
       // Clean up old completed bookings (keep only 5 most recent)

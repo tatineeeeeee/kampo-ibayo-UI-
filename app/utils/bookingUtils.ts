@@ -26,7 +26,7 @@ export async function getUserBookingStats(userId: string): Promise<BookingStats>
   try {
     const { data: bookings, error } = await supabase
       .from('bookings')
-      .select('status, created_at, check_out_date')
+      .select('status, created_at')
       .eq('user_id', userId);
 
     if (error) {
@@ -48,25 +48,10 @@ export async function getUserBookingStats(userId: string): Promise<BookingStats>
       cancelledCount: 0
     };
 
-    const now = new Date();
-    now.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
-
     bookings?.forEach(booking => {
       const status = booking.status?.toLowerCase() || 'pending';
-      
-      // Check if confirmed booking has passed checkout date
-      if (status === 'confirmed' && booking.check_out_date) {
-        const checkOutDate = new Date(booking.check_out_date);
-        checkOutDate.setHours(0, 0, 0, 0);
-        
-        // If checkout date has passed, count as completed
-        if (checkOutDate < now) {
-          stats.completedCount++;
-          return;
-        }
-      }
-      
-      // Otherwise count by status
+
+      // Count by actual database status (no need for date logic anymore)
       switch (status) {
         case 'pending':
           stats.pendingCount++;
@@ -140,7 +125,7 @@ export async function cleanupOldCompletedBookings(userId: string): Promise<numbe
     // Update old completed bookings to "cancelled" status
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ 
+      .update({
         status: 'cancelled',
         cancellation_reason: 'Auto-expired: Completed booking archived after 5 newer completions',
         cancelled_by: 'system',
@@ -163,13 +148,66 @@ export async function cleanupOldCompletedBookings(userId: string): Promise<numbe
 }
 
 /**
+ * Auto-complete confirmed bookings that have passed their checkout date
+ * This runs safely in the background and only updates bookings that need it
+ * @returns Number of bookings auto-completed
+ */
+export async function autoCompleteFinishedBookings(): Promise<number> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today for accurate comparison
+
+    // Find confirmed bookings where checkout date has passed
+    const { data: finishedBookings, error: fetchError } = await supabase
+      .from('bookings')
+      .select('id, guest_name, check_out_date')
+      .eq('status', 'confirmed')
+      .lt('check_out_date', today.toISOString());
+
+    if (fetchError) {
+      console.error('Error fetching finished bookings:', fetchError);
+      return 0;
+    }
+
+    if (!finishedBookings || finishedBookings.length === 0) {
+      return 0; // No bookings to complete
+    }
+
+    console.log(`Found ${finishedBookings.length} confirmed booking(s) past checkout date`);
+
+    const bookingIds = finishedBookings.map(booking => booking.id);
+
+    // Safely update to completed status
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .in('id', bookingIds);
+
+    if (updateError) {
+      console.error('Error auto-completing bookings:', updateError);
+      return 0;
+    }
+
+    console.log(`✅ Auto-completed ${finishedBookings.length} booking(s)`);
+    return finishedBookings.length;
+
+  } catch (error) {
+    console.error('Error in autoCompleteFinishedBookings:', error);
+    return 0;
+  }
+}
+
+/**
  * Check if user can create a new pending booking
  * @param userId - The user's ID
  * @returns Boolean and optional message
  */
-export async function canUserCreatePendingBooking(userId: string): Promise<{canCreate: boolean, message?: string}> {
+export async function canUserCreatePendingBooking(userId: string): Promise<{ canCreate: boolean, message?: string }> {
   const stats = await getUserBookingStats(userId);
-  
+
   if (!stats.canCreatePending) {
     return {
       canCreate: false,
@@ -189,7 +227,7 @@ export async function checkAndExpirePendingBookings(): Promise<BookingExpiration
     // Calculate 7 days ago for production
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     // Find bookings that are pending and older than 7 days
     const { data: expiredBookings, error: fetchError } = await supabase
       .from('bookings')
@@ -210,11 +248,11 @@ export async function checkAndExpirePendingBookings(): Promise<BookingExpiration
 
     // Update the expired bookings to "cancelled" status
     const bookingIds = expiredBookings.map(booking => booking.id);
-    
+
     // Now we can add cancellation reason since we added the column
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ 
+      .update({
         status: 'cancelled',
         cancellation_reason: 'Auto-expired: No confirmation received within 7 days',
         cancelled_by: 'system',
@@ -232,7 +270,7 @@ export async function checkAndExpirePendingBookings(): Promise<BookingExpiration
       const createdDate = new Date(booking.created_at || new Date());
       const now = new Date();
       const daysPending = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       return {
         id: booking.id,
         guest_name: booking.guest_name,
@@ -283,7 +321,7 @@ export function getExpirationWarningMessage(createdAt: string | null): string {
   if (!createdAt) return "";
   const daysPending = getDaysPending(createdAt);
   const daysLeft = Math.max(0, 7 - daysPending);
-  
+
   if (daysLeft === 0) {
     return "⚠️ This booking will expire today";
   } else if (daysLeft === 1) {
@@ -299,7 +337,7 @@ export function getExpirationWarningMessage(createdAt: string | null): string {
  */
 export async function manuallyExpireBookings() {
   const expiredBookings = await checkAndExpirePendingBookings();
-  
+
   if (expiredBookings.length > 0) {
     console.log('📋 Manual Expiration Summary:');
     expiredBookings.forEach(booking => {
@@ -321,12 +359,12 @@ export async function checkBookingTableColumns() {
       .from('bookings')
       .select('*')
       .limit(1);
-    
+
     if (error) {
       console.error('Error checking table structure:', error);
       return;
     }
-    
+
     if (data && data.length > 0) {
       console.log('📋 Bookings table columns:', Object.keys(data[0]));
       console.log('📋 Sample booking data:', data[0]);
