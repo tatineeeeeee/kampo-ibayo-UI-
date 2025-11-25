@@ -1614,6 +1614,8 @@ function BookingsPageContent() {
         return "bg-orange-600";
       case "cancelled":
         return "bg-red-600";
+      case "completed":
+        return "bg-blue-600";
       default:
         return "bg-gray-600";
     }

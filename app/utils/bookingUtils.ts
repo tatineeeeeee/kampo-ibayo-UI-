@@ -149,50 +149,26 @@ export async function cleanupOldCompletedBookings(userId: string): Promise<numbe
 
 /**
  * Auto-complete confirmed bookings that have passed their checkout date
- * This runs safely in the background and only updates bookings that need it
+ * This calls the server-side API endpoint to safely update bookings
  * @returns Number of bookings auto-completed
  */
 export async function autoCompleteFinishedBookings(): Promise<number> {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today for accurate comparison
+    // Call server-side API endpoint to handle the update with admin privileges
+    const response = await fetch('/api/bookings/auto-complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    // Find confirmed bookings where checkout date has passed (use lte to include today)
-    const { data: finishedBookings, error: fetchError } = await supabase
-      .from('bookings')
-      .select('id, guest_name, check_out_date')
-      .eq('status', 'confirmed')
-      .lte('check_out_date', today.toISOString());
-
-    if (fetchError) {
-      console.error('Error fetching finished bookings:', fetchError);
+    if (!response.ok) {
+      console.error('Failed to auto-complete bookings:', response.statusText);
       return 0;
     }
 
-    if (!finishedBookings || finishedBookings.length === 0) {
-      return 0; // No bookings to complete
-    }
-
-    console.log(`Found ${finishedBookings.length} confirmed booking(s) past checkout date`);
-
-    const bookingIds = finishedBookings.map(booking => booking.id);
-
-    // Safely update to completed status
-    const { error: updateError } = await supabase
-      .from('bookings')
-      .update({
-        status: 'completed',
-        updated_at: new Date().toISOString()
-      })
-      .in('id', bookingIds);
-
-    if (updateError) {
-      console.error('Error auto-completing bookings:', updateError);
-      return 0;
-    }
-
-    console.log(`✅ Auto-completed ${finishedBookings.length} booking(s)`);
-    return finishedBookings.length;
+    const data = await response.json();
+    return data.completedCount || 0;
 
   } catch (error) {
     console.error('Error in autoCompleteFinishedBookings:', error);
