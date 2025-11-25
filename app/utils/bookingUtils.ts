@@ -26,7 +26,7 @@ export async function getUserBookingStats(userId: string): Promise<BookingStats>
   try {
     const { data: bookings, error } = await supabase
       .from('bookings')
-      .select('status, created_at')
+      .select('status, created_at, check_out_date')
       .eq('user_id', userId);
 
     if (error) {
@@ -48,8 +48,25 @@ export async function getUserBookingStats(userId: string): Promise<BookingStats>
       cancelledCount: 0
     };
 
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
+
     bookings?.forEach(booking => {
       const status = booking.status?.toLowerCase() || 'pending';
+      
+      // Check if confirmed booking has passed checkout date
+      if (status === 'confirmed' && booking.check_out_date) {
+        const checkOutDate = new Date(booking.check_out_date);
+        checkOutDate.setHours(0, 0, 0, 0);
+        
+        // If checkout date has passed, count as completed
+        if (checkOutDate < now) {
+          stats.completedCount++;
+          return;
+        }
+      }
+      
+      // Otherwise count by status
       switch (status) {
         case 'pending':
           stats.pendingCount++;
