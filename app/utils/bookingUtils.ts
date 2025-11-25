@@ -157,12 +157,12 @@ export async function autoCompleteFinishedBookings(): Promise<number> {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Start of today for accurate comparison
 
-    // Find confirmed bookings where checkout date has passed
+    // Find confirmed bookings where checkout date has passed (use lte to include today)
     const { data: finishedBookings, error: fetchError } = await supabase
       .from('bookings')
       .select('id, guest_name, check_out_date')
       .eq('status', 'confirmed')
-      .lt('check_out_date', today.toISOString());
+      .lte('check_out_date', today.toISOString());
 
     if (fetchError) {
       console.error('Error fetching finished bookings:', fetchError);
