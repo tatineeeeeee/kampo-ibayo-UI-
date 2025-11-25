@@ -1,499 +1,243 @@
-# Republic of the Philippines
-## CAVITE STATE UNIVERSITY
-### Trece Martires City Campus
-**(0977)8033809**  
-**www.cvsu.edu.ph**
+Republic of the Philippines  
+CAVITE STATE UNIVERSITY  
+Trece Martires City Campus  
+🕾 (0977)8033809  
+www.cvsu.edu.ph
+
+**TEST INSTRUMENT**
+
+**The Kampo Way: A Booking and Reservation System for Kampo Ibayo in General Trias, Cavite**
 
 ---
 
-# TEST INSTRUMENT
+### Unit testing
 
-**THE KAMPO WAY: A BOOKING AND RESERVATION SYSTEM FOR KAMPO IBAYO IN GENERAL TRIAS, CAVITE**
-
-**Unit Testing**
-
-**Date:** November 1, 2025  
-**Proponents:** DAI REN B. DACASIN  
-**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** JUSTINE CESAR L. OCAMPO  
-**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** JOHN REIGN REYES
+**Date:** **\*\*\*\***\_\_**\*\*\*\***  
+**Proponents:**  
+Dacasin, Dai Ren B.  
+Ocampo, Justine Cesar L.  
+Reyes, John Reign
 
 ---
 
-## Module: User Authentication & Account Management Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Enable user registration with email verification | |
-| Enable user login with email and password | |
-| Enable user logout with session cleanup | |
-| Password recovery using email reset link | |
-| Edit user profile information (name, email, phone) | |
-| Upload and display profile image | |
-| Role-based access control (admin/staff/user) | |
-| Phone number validation for Philippine numbers | |
+#### Module: User Authentication & Account Management
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Access privileges are correct for each role | |
-| User session management works properly | |
-| Password encryption and validation functions correctly | |
-| Phone number formatting and validation accuracy | |
+**Remarks (Passed/Failed/Comments)**
+
+**FUNCTIONALITY**  
+User can sign up with email and password  
+User can log in with correct credentials  
+User can log out successfully  
+User can reset password via email  
+User can edit profile information (name, email, phone)
+
+**ACCURACY**  
+Correct user role is applied (user, staff, or admin)  
+Profile updates are saved and displayed correctly  
+Session remains active until logout
 
 ---
 
-## Module: Booking Management Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Create new booking with guest information | |
-| Real-time availability checking and calendar display | |
-| Dynamic pricing calculation (weekday/weekend rates) | |
-| Prevent double-booking and date conflicts | |
-| Handle special requests and pet-friendly options | |
-| Booking status workflow (pending → confirmed → cancelled) | |
-| Calculate total amount including guest count | |
-| Generate booking confirmation details | |
+#### Module: Online Booking & Reservation (with Real-Time Availability)
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Availability calculations are correct | |
-| Pricing calculations match business rules | |
-| Booking conflicts are properly prevented | |
-| Date range validation works accurately | |
+**Remarks (Passed/Failed/Comments)**
 
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Users can only view their own bookings | |
-| Admins can view and manage all bookings | |
-| Guest information is properly secured | |
+**FUNCTIONALITY**  
+User can create new booking with dates, guest count, and contact information  
+System shows real-time availability calendar  
+System prevents double-booking (blocks unavailable dates)  
+User can select pet-friendly option when booking  
+User can add special requests  
+System calculates total amount based on dates and number of guests  
+User can view their booking history (pending, confirmed, completed, cancelled)  
+User can cancel booking if needed  
+Admin can confirm or cancel any booking
 
----
+**ACCURACY**  
+Calendar shows correct available and booked dates  
+Pricing is calculated correctly (weekday vs weekend rates, extra guests)  
+Booking details are saved accurately in the system  
+Users can only see their own bookings  
+Admins can see all bookings
 
-## Module: Payment Management Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Upload payment proof with image validation | |
-| Admin verification of payment proofs | |
-| Payment status tracking (pending/verified/rejected) | |
-| Admin notes and rejection reasons | |
-| Payment amount validation | |
-| Reference number handling | |
-| Payment method selection | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Payment amounts calculated correctly | |
-| Payment status updates function properly | |
-| File upload validation works correctly | |
-
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Users can only upload proofs for their bookings | |
-| Admin-only access to verify payments | |
-| Payment data is properly secured | |
+**ACCESS PRIVILEGES**  
+Users can only manage their own bookings  
+Staff and admins can manage all bookings
 
 ---
 
-## Module: Admin Dashboard Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Display real-time booking statistics | |
-| Generate monthly revenue charts with authentic data | |
-| Show booking status distribution | |
-| Calculate average booking values | |
-| Auto-refresh dashboard data every 30 seconds | |
-| Display total bookings, confirmed, pending, cancelled | |
-| Monthly data aggregation by booking dates | |
+#### Module: Secure Payment Integration
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Statistical calculations are accurate | |
-| Chart data reflects real database values | |
-| Revenue calculations match confirmed bookings | |
-| No fake or estimated data is displayed | |
+**Remarks (Passed/Failed/Comments)**
 
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Admin-only access to dashboard | |
-| Data filtering and privacy controls work correctly | |
+**FUNCTIONALITY**  
+User can upload payment proof (screenshot or photo)  
+System supports payment methods: GCash, Maya, Bank Transfer  
+Staff/Admin can verify payment proofs (approve or reject)  
+System tracks payment status (pending, verified, rejected)  
+User receives notification when payment is verified or rejected
+
+**ACCURACY**  
+Payment amounts match the booking total  
+Payment status updates correctly after staff/admin verification  
+Uploaded files are stored securely
+
+**ACCESS PRIVILEGES**  
+Users can only upload payment for their own bookings  
+Only staff and admins can verify or reject payments
 
 ---
 
-## Module: Reports Generation Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Generate daily checklist reports | |
-| Create guest registry with contact information | |
-| Produce revenue reports for accounting | |
-| Generate booking calendar reports | |
-| Filter reports by date range and status | |
-| Export reports to CSV format | |
-| Display filtered booking data in charts | |
+#### Module: Admin Interface & Reports
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Report data matches filtered database queries | |
-| Export functionality preserves data integrity | |
-| Date filtering works correctly | |
-| Chart data respects applied filters | |
+**Remarks (Passed/Failed/Comments)**
 
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Admin-only access to generate reports | |
-| Filtered data respects privacy settings | |
+**FUNCTIONALITY**  
+Staff/Admin can view dashboard with booking statistics  
+Staff/Admin can view all bookings with filters (date, status)  
+Staff/Admin can manage reservations (confirm, cancel)  
+Staff/Admin can verify payment proofs  
+Staff/Admin can view customer inquiries and information  
+System generates automated reports (daily operations, bookings, revenue)  
+Staff/Admin can export reports to CSV format
+
+**ACCURACY**  
+Dashboard statistics match actual booking counts  
+Filters show correct bookings  
+Reports contain accurate data
+
+**ACCESS PRIVILEGES**  
+Only staff and admins can access dashboard and management features
 
 ---
 
-## Module: User Management Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| View all registered users | |
-| Edit user roles (admin/staff/user) | |
-| Delete user accounts with confirmation | |
-| Search and filter users | |
-| View user booking history | |
-| Track user registration dates | |
-| Manage user permissions | |
+#### Module: Guest Reviews & Ratings
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| User data displays correctly | |
-| Role changes are applied properly | |
-| User deletion removes related data | |
+**Remarks (Passed/Failed/Comments)**
 
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Admin-only access to user management | |
-| Proper data protection for user information | |
+**FUNCTIONALITY**  
+Guests can leave reviews after their stay  
+Guests can rate their experience (1-5 stars)  
+Guests can upload photos with reviews (optional)  
+Staff/Admin can approve or reject reviews  
+Only approved reviews are shown publicly
+
+**ACCURACY**  
+Reviews are saved correctly  
+Ratings display accurately  
+Only completed bookings can be reviewed
+
+**ACCESS PRIVILEGES**  
+Users can only review their own completed bookings  
+Only staff and admins can approve/reject reviews
 
 ---
 
-## Module: Review System Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Submit guest reviews with ratings | |
-| Upload photos with review submissions | |
-| Admin review moderation (approve/reject) | |
-| Category ratings (cleanliness, service, location, value, amenities) | |
-| Display approved reviews on homepage | |
-| Handle review rejection with reasons | |
-| Anonymous review options | |
+#### Module: Automated SMS & Email Notifications
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Rating calculations are correct | |
-| Review data is saved and retrieved properly | |
-| Photo uploads function correctly | |
+**Remarks (Passed/Failed/Comments)**
 
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Users can only review their completed bookings | |
-| Admin-only moderation capabilities | |
-| Public display shows only approved reviews | |
+**FUNCTIONALITY**  
+System sends booking confirmation via email and SMS  
+System sends payment verification notification  
+System sends booking reminder before check-in date  
+System sends cancellation notification  
+Staff/Admin receives notification for new bookings
+
+**ACCURACY**  
+Notifications contain correct guest name, dates, and booking details  
+Notifications are sent at the right time (booking, payment, reminder)
 
 ---
 
-## Module: Notification & Communication Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Send booking confirmation emails | |
-| Send admin notification emails | |
-| SMS reminders for check-ins | |
-| Email templates with resort branding | |
-| Automated email triggers for booking events | |
-| Error handling for failed notifications | |
+#### Module: Chatbot / Customer Support
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Email content is accurate and formatted correctly | |
-| SMS formatting follows proper standards | |
-| Notification triggers work at correct times | |
+**Remarks (Passed/Failed/Comments)**
+
+**FUNCTIONALITY**  
+Chatbot is available on the page  
+Chatbot can answer common questions  
+Chatbot provides helpful information about the resort
+
+**ACCURACY**  
+Chatbot responses are relevant and helpful  
+Chatbot is accessible on all pages
 
 ---
 
-## Module: Maintenance Mode Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Enable/disable maintenance mode | |
-| Display maintenance message to users | |
-| Restrict booking functionality during maintenance | |
-| Admin-only access during maintenance | |
-| Real-time maintenance status updates | |
+---
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Maintenance status updates correctly | |
-| Booking restrictions are properly enforced | |
-
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Admin-only access to maintenance controls | |
-| Staff can view but not modify maintenance settings | |
+Republic of the Philippines  
+CAVITE STATE UNIVERSITY
 
 ---
 
-## Module: Availability Calendar Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Display real-time availability calendar | |
-| Show check-in, check-out, and occupied dates | |
-| Handle same-day turnover (1 PM checkout, 3 PM check-in) | |
-| Prevent bookings for past dates | |
-| Visual indicators for different booking statuses | |
-| Navigate between months and years | |
-| Limit bookings to 2-year advance window | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Availability calculations are accurate | |
-| Date comparisons work correctly | |
-| Booking conflicts are properly detected | |
+Name & Signature of Tester  
+Date: **\*\*\*\***\_\_**\*\*\*\***
 
 ---
 
-## Module: Settings & Configuration Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Configure resort pricing (weekday/weekend rates) | |
-| Manage system settings and preferences | |
-| Update contact information | |
-| Configure email and SMS settings | |
-| Backup and restore system data | |
+### Integration testing
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Settings are saved and applied correctly | |
-| Configuration changes take effect immediately | |
+**TEST INSTRUMENT**
 
-| **Access Privileges** | **Remarks (Passed/Failed/Comments)** |
-|-----------------------|---------------------------------------|
-| Admin-only access to system settings | |
-| Changes are logged and traceable | |
+**The Kampo Way: A Booking and Reservation System for Kampo Ibayo in General Trias, Cavite**
 
----
+**Integration testing**
 
-## Module: Data Security & Validation Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Input validation for all forms | |
-| SQL injection prevention | |
-| XSS attack protection | |
-| CSRF token validation | |
-| Secure file upload handling | |
-| Session management security | |
-| API endpoint protection | |
+**Date:** **\*\*\*\***\_\_**\*\*\*\***  
+**Proponents:**  
+Dacasin, Dai Ren B.  
+Ocampo, Justine Cesar L.  
+Reyes, John Reign
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Validation rules are enforced correctly | |
-| Security measures function as expected | |
-| Error messages are appropriate and secure | |
+| Modules                          | Functionality                                                                                       | Passed/Failed | Remarks |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- | ------------- | ------- |
+| User Authentication Module       | Enable user sign‑up, login, logout, and role‑based access across guest, staff, and admin interfaces |               |         |
+| Booking Management Module        | Create bookings, check availability, prevent conflicts, update booking statuses and reschedule      |               |         |
+| Payment Processing Module        | Upload payment proof, verify payments, update payment and booking status                            |               |         |
+| Admin Dashboard & Reports Module | Display booking statistics and filtered booking lists for staff and admins                          |               |         |
+| Profile & Booking History Module | Show profile and booking history with correct linkage to user accounts                              |               |         |
+| Notification Module              | Send correct emails on booking creation, confirmation, cancellation, and payment updates            |               |         |
+| Availability Calendar Module     | Calendar correctly reflects bookings created/updated by other modules                               |               |         |
+| Database Integration Module      | Ensure all modules read/write consistent data with Supabase (RLS, real‑time updates)                |               |         |
 
 ---
 
-## Module: Homepage & Landing Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Display resort hero section with images | |
-| Show real-time availability calendar modal | |
-| Display pricing information (weekday/weekend) | |
-| Show amenities and facilities information | |
-| Display photo gallery with resort images | |
-| Show guest reviews on homepage | |
-| Contact information and Google Maps integration | |
-| Responsive navigation menu | |
-| Back-to-top functionality | |
-| Social media links and footer | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Pricing displays match actual rates | |
-| Contact information is accurate | |
-| Map location points to correct address | |
+Name & Signature of Tester  
+Date: **\*\*\*\***\_\_**\*\*\*\***
 
 ---
 
-## Module: Chatbot & AI Support Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Intelligent chatbot with 200+ FAQ responses | |
-| Floating chatbot button interface | |
-| Contextual responses to booking questions | |
-| Resort information and policies assistance | |
-| Booking guidance and support | |
-| Contact information provision | |
+### System testing
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Chatbot responses are relevant and accurate | |
-| Information provided matches resort policies | |
+**TEST INSTRUMENT**
 
----
+**The Kampo Way: A Booking and Reservation System for Kampo Ibayo in General Trias, Cavite**
 
-## Module: Photo Management & Gallery Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Enhanced gallery display with resort photos | |
-| Photo upload for review submissions | |
-| Image optimization and compression | |
-| Responsive image galleries | |
-| Photo viewing modal with navigation | |
-| Profile picture upload and management | |
+**System testing**
 
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Images load correctly across devices | |
-| Photo uploads maintain quality | |
-| Gallery navigation functions properly | |
+**Date:** **\*\*\*\***\_\_**\*\*\*\***  
+**Proponents:**  
+Dacasin, Dai Ren B.  
+Ocampo, Justine Cesar L.  
+Reyes, John Reign
+
+| Action                           | Activities                                                                           | System Response                                                 | Expected error                                  | System response error                |
+| -------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------ |
+| User Authentication              | Login and Logout – enter email/password, authenticate, redirect to dashboard, logout | Correct login, secure session, successful logout                | Wrong credentials                               | Show error, do not log in            |
+| User Registration                | Sign up new account – enter details, submit, (optional) email verification           | Account is created and can be used to log in                    | Duplicate email                                 | Show “email already in use”          |
+| Booking Creation                 | Create new booking – select dates, guests, contact info, submit                      | Booking created as pending, visible in “My Bookings”            | Past date or conflicting dates                  | Show validation error, no booking    |
+| Payment Proof Upload             | Upload payment proof – select image/file, submit                                     | File validated, payment status set to under review              | Invalid file or too large                       | Show upload validation error         |
+| Staff/Admin Payment Verification | Staff/Admin verifies payment – open booking, view proof, approve/reject              | Booking/payment status updated to verified/rejected accordingly | Invalid or missing proof                        | Show appropriate error/notice        |
+| Booking Cancellation             | Cancel existing booking – user or admin triggers cancel with reason                  | Status changes to cancelled, history updated                    | Cancellation after disallowed timeframe         | Show cannot‑cancel message           |
+| Review Submission                | Submit review after completed stay – rating + comments (+ optional photos)           | Review saved as pending, visible after admin approval           | Review without required fields                  | Show validation error                |
+| Email Notifications              | Booking and payment events – create booking, confirm, cancel, verify payment         | Correct emails sent for each event                              | Email server problem                            | Log error, show non‑blocking message |
+| Profile & History                | Update profile and view history – change details, open bookings list                 | Profile saved, history lists accurate bookings                  | Invalid email/phone format                      | Show validation error                |
+| Maintenance Mode                 | Admin activates maintenance mode – toggle in settings                                | Booking actions disabled for users, maintenance message shown   | Non‑admin/non‑staff tries to change maintenance | Access denied                        |
+| Responsive Design                | Test on desktop, tablet, mobile                                                      | Layout usable and functional on all devices                     | Very small device                               | Layout adapts without breaking flows |
 
 ---
 
-## Module: Legal & Policy Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Terms of service and privacy policy display | |
-| Cancellation policy information | |
-| House rules and resort policies | |
-| FAQ section with common questions | |
-| Help center and support information | |
-| Legal navigation and page routing | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Legal content is up-to-date and accurate | |
-| Policy information matches business practices | |
-
----
-
-## Module: Booking Confirmation & Check-in Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Booking confirmation page display | |
-| Check-in details and instructions | |
-| Booking summary with all details | |
-| Payment status display | |
-| Resort contact information for check-in | |
-| Booking modification options | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Confirmation details match booking data | |
-| Check-in instructions are accurate | |
-
----
-
-## Module: User Profile & Settings Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Display user profile information | |
-| Edit personal details (name, email, phone) | |
-| View booking history | |
-| Profile picture upload and management | |
-| Account settings and preferences | |
-| Password change functionality | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Profile updates save correctly | |
-| Booking history displays accurate data | |
-
----
-
-## Module: API Routes & Backend Services Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Admin booking confirmation API | |
-| Admin booking cancellation API | |
-| User booking cancellation API | |
-| Payment proof verification API | |
-| Review approval/rejection API | |
-| User account deletion API | |
-| Email sending service API | |
-| SMS notification service API | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| API responses are correct and consistent | |
-| Error handling works properly | |
-| Authentication checks function correctly | |
-
----
-
-## Module: Database Integration Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Supabase connection and authentication | |
-| Real-time data synchronization | |
-| Row-level security (RLS) policies | |
-| Database query optimization | |
-| Transaction handling for bookings | |
-| Data backup and recovery | |
-| Foreign key relationships maintenance | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Database queries return accurate results | |
-| Data integrity is maintained | |
-| Real-time updates function correctly | |
-
----
-
-## Module: Utilities & Helper Functions Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Phone number formatting and validation | |
-| Date and time utilities | |
-| Email service configuration | |
-| SMS service integration | |
-| Booking utilities and calculations | |
-| User validation helpers | |
-| API timeout handling | |
-| Server authentication helpers | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Utility functions produce correct results | |
-| Phone number validation works for Philippine numbers | |
-| Date calculations are accurate | |
-
----
-
-## Module: Component Library & UI Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Toast notification system | |
-| Booking selector component | |
-| Review modal and submission forms | |
-| Category ratings component | |
-| Enhanced UI components | |
-| Cancellation policy display | |
-| Logo and branding components | |
-| Notification dropdown | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Components render correctly | |
-| UI interactions work as expected | |
-| Responsive design functions properly | |
-
----
-
-## Module: Hooks & State Management Module
-| **FUNCTIONALITY** | **Remarks (Passed/Failed/Comments)** |
-|-------------------|---------------------------------------|
-| Admin booking statistics hook | |
-| Admin notifications management | |
-| Booking statistics tracking | |
-| Manual validation hooks | |
-| Review modal state management | |
-| Role-based access control hooks | |
-
-| **Accuracy** | **Remarks (Passed/Failed/Comments)** |
-|--------------|---------------------------------------|
-| Hooks return accurate state data | |
-| State management works correctly | |
-| Component updates trigger properly | |
-
----
-
-**_____________________________**  
-**Name & Signature of Tester**  
-**Date: __________________**
+Name & Signature of Tester  
+Date: **\*\*\*\***\_\_**\*\*\*\***

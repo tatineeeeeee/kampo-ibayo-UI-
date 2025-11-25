@@ -221,8 +221,8 @@ export const useToastHelpers = () => {
       showToast({
         type: 'success',
         title: 'Account Created Successfully!',
-        message: 'You can now sign in with your credentials',
-        duration: 5000
+        message: 'Please check your email and verify your account before signing in',
+        duration: 6000
       }),
 
     // Password reset

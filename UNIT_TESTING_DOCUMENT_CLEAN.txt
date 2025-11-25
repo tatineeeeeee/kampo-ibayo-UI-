@@ -1,0 +1,426 @@
+================================================================================
+                          Republic of the Philippines
+                          CAVITE STATE UNIVERSITY
+                       Trece Martires City Campus
+                          (0977)8033809
+                         www.cvsu.edu.ph
+
+                            TEST INSTRUMENT
+
+    The Kampo Way: A Booking and Reservation System for Kampo Ibayo
+                     in General Trias, Cavite
+================================================================================
+
+UNIT TESTING
+
+Date: ________
+Proponents:
+    Dacasin, Dai Ren B.
+    Ocampo, Justine Cesar L.
+    Reyes, John Reign
+
+--------------------------------------------------------------------------------
+Module: User Authentication & Account Management
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] User can sign up with email and password
+[ ] User can log in with correct credentials
+[ ] User can log out successfully
+[ ] User can reset password via email
+[ ] User can edit profile information (name, email, phone)
+
+ACCURACY
+[ ] Correct user role is applied (user, staff, or admin)
+[ ] Profile updates are saved and displayed correctly
+[ ] Session remains active until logout
+
+--------------------------------------------------------------------------------
+Module: Online Booking & Reservation (with Real-Time Availability)
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] User can create new booking with dates, guest count, and contact information
+[ ] System shows real-time availability calendar
+[ ] System prevents double-booking (blocks unavailable dates)
+[ ] User can select pet-friendly option when booking
+[ ] User can add special requests
+[ ] System calculates total amount based on dates and number of guests
+[ ] User can view their booking history (pending, confirmed, completed, cancelled)
+[ ] User can cancel booking if needed
+[ ] Staff/Admin can confirm or cancel any booking
+
+ACCURACY
+[ ] Calendar shows correct available and booked dates
+[ ] Pricing is calculated correctly (weekday vs weekend rates, extra guests)
+[ ] Booking details are saved accurately in the system
+[ ] Users can only see their own bookings
+[ ] Staff/Admins can see all bookings
+
+ACCESS PRIVILEGES
+[ ] Users can only manage their own bookings
+[ ] Staff and admins can manage all bookings
+
+--------------------------------------------------------------------------------
+Module: Secure Payment Integration
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] User can upload payment proof (screenshot or photo)
+[ ] System supports payment methods: GCash, Maya, Bank Transfer
+[ ] Staff/Admin can verify payment proofs (approve or reject)
+[ ] System tracks payment status (pending, verified, rejected)
+[ ] User receives notification when payment is verified or rejected
+
+ACCURACY
+[ ] Payment amounts match the booking total
+[ ] Payment status updates correctly after staff/admin verification
+[ ] Uploaded files are stored securely
+
+ACCESS PRIVILEGES
+[ ] Users can only upload payment for their own bookings
+[ ] Only staff and admins can verify or reject payments
+
+--------------------------------------------------------------------------------
+Module: Admin Interface & Reports
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Staff/Admin can view dashboard with booking statistics
+[ ] Staff/Admin can view all bookings with filters (date, status)
+[ ] Staff/Admin can manage reservations (confirm, cancel)
+[ ] Staff/Admin can verify payment proofs
+[ ] Staff/Admin can view customer inquiries and information
+[ ] System generates automated reports (daily operations, bookings, revenue)
+[ ] Staff/Admin can export reports to CSV format
+
+ACCURACY
+[ ] Dashboard statistics match actual booking counts
+[ ] Filters show correct bookings
+[ ] Reports contain accurate data
+
+ACCESS PRIVILEGES
+[ ] Only staff and admins can access dashboard and management features
+
+--------------------------------------------------------------------------------
+Module: Guest Reviews & Ratings
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Guests can leave reviews after their stay
+[ ] Guests can rate their experience (1-5 stars)
+[ ] Guests can upload photos with reviews (optional)
+[ ] Reviews are automatically published (auto-approve)
+[ ] System auto-flags problematic content (profanity, spam, attacks)
+[ ] Staff/Admin can review flagged reviews only
+[ ] Staff/Admin can approve or reject flagged reviews
+[ ] Only approved reviews are shown publicly
+
+ACCURACY
+[ ] Reviews are saved correctly
+[ ] Ratings display accurately
+[ ] Auto-flagging detects problematic content correctly
+[ ] Only completed bookings can be reviewed
+
+ACCESS PRIVILEGES
+[ ] Users can only review their own completed bookings
+[ ] Only staff and admins can manage flagged reviews
+
+--------------------------------------------------------------------------------
+Module: Automated SMS & Email Notifications
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] System sends booking confirmation via email and SMS
+[ ] System sends payment verification notification
+[ ] System sends booking reminder before check-in date
+[ ] System sends cancellation notification
+[ ] Staff/Admin receives notification for new bookings
+
+ACCURACY
+[ ] Notifications contain correct guest name, dates, and booking details
+[ ] Notifications are sent at the right time (booking, payment, reminder)
+
+--------------------------------------------------------------------------------
+Module: Chatbot / Customer Support
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Chatbot is available on the page
+[ ] Chatbot can answer common questions
+[ ] Chatbot provides helpful information about the resort
+
+ACCURACY
+[ ] Chatbot responses are relevant and helpful
+[ ] Chatbot is accessible on all pages
+
+================================================================================
+
+Name & Signature of Tester: _________________________
+
+Date: ________
+
+================================================================================
+                          Republic of the Philippines
+                          CAVITE STATE UNIVERSITY
+
+                            TEST INSTRUMENT
+
+    The Kampo Way: A Booking and Reservation System for Kampo Ibayo
+                     in General Trias, Cavite
+================================================================================
+
+INTEGRATION TESTING
+
+Date: ________
+Proponents:
+    Dacasin, Dai Ren B.
+    Ocampo, Justine Cesar L.
+    Reyes, John Reign
+
+--------------------------------------------------------------------------------
+
+Modules: User Authentication Module
+Functionality: Enable user sign-up, login, logout, and role-based access 
+               across guest, staff, and admin interfaces
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Online Booking Module
+Functionality: Create bookings with real-time availability, pet-friendly 
+               options, prevent double-booking, calculate pricing
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Payment Integration Module
+Functionality: Upload payment proof (GCash, Maya, Bank), staff/admin verify 
+               payments, track payment status
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Admin Dashboard & Reports Module
+Functionality: Display booking statistics, manage reservations, generate 
+               automated reports, export to CSV
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Review & Rating Module
+Functionality: Submit reviews after stay, rate experience, upload photos, 
+               auto-publish reviews, auto-flag problematic content, 
+               staff/admin moderate flagged reviews only
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: SMS & Email Notification Module
+Functionality: Send booking confirmations, payment notifications, check-in 
+               reminders, cancellation alerts automatically
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Chatbot Support Module
+Functionality: Provide automated customer support, answer FAQs, guide users 
+               through booking process
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Profile & Booking History Module
+Functionality: View/edit profile, display booking history, link user accounts 
+               correctly across system
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+================================================================================
+
+Name & Signature of Tester: _________________________
+
+Date: ________
+
+================================================================================
+                          Republic of the Philippines
+                          CAVITE STATE UNIVERSITY
+
+                            TEST INSTRUMENT
+
+    The Kampo Way: A Booking and Reservation System for Kampo Ibayo
+                     in General Trias, Cavite
+================================================================================
+
+SYSTEM TESTING
+
+Date: ________
+Proponents:
+    Dacasin, Dai Ren B.
+    Ocampo, Justine Cesar L.
+    Reyes, John Reign
+
+--------------------------------------------------------------------------------
+Action: User Authentication
+Activities: Login and Logout - enter email/password, authenticate, redirect, 
+            logout
+System Response: Correct login, secure session, successful logout
+Expected Error: Wrong credentials
+System Response Error: Show error, do not log in
+--------------------------------------------------------------------------------
+
+Action: User Registration
+Activities: Sign up new account - enter details, create account with role
+System Response: Account is created and can be used to log in
+Expected Error: Duplicate email
+System Response Error: Show "email already in use"
+--------------------------------------------------------------------------------
+
+Action: Booking Creation
+Activities: Create new booking - select dates, guests, pet option, contact info
+System Response: Booking created as pending, visible in "My Bookings"
+Expected Error: Past date or conflicting dates
+System Response Error: Show validation error, no booking
+--------------------------------------------------------------------------------
+
+Action: Real-Time Availability
+Activities: Check availability calendar - view dates, see booked/available 
+            status
+System Response: Calendar shows correct available and blocked dates
+Expected Error: Selecting unavailable date
+System Response Error: Date not selectable, shows booked
+--------------------------------------------------------------------------------
+
+Action: Payment Proof Upload
+Activities: Upload payment proof - select image, choose payment method 
+            (GCash/Maya/Bank)
+System Response: File validated, payment status set to under review
+Expected Error: Invalid file or too large
+System Response Error: Show upload validation error
+--------------------------------------------------------------------------------
+
+Action: Staff/Admin Payment Verification
+Activities: Staff/Admin verifies payment - open booking, view proof, 
+            approve/reject
+System Response: Booking/payment status updated to verified/rejected accordingly
+Expected Error: Invalid or missing proof
+System Response Error: Show appropriate error/notice
+--------------------------------------------------------------------------------
+
+Action: Booking Cancellation
+Activities: Cancel existing booking - user or staff/admin triggers cancel with 
+            reason
+System Response: Status changes to cancelled, notification sent
+Expected Error: Cancellation of already confirmed booking
+System Response Error: Show cancellation policy message
+--------------------------------------------------------------------------------
+
+Action: Review Submission
+Activities: Submit review after completed stay - select booking, rate, write 
+            review, add photos
+System Response: Review auto-published immediately (visible to public)
+Expected Error: Review without required rating
+System Response Error: Show validation error
+--------------------------------------------------------------------------------
+
+Action: Auto-Flagging of Problematic Reviews
+Activities: System detects profanity, spam, or personal attacks in review text
+System Response: Review flagged for manual review (not auto-published)
+Expected Error: None - automatic detection
+System Response Error: N/A - automatic system process
+--------------------------------------------------------------------------------
+
+Action: Staff/Admin Review Moderation (Flagged Content)
+Activities: Staff/Admin moderate flagged reviews - view flagged items, approve 
+            or reject
+System Response: Approved reviews appear publicly, rejected are hidden with 
+                 reason sent to guest
+Expected Error: None - staff/admin reviews flagged content only
+System Response Error: N/A
+--------------------------------------------------------------------------------
+
+Action: Email Notifications
+Activities: Booking events - create booking, confirm, cancel, verify payment
+System Response: Correct emails sent with booking details
+Expected Error: Email server problem
+System Response Error: Log error, show non-blocking message
+--------------------------------------------------------------------------------
+
+Action: SMS Notifications
+Activities: Booking alerts - confirmation, reminder, payment update, 
+            cancellation
+System Response: SMS sent with correct details to guest phone
+Expected Error: Invalid phone number
+System Response Error: Show phone validation error
+--------------------------------------------------------------------------------
+
+Action: Admin Dashboard
+Activities: View dashboard - display statistics, bookings, payments
+System Response: Dashboard shows accurate counts and charts
+Expected Error: No data available
+System Response Error: Show "No bookings yet" message
+--------------------------------------------------------------------------------
+
+Action: Generate Reports
+Activities: Create reports - select date range, export bookings/payments to CSV
+System Response: Report generated with correct data, file downloaded
+Expected Error: Invalid date range
+System Response Error: Show date validation error
+--------------------------------------------------------------------------------
+
+Action: Chatbot Support
+Activities: Ask chatbot questions - type query, receive automated response
+System Response: Chatbot provides relevant answers and guidance
+Expected Error: Unrecognized question
+System Response Error: Chatbot suggests alternatives
+--------------------------------------------------------------------------------
+
+Action: Profile Update
+Activities: Update profile - change name, email, phone, save changes
+System Response: Profile saved, confirmation shown
+Expected Error: Invalid email/phone format
+System Response Error: Show validation error
+--------------------------------------------------------------------------------
+
+Action: Maintenance Mode
+Activities: Admin activates maintenance - toggle setting
+System Response: Booking disabled for users, maintenance message shown
+Expected Error: Non-admin/non-staff tries to change
+System Response Error: Access denied
+--------------------------------------------------------------------------------
+
+Action: Responsive Design
+Activities: Test on desktop, tablet, mobile
+System Response: Layout usable and functional on all devices
+Expected Error: Very small screen
+System Response Error: Layout adapts without breaking flows
+--------------------------------------------------------------------------------
+
+================================================================================
+
+Name & Signature of Tester: _________________________
+
+Date: ________
+
+================================================================================
