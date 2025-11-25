@@ -73,9 +73,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16, // Reduced from 24
-    paddingTop: 16, // Reduced from 24
-    paddingBottom: 16, // Reduced from 24
+    marginBottom: 10, // Further reduced to save space
+    paddingTop: 12, // Further reduced
+    paddingBottom: 12, // Further reduced
     paddingHorizontal: 20, // Reduced from 24
     backgroundColor: "#FDF6F0", // Warm cream background
     borderBottom: "2 solid #C5A572", // Richer gold - bottom border only
@@ -176,8 +176,8 @@ const styles = StyleSheet.create({
   // Clean title section
   titleSection: {
     textAlign: "center",
-    marginBottom: 8, // Reduced from 12
-    paddingBottom: 4, // Reduced from 6
+    marginBottom: 6, // Further reduced to save space
+    paddingBottom: 3, // Further reduced
     borderBottom: "1 solid #e2e8f0",
   },
 
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
   // Clean two-column layout with 8px grid system
   mainContent: {
     flexDirection: "row",
-    marginBottom: 12, // Reduced from 16
-    minHeight: 220, // Reduced from 280 to save space
+    marginBottom: 8, // Further reduced to save space
+    minHeight: 200, // Further reduced to save space
   },
 
   // Kampo Ibayo branded information cards with fixed borders
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     padding: 0,
     marginRight: 16, // 8px grid system
     overflow: "hidden",
-    minHeight: 220, // Reduced from 280
+    minHeight: 200, // Further reduced to save space
   },
 
   rightColumn: {
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 0,
     overflow: "hidden",
-    minHeight: 220, // Reduced from 280
+    minHeight: 200, // Further reduced to save space
   },
 
   // Kampo Ibayo section headers with perfect border alignment
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#ffffff",
     backgroundColor: "#9B2226", // Warmer burgundy
-    marginBottom: 10, // Reduced from 16
-    paddingVertical: 8, // Reduced from 12
+    marginBottom: 8, // Further reduced to save space
+    paddingVertical: 6, // Further reduced
     paddingHorizontal: 16, // Better spacing
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
 
   // Content wrapper for proper spacing - 8px grid system
   cardContent: {
-    padding: 12, // Reduced from 16 to save space
+    padding: 10, // Further reduced to save space
   },
 
   // Clean data rows
@@ -316,8 +316,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12, // Only top corners rounded
     borderTopRightRadius: 12, // Only top corners rounded
     padding: 0, // No padding to let totalSection touch edges
-    marginTop: 10, // Reduced from 16
-    marginBottom: 10, // Normal margin bottom
+    marginTop: 6, // Further reduced to save space
+    marginBottom: 6, // Reduced to save space
     overflow: "hidden", // Ensure totalSection corners are clipped
   },
 
@@ -327,20 +327,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#9B2226", // Warmer burgundy
     textAlign: "center",
-    marginBottom: 10, // Reduced from 16
+    marginBottom: 6, // Further reduced to save space
     letterSpacing: 0.5,
     paddingHorizontal: 14, // Add horizontal padding for header
-    paddingTop: 14, // Add top padding for header
+    paddingTop: 10, // Reduced to save space
   },
 
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingVertical: 6, // Better spacing
+    paddingVertical: 4, // Reduced to save space
     paddingHorizontal: 14, // Add horizontal padding for rows
     borderBottom: "0.5 solid #e2e8f0",
-    minHeight: 18, // Better height
+    minHeight: 16, // Reduced to save space
   },
 
   summaryLabel: {
@@ -368,10 +368,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12, // Reduced from 14
+    paddingVertical: 8, // Further reduced to save space
     paddingHorizontal: 14, // Match summary section padding
     backgroundColor: "#9B2226", // Warmer burgundy
-    marginTop: 10, // Spacing from summary rows
+    marginTop: 6, // Reduced to save space
     // No border radius for sharp bottom corners that match container
   },
 
@@ -396,32 +396,32 @@ const styles = StyleSheet.create({
 
   // Kampo Ibayo footer with earth tone branding
   footerSection: {
-    marginTop: 10, // Reduced from 16
-    paddingTop: 12, // Reduced from 20
+    marginTop: 6, // Significantly reduced to prevent overflow
+    paddingTop: 8, // Further reduced
     borderTop: "3 solid #C5A572", // Richer gold
     textAlign: "center",
     backgroundColor: "#FDF6F0",
     marginHorizontal: -12,
     marginBottom: -12,
     paddingHorizontal: 16, // Better spacing
-    paddingBottom: 12, // Reduced from 20
+    paddingBottom: 8, // Further reduced
   },
 
   thankYouMessage: {
     fontFamily: "Times-Bold",
-    fontSize: 14, // Reduced from 15
+    fontSize: 13, // Further reduced to save space
     fontWeight: "bold",
     color: "#9B2226", // Warmer burgundy
-    marginBottom: 6, // Reduced from 10
+    marginBottom: 4, // Further reduced to save space
     letterSpacing: 0.5,
   },
 
   disclaimerText: {
     fontFamily: "Times-Roman",
-    fontSize: 10, // Minimum 10pt for accessibility
+    fontSize: 9, // Slightly reduced to save space
     color: "#000000",
-    marginBottom: 6, // Better spacing
-    lineHeight: 1.2, // Better readability
+    marginBottom: 4, // Reduced to save space
+    lineHeight: 1.15, // Slightly tighter
     textAlign: "center",
   },
 
