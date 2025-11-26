@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/app/utils/emailService";
+import { sendSMS, createBookingRescheduleSMS } from "@/app/utils/smsService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,6 +8,7 @@ export async function POST(request: NextRequest) {
       bookingId,
       guestName,
       guestEmail,
+      phoneNumber,
       originalCheckIn,
       originalCheckOut,
       newCheckIn,
@@ -134,6 +136,22 @@ export async function POST(request: NextRequest) {
       html: adminEmailContent,
     });
 
+    // Optional SMS notification to guest if phone number provided
+    let smsResult = null as null | { success: boolean; messageId?: string; error?: string };
+    if (phoneNumber) {
+      try {
+        const smsMessage = createBookingRescheduleSMS(
+          String(bookingId),
+          guestName,
+          newCheckIn
+        );
+        smsResult = await sendSMS({ phone: phoneNumber, message: smsMessage });
+      } catch (smsError) {
+        console.error("Error sending reschedule SMS:", smsError);
+        smsResult = { success: false, error: "Failed to send SMS" };
+      }
+    }
+
     if (!guestEmailResult.success) {
       console.warn('Failed to send guest email:', guestEmailResult.error);
     }
@@ -144,7 +162,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Reschedule confirmation emails sent successfully"
+      message: phoneNumber
+        ? `Reschedule confirmation sent via email${smsResult?.success ? " and SMS" : " (SMS failed)"}`
+        : "Reschedule confirmation emails sent successfully",
+      smsResult
     });
 
   } catch (error) {
