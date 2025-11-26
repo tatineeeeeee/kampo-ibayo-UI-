@@ -458,10 +458,14 @@ function UploadPaymentProofContent() {
       // Even small differences should trigger warning for amounts that don't match common patterns
       if (percentDiff > 10 && percentDiff <= 25) {
         // Check if it's not a common payment pattern (50%, 100%, or remaining balance)
-        const isHalfPayment = Math.abs(enteredAmount - (totalBookingAmount / 2)) < 100;
-        const isFullPayment = Math.abs(enteredAmount - totalBookingAmount) < 100;
-        const isRemainingBalance = actualRemaining > 0 && Math.abs(enteredAmount - actualRemaining) < 100;
-        
+        const isHalfPayment =
+          Math.abs(enteredAmount - totalBookingAmount / 2) < 100;
+        const isFullPayment =
+          Math.abs(enteredAmount - totalBookingAmount) < 100;
+        const isRemainingBalance =
+          actualRemaining > 0 &&
+          Math.abs(enteredAmount - actualRemaining) < 100;
+
         if (!isHalfPayment && !isFullPayment && !isRemainingBalance) {
           return {
             level: "warning",
@@ -697,7 +701,7 @@ function UploadPaymentProofContent() {
         validationLevel: validation.level,
         allowSubmission: validation.allowSubmission,
         message: validation.message,
-        hasSuggestions: validation.suggestions?.length || 0
+        hasSuggestions: validation.suggestions?.length || 0,
       });
       setPaymentValidation(validation);
       // Reset confirmation when amount changes
@@ -2078,8 +2082,6 @@ function UploadPaymentProofContent() {
                         >
                           {paymentValidation.message}
                         </p>
-
-
 
                         {/* Improved confirmation checkbox for warnings */}
                         {paymentValidation.level === "warning" && (

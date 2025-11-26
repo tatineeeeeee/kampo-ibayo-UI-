@@ -35,13 +35,13 @@ export async function POST(request: Request) {
 
         console.log('Message sent: %s', info.messageId);
 
-        return NextResponse.json({ 
-            message: 'Email sent successfully', 
-            messageId: info.messageId 
+        return NextResponse.json({
+            message: 'Email sent successfully',
+            messageId: info.messageId
         }, { status: 200 });
     } catch (error) {
         console.error('Error sending email:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to send email',
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });

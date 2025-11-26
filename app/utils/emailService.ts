@@ -52,7 +52,7 @@ export interface CancellationEmailData extends BookingDetails {
 export const sendEmail = async (emailData: EmailTemplate) => {
   try {
     const transporter = createEmailTransporter();
-    
+
     const mailOptions = {
       from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
       to: emailData.to,
@@ -643,14 +643,14 @@ export const createAdminNotificationEmail = (bookingDetails: BookingDetails): Em
             <div class="detail-card">
               <div class="detail-label">Booking Time</div>
               <div class="detail-value">${new Date().toLocaleString('en-PH', {
-                timeZone: 'Asia/Manila',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })}</div>
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })}</div>
             </div>
           </div>
         </div>
@@ -973,14 +973,14 @@ export const createBookingConfirmedEmail = (bookingDetails: BookingDetails): Ema
             <div class="detail-card">
               <div class="detail-label">Confirmed Time</div>
               <div class="detail-value">${new Date().toLocaleString('en-PH', {
-                timeZone: 'Asia/Manila',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })}</div>
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })}</div>
             </div>
           </div>
         </div>
@@ -1653,14 +1653,14 @@ export const createUserCancellationEmail = (bookingDetails: BookingDetails): Ema
             <div class="detail-card">
               <div class="detail-label">Cancellation Time</div>
               <div class="detail-value">${new Date().toLocaleString('en-PH', {
-                timeZone: 'Asia/Manila',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })}</div>
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })}</div>
             </div>
           </div>
         </div>
@@ -1730,7 +1730,7 @@ export const createUserCancellationEmail = (bookingDetails: BookingDetails): Ema
 
 // Professional Admin Notification for User-Initiated Cancellation
 export const createUserCancellationAdminNotification = (
-  bookingDetails: BookingDetails, 
+  bookingDetails: BookingDetails,
   cancellationReason?: string
 ): EmailTemplate => {
   const html = `
@@ -2073,14 +2073,14 @@ export const createUserCancellationAdminNotification = (
             <tr>
               <td><strong>Cancellation Time</strong></td>
               <td>${new Date().toLocaleString('en-PH', {
-                timeZone: 'Asia/Manila',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })}</td>
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })}</td>
             </tr>
           </table>
 
@@ -2165,7 +2165,7 @@ export const createUserCancellationAdminNotification = (
 export const createAdminCancellationGuestEmail = (cancellationData: CancellationEmailData): EmailTemplate => {
   const { refundDetails } = cancellationData;
   const hasRefund = refundDetails && refundDetails.refundAmount > 0;
-  
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -2420,7 +2420,7 @@ export const createAdminCancellationGuestEmail = (cancellationData: Cancellation
 export const createUserCancellationConfirmationEmail = (cancellationData: CancellationEmailData): EmailTemplate => {
   const { refundDetails } = cancellationData;
   const hasRefund = refundDetails && refundDetails.refundAmount > 0;
-  
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -2576,11 +2576,11 @@ export const createUserCancellationConfirmationEmail = (cancellationData: Cancel
               </div>
               <div class="detail-item">
                 <div class="detail-label">Cancellation Date</div>
-                <div class="detail-value">${new Date().toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}</div>
+                <div class="detail-value">${new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })}</div>
               </div>
             </div>
           </div>
@@ -2646,11 +2646,11 @@ export const createUserCancellationConfirmationEmail = (cancellationData: Cancel
             </div>
             <div class="detail-card">
               <div class="detail-label">Cancellation Date</div>
-              <div class="detail-value">${new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}</div>
+              <div class="detail-value">${new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })}</div>
             </div>
           </div>
         </div>
