@@ -8,7 +8,7 @@ export const createEmailTransporter = () => {
     secure: false, // false for 587, true for 465
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      pass: process.env.SMTP_PASSWORD,
     },
     tls: {
       rejectUnauthorized: false,

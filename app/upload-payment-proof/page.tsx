@@ -439,13 +439,43 @@ function UploadPaymentProofContent() {
         };
       }
 
-      // Minor warnings (informational)
+      // Minor warnings (informational) - Still require confirmation for safety
       if (percentDiff > 25) {
         return {
           level: "warning",
           message: `Amount differs from expected ₱${expectedAmount.toLocaleString()}. Please verify this is correct.`,
           allowSubmission: true,
+          suggestions: [
+            {
+              type: "expectedAmount" as const,
+              amount: expectedAmount,
+              label: `Expected: ₱${expectedAmount.toLocaleString()}`,
+            },
+          ],
         };
+      }
+
+      // Even small differences should trigger warning for amounts that don't match common patterns
+      if (percentDiff > 10 && percentDiff <= 25) {
+        // Check if it's not a common payment pattern (50%, 100%, or remaining balance)
+        const isHalfPayment = Math.abs(enteredAmount - (totalBookingAmount / 2)) < 100;
+        const isFullPayment = Math.abs(enteredAmount - totalBookingAmount) < 100;
+        const isRemainingBalance = actualRemaining > 0 && Math.abs(enteredAmount - actualRemaining) < 100;
+        
+        if (!isHalfPayment && !isFullPayment && !isRemainingBalance) {
+          return {
+            level: "warning",
+            message: `Amount (₱${enteredAmount.toLocaleString()}) doesn't match expected ₱${expectedAmount.toLocaleString()}. Please confirm.`,
+            allowSubmission: true,
+            suggestions: [
+              {
+                type: "expectedAmount" as const,
+                amount: expectedAmount,
+                label: `Expected: ₱${expectedAmount.toLocaleString()}`,
+              },
+            ],
+          };
+        }
       }
 
       // Check against remaining balance
@@ -661,6 +691,14 @@ function UploadPaymentProofContent() {
   useEffect(() => {
     if (amount && parseFloat(amount) > 0 && booking) {
       const validation = validatePaymentAmount(parseFloat(amount));
+      console.log("💰 Payment Validation Result:", {
+        enteredAmount: parseFloat(amount),
+        expectedAmount: booking.payment_amount || booking.total_amount,
+        validationLevel: validation.level,
+        allowSubmission: validation.allowSubmission,
+        message: validation.message,
+        hasSuggestions: validation.suggestions?.length || 0
+      });
       setPaymentValidation(validation);
       // Reset confirmation when amount changes
       setConfirmUnusualAmount(false);
@@ -2041,43 +2079,11 @@ function UploadPaymentProofContent() {
                           {paymentValidation.message}
                         </p>
 
-                        {/* Amount Suggestions */}
-                        {paymentValidation.suggestions &&
-                          paymentValidation.suggestions.length > 0 && (
-                            <div className="mb-4">
-                              <p className="text-xs text-gray-400 mb-2">
-                                💡 Quick suggestions:
-                              </p>
-                              <div className="flex gap-2 flex-wrap">
-                                {paymentValidation.suggestions.map(
-                                  (suggestion, idx) => (
-                                    <button
-                                      key={idx}
-                                      type="button"
-                                      onClick={() => {
-                                        setAmount(suggestion.amount.toString());
-                                        setIsManualAmountSet(true);
-                                        setConfirmUnusualAmount(false);
-                                      }}
-                                      className={`px-3 py-2 border rounded-lg text-xs font-medium transition-all duration-200 hover:scale-105 ${
-                                        suggestion.type === "expectedAmount"
-                                          ? "bg-green-600/20 text-green-300 border-green-600/30 hover:bg-green-600/30"
-                                          : suggestion.type === "partialPayment"
-                                          ? "bg-blue-600/20 text-blue-300 border-blue-600/30 hover:bg-blue-600/30"
-                                          : "bg-purple-600/20 text-purple-300 border-purple-600/30 hover:bg-purple-600/30"
-                                      }`}
-                                    >
-                                      {suggestion.label}
-                                    </button>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
+
 
                         {/* Improved confirmation checkbox for warnings */}
                         {paymentValidation.level === "warning" && (
-                          <div className="bg-yellow-800/20 border border-yellow-600/30 rounded-lg p-3">
+                          <div className="bg-yellow-800/20 border border-yellow-600/30 rounded-lg p-4">
                             <label
                               htmlFor="confirm-unusual-amount"
                               className="flex items-start gap-3 cursor-pointer group"
@@ -2089,9 +2095,9 @@ function UploadPaymentProofContent() {
                                 onChange={(e) =>
                                   setConfirmUnusualAmount(e.target.checked)
                                 }
-                                className="mt-0.5 w-4 h-4 rounded border-2 border-yellow-500 text-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-0 bg-gray-700 transition-all duration-200"
+                                className="mt-0.5 w-5 h-5 rounded border-2 border-yellow-500 text-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-0 bg-gray-700 transition-all duration-200 cursor-pointer"
                               />
-                              <span className="text-sm text-yellow-100 group-hover:text-white transition-colors leading-relaxed">
+                              <span className="text-sm text-yellow-100 group-hover:text-white transition-colors leading-relaxed font-medium">
                                 I confirm this amount is correct and matches my
                                 payment proof
                               </span>

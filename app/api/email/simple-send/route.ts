@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         secure: false, // true for 465, false for other ports
         auth: {
             user: process.env.SMTP_USER, // Still use env vars for security
-            pass: process.env.SMTP_PASS,
+            pass: process.env.SMTP_PASSWORD,
         },
         tls: {
             rejectUnauthorized: false,
