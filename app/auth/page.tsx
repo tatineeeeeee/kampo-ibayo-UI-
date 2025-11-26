@@ -735,11 +735,22 @@ export default function AuthPage() {
         // Continue anyway - we'll catch duplicates in Supabase Auth
       }
 
+      // Set a flag so we can show welcome after verification even if the hash is empty
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("awaiting_email_verification", "true");
+        } catch {}
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { name: `${firstName} ${lastName}` },
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_BASE_URL ||
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            "https://kampo-ibayo-resort.vercel.app/",
         },
       });
 

@@ -184,7 +184,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const type = params.get("type");
 
             // Fire only for verification (not password recovery), only once
-            if (accessToken && type !== "recovery") {
+            const awaitingEmailVerification =
+              localStorage.getItem("awaiting_email_verification") === "true";
+            if (
+              (accessToken && type !== "recovery") ||
+              awaitingEmailVerification
+            ) {
               // Debounce using sessionStorage to avoid duplicates across navigations
               const lastWelcome = sessionStorage.getItem(
                 "email_verify_welcome"
@@ -197,6 +202,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setTimeout(() => {
                   loginSuccess("user");
                 }, 200);
+                // If we came from signup (flag set), clear it now
+                if (awaitingEmailVerification) {
+                  localStorage.removeItem("awaiting_email_verification");
+                }
                 // Clean hash to prevent re-trigger
                 if (window.history.replaceState) {
                   window.history.replaceState(
