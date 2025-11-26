@@ -231,6 +231,16 @@ export const useToastHelpers = () => {
       });
     },
 
+    // Email verification success
+    verificationSuccess: () => {
+      showToast({
+        type: "success",
+        title: "Email Verified!",
+        message: "Welcome to Kampo Ibayo! Your account is now active.",
+        duration: 4000,
+      });
+    },
+
     // Registration success
     registrationSuccess: () =>
       showToast({

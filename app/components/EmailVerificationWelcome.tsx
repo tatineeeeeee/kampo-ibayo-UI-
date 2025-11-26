@@ -6,7 +6,7 @@ import { useToastHelpers } from "./Toast";
 
 export function EmailVerificationWelcome() {
   const { user, loading } = useAuth();
-  const { loginSuccess } = useToastHelpers();
+  const { verificationSuccess } = useToastHelpers();
   const hasShownWelcome = useRef(false);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function EmailVerificationWelcome() {
 
           // Show welcome notification
           setTimeout(() => {
-            loginSuccess("user");
+            verificationSuccess();
           }, 500); // Small delay to ensure UI is ready
 
           // Clean up the hash from URL to prevent re-triggering
@@ -48,7 +48,7 @@ export function EmailVerificationWelcome() {
         }
       }
     }
-  }, [user, loading, loginSuccess]);
+  }, [user, loading, verificationSuccess]);
 
   return null; // This component doesn't render anything
 }

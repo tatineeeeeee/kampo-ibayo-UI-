@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
-  const { loginSuccess } = useToastHelpers();
+  const { verificationSuccess } = useToastHelpers();
   const [welcomeShown, setWelcomeShown] = useState(false);
 
   // Fix hydration mismatch
@@ -200,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setWelcomeShown(true);
                 // Slight delay to ensure UI/providers ready
                 setTimeout(() => {
-                  loginSuccess("user");
+                  verificationSuccess();
                 }, 200);
                 // If we came from signup (flag set), clear it now
                 if (awaitingEmailVerification) {
