@@ -26,19 +26,29 @@ Module: User Authentication & Account Management
 Remarks (Passed/Failed/Comments): _________________________________________
 
 FUNCTIONALITY
-[ ] User can sign up with email and password
+[ ] Guest can sign up with email and password (becomes user after registration)
 [ ] User can log in with correct credentials
 [ ] User can log out successfully
 [ ] User can reset password via email
-[ ] User can edit profile information (name, email, phone)
+[ ] User can view their profile information
+[ ] User can edit name and phone number only (email cannot be changed)
+[ ] User can view account creation date
 
 ACCURACY
 [ ] Correct user role is applied (user, staff, or admin)
-[ ] Profile updates are saved and displayed correctly
 [ ] Session remains active until logout
+[ ] Guest cannot access user/staff/admin features
+[ ] Profile information displays correctly
+[ ] Profile updates are reflected immediately after saving
+[ ] Phone validation works correctly
+[ ] Email field is read-only (cannot be edited)
+
+ACCESS PRIVILEGES
+[ ] Users can only view and edit their own profile
+[ ] Guests cannot access profile page
 
 --------------------------------------------------------------------------------
-Module: Online Booking & Reservation (with Real-Time Availability)
+Module: User - Online Booking & Reservation (with Real-Time Availability)
 --------------------------------------------------------------------------------
 
 Remarks (Passed/Failed/Comments): _________________________________________
@@ -51,22 +61,23 @@ FUNCTIONALITY
 [ ] User can add special requests
 [ ] System calculates total amount based on dates and number of guests
 [ ] User can view their booking history (pending, confirmed, completed, cancelled)
+[ ] User can download e-receipt for confirmed bookings
+[ ] User can reschedule booking (change dates)
 [ ] User can cancel booking if needed
-[ ] Staff/Admin can confirm or cancel any booking
 
 ACCURACY
 [ ] Calendar shows correct available and booked dates
 [ ] Pricing is calculated correctly (weekday vs weekend rates, extra guests)
 [ ] Booking details are saved accurately in the system
 [ ] Users can only see their own bookings
-[ ] Staff/Admins can see all bookings
+[ ] E-receipt contains correct booking and payment information
+[ ] Reschedule updates dates correctly and recalculates pricing
 
 ACCESS PRIVILEGES
 [ ] Users can only manage their own bookings
-[ ] Staff and admins can manage all bookings
 
 --------------------------------------------------------------------------------
-Module: Secure Payment Integration
+Module: User - Secure Payment Upload
 --------------------------------------------------------------------------------
 
 Remarks (Passed/Failed/Comments): _________________________________________
@@ -74,67 +85,167 @@ Remarks (Passed/Failed/Comments): _________________________________________
 FUNCTIONALITY
 [ ] User can upload payment proof (screenshot or photo)
 [ ] System supports payment methods: GCash, Maya, Bank Transfer
-[ ] Staff/Admin can verify payment proofs (approve or reject)
 [ ] System tracks payment status (pending, verified, rejected)
 [ ] User receives notification when payment is verified or rejected
 
 ACCURACY
 [ ] Payment amounts match the booking total
-[ ] Payment status updates correctly after staff/admin verification
 [ ] Uploaded files are stored securely
 
 ACCESS PRIVILEGES
 [ ] Users can only upload payment for their own bookings
-[ ] Only staff and admins can verify or reject payments
 
 --------------------------------------------------------------------------------
-Module: Admin Interface & Reports
---------------------------------------------------------------------------------
-
-Remarks (Passed/Failed/Comments): _________________________________________
-
-FUNCTIONALITY
-[ ] Staff/Admin can view dashboard with booking statistics
-[ ] Staff/Admin can view all bookings with filters (date, status)
-[ ] Staff/Admin can manage reservations (confirm, cancel)
-[ ] Staff/Admin can verify payment proofs
-[ ] Staff/Admin can view customer inquiries and information
-[ ] System generates automated reports (daily operations, bookings, revenue)
-[ ] Staff/Admin can export reports to CSV format
-
-ACCURACY
-[ ] Dashboard statistics match actual booking counts
-[ ] Filters show correct bookings
-[ ] Reports contain accurate data
-
-ACCESS PRIVILEGES
-[ ] Only staff and admins can access dashboard and management features
-
---------------------------------------------------------------------------------
-Module: Guest Reviews & Ratings
+Module: User - Guest Reviews & Ratings
 --------------------------------------------------------------------------------
 
 Remarks (Passed/Failed/Comments): _________________________________________
 
 FUNCTIONALITY
-[ ] Guests can leave reviews after their stay
-[ ] Guests can rate their experience (1-5 stars)
-[ ] Guests can upload photos with reviews (optional)
+[ ] Logged-in users can leave reviews after their stay
+[ ] Users can rate their experience (1-5 stars)
+[ ] Users can upload photos with reviews (optional)
 [ ] Reviews are automatically published (auto-approve)
 [ ] System auto-flags problematic content (profanity, spam, attacks)
-[ ] Staff/Admin can review flagged reviews only
-[ ] Staff/Admin can approve or reject flagged reviews
-[ ] Only approved reviews are shown publicly
 
 ACCURACY
 [ ] Reviews are saved correctly
 [ ] Ratings display accurately
 [ ] Auto-flagging detects problematic content correctly
 [ ] Only completed bookings can be reviewed
+[ ] Guests (not logged in) cannot submit reviews
 
 ACCESS PRIVILEGES
 [ ] Users can only review their own completed bookings
+[ ] Guests cannot access review submission
+
+--------------------------------------------------------------------------------
+Module: User - Account Settings
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] User can change password
+[ ] User can export personal data (JSON or CSV format)
+[ ] User can delete account (with safety checks)
+[ ] Settings are saved and applied correctly
+
+ACCURACY
+[ ] Password changes take effect immediately
+[ ] Data exports contain correct user and booking information
+[ ] Account deletion requires proper confirmations
+[ ] Account deletion blocked if user has active/upcoming bookings
+
+ACCESS PRIVILEGES
+[ ] Users can only manage their own account settings
+[ ] Guests cannot access settings page
+
+--------------------------------------------------------------------------------
+Module: Staff/Admin - Dashboard, Reports & Analytics
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Staff/Admin can view dashboard with booking statistics
+[ ] Staff/Admin can view revenue metrics and analytics
+[ ] Staff/Admin can generate booking reports
+[ ] Staff/Admin can generate revenue reports
+[ ] Staff/Admin can export reports to CSV format
+[ ] Staff/Admin can filter reports by date range
+[ ] System generates automated reports (daily operations, bookings, revenue)
+
+ACCURACY
+[ ] Dashboard statistics match actual booking counts
+[ ] Revenue calculations are accurate
+[ ] Reports contain accurate data
+[ ] Date filters work correctly
+[ ] Exported CSV files contain correct data
+
+ACCESS PRIVILEGES
+[ ] Staff can view dashboard and reports (read-only access)
+[ ] Admins can view dashboard and reports (full access)
+
+--------------------------------------------------------------------------------
+Module: Staff/Admin - Booking & Payment Management
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Staff/Admin can view all bookings with filters (date, status)
+[ ] Staff/Admin can confirm or cancel any booking
+[ ] Staff/Admin can see all booking details
+[ ] Staff/Admin can search and filter bookings
+[ ] Staff/Admin can view all payment proofs
+[ ] Staff/Admin can verify payment proofs (approve or reject)
+[ ] Staff/Admin can view payment history and status
+[ ] Staff/Admin can filter payments by status
+
+ACCURACY
+[ ] Staff/Admins can see all bookings
+[ ] Booking status updates correctly after staff/admin actions
+[ ] Filters show correct results
+[ ] Payment status updates correctly after staff/admin verification
+[ ] Payment records are accurate
+
+ACCESS PRIVILEGES
+[ ] Only staff and admins can manage all bookings and payments
+
+--------------------------------------------------------------------------------
+Module: Staff/Admin - User Management & Review Moderation
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Staff can view all registered users (view only)
+[ ] Staff can view user details and booking history
+[ ] Staff can search and filter users
+[ ] Admin can manage user roles (user, staff, admin)
+[ ] Admin can delete users
+[ ] Staff/Admin can review flagged reviews only
+[ ] Staff/Admin can approve or reject flagged reviews
+[ ] Only approved reviews are shown publicly
+[ ] Staff/Admin can view all reviews with filtering
+
+ACCURACY
+[ ] User information displays correctly
+[ ] Role changes are applied immediately (admin only)
+[ ] Flagged reviews are correctly identified
+[ ] Approval/rejection updates review status correctly
+
+ACCESS PRIVILEGES
+[ ] Staff can view users but cannot edit roles or delete
+[ ] Only admins can manage user roles and delete users
 [ ] Only staff and admins can manage flagged reviews
+
+--------------------------------------------------------------------------------
+Module: Staff/Admin - Gallery Management & System Settings
+--------------------------------------------------------------------------------
+
+Remarks (Passed/Failed/Comments): _________________________________________
+
+FUNCTIONALITY
+[ ] Staff/Admin can upload resort photos to gallery
+[ ] Staff/Admin can delete photos from gallery
+[ ] Staff/Admin can organize and manage gallery images
+[ ] Gallery displays correctly on public pages
+[ ] Admin can configure system settings
+[ ] Admin can enable/disable maintenance mode
+[ ] Admin can manage booking rules and pricing
+[ ] Admin can update resort information
+
+ACCURACY
+[ ] Images upload and display correctly
+[ ] Deleted images are removed from gallery
+[ ] Settings changes are saved and applied correctly
+[ ] Maintenance mode works as expected
+
+ACCESS PRIVILEGES
+[ ] Staff and admins can manage gallery
+[ ] Only admins can access system settings (staff cannot access)
 
 --------------------------------------------------------------------------------
 Module: Automated SMS & Email Notifications
@@ -160,13 +271,13 @@ Module: Chatbot / Customer Support
 Remarks (Passed/Failed/Comments): _________________________________________
 
 FUNCTIONALITY
-[ ] Chatbot is available on the page
+[ ] Chatbot is available on main pages
 [ ] Chatbot can answer common questions
 [ ] Chatbot provides helpful information about the resort
 
 ACCURACY
 [ ] Chatbot responses are relevant and helpful
-[ ] Chatbot is accessible on all pages
+[ ] Chatbot is accessible on public and user pages (not on booking flow)
 
 ================================================================================
 
@@ -195,8 +306,9 @@ Proponents:
 --------------------------------------------------------------------------------
 
 Modules: User Authentication Module
-Functionality: Enable user sign-up, login, logout, and role-based access 
-               across guest, staff, and admin interfaces
+Functionality: Enable guest sign-up, user login, logout, and role-based access 
+               across guest (not logged in), user (logged in), staff, and 
+               admin interfaces
 Passed/Failed: _________
 Remarks: __________________________________________________________________
 
@@ -257,6 +369,22 @@ Functionality: View/edit profile, display booking history, link user accounts
 Passed/Failed: _________
 Remarks: __________________________________________________________________
 
+--------------------------------------------------------------------------------
+
+Modules: Account Settings Module
+Functionality: Change password, export personal data (JSON/CSV), delete account 
+               with safety checks, validate account deletion rules
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
+--------------------------------------------------------------------------------
+
+Modules: Gallery Management Module
+Functionality: Staff/Admin upload resort photos, delete images, organize gallery, 
+               display on public pages
+Passed/Failed: _________
+Remarks: __________________________________________________________________
+
 ================================================================================
 
 Name & Signature of Tester: _________________________
@@ -282,50 +410,29 @@ Proponents:
     Reyes, John Reign
 
 --------------------------------------------------------------------------------
-Action: User Authentication
-Activities: Login and Logout - enter email/password, authenticate, redirect, 
-            logout
-System Response: Correct login, secure session, successful logout
-Expected Error: Wrong credentials
-System Response Error: Show error, do not log in
+Action: User Authentication & Registration
+Activities: Sign up new account, login/logout - enter credentials, authenticate, 
+            create account with role
+System Response: Correct login, secure session, account created successfully
+Expected Error: Wrong credentials or duplicate email
+System Response Error: Show error, do not log in or show "email already in use"
 --------------------------------------------------------------------------------
 
-Action: User Registration
-Activities: Sign up new account - enter details, create account with role
-System Response: Account is created and can be used to log in
-Expected Error: Duplicate email
-System Response Error: Show "email already in use"
+Action: Booking Creation & Real-Time Availability
+Activities: Create new booking - select dates, guests, pet option, view 
+            availability calendar
+System Response: Booking created as pending, calendar shows correct available 
+                 and blocked dates
+Expected Error: Past date, conflicting dates, or selecting unavailable date
+System Response Error: Show validation error, date not selectable
 --------------------------------------------------------------------------------
 
-Action: Booking Creation
-Activities: Create new booking - select dates, guests, pet option, contact info
-System Response: Booking created as pending, visible in "My Bookings"
-Expected Error: Past date or conflicting dates
-System Response Error: Show validation error, no booking
---------------------------------------------------------------------------------
-
-Action: Real-Time Availability
-Activities: Check availability calendar - view dates, see booked/available 
-            status
-System Response: Calendar shows correct available and blocked dates
-Expected Error: Selecting unavailable date
-System Response Error: Date not selectable, shows booked
---------------------------------------------------------------------------------
-
-Action: Payment Proof Upload
-Activities: Upload payment proof - select image, choose payment method 
-            (GCash/Maya/Bank)
-System Response: File validated, payment status set to under review
-Expected Error: Invalid file or too large
-System Response Error: Show upload validation error
---------------------------------------------------------------------------------
-
-Action: Staff/Admin Payment Verification
-Activities: Staff/Admin verifies payment - open booking, view proof, 
-            approve/reject
-System Response: Booking/payment status updated to verified/rejected accordingly
-Expected Error: Invalid or missing proof
-System Response Error: Show appropriate error/notice
+Action: Payment Proof Upload & Verification
+Activities: User uploads payment proof (GCash/Maya/Bank), Staff/Admin verifies 
+            and approves/rejects
+System Response: File validated, payment status updated to verified/rejected
+Expected Error: Invalid file, too large, or missing proof
+System Response Error: Show upload validation error or notice
 --------------------------------------------------------------------------------
 
 Action: Booking Cancellation
@@ -336,57 +443,30 @@ Expected Error: Cancellation of already confirmed booking
 System Response Error: Show cancellation policy message
 --------------------------------------------------------------------------------
 
-Action: Review Submission
-Activities: Submit review after completed stay - select booking, rate, write 
-            review, add photos
-System Response: Review auto-published immediately (visible to public)
+Action: Review Submission & Moderation
+Activities: Submit review after completed stay (rate, write, add photos), system 
+            auto-flags problematic content, staff/admin moderate flagged reviews
+System Response: Review auto-published or flagged for review, approved reviews 
+                 appear publicly
 Expected Error: Review without required rating
 System Response Error: Show validation error
 --------------------------------------------------------------------------------
 
-Action: Auto-Flagging of Problematic Reviews
-Activities: System detects profanity, spam, or personal attacks in review text
-System Response: Review flagged for manual review (not auto-published)
-Expected Error: None - automatic detection
-System Response Error: N/A - automatic system process
+Action: Email & SMS Notifications
+Activities: Booking events - create booking, confirm, cancel, verify payment, 
+            send reminders
+System Response: Correct emails and SMS sent with booking details
+Expected Error: Email server problem or invalid phone number
+System Response Error: Log error, show non-blocking message or phone validation error
 --------------------------------------------------------------------------------
 
-Action: Staff/Admin Review Moderation (Flagged Content)
-Activities: Staff/Admin moderate flagged reviews - view flagged items, approve 
-            or reject
-System Response: Approved reviews appear publicly, rejected are hidden with 
-                 reason sent to guest
-Expected Error: None - staff/admin reviews flagged content only
-System Response Error: N/A
---------------------------------------------------------------------------------
-
-Action: Email Notifications
-Activities: Booking events - create booking, confirm, cancel, verify payment
-System Response: Correct emails sent with booking details
-Expected Error: Email server problem
-System Response Error: Log error, show non-blocking message
---------------------------------------------------------------------------------
-
-Action: SMS Notifications
-Activities: Booking alerts - confirmation, reminder, payment update, 
-            cancellation
-System Response: SMS sent with correct details to guest phone
-Expected Error: Invalid phone number
-System Response Error: Show phone validation error
---------------------------------------------------------------------------------
-
-Action: Admin Dashboard
-Activities: View dashboard - display statistics, bookings, payments
-System Response: Dashboard shows accurate counts and charts
-Expected Error: No data available
-System Response Error: Show "No bookings yet" message
---------------------------------------------------------------------------------
-
-Action: Generate Reports
-Activities: Create reports - select date range, export bookings/payments to CSV
-System Response: Report generated with correct data, file downloaded
-Expected Error: Invalid date range
-System Response Error: Show date validation error
+Action: Admin Dashboard & Reports
+Activities: View dashboard - display statistics, bookings, payments, generate 
+            reports, export to CSV
+System Response: Dashboard shows accurate counts and charts, reports generated 
+                 with correct data
+Expected Error: No data available or invalid date range
+System Response Error: Show "No bookings yet" or date validation error
 --------------------------------------------------------------------------------
 
 Action: Chatbot Support
@@ -396,11 +476,29 @@ Expected Error: Unrecognized question
 System Response Error: Chatbot suggests alternatives
 --------------------------------------------------------------------------------
 
-Action: Profile Update
-Activities: Update profile - change name, email, phone, save changes
-System Response: Profile saved, confirmation shown
-Expected Error: Invalid email/phone format
-System Response Error: Show validation error
+Action: Profile Update & Account Settings
+Activities: Update profile (name, phone), change password, export data 
+            (JSON/CSV), delete account
+System Response: Profile saved, password updated, data exported, account deleted 
+                 if eligible
+Expected Error: Invalid phone format, active bookings block deletion
+System Response Error: Show validation error or blocking message with reason
+--------------------------------------------------------------------------------
+
+Action: Gallery Upload & User Role Management
+Activities: Staff/Admin uploads resort photo, Admin changes user roles 
+            (user/staff/admin)
+System Response: Image uploaded successfully, role updated with new permissions
+Expected Error: File too large, invalid format, or non-admin tries to change roles
+System Response Error: Show upload validation error or access denied
+--------------------------------------------------------------------------------
+
+Action: Booking Features (E-Receipt & Reschedule)
+Activities: User downloads e-receipt, reschedules booking with new dates
+System Response: E-receipt generated and downloaded, booking dates updated with 
+                 new price
+Expected Error: Booking not confirmed or new dates unavailable
+System Response Error: Show "receipt not available" or date validation error
 --------------------------------------------------------------------------------
 
 Action: Maintenance Mode

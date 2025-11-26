@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./components/Toast";
+import { EmailVerificationWelcome } from "./components/EmailVerificationWelcome";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -20,8 +21,10 @@ import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Kampo Ibayo Resort - Paradise Awaits",
-  description: "Experience luxury and relaxation at Kampo Ibayo Resort. Book your perfect getaway with stunning views, exceptional service, and unforgettable memories.",
-  keywords: "resort, vacation, booking, luxury, relaxation, paradise, getaway, hotel",
+  description:
+    "Experience luxury and relaxation at Kampo Ibayo Resort. Book your perfect getaway with stunning views, exceptional service, and unforgettable memories.",
+  keywords:
+    "resort, vacation, booking, luxury, relaxation, paradise, getaway, hotel",
   authors: [{ name: "Kampo Ibayo Resort" }],
   icons: {
     icon: [
@@ -33,14 +36,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Kampo Ibayo Resort - Paradise Awaits",
-    description: "Experience luxury and relaxation at Kampo Ibayo Resort. Book your perfect getaway with stunning views, exceptional service, and unforgettable memories.",
+    description:
+      "Experience luxury and relaxation at Kampo Ibayo Resort. Book your perfect getaway with stunning views, exceptional service, and unforgettable memories.",
     images: ["/logo.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Kampo Ibayo Resort - Paradise Awaits",
-    description: "Experience luxury and relaxation at Kampo Ibayo Resort. Book your perfect getaway with stunning views, exceptional service, and unforgettable memories.",
+    description:
+      "Experience luxury and relaxation at Kampo Ibayo Resort. Book your perfect getaway with stunning views, exceptional service, and unforgettable memories.",
     images: ["/logo.png"],
   },
 };
@@ -60,12 +65,10 @@ export default function RootLayout({
         <meta name="theme-color" content="#3b82f6" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body
-        className="antialiased"
-        suppressHydrationWarning
-      >
+      <body className="antialiased" suppressHydrationWarning>
         <ToastProvider>
           <AuthProvider>
+            <EmailVerificationWelcome />
             {children}
           </AuthProvider>
         </ToastProvider>
