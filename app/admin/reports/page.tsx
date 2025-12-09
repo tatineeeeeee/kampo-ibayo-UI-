@@ -1321,25 +1321,25 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               Business Reports
             </h1>
-            <p className="text-gray-800 mt-1">
+            <p className="text-gray-800 mt-1 text-sm sm:text-base">
               Real-world reports for resort operations
             </p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               📅 Filtering by check-in date (when guests will arrive)
             </p>
           </div>
           <button
             onClick={fetchBookings}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm sm:text-base"
           >
             {isLoading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1351,11 +1351,11 @@ export default function ReportsPage() {
         </div>
 
         {/* Report Type Selection */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+        <div className="mb-4 sm:mb-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
             Choose Your Report
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {REPORT_TYPES.map((report) => {
               const IconComponent = report.icon;
               const isSelected = selectedReport.id === report.id;
@@ -1416,10 +1416,14 @@ export default function ReportsPage() {
                 <button
                   key={report.id}
                   onClick={() => setSelectedReport(report)}
-                  className={`p-4 rounded-lg border-2 text-left transition-all ${styles.card}`}
+                  className={`p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${styles.card}`}
                 >
-                  <IconComponent className={`w-6 h-6 mb-2 ${styles.icon}`} />
-                  <h4 className={`font-semibold text-sm ${styles.title}`}>
+                  <IconComponent
+                    className={`w-5 h-5 sm:w-6 sm:h-6 mb-1.5 sm:mb-2 ${styles.icon}`}
+                  />
+                  <h4
+                    className={`font-semibold text-xs sm:text-sm ${styles.title}`}
+                  >
                     {report.name}
                   </h4>
                   <p className="text-xs text-gray-800 mt-1">
@@ -1432,7 +1436,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Simple Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Check-in Start Date
@@ -1619,16 +1623,16 @@ export default function ReportsPage() {
 
         {/* Daily Operations Charts */}
         {selectedReport.id === "daily-operations" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-md">
-              <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4 flex items-center gap-2">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 Daily Check-ins vs Check-outs
               </h3>
               {isLoading ? (
-                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+                <div className="h-48 sm:h-64 bg-gray-100 animate-pulse rounded-lg"></div>
               ) : (
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart
                     data={(() => {
                       // 📅 REAL CHECK-IN/OUT DATA from filtered date range
@@ -1693,15 +1697,15 @@ export default function ReportsPage() {
               )}
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-md">
-              <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-600" />
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4 flex items-center gap-2">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                 Guest Count by Day
               </h3>
               {isLoading ? (
-                <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+                <div className="h-48 sm:h-64 bg-gray-100 animate-pulse rounded-lg"></div>
               ) : (
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={200}>
                   <AreaChart
                     data={(() => {
                       const dailyData = [];
@@ -3294,12 +3298,12 @@ export default function ReportsPage() {
       </div>
 
       {/* Bookings Table */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-700">
+      <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-700">
             Booking Results
           </h3>
-          <span className="text-sm text-gray-700">
+          <span className="text-xs sm:text-sm text-gray-700">
             {bookings.length} {bookings.length === 1 ? "booking" : "bookings"}{" "}
             found
             {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
@@ -3312,151 +3316,257 @@ export default function ReportsPage() {
             <span className="ml-2 text-gray-700">Loading bookings...</span>
           </div>
         ) : bookings.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Guest
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Email
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Check In
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Check Out
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Amount
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Cancelled By
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
-                    Booked
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {currentBookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {booking.guest_name}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      {booking.guest_email || "No email"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      {new Date(booking.check_in_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      {new Date(booking.check_out_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {formatCurrency(booking.total_amount)}
-                    </td>
-                    <td className="px-4 py-3">
+          <>
+            {/* Mobile Card View */}
+            <div className="block lg:hidden space-y-3">
+              {currentBookings.map((booking) => (
+                <div
+                  key={`mobile-${booking.id}`}
+                  className="bg-gray-50 border border-gray-200 rounded-lg p-3"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-medium text-gray-900 text-sm">
+                        {booking.guest_name}
+                      </h4>
+                      <p className="text-xs text-gray-600 truncate max-w-[180px]">
+                        {booking.guest_email || "No email"}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        booking.status === "confirmed"
+                          ? "bg-green-100 text-green-800"
+                          : booking.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {booking.status || "Unknown"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-gray-500">Check-in</p>
+                      <p className="text-gray-900">
+                        {new Date(booking.check_in_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Check-out</p>
+                      <p className="text-gray-900">
+                        {new Date(booking.check_out_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Amount</p>
+                      <p className="text-gray-900 font-medium">
+                        {formatCurrency(booking.total_amount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Booked</p>
+                      <p className="text-gray-900">
+                        {booking.created_at
+                          ? new Date(booking.created_at).toLocaleDateString()
+                          : "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+                  {booking.status === "cancelled" && booking.cancelled_by && (
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <span className="text-xs text-gray-500">
+                        Cancelled by:{" "}
+                      </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          booking.status === "confirmed"
-                            ? "bg-green-100 text-green-800"
-                            : booking.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          booking.cancelled_by === "user"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-purple-100 text-purple-800"
                         }`}
                       >
-                        {booking.status || "Unknown"}
+                        {booking.cancelled_by === "user" ? "Guest" : "Admin"}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      {booking.status === "cancelled" &&
-                      booking.cancelled_by ? (
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Guest
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Check In
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Check Out
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Amount
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Cancelled By
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">
+                      Booked
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {currentBookings.map((booking) => (
+                    <tr key={booking.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {booking.guest_name}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900">
+                        {booking.guest_email || "No email"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900">
+                        {new Date(booking.check_in_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900">
+                        {new Date(booking.check_out_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {formatCurrency(booking.total_amount)}
+                      </td>
+                      <td className="px-4 py-3">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            booking.cancelled_by === "user"
-                              ? "bg-orange-100 text-orange-800"
-                              : booking.cancelled_by === "admin"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-gray-100 text-gray-800"
+                            booking.status === "confirmed"
+                              ? "bg-green-100 text-green-800"
+                              : booking.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {booking.cancelled_by === "user"
-                            ? "Guest"
-                            : booking.cancelled_by === "admin"
-                            ? "Admin"
-                            : booking.cancelled_by}
+                          {booking.status || "Unknown"}
                         </span>
-                      ) : (
-                        <span className="text-gray-400 text-xs">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      {booking.created_at
-                        ? new Date(booking.created_at).toLocaleDateString()
-                        : "Unknown"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-4 py-3 text-gray-900">
+                        {booking.status === "cancelled" &&
+                        booking.cancelled_by ? (
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              booking.cancelled_by === "user"
+                                ? "bg-orange-100 text-orange-800"
+                                : booking.cancelled_by === "admin"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {booking.cancelled_by === "user"
+                              ? "Guest"
+                              : booking.cancelled_by === "admin"
+                              ? "Admin"
+                              : booking.cancelled_by}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900">
+                        {booking.created_at
+                          ? new Date(booking.created_at).toLocaleDateString()
+                          : "Unknown"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                <div className="text-sm text-gray-900 font-medium">
-                  Showing {startIndex + 1} to{" "}
-                  {Math.min(endIndex, bookings.length)} of {bookings.length}{" "}
-                  bookings
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`px-3 py-2 text-sm rounded-lg font-medium ${
-                            currentPage === page
-                              ? "bg-green-600 text-white"
-                              : "border border-gray-300 text-gray-900 hover:bg-gray-50"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      )
-                    )}
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-gray-200 gap-3">
+                  <div className="text-xs sm:text-sm text-gray-900 font-medium">
+                    Showing {startIndex + 1} to{" "}
+                    {Math.min(endIndex, bookings.length)} of {bookings.length}{" "}
+                    bookings
                   </div>
 
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  {/* Mobile Pagination */}
+                  <div className="flex sm:hidden w-full justify-between items-center">
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-xs text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs text-gray-700">
+                      Page {currentPage}/{totalPages}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 text-xs text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+
+                  {/* Desktop Pagination */}
+                  <div className="hidden sm:flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-2 text-sm rounded-lg font-medium ${
+                              currentPage === page
+                                ? "bg-green-600 text-white"
+                                : "border border-gray-300 text-gray-900 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </>
         ) : (
           <div className="text-center py-12 text-gray-700">
             <FileText className="w-12 h-12 mx-auto mb-4 opacity-60" />
