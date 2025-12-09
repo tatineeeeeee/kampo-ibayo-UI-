@@ -853,7 +853,30 @@ export default function AuthPage() {
     setIsSendingResetEmail(true);
 
     try {
-      // Use timeout protection for faster response
+      // First, check if the email exists in the database
+      const { data: existingUser, error: lookupError } = await supabase
+        .from("users")
+        .select("id, email")
+        .eq("email", email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (lookupError) {
+        console.error("Email lookup error:", lookupError);
+        showError("Error", "Failed to verify email. Please try again.");
+        setIsSendingResetEmail(false);
+        return;
+      }
+
+      if (!existingUser) {
+        showError(
+          "Email Not Found",
+          "No account found with this email address. Please check your email or create a new account."
+        );
+        setIsSendingResetEmail(false);
+        return;
+      }
+
+      // Email exists in database, proceed with password reset
       const { error } = await withAuthTimeout(
         () =>
           supabase.auth.resetPasswordForEmail(email, {
@@ -865,19 +888,7 @@ export default function AuthPage() {
 
       if (error) {
         console.error("Password reset error:", error);
-
-        // Handle specific error cases
-        if (
-          error.message.includes("not found") ||
-          error.message.includes("invalid")
-        ) {
-          info(
-            "Reset Email Sent",
-            "If an account with this email exists, you will receive a password reset link shortly."
-          );
-        } else {
-          showError("Reset Failed", error.message);
-        }
+        showError("Reset Failed", error.message);
       } else {
         setResetEmailSent(true);
         passwordResetSent();
@@ -887,12 +898,10 @@ export default function AuthPage() {
       console.error("Password reset error:", error);
 
       if (error instanceof TimeoutError) {
-        // Always show success message for timeouts to prevent email enumeration
-        info(
-          "Reset Email Sent",
-          "If an account with this email exists, you will receive a password reset link shortly. This may take up to 5 minutes."
+        showError(
+          "Request Timeout",
+          "The request took too long. Please try again."
         );
-        setResetEmailSent(true);
       } else {
         showError(
           "Reset Error",
