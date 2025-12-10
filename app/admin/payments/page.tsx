@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Download,
+  FileText,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -12,6 +13,7 @@ import {
   PhilippinePeso,
 } from "lucide-react";
 import { exportPaymentsCSV } from "../../utils/csvExport";
+import { exportPaymentsPDF } from "../../utils/pdfExport";
 import { useToastHelpers } from "../../components/Toast";
 import { formatBookingNumber } from "../../utils/bookingNumber";
 
@@ -884,7 +886,44 @@ export default function PaymentsPage() {
                 title="Export payments to CSV"
               >
                 <Download className="w-4 h-4 mr-1" />
-                Export CSV
+                CSV
+              </button>
+
+              {/* Export PDF Button */}
+              <button
+                onClick={async () => {
+                  try {
+                    await exportPaymentsPDF(
+                      filteredPayments as unknown as {
+                        [key: string]:
+                          | string
+                          | number
+                          | boolean
+                          | null
+                          | undefined
+                          | object;
+                      }[]
+                    );
+                    success(
+                      `${filteredPayments.length} payment${
+                        filteredPayments.length !== 1 ? "s" : ""
+                      } exported to PDF successfully!`
+                    );
+                  } catch (error) {
+                    console.error("Export error:", error);
+                    showError("Failed to export PDF. Please try again.");
+                  }
+                }}
+                disabled={filteredPayments.length === 0}
+                className={`inline-flex items-center px-2 sm:px-3 py-1 border rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                  filteredPayments.length === 0
+                    ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+                    : "border-red-300 text-red-700 bg-red-50 hover:bg-red-100"
+                }`}
+                title="Export payments to PDF"
+              >
+                <FileText className="w-4 h-4 mr-1" />
+                PDF
               </button>
 
               {/* Fix Payment Types Button */}

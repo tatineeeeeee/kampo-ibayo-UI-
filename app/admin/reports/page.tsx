@@ -33,6 +33,7 @@ import {
   Area,
 } from "recharts";
 import { useToast } from "../../components/Toast";
+import { exportReportsPDF } from "../../utils/pdfExport";
 
 // Use the proper database type for bookings
 type BookingRow = Tables<"bookings">;
@@ -1491,18 +1492,58 @@ export default function ReportsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Export
             </label>
-            <button
-              onClick={exportReport}
-              disabled={isLoading || bookings.length === 0 || isExporting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isExporting ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              {isExporting ? "Exporting..." : `Export ${selectedReport.name}`}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={exportReport}
+                disabled={isLoading || bookings.length === 0 || isExporting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export to CSV"
+              >
+                {isExporting ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                CSV
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await exportReportsPDF(
+                      bookings as unknown as {
+                        [key: string]:
+                          | string
+                          | number
+                          | boolean
+                          | null
+                          | undefined
+                          | object;
+                      }[],
+                      selectedReport.name,
+                      { start: startDate, end: endDate }
+                    );
+                    showToast({
+                      type: "success",
+                      title: "PDF Export Completed",
+                      message: `${selectedReport.name} exported to PDF successfully!`,
+                    });
+                  } catch (error) {
+                    console.error("PDF export error:", error);
+                    showToast({
+                      type: "error",
+                      title: "Export Failed",
+                      message: "Failed to export PDF. Please try again.",
+                    });
+                  }
+                }}
+                disabled={isLoading || bookings.length === 0 || isExporting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export to PDF"
+              >
+                <FileText className="w-4 h-4" />
+                PDF
+              </button>
+            </div>
           </div>
         </div>
       </div>

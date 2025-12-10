@@ -9,6 +9,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Download,
+  FileText,
 } from "lucide-react";
 import { Tables } from "../../../database.types";
 import { displayPhoneNumber } from "../../utils/phoneUtils";
@@ -18,6 +19,7 @@ import {
 } from "../../utils/bookingNumber";
 import Image from "next/image";
 import { exportBookingsCSV } from "../../utils/csvExport";
+import { exportBookingsPDF } from "../../utils/pdfExport";
 
 interface Booking extends Tables<"bookings"> {
   // Add user info to track if user still exists
@@ -2610,7 +2612,40 @@ export default function BookingsPage() {
               title="Export current bookings to CSV"
             >
               <Download className="w-4 h-4" />
-              Export CSV
+              CSV
+            </button>
+
+            {/* Export PDF Button */}
+            <button
+              onClick={async () => {
+                try {
+                  await exportBookingsPDF(
+                    filteredBookings as unknown as {
+                      [key: string]:
+                        | string
+                        | number
+                        | boolean
+                        | null
+                        | undefined
+                        | object;
+                    }[]
+                  );
+                  success("Bookings exported to PDF successfully!");
+                } catch (error) {
+                  console.error("Export error:", error);
+                  showError("Failed to export PDF");
+                }
+              }}
+              disabled={filteredBookings.length === 0}
+              className={`px-3 py-1 text-white rounded-md text-sm transition flex items-center gap-2 ${
+                filteredBookings.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-500 hover:bg-red-600"
+              }`}
+              title="Export current bookings to PDF"
+            >
+              <FileText className="w-4 h-4" />
+              PDF
             </button>
 
             <button
