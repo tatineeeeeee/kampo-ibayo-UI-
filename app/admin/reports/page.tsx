@@ -1098,7 +1098,6 @@ export default function ReportsPage() {
               half: "Downpayment/Partial",
               partial: "Downpayment/Partial",
               downpayment: "Downpayment",
-              bank: "Bank Transfer",
               other: "Other Method",
             };
             const displayMethod = methodMap[method] || method || "Other";
@@ -2682,7 +2681,6 @@ export default function ReportsPage() {
                             half: "Downpayment/Partial",
                             partial: "Downpayment/Partial",
                             downpayment: "Downpayment",
-                            bank: "Bank Transfer",
                             other: "Other Method",
                           };
 

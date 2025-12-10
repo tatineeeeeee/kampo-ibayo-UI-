@@ -139,9 +139,9 @@ const FAQ_DATABASE: FAQItem[] = [
 
   // PAYMENT METHODS (English & Tagalog)
   {
-    keywords: ["payment", "bayad", "gcash", "mode of payment", "paano magbayad", "transfer", "bank"],
+    keywords: ["payment", "bayad", "gcash", "maya", "mode of payment", "paano magbayad"],
     question: "How can we pay? / Paano po ang bayad?",
-    answer: "**English:** You can pay via GCash or bank transfer. Just upload a screenshot of your payment on the booking form to confirm your reservation.\n\n**Tagalog:** Maaari po kayong magbayad sa pamamagitan ng GCash o bank transfer. I-upload lamang po ang screenshot ng bayad sa booking form upang makumpirma ang reservation."
+    answer: "**English:** You can pay via GCash or Maya. Just upload a screenshot of your payment on the booking form to confirm your reservation.\n\n**Tagalog:** Maaari po kayong magbayad sa pamamagitan ng GCash o Maya. I-upload lamang po ang screenshot ng bayad sa booking form upang makumpirma ang reservation."
   },
 
   // BRINGING FOOD (English & Tagalog)
@@ -249,7 +249,7 @@ const FAQ_DATABASE: FAQItem[] = [
   {
     keywords: ["payment", "downpayment", "deposit", "how to pay", "payment method"],
     question: "What's the payment process?",
-    answer: "50% downpayment secures your booking (pay via GCash, bank transfer, or other methods we'll provide). The remaining 50% is due at check-in. We'll send payment details after you book."
+    answer: "50% downpayment secures your booking (pay via GCash or Maya). The remaining 50% is due at check-in. We'll send payment details after you book."
   },
   {
     keywords: ["advance", "how far", "book ahead", "reservation time"],

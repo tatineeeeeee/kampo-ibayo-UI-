@@ -25,7 +25,7 @@ export default function HouseRulesPage() {
         },
         {
           rule: "Full Payment Due",
-          details: "Remaining balance must be settled upon arrival. Cash, GCash, or bank transfer preferred."
+          details: "Remaining balance must be settled upon arrival. Cash, GCash, or Maya accepted."
         }
       ]
     },

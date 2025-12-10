@@ -3332,6 +3332,7 @@ export default function BookingsPage() {
 
             {/* Modal Footer - Clean Action Buttons */}
             <div className="bg-gray-50 p-6 rounded-b-lg border-t border-gray-200">
+              {/* PENDING BOOKINGS - Show confirm and cancel options */}
               {(selectedBooking.status || "pending") === "pending" &&
               !showCancelModal ? (
                 <div className="space-y-4">
@@ -3438,8 +3439,105 @@ export default function BookingsPage() {
                     </button>
                   </div>
                 </div>
+              ) : /* CONFIRMED BOOKINGS - Show cancel option with warning */
+              (selectedBooking.status || "pending") === "confirmed" &&
+                !showCancelModal ? (
+                <div className="space-y-4">
+                  {/* Confirmed Status Banner */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-green-600 text-lg">✅</span>
+                      <h4 className="text-green-800 font-semibold">
+                        Booking Confirmed
+                      </h4>
+                    </div>
+                    <p className="text-green-700 text-sm">
+                      This booking has been confirmed and payment has been verified. 
+                      The guest is expected to check in on{" "}
+                      <strong>
+                        {new Date(selectedBooking.check_in_date).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </strong>.
+                    </p>
+                  </div>
+
+                  {/* Action Sections Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* View Payment Proof Section */}
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                      <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                        Payment Verified
+                      </h4>
+                      <PaymentProofButton
+                        key={`modal-proof-confirmed-${
+                          selectedBooking.id
+                        }-${refreshTrigger}`}
+                        bookingId={selectedBooking.id}
+                        booking={selectedBooking}
+                        variant="modal"
+                        onViewProof={async (proof) => {
+                          setSelectedPaymentProof(proof);
+                          setShowPaymentProofModal(true);
+                          if (proof.id > 0) {
+                            await fetchPaymentHistory(selectedBooking.id);
+                          }
+                        }}
+                        refreshKey={refreshTrigger}
+                      />
+                    </div>
+
+                    {/* Admin Cancel Section */}
+                    <div className="bg-white p-4 rounded-lg border border-red-200 shadow-sm">
+                      <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                        Admin Actions
+                      </h4>
+                      <button
+                        onClick={() => setShowCancelModal(true)}
+                        className="w-full px-4 py-2 bg-red-500 text-white rounded-md text-sm font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2"
+                      >
+                        <span>⚠️</span>
+                        Cancel Confirmed Booking
+                      </button>
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        Use only for guest requests or emergencies
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Close Button */}
+                  <div className="flex justify-center pt-2 border-t border-gray-200">
+                    <button
+                      onClick={closeModal}
+                      className="px-8 py-2 bg-gray-600 text-white rounded-md text-sm font-medium hover:bg-gray-700 transition"
+                    >
+                      Close Modal
+                    </button>
+                  </div>
+                </div>
               ) : showCancelModal ? (
                 <div className="space-y-4">
+                  {/* Warning Banner for Confirmed Bookings */}
+                  {selectedBooking.status === "confirmed" && (
+                    <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-amber-600 text-lg">⚠️</span>
+                        <h4 className="text-amber-800 font-semibold">
+                          Cancelling a Confirmed Booking
+                        </h4>
+                      </div>
+                      <p className="text-amber-700 text-sm">
+                        This booking has already been <strong>confirmed</strong> and payment has been <strong>verified</strong>. 
+                        Cancelling will notify the guest and may require processing a refund.
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <h4 className="text-gray-800 font-medium mb-2">
                       Reason for cancellation
@@ -3449,7 +3547,11 @@ export default function BookingsPage() {
                       onChange={(e) =>
                         setAdminCancellationReason(e.target.value)
                       }
-                      placeholder="Please provide a reason for cancelling this booking"
+                      placeholder={
+                        selectedBooking.status === "confirmed"
+                          ? "Please provide a detailed reason (e.g., Guest requested cancellation, Emergency situation, etc.)"
+                          : "Please provide a reason for cancelling this booking"
+                      }
                       className="w-full p-3 border border-gray-300 rounded-md resize-none text-gray-700 focus:border-red-500 focus:outline-none"
                       rows={3}
                       maxLength={200}
@@ -3503,9 +3605,10 @@ export default function BookingsPage() {
                           guest will be notified via email.
                         </p>
 
-                        {/* Refund Option - Only show if payment was made */}
-                        {selectedBooking.payment_status === "paid" &&
-                          selectedBooking.payment_intent_id && (
+                        {/* Refund Option - Show for confirmed bookings OR if payment was made */}
+                        {(selectedBooking.status === "confirmed" ||
+                          selectedBooking.payment_status === "paid" ||
+                          selectedBooking.payment_intent_id) && (
                             <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-blue-500">💰</span>
@@ -3565,8 +3668,7 @@ export default function BookingsPage() {
                                     <strong>Manual Refund Processing:</strong>{" "}
                                     Since this is a manual payment proof system,
                                     refunds will need to be processed manually
-                                    through your payment method (bank transfer,
-                                    GCash, etc.). Please coordinate with the
+                                    through GCash. Please coordinate with the
                                     guest for refund details.
                                   </p>
                                 </div>

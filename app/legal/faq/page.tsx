@@ -33,7 +33,7 @@ export default function FAQPage() {
         },
         {
           question: "What payment methods do you accept?",
-          answer: "We accept cash, GCash, bank transfers, and major credit cards. A 50% deposit is required upon booking confirmation, with the balance payable upon arrival."
+          answer: "We accept GCash, Maya, or Cash upon arrival. A 50% deposit is required upon booking confirmation, with the balance payable upon arrival."
         },
         {
           question: "Can I modify or cancel my reservation?",

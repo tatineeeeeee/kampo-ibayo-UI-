@@ -108,7 +108,7 @@ export default function TermsPage() {
             <div>
               <h3 className="text-xl font-semibold mb-3 text-white">2. Payment Terms</h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
-                <li>Accepted payment methods: Cash, GCash, bank transfer, major credit cards</li>
+                <li>Accepted payment methods: GCash, Maya, or Cash upon arrival</li>
                 <li>All rates are in Philippine Peso (₱) and inclusive of applicable taxes</li>
                 <li>Additional charges for damages, excess cleaning, or extra services apply</li>
                 <li>Refunds processed according to our cancellation policy</li>

@@ -85,7 +85,6 @@ export default function OCRProcessor({
     switch (method) {
       case 'gcash': return '📱 GCash';
       case 'maya': return '💳 Maya/PayMaya';
-      case 'bank': return '🏦 Bank Transfer';
       default: return '❓ Unknown';
     }
   };

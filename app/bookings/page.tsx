@@ -1862,8 +1862,7 @@ function BookingsPageContent() {
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-3 h-3 text-blue-200 flex-shrink-0" />
                     <p>
-                      Pay 50% down payment via GCash, Bank Transfer, or other
-                      methods
+                      Pay 50% down payment via GCash or Maya
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
