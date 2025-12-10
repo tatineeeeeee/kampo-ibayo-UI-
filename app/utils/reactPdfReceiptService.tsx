@@ -8,6 +8,7 @@ import {
   StyleSheet,
   pdf,
 } from "@react-pdf/renderer";
+import QRCode from "qrcode";
 
 // Professional Receipt Data Interfaces
 export interface Booking {
@@ -67,41 +68,56 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 1.2,
     color: "#2d3748",
+    position: "relative",
   },
 
-  // Premium header with left logo and Kampo Ibayo brand colors and elegant background
+  // PAID Watermark - diagonal across the page
+  watermark: {
+    position: "absolute",
+    top: "40%",
+    left: "15%",
+    transform: "rotate(-35deg)",
+    fontSize: 120,
+    fontFamily: "Times-Bold",
+    color: "#C5A572",
+    opacity: 0.12,
+    letterSpacing: 15,
+    zIndex: 0,
+  },
+
+  // Premium header - LANDSCAPE OPTIMIZED
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10, // Further reduced to save space
-    paddingTop: 12, // Further reduced
-    paddingBottom: 12, // Further reduced
-    paddingHorizontal: 20, // Reduced from 24
-    backgroundColor: "#FDF6F0", // Warm cream background
-    borderBottom: "2 solid #C5A572", // Richer gold - bottom border only
+    marginBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#FDF6F0",
+    borderBottom: "2 solid #C5A572",
     marginHorizontal: -12,
     marginTop: -12,
   },
 
-  // Left-positioned logo container for professional layout
+  // Left-positioned logo container - LANDSCAPE
   logoContainer: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 16,
+    marginRight: 12,
   },
 
-  // Premium logo sizing for brand prominence
+  // Premium logo sizing - LANDSCAPE
   companyLogo: {
-    width: 75,
-    height: 75,
+    width: 55,
+    height: 55,
   },
 
-  // Fallback logo with professional styling
+  // Fallback logo - LANDSCAPE
   logoFallback: {
-    width: 70,
-    height: 70,
+    width: 50,
+    height: 50,
     borderRadius: 4,
     backgroundColor: "#d4af37",
     alignItems: "center",
@@ -110,7 +126,7 @@ const styles = StyleSheet.create({
 
   logoText: {
     fontFamily: "Times-Bold",
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#0f172a",
   },
@@ -170,38 +186,38 @@ const styles = StyleSheet.create({
 
   // Clean content area
   contentArea: {
-    marginTop: 20,
+    marginTop: 12,
   },
 
-  // Clean title section
+  // Clean title section - LANDSCAPE
   titleSection: {
     textAlign: "center",
-    marginBottom: 6, // Further reduced to save space
-    paddingBottom: 3, // Further reduced
+    marginBottom: 6,
+    paddingBottom: 4,
     borderBottom: "1 solid #e2e8f0",
   },
 
   receiptTitle: {
     fontFamily: "Times-Bold",
-    fontSize: 24, // Reduced from 26 to save space
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#9B2226", // Warmer burgundy
-    marginBottom: 6, // Reduced from 10
+    color: "#9B2226",
+    marginBottom: 2,
     letterSpacing: 1,
   },
 
   receiptSubtitle: {
     fontFamily: "Times-Roman",
-    fontSize: 12,
-    color: "#C5A572", // Richer gold
-    marginBottom: 8, // Reduced from 15
+    fontSize: 10,
+    color: "#C5A572",
+    marginBottom: 4,
     fontStyle: "italic",
   },
 
   receiptNumberBadge: {
-    backgroundColor: "#9B2226", // Warmer burgundy
-    borderRadius: 6, // Smaller radius
-    paddingVertical: 6, // Reduced padding
+    backgroundColor: "#9B2226",
+    borderRadius: 4,
+    paddingVertical: 4,
     paddingHorizontal: 12, // Reduced padding
     alignSelf: "center",
   },
@@ -214,53 +230,62 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Clean two-column layout with 8px grid system
+  // Clean two-column layout with 8px grid system - LANDSCAPE OPTIMIZED
   mainContent: {
     flexDirection: "row",
-    marginBottom: 8, // Further reduced to save space
-    minHeight: 200, // Further reduced to save space
+    marginBottom: 6,
+    flex: 1,
   },
 
-  // Kampo Ibayo branded information cards with fixed borders
+  // Kampo Ibayo branded information cards with fixed borders - LANDSCAPE: 3 columns
   leftColumn: {
-    width: "48%",
+    width: "32%",
     backgroundColor: "#FDF6F0",
-    border: "2 solid #C5A572", // Richer gold
-    borderRadius: 12,
+    border: "2 solid #C5A572",
+    borderRadius: 10,
     padding: 0,
-    marginRight: 16, // 8px grid system
+    marginRight: 10,
     overflow: "hidden",
-    minHeight: 200, // Further reduced to save space
   },
 
   rightColumn: {
-    width: "48%",
+    width: "32%",
     backgroundColor: "#FDF6F0",
-    border: "2 solid #C5A572", // Richer gold
-    borderRadius: 12,
+    border: "2 solid #C5A572",
+    borderRadius: 10,
     padding: 0,
+    marginRight: 10,
     overflow: "hidden",
-    minHeight: 200, // Further reduced to save space
   },
 
-  // Kampo Ibayo section headers with perfect border alignment
+  // Third column for Payment Summary in landscape
+  thirdColumn: {
+    width: "32%",
+    backgroundColor: "#FDF6F0",
+    border: "2 solid #C5A572",
+    borderRadius: 10,
+    padding: 0,
+    overflow: "hidden",
+  },
+
+  // Kampo Ibayo section headers with perfect border alignment - LANDSCAPE
   sectionHeader: {
     fontFamily: "Times-Bold",
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "bold",
     color: "#ffffff",
-    backgroundColor: "#9B2226", // Warmer burgundy
-    marginBottom: 8, // Further reduced to save space
-    paddingVertical: 6, // Further reduced
-    paddingHorizontal: 16, // Better spacing
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    backgroundColor: "#9B2226",
+    marginBottom: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
     textAlign: "center",
   },
 
-  // Content wrapper for proper spacing - 8px grid system
+  // Content wrapper for proper spacing - LANDSCAPE
   cardContent: {
-    padding: 10, // Further reduced to save space
+    padding: 8,
   },
 
   // Clean data rows
@@ -407,6 +432,54 @@ const styles = StyleSheet.create({
     paddingBottom: 8, // Further reduced
   },
 
+  // Check-in reminder box
+  checkInReminder: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#9B2226",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+
+  checkInReminderText: {
+    fontFamily: "Times-Bold",
+    fontSize: 11,
+    color: "#ffffff",
+    textAlign: "center",
+    letterSpacing: 0.3,
+  },
+
+  // Cancellation policy reminder box
+  cancellationReminder: {
+    backgroundColor: "#FDF6F0",
+    border: "1 solid #C5A572",
+    borderRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+
+  cancellationTitle: {
+    fontFamily: "Times-Bold",
+    fontSize: 9,
+    color: "#9B2226",
+    marginBottom: 2,
+    textAlign: "center",
+  },
+
+  cancellationText: {
+    fontFamily: "Times-Roman",
+    fontSize: 8,
+    color: "#000000",
+    textAlign: "center",
+    lineHeight: 1.2,
+  },
+
   thankYouMessage: {
     fontFamily: "Times-Bold",
     fontSize: 13, // Further reduced to save space
@@ -430,6 +503,7 @@ const styles = StyleSheet.create({
     fontSize: 10, // Minimum 10pt for accessibility
     color: "#000000",
     lineHeight: 1.2, // Better readability
+    textAlign: "center",
   },
 
   // Clean divider
@@ -439,10 +513,44 @@ const styles = StyleSheet.create({
     backgroundColor: "#e2e8f0",
     marginVertical: 1,
   },
+
+  // QR Code section
+  qrSection: {
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
+  qrContainer: {
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "#ffffff",
+    borderRadius: 6,
+    border: "1 solid #C5A572",
+  },
+
+  qrImage: {
+    width: 70,
+    height: 70,
+  },
+
+  qrLabel: {
+    fontFamily: "Times-Roman",
+    fontSize: 8,
+    color: "#666666",
+    marginTop: 4,
+    textAlign: "center",
+  },
 });
 
-// Professional Receipt Document Component
-const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
+// Professional Receipt Document Component - Now accepts QR code data URL
+const ProfessionalReceiptDocument = ({
+  data,
+  qrCodeDataUrl,
+}: {
+  data: ReceiptData;
+  qrCodeDataUrl?: string;
+}) => {
   // Currency formatting for Philippine Peso
   const formatCurrency = (amount: number | null | undefined): string => {
     // Ensure we have a valid number
@@ -494,7 +602,10 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        {/* PAID Watermark */}
+        <Text style={styles.watermark}>PAID</Text>
+
         <View style={styles.mainWrapper}>
           <View style={styles.contentContainer}>
             {/* Professional Header Section */}
@@ -506,32 +617,19 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
               <View style={styles.companyDescription}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: 10,
                     color: "#9B2226",
                     fontWeight: "bold",
-                    marginBottom: 6,
+                    marginBottom: 4,
                   }}
                 >
-                  About Kampo Ibayo Resort
+                  Kampo Ibayo Resort
                 </Text>
                 <Text
-                  style={{
-                    fontSize: 10,
-                    color: "#000000",
-                    lineHeight: 1.3,
-                    marginBottom: 8,
-                  }}
+                  style={{ fontSize: 8, color: "#000000", fontStyle: "italic" }}
                 >
-                  Eco-friendly camping resort in peaceful farmlands of General
-                  Trias, Cavite. Accommodates up to 15 guests with modern
-                  comfort and adventure.
-                </Text>
-                <Text
-                  style={{ fontSize: 9, color: "#000000", fontStyle: "italic" }}
-                >
-                  Family-Friendly • Pet-Friendly • Nature&apos;s Tranquility
-                  {"\n"}
-                  Swimming Pool • Adventure Bridge • Complete Amenities
+                  Eco-friendly camping in General Trias, Cavite{"\n"}
+                  Family-Friendly • Pet-Friendly • Up to 15 Guests
                 </Text>
               </View>
 
@@ -539,13 +637,27 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
                 <Text style={styles.companyName}>
                   {data.companyDetails.name}
                 </Text>
-                <Text>{"\n"}</Text>
                 <Text style={styles.companyTagline}>
                   Luxury • Tranquility • Excellence
                 </Text>
-                <Text style={styles.companyAddress}>
+                <Text
+                  style={{
+                    fontFamily: "Times-Roman",
+                    fontSize: 9,
+                    color: "#000000",
+                    marginTop: 4,
+                  }}
+                >
                   {data.companyDetails.address}
-                  {"\n"}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Times-Roman",
+                    fontSize: 9,
+                    color: "#000000",
+                    marginTop: 2,
+                  }}
+                >
                   {data.companyDetails.phone} • {data.companyDetails.email}
                 </Text>
               </View>
@@ -554,10 +666,17 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
             {/* Title Section */}
             <View style={styles.titleSection}>
               <Text style={styles.receiptTitle}>Payment Receipt</Text>
-              <Text>{"\n"}</Text>
-              <Text style={styles.receiptSubtitle}>
-                Official confirmation of payment received for your reservation
-                at Kampo Ibayo Resort
+              <Text
+                style={{
+                  fontFamily: "Times-Roman",
+                  fontSize: 10,
+                  color: "#C5A572",
+                  fontStyle: "italic",
+                  marginTop: 2,
+                  marginBottom: 6,
+                }}
+              >
+                Official payment confirmation for your reservation
               </Text>
               <View style={styles.receiptNumberBadge}>
                 <Text style={styles.receiptNumber}>
@@ -776,119 +895,245 @@ const ProfessionalReceiptDocument = ({ data }: { data: ReceiptData }) => {
                   )}
                 </View>
               </View>
-            </View>
 
-            {/* Payment Summary */}
-            <View style={styles.summarySection}>
-              <Text style={styles.summaryHeader}>Payment Summary</Text>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Base Rate ({calculateNights()}{" "}
-                  {calculateNights() === 1 ? "night" : "nights"}):
-                </Text>
-                <Text style={styles.summaryValue}>
-                  {formatCurrency(
-                    data.booking.number_of_guests > 15
-                      ? (data.booking.total_amount ?? 0) -
-                          (data.booking.number_of_guests - 15) *
-                            300 *
-                            calculateNights()
-                      : data.booking.total_amount ?? 0
-                  )}
-                </Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Standard Guests (Up to 15):
-                </Text>
-                <Text style={styles.summaryValue}>Included in Base Rate</Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Extra Guests (
-                  {Math.max(0, data.booking.number_of_guests - 15)} x 300 x{" "}
-                  {calculateNights()}):
-                </Text>
-                <Text style={styles.summaryValue}>
-                  {formatCurrency(
-                    data.booking.number_of_guests > 15
-                      ? (data.booking.number_of_guests - 15) *
-                          300 *
-                          calculateNights()
-                      : 0
-                  )}
-                </Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Guests:</Text>
-                <Text style={styles.summaryValue}>
-                  {data.booking.number_of_guests}{" "}
-                  {data.booking.number_of_guests === 1 ? "guest" : "guests"}
-                </Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal:</Text>
-                <Text style={styles.summaryValue}>
-                  {formatCurrency(data.booking.total_amount ?? 0)}
-                </Text>
-              </View>
-
-              {data.booking.payment_type === "partial" && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Payment Type:</Text>
-                  <Text style={styles.summaryValue}>50% Down Payment</Text>
-                </View>
-              )}
-
-              {data.booking.total_amount &&
-                data.booking.total_amount >
-                  (data.paymentProof?.amount_paid ?? 0) && (
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Remaining Balance:</Text>
-                    <Text style={styles.summaryValue}>
+              {/* Third Column - Payment Summary (LANDSCAPE LAYOUT) */}
+              <View style={styles.thirdColumn}>
+                <Text style={styles.sectionHeader}>Payment Summary</Text>
+                <View style={styles.cardContent}>
+                  <View style={styles.dataRow}>
+                    <Text style={styles.dataLabel}>Base Rate:</Text>
+                    <Text style={styles.dataValue}>
                       {formatCurrency(
-                        data.booking.total_amount -
-                          (data.paymentProof?.amount_paid ?? 0)
+                        data.booking.number_of_guests > 15
+                          ? (data.booking.total_amount ?? 0) -
+                              (data.booking.number_of_guests - 15) *
+                                300 *
+                                calculateNights()
+                          : data.booking.total_amount ?? 0
                       )}
                     </Text>
                   </View>
-                )}
 
-              {/* Total Section - Now inside summary container at bottom */}
-              <View style={styles.totalSection}>
-                <Text style={styles.totalLabel}>Amount Paid:</Text>
-                <Text style={styles.totalAmount}>
-                  {formatCurrency(
-                    data.paymentProof?.amount_paid ??
-                      data.booking.payment_amount ??
-                      data.booking.total_amount ??
-                      0
+                  <View style={styles.dataRow}>
+                    <Text style={styles.dataLabel}>Extra Guests:</Text>
+                    <Text style={styles.dataValue}>
+                      {formatCurrency(
+                        data.booking.number_of_guests > 15
+                          ? (data.booking.number_of_guests - 15) *
+                              300 *
+                              calculateNights()
+                          : 0
+                      )}
+                    </Text>
+                  </View>
+
+                  <View style={styles.dataRow}>
+                    <Text style={styles.dataLabel}>Subtotal:</Text>
+                    <Text style={styles.dataValue}>
+                      {formatCurrency(data.booking.total_amount ?? 0)}
+                    </Text>
+                  </View>
+
+                  {data.booking.payment_type === "partial" && (
+                    <View style={styles.dataRow}>
+                      <Text style={styles.dataLabel}>Payment:</Text>
+                      <Text style={styles.dataValue}>50% Down Payment</Text>
+                    </View>
                   )}
-                </Text>
+
+                  {data.booking.total_amount &&
+                    data.booking.total_amount >
+                      (data.paymentProof?.amount_paid ?? 0) && (
+                      <View style={styles.dataRow}>
+                        <Text style={styles.dataLabel}>Balance:</Text>
+                        <Text style={styles.dataValue}>
+                          {formatCurrency(
+                            data.booking.total_amount -
+                              (data.paymentProof?.amount_paid ?? 0)
+                          )}
+                        </Text>
+                      </View>
+                    )}
+
+                  {/* Amount Paid - Clean style without background */}
+                  <View
+                    style={{
+                      marginTop: 8,
+                      paddingTop: 8,
+                      borderTop: "2 solid #9B2226",
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Times-Bold",
+                          fontSize: 11,
+                          color: "#9B2226",
+                        }}
+                      >
+                        Amount Paid:
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Times-Bold",
+                          fontSize: 14,
+                          color: "#9B2226",
+                        }}
+                      >
+                        {formatCurrency(
+                          data.paymentProof?.amount_paid ??
+                            data.booking.payment_amount ??
+                            data.booking.total_amount ??
+                            0
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
               </View>
             </View>
           </View>
 
-          {/* Footer Section - At bottom of A4 page */}
-          <View style={styles.footerSection}>
-            <Text style={styles.thankYouMessage}>
-              Thank You for Your Payment!
-            </Text>
-            <Text style={styles.disclaimerText}>
-              This receipt confirms your payment has been processed
-              successfully. Please keep this document for your records.
-            </Text>
-            <View style={styles.divider} />
-            <Text style={styles.contactInfo}>
-              Business Hours: 8:00 AM - 8:00 PM • Check-in: 3:00 PM • Check-out:
-              1:00 PM{"\n"}
-              Contact: {data.companyDetails.phone} • {data.companyDetails.email}
-            </Text>
+          {/* Footer Section - LANDSCAPE LAYOUT: Horizontal with QR on right */}
+          <View
+            style={{
+              flexDirection: "row",
+              marginTop: 8,
+              paddingTop: 8,
+              borderTop: "2 solid #C5A572",
+              backgroundColor: "#FDF6F0",
+              marginHorizontal: -12,
+              marginBottom: -12,
+              paddingHorizontal: 16,
+              paddingBottom: 8,
+            }}
+          >
+            {/* Left side - Info */}
+            <View style={{ flex: 1, paddingRight: 20 }}>
+              {/* Row 1: Check-in/Check-out + Thank You */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 6,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "#9B2226",
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: 4,
+                    marginRight: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Times-Bold",
+                      fontSize: 9,
+                      color: "#ffffff",
+                    }}
+                  >
+                    CHECK-IN: 3:00 PM • CHECK-OUT: 1:00 PM
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontFamily: "Times-Bold",
+                    fontSize: 11,
+                    color: "#9B2226",
+                  }}
+                >
+                  Thank You for Your Payment!
+                </Text>
+              </View>
+
+              {/* Row 2: Confirmation message */}
+              <Text
+                style={{
+                  fontFamily: "Times-Roman",
+                  fontSize: 9,
+                  color: "#000000",
+                  marginBottom: 6,
+                }}
+              >
+                This receipt confirms your payment has been processed
+                successfully. Please keep this document for your records.
+              </Text>
+
+              {/* Row 3: Cancellation Policy inline */}
+              <View style={{ flexDirection: "row", marginBottom: 6 }}>
+                <Text
+                  style={{
+                    fontFamily: "Times-Bold",
+                    fontSize: 9,
+                    color: "#9B2226",
+                    marginRight: 6,
+                  }}
+                >
+                  Cancellation Policy:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Times-Roman",
+                    fontSize: 9,
+                    color: "#000000",
+                    flex: 1,
+                  }}
+                >
+                  Free cancellation 7+ days before check-in. 50% refund 3-7 days
+                  before. No refund within 3 days.
+                </Text>
+              </View>
+
+              {/* Row 4: Contact info */}
+              <Text
+                style={{
+                  fontFamily: "Times-Bold",
+                  fontSize: 9,
+                  color: "#000000",
+                }}
+              >
+                Business Hours: 8:00 AM - 8:00 PM • {data.companyDetails.phone}{" "}
+                • {data.companyDetails.email}
+              </Text>
+            </View>
+
+            {/* Right side - QR Code */}
+            {qrCodeDataUrl && (
+              <View style={{ alignItems: "center", justifyContent: "center" }}>
+                <View
+                  style={{
+                    backgroundColor: "#ffffff",
+                    padding: 6,
+                    borderRadius: 6,
+                    border: "1 solid #C5A572",
+                  }}
+                >
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                  <Image
+                    src={qrCodeDataUrl}
+                    style={{ width: 60, height: 60 }}
+                  />
+                </View>
+                <Text
+                  style={{
+                    fontFamily: "Times-Roman",
+                    fontSize: 7,
+                    color: "#666666",
+                    marginTop: 3,
+                  }}
+                >
+                  Scan to view booking
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Page>
@@ -976,6 +1221,32 @@ export class ReactPdfReceiptService {
   }
 
   /**
+   * Generate QR code as data URL
+   */
+  static async generateQRCode(bookingId: string): Promise<string> {
+    try {
+      // Create URL that links to booking page
+      const bookingUrl = `https://kampo-ibayo-resort.vercel.app/bookings?id=${bookingId}`;
+
+      // Generate QR code as data URL
+      const qrDataUrl = await QRCode.toDataURL(bookingUrl, {
+        width: 150,
+        margin: 1,
+        color: {
+          dark: "#9B2226", // Burgundy color to match brand
+          light: "#FFFFFF",
+        },
+      });
+
+      console.log("✅ QR code generated successfully");
+      return qrDataUrl;
+    } catch (error) {
+      console.error("❌ QR code generation failed:", error);
+      return ""; // Return empty string if QR generation fails
+    }
+  }
+
+  /**
    * Generate professional PDF receipt with error handling
    */
   static async generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
@@ -992,8 +1263,16 @@ export class ReactPdfReceiptService {
         throw new Error("Invalid receipt data provided");
       }
 
-      // Generate PDF with professional styling
-      const receiptDocument = <ProfessionalReceiptDocument data={data} />;
+      // Generate QR code
+      const qrCodeDataUrl = await this.generateQRCode(data.booking.id);
+
+      // Generate PDF with professional styling and QR code
+      const receiptDocument = (
+        <ProfessionalReceiptDocument
+          data={data}
+          qrCodeDataUrl={qrCodeDataUrl}
+        />
+      );
 
       // Create optimized PDF blob
       const pdfBlob = await pdf(receiptDocument).toBlob();

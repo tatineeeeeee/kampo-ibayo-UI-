@@ -22,6 +22,7 @@ import {
   FaChevronDown,
   FaFileCode,
   FaTable,
+  FaFilePdf,
 } from "react-icons/fa";
 import { Check, X } from "lucide-react";
 import { useToastHelpers } from "../components/Toast";
@@ -695,6 +696,47 @@ export default function SettingsPage() {
           csvBlob,
           `kampo-ibayo-bookings-${new Date().toISOString().split("T")[0]}.csv`
         );
+      } else if (format === "pdf") {
+        // PDF Export - call API to generate PDF
+        const response = await fetch("/api/user/export-pdf", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            userProfile,
+            userData,
+            bookings: bookings || [],
+            statistics: {
+              total_bookings: bookings?.length || 0,
+              cancelled_bookings:
+                bookings?.filter((b) => b.status === "cancelled").length || 0,
+              confirmed_bookings:
+                bookings?.filter((b) => b.status === "confirmed").length || 0,
+              pending_bookings:
+                bookings?.filter((b) => b.status === "pending").length || 0,
+              completed_bookings:
+                bookings?.filter((b) => b.status === "completed").length || 0,
+              total_amount_spent:
+                bookings?.reduce((sum, b) => sum + (b.total_amount || 0), 0) ||
+                0,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate PDF");
+        }
+
+        const pdfBlob = await response.blob();
+        downloadFile(
+          pdfBlob,
+          `kampo-ibayo-data-export-${
+            new Date().toISOString().split("T")[0]
+          }.pdf`
+        );
       }
 
       success(
@@ -1104,13 +1146,31 @@ export default function SettingsPage() {
                           handleExportData("csv");
                           setShowExportDropdown(false);
                         }}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-left text-white hover:bg-gray-500 transition rounded-b-lg"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-left text-white hover:bg-gray-500 transition"
                       >
                         <FaTable className="w-4 h-4 text-green-400" />
                         <div>
                           <div className="font-semibold">CSV Format</div>
                           <div className="text-xs text-gray-300">
                             Spreadsheet-friendly booking data
+                          </div>
+                        </div>
+                      </button>
+
+                      <div className="border-t border-gray-500"></div>
+
+                      <button
+                        onClick={() => {
+                          handleExportData("pdf");
+                          setShowExportDropdown(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-3 text-left text-white hover:bg-gray-500 transition rounded-b-lg"
+                      >
+                        <FaFilePdf className="w-4 h-4 text-red-400" />
+                        <div>
+                          <div className="font-semibold">PDF Format</div>
+                          <div className="text-xs text-gray-300">
+                            Professional printable report
                           </div>
                         </div>
                       </button>
