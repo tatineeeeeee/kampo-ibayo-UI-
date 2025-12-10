@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       const originalCheckIn = new Date(booking.check_in_date);
       const now = new Date();
       const hoursUntilCheckIn = (originalCheckIn.getTime() - now.getTime()) / (1000 * 3600);
-      
+
       if (hoursUntilCheckIn < 24) {
         return NextResponse.json(
           { success: false, error: "Cannot reschedule less than 24 hours before check-in" },
@@ -118,31 +118,31 @@ export async function POST(request: NextRequest) {
     const calculateMultiDayPrice = (checkInDate: Date, checkOutDate: Date, guestCount: number = 15) => {
       const nights = [];
       const currentNight = new Date(checkInDate);
-      
+
       // Calculate each night between check-in and check-out
       while (currentNight < checkOutDate) {
         const dayOfWeek = currentNight.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
-        
+
         // Simple weekend/holiday logic (can be expanded later)
         const nightRate = isWeekend ? 12000 : 9000;
-        
+
         nights.push({
           date: new Date(currentNight),
           rate: nightRate,
           isWeekend
         });
-        
+
         currentNight.setDate(currentNight.getDate() + 1);
       }
-      
+
       // Calculate total base cost
       const totalBaseRate = nights.reduce((sum, night) => sum + night.rate, 0);
-      
+
       // Add excess guest fee (₱300 per guest over 15, per night)
       const totalNights = nights.length;
       const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
-      
+
       return {
         totalNights,
         totalBaseRate,
@@ -189,6 +189,7 @@ export async function POST(request: NextRequest) {
         bookingId: bookingId,
         guestName: booking.guest_name,
         guestEmail: booking.guest_email,
+        phoneNumber: booking.guest_phone, // Include phone for SMS notification
         originalCheckIn: new Date(booking.check_in_date).toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
@@ -217,13 +218,13 @@ export async function POST(request: NextRequest) {
         guests: booking.number_of_guests
       };
 
-      // Send reschedule confirmation email (fire and forget)
+      // Send reschedule confirmation email and SMS (fire and forget)
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/booking-rescheduled`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(emailData)
       }).catch(error => {
-        console.warn('Email notification failed:', error);
+        console.warn('Email/SMS notification failed:', error);
         // Don't fail the main operation
       });
 
