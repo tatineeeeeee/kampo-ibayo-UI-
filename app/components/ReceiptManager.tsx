@@ -156,7 +156,7 @@ export function ReceiptManager({
       <button
         onClick={handleDownloadReceipt}
         disabled={isDownloading || isEmailing}
-        className="flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 min-h-[44px]"
+        className="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 min-h-[44px] w-full sm:w-auto"
         title="Download official receipt as PDF"
       >
         {isDownloading ? (
@@ -176,7 +176,7 @@ export function ReceiptManager({
       <button
         onClick={handleEmailReceipt}
         disabled={isDownloading || isEmailing}
-        className="flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 min-h-[44px]"
+        className="flex items-center justify-center gap-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 min-h-[44px] w-full sm:w-auto"
         title="Email official receipt to your registered email"
       >
         {isEmailing ? (

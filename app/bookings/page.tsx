@@ -218,7 +218,7 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
     return (
       <div className="bg-gray-700 text-gray-400 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
-        Checking...
+        Loading
       </div>
     );
   }
@@ -227,8 +227,9 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   if (!proofStatus) {
     return (
       <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-        <button className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto">
-          Upload Payment Proof
+        <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
+          <Upload className="w-3 h-3" />
+          Upload
         </button>
       </Link>
     );
@@ -243,7 +244,8 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   if (proofStatus === "cancelled") {
     return (
       <div className="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
-        <Ban className="w-3 h-3" /> Cancelled
+        <Ban className="w-3 h-3" />
+        Cancelled
       </div>
     );
   }
@@ -252,15 +254,17 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   if (proofStatus === "pending") {
     return (
       <div className="bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
-        <HourglassIcon className="w-3 h-3" /> Under Review
+        <HourglassIcon className="w-3 h-3" />
+        Pending
       </div>
     );
   }
 
   if (proofStatus === "verified") {
     return (
-      <div className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
-        <CheckCircle2 className="w-3 h-3" /> Payment Verified
+      <div className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+        <CheckCircle2 className="w-3 h-3" />
+        Verified
       </div>
     );
   }
@@ -268,8 +272,9 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   // Fallback for unknown status
   return (
     <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-      <button className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto">
-        Upload Payment Proof
+      <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
+        <Upload className="w-3 h-3" />
+        Upload
       </button>
     </Link>
   );
@@ -1960,17 +1965,22 @@ function BookingsPageContent() {
                       </div>
                     )}
 
-                    {/* Details Grid - Mobile Responsive */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    {/* Details Grid - 2x2 on Mobile */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
                         <Calendar className="w-3 h-3 text-red-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">Check-in</p>
+                          <p className="text-[10px] sm:text-xs text-gray-400">
+                            Check-in
+                          </p>
                           <p className="font-semibold text-xs truncate">
                             {booking.check_in_date
                               ? new Date(
                                   booking.check_in_date
-                                ).toLocaleDateString()
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })
                               : "N/A"}
                           </p>
                         </div>
@@ -1978,12 +1988,17 @@ function BookingsPageContent() {
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
                         <Calendar className="w-3 h-3 text-red-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">Check-out</p>
+                          <p className="text-[10px] sm:text-xs text-gray-400">
+                            Check-out
+                          </p>
                           <p className="font-semibold text-xs truncate">
                             {booking.check_out_date
                               ? new Date(
                                   booking.check_out_date
-                                ).toLocaleDateString()
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })
                               : "N/A"}
                           </p>
                         </div>
@@ -1991,7 +2006,9 @@ function BookingsPageContent() {
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
                         <Users className="w-3 h-3 text-red-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">Guests</p>
+                          <p className="text-[10px] sm:text-xs text-gray-400">
+                            Guests
+                          </p>
                           <p className="font-semibold text-xs">
                             {booking.number_of_guests} guest(s)
                           </p>
@@ -2000,19 +2017,20 @@ function BookingsPageContent() {
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
                         <PhilippinePeso className="w-3 h-3 text-red-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">
+                          <p className="text-[10px] sm:text-xs text-gray-400">
                             {booking.payment_type === "full"
-                              ? "Payment Required"
-                              : "Down Payment (50%)"}
+                              ? "Full Pay"
+                              : "50% Down"}
                           </p>
                           <p className="font-semibold text-green-400 text-xs">
                             ₱
                             {(
-                              booking.payment_amount ||
-                              (booking.payment_type === "full"
-                                ? booking.total_amount
-                                : booking.total_amount * 0.5)
-                            ).toLocaleString()}
+                              (booking.payment_amount ||
+                                (booking.payment_type === "full"
+                                  ? booking.total_amount
+                                  : booking.total_amount * 0.5)) / 1000
+                            ).toFixed(1)}
+                            k
                           </p>
                         </div>
                       </div>
@@ -2054,7 +2072,7 @@ function BookingsPageContent() {
                       />
                     )}
 
-                    {/* Actions Section - Mobile First */}
+                    {/* Actions Section - 2x2 Grid on Mobile */}
                     <div className="flex flex-col gap-2 sm:gap-3 pt-3 border-t border-gray-600">
                       <div className="flex items-center justify-between">
                         <p className="text-gray-400 text-xs flex items-center gap-1">
@@ -2064,12 +2082,12 @@ function BookingsPageContent() {
                             : "N/A"}
                         </p>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
                         <button
                           onClick={() => openModal(booking)}
-                          className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-500 transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto"
+                          className="bg-gray-600 hover:bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                         >
-                          View Details
+                          Details
                         </button>
 
                         {/* Receipt Buttons - Show only for confirmed bookings with verified payment */}
@@ -2101,10 +2119,10 @@ function BookingsPageContent() {
                         {canRescheduleBooking(booking) && (
                           <button
                             onClick={() => handleOpenReschedule(booking)}
-                            className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto"
+                            className="bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                           >
                             <Calendar className="w-3 h-3" />
-                            Reschedule
+                            Resched
                           </button>
                         )}
 
@@ -2112,9 +2130,9 @@ function BookingsPageContent() {
                           <button
                             onClick={() => {
                               setSelectedBooking(booking);
-                              setShowCancelModal(true); // Skip booking details modal, go straight to cancellation
+                              setShowCancelModal(true);
                             }}
-                            className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto"
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                             title={getCancellationMessage(booking)}
                           >
                             Cancel
@@ -2123,11 +2141,11 @@ function BookingsPageContent() {
                           booking.status?.toLowerCase() !== "cancelled" && (
                             <button
                               disabled
-                              className="bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto"
+                              className="bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
                               title={getCancellationMessage(booking)}
                             >
                               <Ban className="w-3 h-3" />
-                              Cannot Cancel
+                              Locked
                             </button>
                           )
                         )}
