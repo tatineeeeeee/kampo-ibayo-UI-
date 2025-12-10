@@ -366,7 +366,8 @@ export default function PaymentsPage() {
       payment.balance_status === "verified";
 
     // NEW: Check if the booking is cancelled
-    const isBookingCancelled = payment.booking_status?.toLowerCase() === "cancelled";
+    const isBookingCancelled =
+      payment.booking_status?.toLowerCase() === "cancelled";
 
     // Don't allow if balance payment already exists or booking is cancelled
     if (hasExistingBalancePayment || isBookingCancelled) {
@@ -441,10 +442,10 @@ export default function PaymentsPage() {
           return (
             payment.booking_status?.toLowerCase() !== "cancelled" &&
             (originalStatus === "pending" ||
-            originalStatus === "pending_verification" ||
-            (payment.balance_reference &&
-              (balanceStatus === "pending" ||
-                balanceStatus === "pending_verification")))
+              originalStatus === "pending_verification" ||
+              (payment.balance_reference &&
+                (balanceStatus === "pending" ||
+                  balanceStatus === "pending_verification")))
           );
         } else if (statusFilter === "cancelled") {
           // Booking is cancelled OR payment is cancelled/rejected
@@ -641,7 +642,7 @@ export default function PaymentsPage() {
                   (p) =>
                     p.booking_status?.toLowerCase() !== "cancelled" &&
                     (p.status?.toLowerCase() === "paid" ||
-                    p.status?.toLowerCase() === "verified")
+                      p.status?.toLowerCase() === "verified")
                 ).length
               }
               )
@@ -664,7 +665,7 @@ export default function PaymentsPage() {
                   (p) =>
                     p.booking_status?.toLowerCase() !== "cancelled" &&
                     (p.status?.toLowerCase() === "pending" ||
-                    p.status?.toLowerCase() === "pending_verification")
+                      p.status?.toLowerCase() === "pending_verification")
                 ).length
               }
               )
@@ -1165,7 +1166,8 @@ export default function PaymentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            payment.booking_status?.toLowerCase() === "cancelled"
+                            payment.booking_status?.toLowerCase() ===
+                            "cancelled"
                               ? "bg-red-100 text-red-800"
                               : payment.original_status === "verified" &&
                                 (payment.payment_type === "full" ||
@@ -1197,7 +1199,10 @@ export default function PaymentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {(() => {
                           // Check if booking is cancelled first
-                          if (payment.booking_status?.toLowerCase() === "cancelled") {
+                          if (
+                            payment.booking_status?.toLowerCase() ===
+                            "cancelled"
+                          ) {
                             return (
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                 BOOKING CANCELLED

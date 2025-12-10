@@ -47,8 +47,8 @@ const REPORT_TYPES = [
     color: "blue",
   },
   {
-    id: "guest-database",
-    name: "Guest Database",
+    id: "user-database",
+    name: "User Database",
     description:
       "Customer list with contact info, visits & spending (for marketing)",
     icon: Users,
@@ -110,11 +110,6 @@ export default function ReportsPage() {
       if (error) throw error;
 
       setBookings(data || []);
-      console.log(
-        `📊 Filtered bookings: ${
-          data?.length || 0
-        } bookings from ${startDate} to ${endDate}`
-      );
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -218,18 +213,9 @@ export default function ReportsPage() {
             .split("T")[0];
 
           // Include today's activities plus current guests and near-future arrivals
-          console.log(`🏨 Daily Checklist Debug - Today: ${today}`);
-          console.log(
-            `📋 Total filtered bookings to check: ${filteredBookings.length}`
-          );
-
           const operationalActivity = filteredBookings.filter((b) => {
             const checkIn = b.check_in_date;
             const checkOut = b.check_out_date;
-
-            console.log(
-              `🔍 Checking booking ${b.id}: ${b.guest_name} - Check-in: ${checkIn}, Check-out: ${checkOut}, Status: ${b.status}`
-            );
 
             // REAL RESORT LOGIC: Current guests must be confirmed AND paid
             const isCurrentGuest =
@@ -252,28 +238,8 @@ export default function ReportsPage() {
               isCurrentGuest ||
               isRecentCheckOut;
 
-            if (isOperationallyRelevant) {
-              console.log(
-                `✅ Including in daily checklist: ${b.guest_name} - Reason: ${
-                  isTodayCheckIn
-                    ? "Today Check-in"
-                    : isTodayCheckOut
-                    ? "Today Check-out"
-                    : isTomorrowCheckIn
-                    ? "Tomorrow Check-in"
-                    : isCurrentGuest
-                    ? "Current Guest"
-                    : "Recent Check-out"
-                }`
-              );
-            }
-
             return isOperationallyRelevant;
           });
-
-          console.log(
-            `📊 Daily checklist activities found: ${operationalActivity.length}`
-          );
 
           if (operationalActivity.length === 0) {
             const nextBooking = filteredBookings.find(
@@ -439,8 +405,8 @@ export default function ReportsPage() {
           filename = `daily-checklist-${startDate}-to-${endDate}.csv`;
           break;
 
-        case "guest-database":
-          // Simple guest database for marketing and customer service
+        case "user-database":
+          // Simple user database for marketing and customer service
           const guestDatabase = new Map();
 
           // Build simple guest list
@@ -485,7 +451,7 @@ export default function ReportsPage() {
             ];
           });
 
-          filename = `guest-database-${startDate}-to-${endDate}.csv`;
+          filename = `user-database-${startDate}-to-${endDate}.csv`;
           break;
 
         case "unused-legacy-resort-performance":
@@ -654,14 +620,20 @@ export default function ReportsPage() {
             // Enhanced payment status display
             let paymentStatusDisplay = "Unknown";
             const paymentStatus = booking.payment_status;
+            const bookingStatus = booking.status;
 
             // Check if booking is in the future or past
             const today = new Date().toISOString().split("T")[0];
             const checkInDate = booking.check_in_date;
             const isFutureBooking = checkInDate > today;
 
-            // Handle payment status - 'paid' means fully completed payment
-            if (paymentStatus === "verified" || paymentStatus === "paid") {
+            // IMPORTANT: If booking is cancelled, payment status should reflect that
+            if (bookingStatus === "cancelled") {
+              paymentStatusDisplay = "❌ Booking Cancelled";
+            } else if (
+              paymentStatus === "verified" ||
+              paymentStatus === "paid"
+            ) {
               if (isFutureBooking) {
                 paymentStatusDisplay = "✅ Fully Paid (Future Stay)";
               } else {
@@ -684,7 +656,6 @@ export default function ReportsPage() {
 
             // Enhanced booking status display
             let bookingStatusDisplay = "Unknown";
-            const bookingStatus = booking.status;
 
             if (bookingStatus === "confirmed") {
               bookingStatusDisplay = "✅ Confirmed";
@@ -776,8 +747,10 @@ export default function ReportsPage() {
             const today = new Date().toISOString().split("T")[0];
             const isFutureBooking = booking.check_in_date > today;
 
-            // Handle payments based on actual status and booking timing
-            if (
+            // IMPORTANT: Check cancelled FIRST - cancelled bookings don't count as revenue
+            if (bookingStatus === "cancelled") {
+              paymentSummary.cancelled++;
+            } else if (
               (paymentStatus === "paid" || paymentStatus === "verified") &&
               bookingStatus === "confirmed"
             ) {
@@ -798,8 +771,6 @@ export default function ReportsPage() {
             ) {
               paymentSummary.pending++;
               paymentSummary.pendingRevenue += amount;
-            } else if (bookingStatus === "cancelled") {
-              paymentSummary.cancelled++;
             }
           });
 
@@ -858,6 +829,7 @@ export default function ReportsPage() {
               filteredBookings
                 .filter(
                   (b) =>
+                    b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
                     b.payment_type === "half"
@@ -870,6 +842,7 @@ export default function ReportsPage() {
               `₱${filteredBookings
                 .filter(
                   (b) =>
+                    b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
                     b.payment_type === "half"
@@ -884,6 +857,7 @@ export default function ReportsPage() {
               filteredBookings
                 .filter(
                   (b) =>
+                    b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
                     b.payment_type === "full"
@@ -896,6 +870,7 @@ export default function ReportsPage() {
               `₱${filteredBookings
                 .filter(
                   (b) =>
+                    b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
                     b.payment_type === "full"
@@ -910,14 +885,20 @@ export default function ReportsPage() {
             [
               "Awaiting Payment:",
               filteredBookings
-                .filter((b) => b.payment_status === "pending")
+                .filter(
+                  (b) =>
+                    b.status !== "cancelled" && b.payment_status === "pending"
+                )
                 .length.toString(),
               "",
               "",
               "",
               "",
               `₱${filteredBookings
-                .filter((b) => b.payment_status === "pending")
+                .filter(
+                  (b) =>
+                    b.status !== "cancelled" && b.payment_status === "pending"
+                )
                 .reduce((sum, b) => sum + (b.total_amount || 0), 0)
                 .toLocaleString()}`,
               "⏳ To Collect",
@@ -929,6 +910,7 @@ export default function ReportsPage() {
               "Future F2F Collections:",
               filteredBookings
                 .filter((b) => {
+                  if (b.status === "cancelled") return false;
                   const today = new Date().toISOString().split("T")[0];
                   const isFutureBooking = b.check_in_date > today;
                   const paidAmount = b.payment_amount || 0;
@@ -952,6 +934,7 @@ export default function ReportsPage() {
               "",
               `₱${filteredBookings
                 .filter((b) => {
+                  if (b.status === "cancelled") return false;
                   const today = new Date().toISOString().split("T")[0];
                   const isFutureBooking = b.check_in_date > today;
                   const paidAmount = b.payment_amount || 0;
@@ -981,6 +964,7 @@ export default function ReportsPage() {
               "Completed F2F Payments:",
               filteredBookings
                 .filter((b) => {
+                  if (b.status === "cancelled") return false;
                   const today = new Date().toISOString().split("T")[0];
                   const isPastBooking = b.check_in_date <= today;
                   const isVerified =
@@ -997,6 +981,7 @@ export default function ReportsPage() {
               "",
               `₱${filteredBookings
                 .filter((b) => {
+                  if (b.status === "cancelled") return false;
                   const today = new Date().toISOString().split("T")[0];
                   const isPastBooking = b.check_in_date <= today;
                   const isVerified =
@@ -1024,10 +1009,14 @@ export default function ReportsPage() {
               "",
               `₱${(
                 filteredBookings
-                  .filter((b) => b.payment_status === "pending")
+                  .filter(
+                    (b) =>
+                      b.status !== "cancelled" && b.payment_status === "pending"
+                  )
                   .reduce((sum, b) => sum + (b.total_amount || 0), 0) +
                 filteredBookings
                   .filter((b) => {
+                    if (b.status === "cancelled") return false;
                     const paidAmount = b.payment_amount || 0;
                     const totalAmount = b.total_amount || 0;
                     const hasRemainingBalance =
@@ -1294,13 +1283,6 @@ export default function ReportsPage() {
       a.download = filename;
       a.click();
       window.URL.revokeObjectURL(url);
-
-      console.log(
-        `✅ ${selectedReport.name} exported successfully: ${filename}`
-      );
-      console.log(
-        `📊 Exported ${rows.length} records with ${headers.length} columns`
-      );
 
       showToast({
         type: "success",
@@ -1589,7 +1571,7 @@ export default function ReportsPage() {
             )}
             {selectedReport.id === "guest-registry" && (
               <p>
-                <strong>👥 Guest Database:</strong> COMPLETED stays only - Real
+                <strong>👥 User Database:</strong> COMPLETED stays only - Real
                 customer profiles for marketing, loyalty programs, and
                 personalized service
               </p>
@@ -2082,27 +2064,27 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* Guest Database Report Description */}
-        {selectedReport.id === "guest-database" && (
+        {/* User Database Report Description */}
+        {selectedReport.id === "user-database" && (
           <div className="text-center py-12 max-w-2xl mx-auto">
             <Users className="w-16 h-16 mx-auto mb-4 text-purple-600" />
             <h3 className="text-lg font-semibold text-black mb-2">
-              Guest Database Report
+              User Database Report
             </h3>
             <p className="text-gray-600 mb-4">
-              This report shows your complete guest database with contact
+              This report shows your complete user database with contact
               information, visit history, and spending patterns for marketing
               and customer service.
             </p>
             <p className="text-sm text-gray-500">
               Click the <strong>Export</strong> button above to download the
-              complete guest database report as CSV.
+              complete user database report as CSV.
             </p>
           </div>
         )}
 
-        {/* Guest Database Charts */}
-        {selectedReport.id === "guest-database" && (
+        {/* User Database Charts */}
+        {selectedReport.id === "user-database" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-md">
               <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
