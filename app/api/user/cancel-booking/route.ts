@@ -45,11 +45,11 @@ export async function POST(request: NextRequest) {
     const checkInDate = new Date(booking.check_in_date);
     const currentTime = new Date();
     const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
-    
+
     if (hoursUntilCheckIn < 24) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Cancellation is not allowed within 24 hours of check-in. Please contact the resort directly for assistance.',
           canCancel: false
         },
@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
 
     // Check if refund should be processed (only if payment was made)
     let refundResponse = null;
-    
+
     if (booking.payment_status === 'paid' && booking.payment_intent_id) {
       console.log('💰 Processing automatic refund for user cancellation');
-      
+
       try {
         const refundApiResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/paymongo/process-refund`, {
           method: 'POST',
@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
 
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ 
+      .update({
         status: 'cancelled',
+        // Note: We keep the original payment_status for audit purposes (shows what was actually paid)
         cancelled_by: 'user',
         cancelled_at: philippinesTime.toISOString(),
         cancellation_reason: cancellationReason || 'Cancelled by guest'
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     // ✨ NEW FEATURE: Auto-cancel any pending payment proofs for this booking
     console.log(`PAYMENT PROOF AUTO-CANCEL STARTING FOR BOOKING ${bookingId}`);
     console.log(`Auto-cancelling payment proofs for cancelled booking ${bookingId}`);
-    
+
     try {
       // First, check what payment proofs exist for this booking
       const { data: existingProofs, error: fetchError } = await supabase
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
         .eq('booking_id', bookingId);
 
       console.log(`📋 Found ${existingProofs?.length || 0} payment proof(s) for booking ${bookingId}:`, existingProofs);
-      
+
       if (fetchError) {
         console.error('❌ Error fetching existing payment proofs:', fetchError);
       }
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
       // Update only pending payment proofs to rejected (auto-cancelled)
       const { data: affectedProofs, error: proofUpdateError } = await supabase
         .from('payment_proofs')
-        .update({ 
+        .update({
           status: 'rejected',
           admin_notes: 'Automatically cancelled due to user booking cancellation',
           verified_at: philippinesTime.toISOString()
@@ -166,16 +167,16 @@ export async function POST(request: NextRequest) {
     if (booking.guest_email && booking.guest_email.trim()) {
       // Always prepare refund details for email (even if no actual refund was processed)
       let refundDetails: RefundDetails | undefined = undefined;
-      
+
       // Calculate what the refund would be based on timing policy
       const downPayment = booking.total_amount * 0.5;
       const checkInDate = new Date(booking.check_in_date);
       const currentTime = new Date();
       const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
-      
+
       let refundPercentage = 0;
       let refundAmount = 0;
-      
+
       if (hoursUntilCheckIn >= 48) {
         refundPercentage = 100;
         refundAmount = downPayment;
@@ -204,17 +205,17 @@ export async function POST(request: NextRequest) {
       const cancellationData: CancellationEmailData = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
-        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
-        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
@@ -235,17 +236,17 @@ export async function POST(request: NextRequest) {
       const adminBookingDetails = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
-        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
-        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
@@ -280,7 +281,7 @@ export async function POST(request: NextRequest) {
             cancelledBy: 'Guest'
           }),
         });
-        
+
         if (smsResponse.ok) {
           smsResult = await smsResponse.json();
           console.log('✅ Cancellation SMS sent successfully');
@@ -315,15 +316,15 @@ export async function POST(request: NextRequest) {
     };
 
     if (guestEmailResult.success && adminEmailResult.success) {
-      responseData.message = refundResponse 
+      responseData.message = refundResponse
         ? `Booking cancelled and refund of ₱${refundResponse.refund_amount.toLocaleString()} processed. Notifications sent.`
         : 'Booking cancelled successfully and notifications sent';
       return NextResponse.json(responseData);
     } else {
-      responseData.message = refundResponse 
+      responseData.message = refundResponse
         ? `Booking cancelled and refund of ₱${refundResponse.refund_amount.toLocaleString()} processed.`
         : 'Booking cancelled successfully';
-      
+
       if (emailErrors.length > 0) {
         return NextResponse.json({
           ...responseData,
@@ -331,16 +332,16 @@ export async function POST(request: NextRequest) {
           emailErrors,
         });
       }
-      
+
       return NextResponse.json(responseData);
     }
 
   } catch (error) {
     console.error('Error in user cancel booking API:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error'
       },
       { status: 500 }
     );

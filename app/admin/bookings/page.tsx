@@ -71,8 +71,8 @@ function getSmartWorkflowStatus(
         priority: 0,
         badge: "bg-gray-100 text-gray-800",
         text: "Cancelled",
-        description: "Booking cancelled by guest",
-        actionNeeded: "None - booking cancelled by guest",
+        description: "Booking cancelled by user",
+        actionNeeded: "None - booking cancelled by user",
       };
     }
     // Handle ADMIN cancellations
@@ -126,7 +126,7 @@ function getSmartWorkflowStatus(
         text: "Rejected",
         description: "Payment proof was rejected by admin",
         actionNeeded:
-          "Guest needs to upload new payment proof or booking should be cancelled",
+          "User needs to upload new payment proof or booking should be cancelled",
       };
     } else if (proofStatus === "verified") {
       return {
@@ -143,8 +143,8 @@ function getSmartWorkflowStatus(
         priority: 4,
         badge: "bg-orange-100 text-orange-800",
         text: "Awaiting Payment",
-        description: "Guest needs to upload payment proof",
-        actionNeeded: "Remind guest to upload payment",
+        description: "User needs to upload payment proof",
+        actionNeeded: "Remind user to upload payment",
       };
     }
   } else if (bookingStatus === "confirmed") {
@@ -189,8 +189,8 @@ function getSmartWorkflowStatus(
         priority: 0,
         badge: "bg-purple-100 text-purple-800",
         text: "Completed",
-        description: "Guest stay completed successfully",
-        actionNeeded: "Request guest review",
+        description: "User stay completed successfully",
+        actionNeeded: "Request user review",
       };
     default:
       return {
@@ -587,7 +587,7 @@ function SmartConfirmButton({
     let reason, buttonText;
 
     if (!paymentProof) {
-      reason = "Step 1: Guest must upload payment proof";
+      reason = "Step 1: User must upload payment proof";
       buttonText = "Need Payment";
     } else if (paymentProof.status === "pending") {
       reason = "Step 2: Admin must verify payment first";
@@ -2005,7 +2005,8 @@ export default function BookingsPage() {
         const result = await response.json();
 
         if (result.success) {
-          success("Booking confirmed and guest notified via email");
+          // Use API message which includes email/SMS notification status
+          success(result.message || "Booking confirmed and user notified");
         } else {
           throw new Error(result.error || "Failed to confirm booking");
         }
@@ -2189,9 +2190,12 @@ export default function BookingsPage() {
       const result = await response.json();
 
       if (result.success) {
-        const message = shouldRefund
-          ? `Booking cancelled and ₱${refundAmount.toLocaleString()} refund marked for processing. Guest notified via email.`
-          : "Booking cancelled and guest notified via email.";
+        // Use API message which includes email/SMS notification status
+        const message =
+          result.message ||
+          (shouldRefund
+            ? `Booking cancelled and ₱${refundAmount.toLocaleString()} refund marked for processing. User notified.`
+            : "Booking cancelled and user notified.");
         success(message);
         fetchBookings(); // Refresh the list
         closeModal();
@@ -3664,8 +3668,8 @@ export default function BookingsPage() {
                         Cancelling a Confirmed Booking
                       </h4>
                       <p className="text-red-600 text-xs mt-1">
-                        Payment verified • Guest will be notified • Refund may
-                        be required
+                        Payment verified • User will be notified via email and
+                        SMS • Refund may be required
                       </p>
                     </div>
                   )}
@@ -3684,8 +3688,8 @@ export default function BookingsPage() {
                           }
                           placeholder={
                             selectedBooking.status === "confirmed"
-                              ? "e.g., Guest requested cancellation, Emergency situation, Overbooking..."
-                              : "e.g., Guest no-show, Payment issue, Guest request..."
+                              ? "e.g., User requested cancellation, Emergency situation, Overbooking..."
+                              : "e.g., User no-show, Payment issue, User request..."
                           }
                           className="w-full p-3 border border-gray-300 rounded-lg resize-none text-gray-700 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition"
                           rows={3}
@@ -3694,7 +3698,7 @@ export default function BookingsPage() {
                         />
                         <div className="flex justify-between mt-1">
                           <p className="text-gray-400 text-xs">
-                            This reason will be shown to the guest
+                            This reason will be shown to the user
                           </p>
                           <p className="text-gray-400 text-xs">
                             {adminCancellationReason.length}/200
@@ -4410,8 +4414,8 @@ export default function BookingsPage() {
                             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
                           />
                         </svg>
-                        User will be notified via email with this reason and can
-                        resubmit payment proof
+                        User will be notified via email and SMS with this reason
+                        and can resubmit payment proof
                       </p>
                     </div>
 

@@ -163,9 +163,9 @@ export default function AdminReviewsPage() {
 
       // Show success message
       if (approved) {
-        alert("Review approved and guest notified via email!");
+        alert("Review approved and user notified via email!");
       } else {
-        alert("Review rejected and guest notified via email with feedback!");
+        alert("Review rejected and user notified via email with feedback!");
       }
     } catch (error) {
       console.error("Error updating review status:", error);

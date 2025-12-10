@@ -8,11 +8,65 @@ interface CSVExportable {
   [key: string]: string | number | boolean | null | undefined | object;
 }
 
+// Helper to format date
+const formatDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return String(dateStr);
+  }
+};
+
+// Helper to format currency
+const formatCurrency = (amount: number | null | undefined): string => {
+  if (amount === null || amount === undefined) return '₱0';
+  return `₱${amount.toLocaleString()}`;
+};
+
+// Helper to format Philippine phone number for display
+// Converts +639123456789 or 639123456789 to 0912-345-6789
+const formatPhoneNumber = (phone: string | null | undefined): string => {
+  if (!phone) return '';
+
+  // Remove all non-digit characters
+  let cleaned = String(phone).replace(/\D/g, '');
+
+  // Convert from international format (+63) to local format (09XX)
+  if (cleaned.startsWith('63') && cleaned.length === 12) {
+    cleaned = '0' + cleaned.substring(2);
+  }
+
+  // Format as 0912-345-6789
+  if (cleaned.length === 11 && cleaned.startsWith('0')) {
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+  }
+
+  // If it's 10 digits without leading 0, add it
+  if (cleaned.length === 10 && cleaned.startsWith('9')) {
+    cleaned = '0' + cleaned;
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+  }
+
+  // Return original if format doesn't match
+  return String(phone);
+};
+
+// Helper to format booking ID
+const formatBookingId = (id: number | string | null | undefined): string => {
+  if (!id) return '';
+  return `KB-${String(id).padStart(4, '0')}`;
+};
+
 // Type-safe CSV export function
 export function exportToCSV<T extends CSVExportable>(
   data: T[],
   filename: string,
-  columnMapping?: { [key: string]: string }
+  columns: { key: string; header: string; format?: (value: unknown, row: T) => string }[]
 ): void {
   if (!data || data.length === 0) {
     alert('No data to export');
@@ -20,42 +74,40 @@ export function exportToCSV<T extends CSVExportable>(
   }
 
   try {
-    // Get headers from the first row or use provided mapping
-    const firstRow = data[0];
-    const headers = columnMapping ? Object.keys(columnMapping) : Object.keys(firstRow);
-    const headerLabels = columnMapping ? Object.values(columnMapping) : headers;
-
     // Create CSV content
     const csvContent = [
       // Header row
-      headerLabels.map(header => `"${header}"`).join(','),
+      columns.map(col => `"${col.header}"`).join(','),
       // Data rows
-      ...data.map(row => 
-        headers.map(header => {
-          let value = row[header];
-          
-          // Handle different data types safely
-          if (value === null || value === undefined) {
-            value = '';
-          } else if (typeof value === 'object') {
-            // Convert objects/arrays to JSON string
-            value = JSON.stringify(value);
-          } else if (typeof value === 'boolean') {
-            value = value ? 'Yes' : 'No';
+      ...data.map(row =>
+        columns.map(col => {
+          let value: string;
+
+          if (col.format) {
+            value = col.format(row[col.key], row);
           } else {
-            value = String(value);
+            const rawValue = row[col.key];
+            if (rawValue === null || rawValue === undefined) {
+              value = '';
+            } else if (typeof rawValue === 'object') {
+              value = JSON.stringify(rawValue);
+            } else if (typeof rawValue === 'boolean') {
+              value = rawValue ? 'Yes' : 'No';
+            } else {
+              value = String(rawValue);
+            }
           }
-          
+
           // Escape quotes and wrap in quotes for CSV safety
-          return `"${value.toString().replace(/"/g, '""')}"`;
+          return `"${value.replace(/"/g, '""')}"`;
         }).join(',')
       )
     ].join('\n');
 
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Add BOM for Excel UTF-8 compatibility
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
+
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -72,59 +124,127 @@ export function exportToCSV<T extends CSVExportable>(
   }
 }
 
-// Pre-configured export functions for each admin page
+// =====================
+// BOOKINGS CSV EXPORT
+// =====================
 export const exportBookingsCSV = (bookings: CSVExportable[]) => {
-  const columnMapping = {
-    id: 'Booking ID',
-    guest_name: 'Guest Name',
-    guest_email: 'Guest Email',
-    guest_phone: 'Guest Phone',
-    check_in_date: 'Check-in Date',
-    check_out_date: 'Check-out Date',
-    number_of_guests: 'Number of Guests',
-    total_amount: 'Total Amount (PHP)',
-    payment_type: 'Payment Type',
-    status: 'Booking Status',
-    payment_status: 'Payment Status',
-    special_requests: 'Special Requests',
-    created_at: 'Booking Date',
-    user_exists: 'User Account Active'
-  };
-  
-  exportToCSV(bookings, 'kampo_ibayo_bookings', columnMapping);
+  const columns = [
+    { key: 'id', header: 'Booking ID', format: (v: unknown) => formatBookingId(v as number) },
+    { key: 'guest_name', header: 'Guest Name', format: (v: unknown) => String(v || '') },
+    { key: 'guest_email', header: 'Email', format: (v: unknown) => String(v || '') },
+    { key: 'guest_phone', header: 'Phone', format: (v: unknown) => formatPhoneNumber(v as string) },
+    { key: 'check_in_date', header: 'Check-in', format: (v: unknown) => formatDate(v as string) },
+    { key: 'check_out_date', header: 'Check-out', format: (v: unknown) => formatDate(v as string) },
+    {
+      key: 'nights', header: 'Nights', format: (v: unknown, row: CSVExportable) => {
+        const checkIn = row.check_in_date as string;
+        const checkOut = row.check_out_date as string;
+        if (!checkIn || !checkOut) return '';
+        const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
+        return String(nights);
+      }
+    },
+    { key: 'number_of_guests', header: 'Guests', format: (v: unknown) => String(v || 0) },
+    { key: 'total_amount', header: 'Total Amount', format: (v: unknown) => formatCurrency(v as number) },
+    {
+      key: 'payment_type', header: 'Payment Type', format: (v: unknown) => {
+        const type = v as string;
+        return type === 'full' ? 'Full Payment' : '50% Downpayment';
+      }
+    },
+    {
+      key: 'status', header: 'Booking Status', format: (v: unknown) => {
+        const status = (v as string || 'pending').toLowerCase();
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    },
+    {
+      key: 'payment_status', header: 'Payment Status', format: (v: unknown) => {
+        const status = (v as string || 'pending').toLowerCase();
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    },
+    { key: 'special_requests', header: 'Special Requests', format: (v: unknown) => String(v || 'None') },
+    { key: 'created_at', header: 'Booked On', format: (v: unknown) => formatDate(v as string) },
+  ];
+
+  exportToCSV(bookings, 'kampo_ibayo_bookings', columns);
 };
 
+// =====================
+// USERS CSV EXPORT
+// =====================
 export const exportUsersCSV = (users: CSVExportable[]) => {
-  const columnMapping = {
-    id: 'User ID',
-    name: 'Full Name',
-    email: 'Email Address',
-    phone: 'Phone Number',
-    created_at: 'Registration Date',
-    updated_at: 'Last Updated',
-    auth_id: 'Auth ID'
-  };
-  
-  exportToCSV(users, 'kampo_ibayo_users', columnMapping);
+  const columns = [
+    { key: 'name', header: 'Full Name', format: (v: unknown) => String(v || '') },
+    { key: 'email', header: 'Email Address', format: (v: unknown) => String(v || '') },
+    { key: 'phone', header: 'Phone Number', format: (v: unknown) => formatPhoneNumber(v as string) },
+    { key: 'created_at', header: 'Registered On', format: (v: unknown) => formatDate(v as string) },
+  ];
+
+  exportToCSV(users, 'kampo_ibayo_users', columns);
 };
 
+// =====================
+// PAYMENTS CSV EXPORT
+// =====================
 export const exportPaymentsCSV = (payments: CSVExportable[]) => {
-  const columnMapping = {
-    id: 'Payment ID',
-    user: 'Guest Name',
-    email: 'Guest Email', 
-    amount: 'Amount (PHP)',
-    date: 'Payment Date',
-    status: 'Payment Status',
-    payment_intent_id: 'PayMongo Intent ID',
-    booking_status: 'Booking Status',
-    payment_status: 'Processing Status'
-  };
-  
-  exportToCSV(payments, 'kampo_ibayo_payments', columnMapping);
+  const columns = [
+    { key: 'booking_id', header: 'Booking ID', format: (v: unknown) => formatBookingId(v as number) },
+    { key: 'user', header: 'Guest Name', format: (v: unknown, row: CSVExportable) => String(row.guest_name || row.user || '') },
+    { key: 'email', header: 'Email', format: (v: unknown) => String(v || '') },
+    { key: 'total_amount', header: 'Total Booking', format: (v: unknown) => formatCurrency(v as number) },
+    { key: 'amount', header: 'Amount Paid', format: (v: unknown) => formatCurrency(v as number) },
+    {
+      key: 'balance', header: 'Balance Remaining', format: (v: unknown, row: CSVExportable) => {
+        const total = (row.total_amount as number) || 0;
+        const paid = (row.amount as number) || 0;
+        return formatCurrency(Math.max(0, total - paid));
+      }
+    },
+    {
+      key: 'payment_type', header: 'Payment Type', format: (v: unknown) => {
+        const type = v as string;
+        return type === 'full' ? 'Full Payment' : type === 'half' ? '50% Downpayment' : String(type || '');
+      }
+    },
+    {
+      key: 'original_method', header: 'Payment Method', format: (v: unknown, row: CSVExportable) => {
+        const method = String(row.original_method || row.payment_method || '');
+        return method ? method.toUpperCase() : '';
+      }
+    },
+    {
+      key: 'original_reference', header: 'Reference Number', format: (v: unknown, row: CSVExportable) => {
+        return String(row.original_reference || row.reference_number || '');
+      }
+    },
+    {
+      key: 'status', header: 'Payment Status', format: (v: unknown) => {
+        const status = (v as string || '').toLowerCase();
+        return status ? status.charAt(0).toUpperCase() + status.slice(1) : '';
+      }
+    },
+    {
+      key: 'booking_status', header: 'Booking Status', format: (v: unknown) => {
+        const status = (v as string || '').toLowerCase();
+        return status ? status.charAt(0).toUpperCase() + status.slice(1) : '';
+      }
+    },
+    {
+      key: 'check_in_date', header: 'Check-in Date', format: (v: unknown, row: CSVExportable) => {
+        return formatDate((row.check_in_date || row.date) as string);
+      }
+    },
+    { key: 'verified_at', header: 'Verified On', format: (v: unknown) => formatDate(v as string) },
+  ];
+
+  exportToCSV(payments, 'kampo_ibayo_payments', columns);
 };
 
-// Enhanced export with filtering options
+// =====================
+// FILTERED BOOKINGS EXPORT (with options)
+// =====================
 export const exportFilteredBookingsCSV = (
   bookings: CSVExportable[],
   options: {
@@ -134,16 +254,16 @@ export const exportFilteredBookingsCSV = (
   } = {}
 ) => {
   let filteredBookings = [...bookings];
-  
+
   // Apply filters
   if (!options.includeDeletedUsers) {
     filteredBookings = filteredBookings.filter(booking => booking.user_exists !== false);
   }
-  
+
   if (options.status) {
     filteredBookings = filteredBookings.filter(booking => booking.status === options.status);
   }
-  
+
   if (options.dateRange) {
     filteredBookings = filteredBookings.filter(booking => {
       const createdAt = booking.created_at as string;
@@ -154,7 +274,7 @@ export const exportFilteredBookingsCSV = (
       return bookingDate >= startDate && bookingDate <= endDate;
     });
   }
-  
+
   // Generate filename with filters
   let filename = 'kampo_ibayo_bookings';
   if (options.status) {
@@ -163,28 +283,51 @@ export const exportFilteredBookingsCSV = (
   if (options.dateRange) {
     filename += `_${options.dateRange.start}_to_${options.dateRange.end}`;
   }
-  
-  const columnMapping = {
-    id: 'Booking ID',
-    guest_name: 'Guest Name',
-    guest_email: 'Guest Email',
-    guest_phone: 'Guest Phone',
-    check_in_date: 'Check-in Date',
-    check_out_date: 'Check-out Date',
-    number_of_guests: 'Number of Guests',
-    total_amount: 'Total Amount (PHP)',
-    payment_type: 'Payment Type',
-    status: 'Booking Status',
-    payment_status: 'Payment Status',
-    special_requests: 'Special Requests',
-    created_at: 'Booking Date',
-    user_exists: 'User Account Active'
-  };
-  
-  exportToCSV(filteredBookings, filename, columnMapping);
+
+  const columns = [
+    { key: 'id', header: 'Booking ID', format: (v: unknown) => formatBookingId(v as number) },
+    { key: 'guest_name', header: 'Guest Name', format: (v: unknown) => String(v || '') },
+    { key: 'guest_email', header: 'Email', format: (v: unknown) => String(v || '') },
+    { key: 'guest_phone', header: 'Phone', format: (v: unknown) => formatPhoneNumber(v as string) },
+    { key: 'check_in_date', header: 'Check-in', format: (v: unknown) => formatDate(v as string) },
+    { key: 'check_out_date', header: 'Check-out', format: (v: unknown) => formatDate(v as string) },
+    {
+      key: 'nights', header: 'Nights', format: (v: unknown, row: CSVExportable) => {
+        const checkIn = row.check_in_date as string;
+        const checkOut = row.check_out_date as string;
+        if (!checkIn || !checkOut) return '';
+        const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
+        return String(nights);
+      }
+    },
+    { key: 'number_of_guests', header: 'Guests', format: (v: unknown) => String(v || 0) },
+    { key: 'total_amount', header: 'Total Amount', format: (v: unknown) => formatCurrency(v as number) },
+    {
+      key: 'payment_type', header: 'Payment Type', format: (v: unknown) => {
+        const type = v as string;
+        return type === 'full' ? 'Full Payment' : '50% Downpayment';
+      }
+    },
+    {
+      key: 'status', header: 'Booking Status', format: (v: unknown) => {
+        const status = (v as string || 'pending').toLowerCase();
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    },
+    {
+      key: 'payment_status', header: 'Payment Status', format: (v: unknown) => {
+        const status = (v as string || 'pending').toLowerCase();
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    },
+    { key: 'special_requests', header: 'Special Requests', format: (v: unknown) => String(v || 'None') },
+    { key: 'created_at', header: 'Booked On', format: (v: unknown) => formatDate(v as string) },
+  ];
+
+  exportToCSV(filteredBookings, filename, columns);
 };
 
-// Utility to format data before export (optional preprocessing)
+// Legacy: Keep for backwards compatibility
 export const preprocessBookingData = (bookings: CSVExportable[]) => {
   return bookings.map(booking => {
     const totalAmount = typeof booking.total_amount === 'number' ? booking.total_amount : 0;
@@ -192,7 +335,7 @@ export const preprocessBookingData = (bookings: CSVExportable[]) => {
     const checkOutDate = typeof booking.check_out_date === 'string' ? booking.check_out_date : '';
     const createdAt = typeof booking.created_at === 'string' ? booking.created_at : '';
     const status = typeof booking.status === 'string' ? booking.status : '';
-    
+
     return {
       ...booking,
       total_amount: totalAmount ? `₱${totalAmount.toLocaleString()}` : '₱0',

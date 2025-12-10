@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     const philippinesTime = new Date(utcTime + philippinesOffset);
 
     // Prepare update data with refund information if applicable
+    // Note: We keep the original payment_status for audit purposes (shows what was actually paid)
     const updateData: Record<string, unknown> = {
       status: 'cancelled',
       cancelled_by: 'admin',
@@ -159,8 +160,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           message: refundProcessed
-            ? `Booking cancelled and refund notification sent (₱${refundAmount.toLocaleString()})`
-            : 'Booking cancelled and notification email sent',
+            ? `Booking cancelled! ₱${refundAmount.toLocaleString()} refund marked for processing. User notified via email${smsResult?.success ? ' and SMS' : ''}.`
+            : `Booking cancelled! User notified via email${smsResult?.success ? ' and SMS' : ''}.`,
           messageId: emailResult.messageId,
           smsStatus: smsResult?.success ? 'SMS sent' : 'SMS failed (non-critical)'
         });

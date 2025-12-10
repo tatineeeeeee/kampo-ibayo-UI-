@@ -47,17 +47,17 @@ export async function POST(request: NextRequest) {
       const emailBookingDetails: BookingDetails = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
-        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
-        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
       if (emailResult.success) {
         return NextResponse.json({
           success: true,
-          message: booking.guest_phone 
-            ? `Booking confirmed with email${smsResult?.success ? ' and SMS' : ' (SMS failed)'} notifications`
-            : 'Booking confirmed and notification email sent',
+          message: booking.guest_phone
+            ? `Booking confirmed! User notified via email${smsResult?.success ? ' and SMS' : ''}`
+            : 'Booking confirmed! User notified via email',
           messageId: emailResult.messageId,
           smsResult: smsResult
         });
@@ -114,9 +114,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error in confirm booking API:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error'
       },
       { status: 500 }
     );
