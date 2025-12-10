@@ -2169,6 +2169,9 @@ export default function BookingsPage() {
         }
       }
 
+      // Calculate refund amount based on actual amount paid
+      const refundAmount = shouldRefund ? paymentSummary?.totalPaid || 0 : 0;
+
       // Cancel the booking
       const response = await fetch("/api/admin/cancel-booking", {
         method: "POST",
@@ -2177,17 +2180,18 @@ export default function BookingsPage() {
         },
         body: JSON.stringify({
           bookingId,
-          refundProcessed: refundResponse ? true : false,
-          refundAmount: refundResponse?.refund_amount || 0,
+          refundProcessed: shouldRefund,
+          refundAmount: refundAmount,
+          cancellationReason: adminCancellationReason,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        const message = refundResponse
-          ? `Booking cancelled and ₱${refundResponse.refund_amount.toLocaleString()} refund processed. Guest notified via email.`
-          : "Booking cancelled and guest notified via email";
+        const message = shouldRefund
+          ? `Booking cancelled and ₱${refundAmount.toLocaleString()} refund marked for processing. Guest notified via email.`
+          : "Booking cancelled and guest notified via email.";
         success(message);
         fetchBookings(); // Refresh the list
         closeModal();
@@ -2206,9 +2210,11 @@ export default function BookingsPage() {
     }
   };
 
-  const openModal = (booking: Booking) => {
+  const openModal = async (booking: Booking) => {
     setSelectedBooking(booking);
     setShowModal(true);
+    // Fetch payment history to get actual paid amount
+    await fetchPaymentHistory(booking.id);
   };
 
   const closeModal = () => {
@@ -2219,6 +2225,8 @@ export default function BookingsPage() {
     setShowConfirmCancel(false);
     setShouldRefund(false);
     setIsProcessing(false);
+    setPaymentSummary(null); // Clear payment summary
+    setPaymentHistory([]); // Clear payment history
   };
 
   // Pagination helpers
@@ -3217,61 +3225,192 @@ export default function BookingsPage() {
                 </div>
 
                 {/* Payment Status Information */}
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-3">
-                  <h4 className="text-sm font-semibold text-blue-700 mb-3">
-                    💳 Payment Information
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-3">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-4">
+                    Payment Information
                   </h4>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
-                        Payment Status:
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          selectedBooking.payment_status === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {selectedBooking.payment_status || "pending"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
-                        Amount Collected:
-                      </span>
-                      <span className="font-semibold text-green-700">
-                        {selectedBooking.payment_status === "paid"
-                          ? selectedBooking.payment_type === "full"
-                            ? `₱${selectedBooking.total_amount.toLocaleString()}`
-                            : `₱${Math.round(
+
+                  {/* Payment Progress Bar */}
+                  {(() => {
+                    const requiredDownpayment =
+                      selectedBooking.payment_type === "full"
+                        ? selectedBooking.total_amount
+                        : Math.round(selectedBooking.total_amount * 0.5);
+                    const amountPaid = paymentSummary?.totalPaid || 0;
+                    const progressPercent = Math.min(
+                      100,
+                      Math.round((amountPaid / requiredDownpayment) * 100)
+                    );
+                    const isComplete = amountPaid >= requiredDownpayment;
+
+                    return (
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-500">
+                            Downpayment Progress
+                          </span>
+                          <span
+                            className={`text-xs font-medium ${
+                              isComplete ? "text-green-600" : "text-gray-600"
+                            }`}
+                          >
+                            {progressPercent}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all ${
+                              isComplete ? "bg-green-500" : "bg-blue-500"
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Two Column Layout */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Left Column - Online Payment */}
+                    <div className="space-y-3">
+                      <div className="pb-2 border-b border-gray-200">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Online Payment
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-xs text-gray-500 block">
+                          Required
+                        </span>
+                        <span className="text-sm font-semibold text-gray-800">
+                          ₱
+                          {selectedBooking.payment_type === "full"
+                            ? selectedBooking.total_amount.toLocaleString()
+                            : Math.round(
                                 selectedBooking.total_amount * 0.5
-                              ).toLocaleString()}`
-                          : "₱0"}
-                      </span>
+                              ).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-xs text-gray-500 block">
+                          Paid
+                        </span>
+                        <span className="text-sm font-semibold text-green-600">
+                          ₱
+                          {paymentSummary
+                            ? paymentSummary.totalPaid.toLocaleString()
+                            : "0"}
+                        </span>
+                      </div>
+
+                      {(() => {
+                        const requiredDownpayment =
+                          selectedBooking.payment_type === "full"
+                            ? selectedBooking.total_amount
+                            : Math.round(selectedBooking.total_amount * 0.5);
+                        const amountPaid = paymentSummary?.totalPaid || 0;
+                        const stillOwedOnline = Math.max(
+                          0,
+                          requiredDownpayment - amountPaid
+                        );
+
+                        return stillOwedOnline > 0 ? (
+                          <div>
+                            <span className="text-xs text-gray-500 block">
+                              Remaining
+                            </span>
+                            <span className="text-sm font-semibold text-red-600">
+                              ₱{stillOwedOnline.toLocaleString()}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="bg-green-50 rounded px-2 py-1 inline-block">
+                            <span className="text-xs font-medium text-green-700">
+                              Complete
+                            </span>
+                          </div>
+                        );
+                      })()}
+
+                      {paymentSummary &&
+                        (paymentSummary.pendingAmount ?? 0) > 0 && (
+                          <div>
+                            <span className="text-xs text-gray-500 block">
+                              Pending Review
+                            </span>
+                            <span className="text-sm font-medium text-yellow-600">
+                              ₱
+                              {(
+                                paymentSummary.pendingAmount ?? 0
+                              ).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
-                        Balance Due (F2F):
-                      </span>
-                      <span className="font-semibold text-orange-700">
-                        {selectedBooking.payment_type === "full"
-                          ? selectedBooking.payment_status === "paid"
-                            ? "₱0"
-                            : `₱${selectedBooking.total_amount.toLocaleString()}`
-                          : `₱${Math.round(
-                              selectedBooking.total_amount * 0.5
-                            ).toLocaleString()}`}
-                      </span>
+
+                    {/* Right Column - On-site Payment */}
+                    <div className="space-y-3">
+                      <div className="pb-2 border-b border-gray-200">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          On-site Payment
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-xs text-gray-500 block">
+                          Due at Check-in
+                        </span>
+                        <span className="text-sm font-semibold text-orange-600">
+                          ₱
+                          {selectedBooking.payment_type === "full"
+                            ? "0"
+                            : Math.round(
+                                selectedBooking.total_amount * 0.5
+                              ).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-xs text-gray-500 block">
+                          Payment Type
+                        </span>
+                        <span className="text-sm font-medium text-gray-700 capitalize">
+                          {selectedBooking.payment_type === "full"
+                            ? "Full Payment"
+                            : "50% Downpayment"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-xs text-gray-500 block">
+                          Status
+                        </span>
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                            selectedBooking.payment_status === "paid" ||
+                            selectedBooking.payment_status === "verified"
+                              ? "bg-green-100 text-green-800"
+                              : selectedBooking.payment_status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {selectedBooking.payment_status || "pending"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
-                        Revenue Value:
-                      </span>
-                      <span className="font-bold text-blue-700">
-                        ₱{selectedBooking.total_amount.toLocaleString()}
-                      </span>
-                    </div>
+                  </div>
+
+                  {/* Total Summary Bar */}
+                  <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">
+                      Total Booking Value
+                    </span>
+                    <span className="text-lg font-bold text-gray-900">
+                      ₱{selectedBooking.total_amount.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
@@ -3330,19 +3469,52 @@ export default function BookingsPage() {
               </div>
             </div>
 
-            {/* Modal Footer - Clean Action Buttons */}
+            {/* Modal Footer - Unified Action Buttons */}
             <div className="bg-gray-50 p-6 rounded-b-lg border-t border-gray-200">
-              {/* PENDING BOOKINGS - Show confirm and cancel options */}
-              {(selectedBooking.status || "pending") === "pending" &&
+              {/* ACTIVE BOOKINGS (Pending or Confirmed) - Show actions */}
+              {(selectedBooking.status === "pending" ||
+                selectedBooking.status === "confirmed") &&
               !showCancelModal ? (
                 <div className="space-y-4">
+                  {/* Status Banner - Adapts based on booking status */}
+                  {selectedBooking.status === "confirmed" && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✅</span>
+                        <div>
+                          <span className="text-green-800 font-semibold text-sm">
+                            Booking Confirmed
+                          </span>
+                          <span className="text-green-600 text-xs ml-2">
+                            Check-in:{" "}
+                            {new Date(
+                              selectedBooking.check_in_date
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Action Sections Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Payment Verification Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Payment Section */}
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-orange-400 rounded-full"></span>
-                        Payment Verification
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            selectedBooking.status === "confirmed"
+                              ? "bg-green-400"
+                              : "bg-orange-400"
+                          }`}
+                        ></span>
+                        {selectedBooking.status === "confirmed"
+                          ? "Payment Verified"
+                          : "Payment Verification"}
                       </h4>
                       <PaymentProofButton
                         key={`modal-proof-${
@@ -3357,10 +3529,7 @@ export default function BookingsPage() {
                           setSelectedPaymentProof(proof);
                           setShowPaymentProofModal(true);
                           if (proof.id > 0) {
-                            // Only fetch history for real proofs, not dummy ones
                             await fetchPaymentHistory(selectedBooking.id);
-
-                            // Fetch the correct payment proof using priority logic
                             try {
                               const { data: allProofs } = await supabase
                                 .from("payment_proofs")
@@ -3369,7 +3538,6 @@ export default function BookingsPage() {
                                 .order("uploaded_at", { ascending: false });
 
                               if (allProofs && allProofs.length > 0) {
-                                // Priority: pending > verified > rejected > cancelled
                                 const pendingProof = allProofs.find(
                                   (p) => p.status === "pending"
                                 );
@@ -3382,7 +3550,6 @@ export default function BookingsPage() {
                                 const cancelledProof = allProofs.find(
                                   (p) => p.status === "cancelled"
                                 );
-
                                 const prioritizedProof =
                                   pendingProof ||
                                   verifiedProof ||
@@ -3407,21 +3574,29 @@ export default function BookingsPage() {
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                         <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                        Booking Management
+                        Booking Actions
                       </h4>
-                      <div className="flex gap-2">
-                        <SmartConfirmButton
-                          booking={selectedBooking}
-                          variant="modal"
-                          refreshKey={refreshTrigger}
-                          onConfirm={(bookingId) => {
-                            updateBookingStatus(bookingId, "confirmed");
-                            closeModal();
-                          }}
-                        />
+                      <div className="flex flex-col gap-2">
+                        {/* Only show Confirm button for pending bookings */}
+                        {selectedBooking.status === "pending" && (
+                          <SmartConfirmButton
+                            booking={selectedBooking}
+                            variant="modal"
+                            refreshKey={refreshTrigger}
+                            onConfirm={(bookingId) => {
+                              updateBookingStatus(bookingId, "confirmed");
+                              closeModal();
+                            }}
+                          />
+                        )}
+                        {/* Cancel button for all active bookings */}
                         <button
                           onClick={() => setShowCancelModal(true)}
-                          className="flex-1 px-4 py-2 bg-red-500 text-white rounded-md text-sm font-semibold hover:bg-red-600 transition"
+                          className={`w-full px-4 py-2 rounded-md text-sm font-semibold transition flex items-center justify-center gap-2 ${
+                            selectedBooking.status === "confirmed"
+                              ? "bg-red-500 text-white hover:bg-red-600"
+                              : "bg-gray-100 text-red-600 hover:bg-red-50 border border-red-200"
+                          }`}
                         >
                           Cancel Booking
                         </button>
@@ -3429,255 +3604,261 @@ export default function BookingsPage() {
                     </div>
                   </div>
 
-                  {/* Close Button - Separate */}
-                  <div className="flex justify-center pt-2 border-t border-gray-200">
-                    <button
-                      onClick={closeModal}
-                      className="px-8 py-2 bg-gray-600 text-white rounded-md text-sm font-medium hover:bg-gray-700 transition"
-                    >
-                      Close Modal
-                    </button>
-                  </div>
-                </div>
-              ) : /* CONFIRMED BOOKINGS - Show cancel option with warning */
-              (selectedBooking.status || "pending") === "confirmed" &&
-                !showCancelModal ? (
-                <div className="space-y-4">
-                  {/* Confirmed Status Banner */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-green-600 text-lg">✅</span>
-                      <h4 className="text-green-800 font-semibold">
-                        Booking Confirmed
-                      </h4>
-                    </div>
-                    <p className="text-green-700 text-sm">
-                      This booking has been confirmed and payment has been verified. 
-                      The guest is expected to check in on{" "}
-                      <strong>
-                        {new Date(selectedBooking.check_in_date).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </strong>.
-                    </p>
-                  </div>
-
-                  {/* Action Sections Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* View Payment Proof Section */}
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                        Payment Verified
-                      </h4>
-                      <PaymentProofButton
-                        key={`modal-proof-confirmed-${
-                          selectedBooking.id
-                        }-${refreshTrigger}`}
-                        bookingId={selectedBooking.id}
-                        booking={selectedBooking}
-                        variant="modal"
-                        onViewProof={async (proof) => {
-                          setSelectedPaymentProof(proof);
-                          setShowPaymentProofModal(true);
-                          if (proof.id > 0) {
-                            await fetchPaymentHistory(selectedBooking.id);
-                          }
-                        }}
-                        refreshKey={refreshTrigger}
-                      />
-                    </div>
-
-                    {/* Admin Cancel Section */}
-                    <div className="bg-white p-4 rounded-lg border border-red-200 shadow-sm">
-                      <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                        Admin Actions
-                      </h4>
-                      <button
-                        onClick={() => setShowCancelModal(true)}
-                        className="w-full px-4 py-2 bg-red-500 text-white rounded-md text-sm font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2"
-                      >
-                        <span>⚠️</span>
-                        Cancel Confirmed Booking
-                      </button>
-                      <p className="text-xs text-gray-500 mt-2 text-center">
-                        Use only for guest requests or emergencies
-                      </p>
-                    </div>
-                  </div>
-
                   {/* Close Button */}
-                  <div className="flex justify-center pt-2 border-t border-gray-200">
+                  <div className="flex justify-center pt-3 border-t border-gray-200">
                     <button
                       onClick={closeModal}
                       className="px-8 py-2 bg-gray-600 text-white rounded-md text-sm font-medium hover:bg-gray-700 transition"
                     >
-                      Close Modal
+                      Close
                     </button>
                   </div>
                 </div>
               ) : showCancelModal ? (
                 <div className="space-y-4">
+                  {/* Step Indicator */}
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <div
+                      className={`flex items-center gap-2 ${
+                        !showConfirmCancel ? "text-red-600" : "text-gray-400"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          !showConfirmCancel
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-200 text-gray-500"
+                        }`}
+                      >
+                        1
+                      </div>
+                      <span className="text-sm font-medium hidden sm:inline">
+                        Reason
+                      </span>
+                    </div>
+                    <div className="w-8 h-0.5 bg-gray-200"></div>
+                    <div
+                      className={`flex items-center gap-2 ${
+                        showConfirmCancel ? "text-red-600" : "text-gray-400"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          showConfirmCancel
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-200 text-gray-500"
+                        }`}
+                      >
+                        2
+                      </div>
+                      <span className="text-sm font-medium hidden sm:inline">
+                        Confirm
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Warning Banner for Confirmed Bookings */}
                   {selectedBooking.status === "confirmed" && (
-                    <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-amber-600 text-lg">⚠️</span>
-                        <h4 className="text-amber-800 font-semibold">
-                          Cancelling a Confirmed Booking
-                        </h4>
-                      </div>
-                      <p className="text-amber-700 text-sm">
-                        This booking has already been <strong>confirmed</strong> and payment has been <strong>verified</strong>. 
-                        Cancelling will notify the guest and may require processing a refund.
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <h4 className="text-red-800 font-semibold text-sm">
+                        Cancelling a Confirmed Booking
+                      </h4>
+                      <p className="text-red-600 text-xs mt-1">
+                        Payment verified • Guest will be notified • Refund may
+                        be required
                       </p>
                     </div>
                   )}
 
-                  <div>
-                    <h4 className="text-gray-800 font-medium mb-2">
-                      Reason for cancellation
-                    </h4>
-                    <textarea
-                      value={adminCancellationReason}
-                      onChange={(e) =>
-                        setAdminCancellationReason(e.target.value)
-                      }
-                      placeholder={
-                        selectedBooking.status === "confirmed"
-                          ? "Please provide a detailed reason (e.g., Guest requested cancellation, Emergency situation, etc.)"
-                          : "Please provide a reason for cancelling this booking"
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-md resize-none text-gray-700 focus:border-red-500 focus:outline-none"
-                      rows={3}
-                      maxLength={200}
-                      disabled={isProcessing}
-                    />
-                    <p className="text-gray-500 text-sm mt-1">
-                      {adminCancellationReason.length}/200 characters
-                    </p>
-                  </div>
                   {!showConfirmCancel ? (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() =>
-                          handleAdminCancelBooking(selectedBooking.id)
-                        }
-                        disabled={
-                          !adminCancellationReason.trim() || isProcessing
-                        }
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${
-                          adminCancellationReason.trim() && !isProcessing
-                            ? "bg-red-500 text-white hover:bg-red-600"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
-                      >
-                        {isProcessing ? "Processing..." : "Continue"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowCancelModal(false);
-                          setAdminCancellationReason("");
-                          setShowConfirmCancel(false);
-                        }}
-                        disabled={isProcessing}
-                        className="bg-gray-500 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"
-                      >
-                        Back
-                      </button>
-                    </div>
-                  ) : (
+                    /* STEP 1: Enter Reason */
                     <div className="space-y-4">
-                      <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-red-500">⚠️</span>
-                          <h4 className="text-red-800 font-medium">
-                            Confirm Cancellation
-                          </h4>
+                      <div>
+                        <label className="block text-gray-700 font-medium mb-2 text-sm">
+                          Why are you cancelling this booking?
+                        </label>
+                        <textarea
+                          value={adminCancellationReason}
+                          onChange={(e) =>
+                            setAdminCancellationReason(e.target.value)
+                          }
+                          placeholder={
+                            selectedBooking.status === "confirmed"
+                              ? "e.g., Guest requested cancellation, Emergency situation, Overbooking..."
+                              : "e.g., Guest no-show, Payment issue, Guest request..."
+                          }
+                          className="w-full p-3 border border-gray-300 rounded-lg resize-none text-gray-700 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition"
+                          rows={3}
+                          maxLength={200}
+                          disabled={isProcessing}
+                        />
+                        <div className="flex justify-between mt-1">
+                          <p className="text-gray-400 text-xs">
+                            This reason will be shown to the guest
+                          </p>
+                          <p className="text-gray-400 text-xs">
+                            {adminCancellationReason.length}/200
+                          </p>
                         </div>
-                        <p className="text-red-700 text-sm mb-3">
-                          This will permanently cancel the booking for{" "}
-                          <strong>{selectedBooking.guest_name}</strong>. The
-                          guest will be notified via email.
-                        </p>
-
-                        {/* Refund Option - Show for confirmed bookings OR if payment was made */}
-                        {(selectedBooking.status === "confirmed" ||
-                          selectedBooking.payment_status === "paid" ||
-                          selectedBooking.payment_intent_id) && (
-                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-blue-500">💰</span>
-                                <h5 className="text-blue-800 font-medium text-sm">
-                                  Refund Options
-                                </h5>
-                              </div>
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input
-                                    type="radio"
-                                    name="refundOption"
-                                    value="none"
-                                    checked={!shouldRefund}
-                                    onChange={() => setShouldRefund(false)}
-                                    className="text-blue-600"
-                                  />
-                                  <span className="text-blue-700 text-sm">
-                                    Cancel without refund
-                                  </span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input
-                                    type="radio"
-                                    name="refundOption"
-                                    value="full"
-                                    checked={shouldRefund}
-                                    onChange={() => setShouldRefund(true)}
-                                    className="text-blue-600"
-                                  />
-                                  <span className="text-blue-700 text-sm">
-                                    {selectedBooking.payment_type === "full"
-                                      ? `Cancel with full payment refund (₱${selectedBooking.total_amount.toLocaleString()})`
-                                      : `Cancel with down payment refund (₱${Math.round(
-                                          selectedBooking.total_amount * 0.5
-                                        ).toLocaleString()})`}
-                                  </span>
-                                </label>
-                              </div>
-                              <p className="text-blue-600 text-xs mt-2">
-                                {selectedBooking.payment_type === "full"
-                                  ? "* Full payment amount is refundable since guest paid the complete amount upfront."
-                                  : `* Only down payment (50%) is refundable. F2F balance (₱${Math.round(
-                                      selectedBooking.total_amount * 0.5
-                                    ).toLocaleString()}) was never charged.`}
-                              </p>
-
-                              {/* Manual Refund Processing Note */}
-                              {(selectedBooking.payment_type === "full"
-                                ? selectedBooking.total_amount
-                                : Math.round(
-                                    selectedBooking.total_amount * 0.5
-                                  )) > 5000 && (
-                                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                                  <p className="text-blue-700 text-xs">
-                                    ℹ️{" "}
-                                    <strong>Manual Refund Processing:</strong>{" "}
-                                    Since this is a manual payment proof system,
-                                    refunds will need to be processed manually
-                                    through GCash. Please coordinate with the
-                                    guest for refund details.
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
                       </div>
 
                       <div className="flex gap-3">
+                        <button
+                          onClick={() => setShowConfirmCancel(true)}
+                          disabled={
+                            !adminCancellationReason.trim() || isProcessing
+                          }
+                          className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition ${
+                            adminCancellationReason.trim() && !isProcessing
+                              ? "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          Continue to Confirmation →
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowCancelModal(false);
+                            setAdminCancellationReason("");
+                            setShowConfirmCancel(false);
+                          }}
+                          disabled={isProcessing}
+                          className="px-6 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                        >
+                          Back
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* STEP 2: Confirm & Choose Refund */
+                    <div className="space-y-4">
+                      {/* Cancellation Summary */}
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <h4 className="text-gray-800 font-semibold text-sm mb-3">
+                          Cancellation Summary
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-gray-500 text-xs">Guest</p>
+                            <p className="text-gray-800 font-medium">
+                              {selectedBooking.guest_name}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 text-xs">Booking</p>
+                            <p className="text-gray-800 font-medium">
+                              KB-
+                              {selectedBooking.id.toString().padStart(4, "0")}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-gray-500 text-xs">Reason</p>
+                            <p className="text-gray-800 text-sm italic">
+                              &ldquo;{adminCancellationReason}&rdquo;
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Refund Options - Enhanced UI */}
+                      {(selectedBooking.status === "confirmed" ||
+                        selectedBooking.payment_status === "paid" ||
+                        selectedBooking.payment_intent_id) && (
+                        <div className="space-y-3">
+                          <h4 className="text-gray-800 font-semibold text-sm">
+                            Refund Decision
+                          </h4>
+
+                          {/* No Refund Option */}
+                          <label
+                            className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition ${
+                              !shouldRefund
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200 hover:border-gray-300 bg-white"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="refundOption"
+                              checked={!shouldRefund}
+                              onChange={() => setShouldRefund(false)}
+                              className="mt-1 text-red-600 focus:ring-red-500"
+                            />
+                            <div className="flex-1">
+                              <p
+                                className={`font-medium ${
+                                  !shouldRefund
+                                    ? "text-red-700"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                Cancel without refund
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Guest will not receive any refund. Use for
+                                policy violations or no-shows.
+                              </p>
+                            </div>
+                            <span className="text-gray-400 font-semibold text-sm">
+                              ₱0
+                            </span>
+                          </label>
+
+                          {/* With Refund Option */}
+                          <label
+                            className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition ${
+                              shouldRefund
+                                ? "border-green-500 bg-green-50"
+                                : "border-gray-200 hover:border-gray-300 bg-white"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="refundOption"
+                              checked={shouldRefund}
+                              onChange={() => setShouldRefund(true)}
+                              className="mt-1 text-green-600 focus:ring-green-500"
+                            />
+                            <div className="flex-1">
+                              <p
+                                className={`font-medium ${
+                                  shouldRefund
+                                    ? "text-green-700"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                Cancel with refund
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Refund the actual amount paid by the guest.
+                              </p>
+                            </div>
+                            <span className="text-green-600 font-bold text-sm">
+                              ₱
+                              {(
+                                paymentSummary?.totalPaid || 0
+                              ).toLocaleString()}
+                            </span>
+                          </label>
+
+                          {/* Refund Note */}
+                          {shouldRefund &&
+                            (paymentSummary?.totalPaid || 0) > 0 && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-blue-700 text-xs">
+                                  <strong>Manual Processing Required:</strong>{" "}
+                                  Process the refund via GCash or Maya, then
+                                  coordinate with the guest. The refund status
+                                  will be marked as &quot;pending&quot; and
+                                  shown in the guest&apos;s booking history.
+                                </p>
+                              </div>
+                            )}
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-2">
                         <button
                           onClick={() =>
                             handleAdminCancelBooking(
@@ -3686,35 +3867,36 @@ export default function BookingsPage() {
                             )
                           }
                           disabled={isProcessing}
-                          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${
+                          className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition shadow-sm ${
                             isProcessing
                               ? "bg-gray-400 cursor-not-allowed"
+                              : shouldRefund
+                              ? "bg-green-600 hover:bg-green-700"
                               : "bg-red-600 hover:bg-red-700"
                           } text-white`}
                         >
                           {isProcessing ? (
                             <span className="flex items-center justify-center gap-2">
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              {shouldRefund
-                                ? "Cancelling & Refunding..."
-                                : "Cancelling..."}
+                              Processing...
                             </span>
                           ) : shouldRefund ? (
-                            "Cancel & Process Refund"
+                            `Cancel & Refund ₱${(
+                              paymentSummary?.totalPaid || 0
+                            ).toLocaleString()}`
                           ) : (
-                            "Cancel Booking Only"
+                            "Cancel Without Refund"
                           )}
                         </button>
                         <button
                           onClick={() => {
                             setShowConfirmCancel(false);
                             setShouldRefund(false);
-                            warning("Cancellation cancelled");
                           }}
                           disabled={isProcessing}
-                          className="bg-gray-500 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"
+                          className="px-6 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-50"
                         >
-                          No, Keep Booking
+                          ← Back
                         </button>
                       </div>
                     </div>

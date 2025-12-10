@@ -1861,9 +1861,7 @@ function BookingsPageContent() {
                 <div className="space-y-1 text-blue-100 text-xs">
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-3 h-3 text-blue-200 flex-shrink-0" />
-                    <p>
-                      Pay 50% down payment via GCash or Maya
-                    </p>
+                    <p>Pay 50% down payment via GCash or Maya</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Smartphone className="w-3 h-3 text-blue-200 flex-shrink-0" />
@@ -2923,6 +2921,35 @@ function BookingsPageContent() {
                                 {selectedBooking.cancellation_reason}
                               </p>
                             )}
+                            {/* Refund Information */}
+                            {selectedBooking.refund_amount &&
+                              selectedBooking.refund_amount > 0 && (
+                                <div className="mt-2 p-2 bg-green-900/30 border border-green-700/50 rounded-lg">
+                                  <p className="text-green-400 text-xs font-medium flex items-center gap-1">
+                                    💰 Refund: ₱
+                                    {selectedBooking.refund_amount.toLocaleString()}
+                                  </p>
+                                  <p className="text-green-300/70 text-xs mt-1">
+                                    Status:{" "}
+                                    {selectedBooking.refund_status ===
+                                    "completed"
+                                      ? "✅ Completed"
+                                      : selectedBooking.refund_status ===
+                                        "pending"
+                                      ? "⏳ Processing (via GCash/Maya)"
+                                      : selectedBooking.refund_status ||
+                                        "Pending"}
+                                  </p>
+                                  {selectedBooking.refund_processed_at && (
+                                    <p className="text-green-300/60 text-xs">
+                                      Processed:{" "}
+                                      {new Date(
+                                        selectedBooking.refund_processed_at
+                                      ).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                           </div>
                         )}
                     </div>

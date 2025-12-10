@@ -5,7 +5,7 @@ import { supabase } from '@/app/supabaseClient';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bookingId, refundProcessed = false, refundAmount = 0 } = body;
+    const { bookingId, refundProcessed = false, refundAmount = 0, cancellationReason = '' } = body;
 
     if (!bookingId) {
       return NextResponse.json(
@@ -28,20 +28,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update booking status to cancelled with additional details
+    // Update booking status to cancelled with additional details including refund info
     const now = new Date();
     const utcTime = now.getTime();
     const philippinesOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
     const philippinesTime = new Date(utcTime + philippinesOffset);
 
+    // Prepare update data with refund information if applicable
+    const updateData: Record<string, unknown> = {
+      status: 'cancelled',
+      cancelled_by: 'admin',
+      cancelled_at: philippinesTime.toISOString(),
+      cancellation_reason: cancellationReason || 'Cancelled by administrator'
+    };
+
+    // Add refund information if refund was processed
+    if (refundProcessed && refundAmount > 0) {
+      updateData.refund_amount = refundAmount;
+      updateData.refund_status = 'pending'; // Will be updated to 'completed' after manual processing
+      updateData.refund_reason = 'Admin cancellation with refund';
+      updateData.refund_processed_by = 'admin';
+      updateData.refund_processed_at = philippinesTime.toISOString();
+    }
+
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ 
-        status: 'cancelled',
-        cancelled_by: 'admin',
-        cancelled_at: philippinesTime.toISOString(),
-        cancellation_reason: 'Cancelled by administrator'
-      })
+      .update(updateData)
       .eq('id', bookingId);
 
     if (updateError) {
@@ -72,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (booking.guest_email) {
       // Prepare refund details if refund was processed
       let refundDetails: RefundDetails | undefined = undefined;
-      
+
       if (refundProcessed && refundAmount > 0) {
         const downPayment = booking.total_amount * 0.5;
         refundDetails = {
@@ -87,23 +99,23 @@ export async function POST(request: NextRequest) {
       const cancellationData: CancellationEmailData = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
-        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkIn: new Date(booking.check_in_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
-        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        checkOut: new Date(booking.check_out_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         }),
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
         email: booking.guest_email,
         cancelledBy: 'admin',
-        cancellationReason: 'Cancelled by resort administration',
+        cancellationReason: cancellationReason || 'Cancelled by resort administration',
         refundDetails: refundDetails
       };
 
@@ -125,13 +137,14 @@ export async function POST(request: NextRequest) {
                 check_in_date: new Date(booking.check_in_date).toLocaleDateString(),
                 check_out_date: new Date(booking.check_out_date).toLocaleDateString(),
                 number_of_guests: booking.number_of_guests,
-                refund_status: refundProcessed ? 'processing' : null
+                refund_status: refundProcessed ? 'processing' : null,
+                refund_amount: refundProcessed ? refundAmount : null
               },
-              reason: 'Cancelled by resort administration',
+              reason: cancellationReason || 'Cancelled by resort administration',
               cancelledBy: 'Admin'
             }),
           });
-          
+
           if (smsResponse.ok) {
             smsResult = await smsResponse.json();
             console.log('Cancellation SMS sent successfully');
@@ -145,7 +158,7 @@ export async function POST(request: NextRequest) {
       if (emailResult.success) {
         return NextResponse.json({
           success: true,
-          message: refundProcessed 
+          message: refundProcessed
             ? `Booking cancelled and refund notification sent (₱${refundAmount.toLocaleString()})`
             : 'Booking cancelled and notification email sent',
           messageId: emailResult.messageId,
@@ -163,7 +176,7 @@ export async function POST(request: NextRequest) {
       // No email available, but booking was still cancelled successfully
       return NextResponse.json({
         success: true,
-        message: refundProcessed 
+        message: refundProcessed
           ? `Booking cancelled and refund processed (₱${refundAmount.toLocaleString()}) - no email on file`
           : 'Booking cancelled successfully (no email on file)',
       });
@@ -172,9 +185,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error in cancel booking API:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error'
       },
       { status: 500 }
     );

@@ -1,71 +1,74 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { OCRService, OCRResult } from '../utils/ocrService';
-import { Eye, Zap, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { OCRService, OCRResult } from "../utils/ocrService";
+import { Eye, Zap, AlertTriangle, CheckCircle, X } from "lucide-react";
 
 interface OCRProcessorProps {
   file: File | null;
-  onOCRResult: (data: { referenceNumber: string; amount: string; method: string }) => void;
+  onOCRResult: (data: {
+    referenceNumber: string;
+    amount: string;
+    method: string;
+  }) => void;
   expectedAmount?: number;
   className?: string;
 }
 
-export default function OCRProcessor({ 
-  file, 
-  onOCRResult, 
-  expectedAmount, 
-  className = '' 
+export default function OCRProcessor({
+  file,
+  onOCRResult,
+  expectedAmount,
+  className = "",
 }: OCRProcessorProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [showRawText, setShowRawText] = useState(false);
-  const [processingStep, setProcessingStep] = useState('');
+  const [processingStep, setProcessingStep] = useState("");
   const [autoProcessed, setAutoProcessed] = useState(false);
 
   const processImage = useCallback(async () => {
     if (!file) return;
 
     setIsProcessing(true);
-    setProcessingStep('Initializing OCR...');
-    
+    setProcessingStep("Initializing OCR...");
+
     try {
-      setProcessingStep('Reading image...');
+      setProcessingStep("Reading image...");
       const result = await OCRService.processPaymentImage(file);
       setOcrResult(result);
-      
-      setProcessingStep('Validating data...');
-      
+
+      setProcessingStep("Validating data...");
+
       if (result.referenceNumber || result.amount) {
         // Auto-fill the form with extracted data
         onOCRResult({
-          referenceNumber: result.referenceNumber || '',
-          amount: result.amount?.toString() || '',
-          method: result.method === 'unknown' ? '' : result.method
+          referenceNumber: result.referenceNumber || "",
+          amount: result.amount?.toString() || "",
+          method: result.method === "unknown" ? "" : result.method,
         });
       }
-      
-      setProcessingStep('Complete!');
-      
+
+      setProcessingStep("Complete!");
     } catch (error) {
-      console.error('OCR processing failed:', error);
+      console.error("OCR processing failed:", error);
       setOcrResult({
         referenceNumber: null,
         amount: null,
         confidence: 0,
-        rawText: '',
-        method: 'unknown'
+        rawText: "",
+        method: "unknown",
       });
     } finally {
       setIsProcessing(false);
-      setProcessingStep('');
+      setProcessingStep("");
     }
   }, [file, onOCRResult]);
 
   // Auto-process when file changes
   useEffect(() => {
     if (file && !autoProcessed) {
-      console.log('🤖 Auto-processing uploaded image...');
+      console.log("🤖 Auto-processing uploaded image...");
       processImage();
       setAutoProcessed(true);
     } else if (!file) {
@@ -76,24 +79,31 @@ export default function OCRProcessor({
   }, [file, autoProcessed, processImage]);
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return 'text-green-400';
-    if (confidence >= 60) return 'text-yellow-400';
-    return 'text-red-400';
+    if (confidence >= 80) return "text-green-400";
+    if (confidence >= 60) return "text-yellow-400";
+    return "text-red-400";
   };
 
   const getMethodLabel = (method: string) => {
     switch (method) {
-      case 'gcash': return '📱 GCash';
-      case 'maya': return '💳 Maya/PayMaya';
-      default: return '❓ Unknown';
+      case "gcash":
+        return "📱 GCash";
+      case "maya":
+        return "💳 Maya/PayMaya";
+      default:
+        return "❓ Unknown";
     }
   };
 
   if (!file) {
     return (
-      <div className={`p-4 bg-gray-700/50 border border-gray-600 rounded-lg text-center ${className}`}>
+      <div
+        className={`p-4 bg-gray-700/50 border border-gray-600 rounded-lg text-center ${className}`}
+      >
         <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-gray-400 text-sm">Upload an image to enable auto-fill</p>
+        <p className="text-gray-400 text-sm">
+          Upload an image to enable auto-fill
+        </p>
       </div>
     );
   }
@@ -104,29 +114,44 @@ export default function OCRProcessor({
       <div className="bg-gradient-to-r from-blue-800/20 to-purple-800/20 border border-blue-600/30 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-full ${isProcessing ? 'bg-yellow-600/30' : ocrResult ? 'bg-green-600/30' : 'bg-blue-600/30'}`}>
+            <div
+              className={`p-2 rounded-full ${
+                isProcessing
+                  ? "bg-yellow-600/30"
+                  : ocrResult
+                  ? "bg-green-600/30"
+                  : "bg-blue-600/30"
+              }`}
+            >
               {isProcessing ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-400"></div>
               ) : (
-                <Zap className={`w-5 h-5 ${ocrResult ? 'text-green-400' : 'text-blue-400'}`} />
+                <Zap
+                  className={`w-5 h-5 ${
+                    ocrResult ? "text-green-400" : "text-blue-400"
+                  }`}
+                />
               )}
             </div>
             <div>
               <h3 className="font-semibold text-white">
-                {isProcessing ? 'Processing Image...' : ocrResult ? 'Auto-Fill Complete' : 'Smart Auto-Fill'}
+                {isProcessing
+                  ? "Processing Image..."
+                  : ocrResult
+                  ? "Auto-Fill Complete"
+                  : "Smart Auto-Fill"}
               </h3>
               <p className="text-sm text-blue-200">
-                {isProcessing 
-                  ? processingStep || 'Analyzing payment details...'
-                  : ocrResult 
-                  ? 'Payment details extracted successfully'
-                  : 'Automatically extracts payment details when you upload'
-                }
+                {isProcessing
+                  ? processingStep || "Analyzing payment details..."
+                  : ocrResult
+                  ? "Payment details extracted successfully"
+                  : "Automatically extracts payment details when you upload"}
               </p>
             </div>
           </div>
         </div>
-        
+
         {!isProcessing && !autoProcessed && (
           <button
             onClick={processImage}
@@ -136,20 +161,21 @@ export default function OCRProcessor({
             🚀 Process Image Manually
           </button>
         )}
-        
+
         {isProcessing && (
           <div className="w-full bg-gray-700 rounded-lg p-3 flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-            <span className="text-blue-200 text-sm">{processingStep || 'Processing...'}</span>
+            <span className="text-blue-200 text-sm">
+              {processingStep || "Processing..."}
+            </span>
           </div>
         )}
-        
+
         {!isProcessing && (
           <p className="text-xs text-blue-200 mt-2 text-center">
-            {autoProcessed 
-              ? '✅ Automatically processed your uploaded image'
-              : '✨ Upload an image and we\'ll automatically extract payment details'
-            }
+            {autoProcessed
+              ? "✅ Automatically processed your uploaded image"
+              : "✨ Upload an image and we'll automatically extract payment details"}
           </p>
         )}
       </div>
@@ -162,17 +188,23 @@ export default function OCRProcessor({
               <Eye className="w-4 h-4 text-blue-400" />
               Extracted Information
             </h4>
-            <span className={`text-xs px-2 py-1 rounded-full bg-gray-700 ${getConfidenceColor(ocrResult.confidence)}`}>
+            <span
+              className={`text-xs px-2 py-1 rounded-full bg-gray-700 ${getConfidenceColor(
+                ocrResult.confidence
+              )}`}
+            >
               {ocrResult.confidence.toFixed(0)}% confidence
             </span>
           </div>
 
           <div className="space-y-3">
             {/* Payment Method */}
-            {ocrResult.method !== 'unknown' && (
+            {ocrResult.method !== "unknown" && (
               <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
                 <span className="text-gray-400 text-sm">Detected Method:</span>
-                <span className="text-white font-medium">{getMethodLabel(ocrResult.method)}</span>
+                <span className="text-white font-medium">
+                  {getMethodLabel(ocrResult.method)}
+                </span>
               </div>
             )}
 
@@ -183,7 +215,9 @@ export default function OCRProcessor({
                 {ocrResult.referenceNumber ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-white font-mono text-sm">{ocrResult.referenceNumber}</span>
+                    <span className="text-white font-mono text-sm">
+                      {ocrResult.referenceNumber}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -201,12 +235,16 @@ export default function OCRProcessor({
                 {ocrResult.amount ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-white font-semibold">₱{ocrResult.amount.toLocaleString()}</span>
-                    {expectedAmount && Math.abs(ocrResult.amount - expectedAmount) > expectedAmount * 0.1 && (
-                      <div title="Amount differs from expected">
-                        <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                      </div>
-                    )}
+                    <span className="text-white font-semibold">
+                      ₱{ocrResult.amount.toLocaleString()}
+                    </span>
+                    {expectedAmount &&
+                      Math.abs(ocrResult.amount - expectedAmount) >
+                        expectedAmount * 0.1 && (
+                        <div title="Amount differs from expected">
+                          <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                        </div>
+                      )}
                   </>
                 ) : (
                   <>
@@ -241,7 +279,7 @@ export default function OCRProcessor({
               onClick={() => setShowRawText(!showRawText)}
               className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
             >
-              {showRawText ? '🙈 Hide' : '👁️ Show'} Raw OCR Text
+              {showRawText ? "🙈 Hide" : "👁️ Show"} Raw OCR Text
             </button>
 
             {/* Raw OCR Text */}
@@ -259,7 +297,9 @@ export default function OCRProcessor({
 
       {/* Tips for Better OCR */}
       <div className="bg-yellow-800/20 border border-yellow-600/30 rounded-lg p-3">
-        <h5 className="text-yellow-300 font-medium text-sm mb-2">💡 Tips for Better Detection:</h5>
+        <h5 className="text-yellow-300 font-medium text-sm mb-2">
+          💡 Tips for Better Detection:
+        </h5>
         <ul className="text-yellow-200 text-xs space-y-1">
           <li>• 📸 Use clear, well-lit screenshots</li>
           <li>• 🔍 Ensure text is large and readable</li>
