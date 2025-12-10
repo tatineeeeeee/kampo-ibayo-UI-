@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function SMSTestPage() {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [testType, setTestType] = useState('basic');
-  const [result, setResult] = useState<{success: boolean; error?: string; message?: string} | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [testType, setTestType] = useState("basic");
+  const [result, setResult] = useState<{
+    success: boolean;
+    error?: string;
+    message?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const testSMS = async () => {
     if (!phoneNumber) {
-      alert('Please enter a phone number');
+      alert("Please enter a phone number");
       return;
     }
 
@@ -18,15 +22,15 @@ export default function SMSTestPage() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/sms/send-test', {
-        method: 'POST',
+      const response = await fetch("/api/sms/send-test", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           phoneNumber,
-          testType
-        })
+          testType,
+        }),
       });
 
       const data = await response.json();
@@ -34,7 +38,7 @@ export default function SMSTestPage() {
     } catch (error) {
       setResult({
         success: false,
-        error: 'Network error: ' + error
+        error: "Network error: " + error,
       });
     } finally {
       setLoading(false);
@@ -44,13 +48,13 @@ export default function SMSTestPage() {
   const checkConfig = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/sms/send-test');
+      const response = await fetch("/api/sms/send-test");
       const data = await response.json();
       setResult(data);
     } catch (error) {
       setResult({
         success: false,
-        error: 'Network error: ' + error
+        error: "Network error: " + error,
       });
     } finally {
       setLoading(false);
@@ -74,7 +78,7 @@ export default function SMSTestPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? '🔄 Checking...' : '🔍 Check Config'}
+            {loading ? "🔄 Checking..." : "🔍 Check Config"}
           </button>
         </div>
 
@@ -83,7 +87,7 @@ export default function SMSTestPage() {
           <h2 className="text-lg font-semibold text-green-900 mb-3">
             2. Send Test SMS
           </h2>
-          
+
           <div className="mb-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Phone Number (with country code)
@@ -94,7 +98,7 @@ export default function SMSTestPage() {
               value={phoneNumber}
               onChange={(e) => {
                 // Clean the phone number input (remove extra + signs)
-                const cleaned = e.target.value.replace(/^\++/, '+');
+                const cleaned = e.target.value.replace(/^\++/, "+");
                 setPhoneNumber(cleaned);
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -122,56 +126,108 @@ export default function SMSTestPage() {
             disabled={loading || !phoneNumber}
             className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 mb-2"
           >
-            {loading ? '📱 Sending...' : '📱 Send Test SMS'}
+            {loading ? "📱 Sending..." : "📱 Send Test SMS"}
           </button>
-          
+
           <button
             onClick={async () => {
               if (!phoneNumber) {
-                alert('Please enter a phone number');
+                alert("Please enter a phone number");
                 return;
               }
               setLoading(true);
               try {
-                const response = await fetch('/api/sms/booking-cancelled', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                const response = await fetch("/api/sms/booking-cancelled", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     phoneNumber,
                     bookingDetails: {
-                      name: 'Test Guest',
-                      booking_number: 'KB-0001',
-                      check_in_date: '2024-12-15',
-                      check_out_date: '2024-12-16',
+                      name: "Test Guest",
+                      booking_number: "KB-0001",
+                      check_in_date: "2024-12-15",
+                      check_out_date: "2024-12-16",
                       number_of_guests: 4,
-                      refund_status: 'processing'
+                      refund_status: "processing",
                     },
-                    reason: 'Test cancellation',
-                    cancelledBy: 'Admin'
+                    reason: "Test cancellation",
+                    cancelledBy: "Admin",
                   }),
                 });
                 const data = await response.json();
                 setResult(data);
               } catch (error) {
-                setResult({ success: false, error: 'Network error: ' + error });
+                setResult({ success: false, error: "Network error: " + error });
               } finally {
                 setLoading(false);
               }
             }}
             disabled={loading || !phoneNumber}
-            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50"
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 mb-2"
           >
-            {loading ? '📱 Sending...' : '🚫 Test Cancellation SMS'}
+            {loading ? "📱 Sending..." : "🚫 Test Cancellation SMS"}
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!phoneNumber) {
+                alert("Please enter a phone number");
+                return;
+              }
+              setLoading(true);
+              try {
+                const response = await fetch("/api/email/booking-rescheduled", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    bookingId: 1,
+                    guestName: "Test Guest",
+                    guestEmail: "test@example.com",
+                    phoneNumber: phoneNumber,
+                    originalCheckIn: "December 15, 2024",
+                    originalCheckOut: "December 16, 2024",
+                    newCheckIn: "December 20, 2024",
+                    newCheckOut: "December 21, 2024",
+                    totalAmount: 9000,
+                    guests: 4,
+                  }),
+                });
+                const data = await response.json();
+                setResult(data);
+              } catch (error) {
+                setResult({ success: false, error: "Network error: " + error });
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading || !phoneNumber}
+            className="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+          >
+            {loading ? "📱 Sending..." : "📅 Test Reschedule SMS"}
           </button>
         </div>
 
         {/* Results */}
         {result && (
-          <div className={`p-4 rounded-lg ${result.success ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'}`}>
-            <h3 className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
-              {result.success ? '✅ Success!' : '❌ Error'}
+          <div
+            className={`p-4 rounded-lg ${
+              result.success
+                ? "bg-green-100 border border-green-300"
+                : "bg-red-100 border border-red-300"
+            }`}
+          >
+            <h3
+              className={`font-semibold ${
+                result.success ? "text-green-800" : "text-red-800"
+              }`}
+            >
+              {result.success ? "✅ Success!" : "❌ Error"}
             </h3>
-            <pre className={`mt-2 text-sm ${result.success ? 'text-green-700' : 'text-red-700'} overflow-auto`}>
+            <pre
+              className={`mt-2 text-sm ${
+                result.success ? "text-green-700" : "text-red-700"
+              } overflow-auto`}
+            >
               {JSON.stringify(result, null, 2)}
             </pre>
           </div>
@@ -179,7 +235,9 @@ export default function SMSTestPage() {
 
         {/* Instructions */}
         <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
-          <h3 className="font-semibold text-yellow-800 mb-2">💡 Instructions:</h3>
+          <h3 className="font-semibold text-yellow-800 mb-2">
+            💡 Instructions:
+          </h3>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>• Make sure your Android phone is online</li>
             <li>• SMS-Gate app should be running</li>
