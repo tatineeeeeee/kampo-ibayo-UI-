@@ -365,8 +365,11 @@ export default function PaymentsPage() {
       payment.balance_reference !== null &&
       payment.balance_status === "verified";
 
-    // Don't allow if balance payment already exists
-    if (hasExistingBalancePayment) {
+    // NEW: Check if the booking is cancelled
+    const isBookingCancelled = payment.booking_status?.toLowerCase() === "cancelled";
+
+    // Don't allow if balance payment already exists or booking is cancelled
+    if (hasExistingBalancePayment || isBookingCancelled) {
       return false;
     }
 
@@ -383,7 +386,10 @@ export default function PaymentsPage() {
           hasValidAmounts,
           isOverpaid,
           hasExistingBalancePayment,
-          reason: hasExistingBalancePayment
+          isBookingCancelled,
+          reason: isBookingCancelled
+            ? "Booking is cancelled"
+            : hasExistingBalancePayment
             ? "Balance payment already exists"
             : isOverpaid
             ? "OVERPAID - Customer paid more than total amount"
@@ -396,14 +402,15 @@ export default function PaymentsPage() {
       );
     }
 
-    // Don't allow marking balance as paid for overpaid bookings or if balance already exists
+    // Don't allow marking balance as paid for overpaid bookings, if balance already exists, or if booking is cancelled
     return (
       isHalfPayment &&
       isOriginalVerified &&
       hasRemainingBalance &&
       balanceAmount > 0 &&
       !isOverpaid &&
-      !hasExistingBalancePayment
+      !hasExistingBalancePayment &&
+      !isBookingCancelled
     );
   };
 
@@ -423,23 +430,26 @@ export default function PaymentsPage() {
         const balanceStatus = payment.balance_status?.toLowerCase();
 
         if (statusFilter === "paid") {
-          // Both payments verified or completed
+          // Both payments verified or completed (and booking not cancelled)
           return (
+            payment.booking_status?.toLowerCase() !== "cancelled" &&
             originalStatus === "verified" &&
             (payment.payment_type === "full" || balanceStatus === "verified")
           );
         } else if (statusFilter === "pending") {
-          // Either payment is pending
+          // Either payment is pending (and booking not cancelled)
           return (
-            originalStatus === "pending" ||
+            payment.booking_status?.toLowerCase() !== "cancelled" &&
+            (originalStatus === "pending" ||
             originalStatus === "pending_verification" ||
             (payment.balance_reference &&
               (balanceStatus === "pending" ||
-                balanceStatus === "pending_verification"))
+                balanceStatus === "pending_verification")))
           );
         } else if (statusFilter === "cancelled") {
-          // Either payment is cancelled/rejected
+          // Booking is cancelled OR payment is cancelled/rejected
           return (
+            payment.booking_status?.toLowerCase() === "cancelled" ||
             originalStatus === "cancelled" ||
             originalStatus === "rejected" ||
             balanceStatus === "cancelled" ||
@@ -629,8 +639,9 @@ export default function PaymentsPage() {
               {
                 payments.filter(
                   (p) =>
-                    p.status?.toLowerCase() === "paid" ||
-                    p.status?.toLowerCase() === "verified"
+                    p.booking_status?.toLowerCase() !== "cancelled" &&
+                    (p.status?.toLowerCase() === "paid" ||
+                    p.status?.toLowerCase() === "verified")
                 ).length
               }
               )
@@ -651,8 +662,9 @@ export default function PaymentsPage() {
               {
                 payments.filter(
                   (p) =>
-                    p.status?.toLowerCase() === "pending" ||
-                    p.status?.toLowerCase() === "pending_verification"
+                    p.booking_status?.toLowerCase() !== "cancelled" &&
+                    (p.status?.toLowerCase() === "pending" ||
+                    p.status?.toLowerCase() === "pending_verification")
                 ).length
               }
               )
@@ -673,6 +685,7 @@ export default function PaymentsPage() {
               {
                 payments.filter(
                   (p) =>
+                    p.booking_status?.toLowerCase() === "cancelled" ||
                     p.status?.toLowerCase() === "cancelled" ||
                     p.status?.toLowerCase() === "rejected"
                 ).length
@@ -948,14 +961,18 @@ export default function PaymentsPage() {
                       <span className="text-gray-500">Status:</span>
                       <span
                         className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                          payment.original_status === "verified"
+                          payment.booking_status?.toLowerCase() === "cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : payment.original_status === "verified"
                             ? "bg-green-100 text-green-800"
                             : payment.original_status === "rejected"
                             ? "bg-red-100 text-red-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {payment.original_status || "pending"}
+                        {payment.booking_status?.toLowerCase() === "cancelled"
+                          ? "cancelled"
+                          : payment.original_status || "pending"}
                       </span>
                     </div>
                   </div>
@@ -1148,9 +1165,11 @@ export default function PaymentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            payment.original_status === "verified" &&
-                            (payment.payment_type === "full" ||
-                              payment.balance_status === "verified")
+                            payment.booking_status?.toLowerCase() === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : payment.original_status === "verified" &&
+                                (payment.payment_type === "full" ||
+                                  payment.balance_status === "verified")
                               ? "bg-green-100 text-green-800"
                               : payment.original_status === "verified" &&
                                 payment.payment_type === "half"
@@ -1160,8 +1179,10 @@ export default function PaymentsPage() {
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {payment.payment_type === "full" &&
-                          payment.original_status === "verified"
+                          {payment.booking_status?.toLowerCase() === "cancelled"
+                            ? "cancelled"
+                            : payment.payment_type === "full" &&
+                              payment.original_status === "verified"
                             ? "paid"
                             : payment.payment_type === "half" &&
                               payment.original_status === "verified" &&
@@ -1175,6 +1196,15 @@ export default function PaymentsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {(() => {
+                          // Check if booking is cancelled first
+                          if (payment.booking_status?.toLowerCase() === "cancelled") {
+                            return (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                BOOKING CANCELLED
+                              </span>
+                            );
+                          }
+
                           const amount = payment.amount;
                           const totalAmount = payment.total_amount;
                           const isOverpaid =
