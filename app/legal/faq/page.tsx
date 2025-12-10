@@ -196,7 +196,7 @@ export default function FAQPage() {
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
               >
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
               </Link>
@@ -225,10 +225,10 @@ export default function FAQPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search frequently asked questions..."
+              placeholder="Search FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-700 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-600 focus:border-red-500 focus:outline-none transition-colors"
+              className="w-full bg-gray-700 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-600 focus:border-red-500 focus:outline-none transition-colors text-base min-h-[48px]"
             />
           </div>
         </div>
@@ -259,9 +259,9 @@ export default function FAQPage() {
                     >
                       <button
                         onClick={() => toggleFAQ(globalIndex)}
-                        className="w-full px-4 py-4 text-left bg-gray-700/50 hover:bg-gray-700 transition-colors flex items-center justify-between"
+                        className="w-full px-4 py-4 text-left bg-gray-700/50 hover:bg-gray-700 transition-colors flex items-center justify-between min-h-[56px] touch-manipulation"
                       >
-                        <span className="font-medium text-white pr-4">
+                        <span className="font-medium text-white pr-4 text-sm sm:text-base">
                           {faq.question}
                         </span>
                         {isOpen ? (
@@ -273,7 +273,7 @@ export default function FAQPage() {
 
                       {isOpen && (
                         <div className="px-4 py-4 bg-gray-800/50 border-t border-gray-700">
-                          <p className="text-gray-300 leading-relaxed">
+                          <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
                             {faq.answer}
                           </p>
                         </div>

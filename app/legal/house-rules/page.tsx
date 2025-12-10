@@ -213,7 +213,7 @@ export default function HouseRulesPage() {
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
               >
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
               </Link>

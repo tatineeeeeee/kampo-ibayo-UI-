@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
-import { Tables } from '../../database.types';
-import { Star, ChevronLeft, ChevronRight, MapPin, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
-import Image from 'next/image';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "../supabaseClient";
+import { Tables } from "../../database.types";
+import {
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Calendar,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import Image from "next/image";
 
-type GuestReview = Tables<'guest_reviews'>;
+type GuestReview = Tables<"guest_reviews">;
 
 interface ReviewPhotoSimple {
   id: number;
@@ -25,10 +33,10 @@ interface ReviewSystemProps {
   className?: string;
 }
 
-const ReviewSystem = ({ 
-  limit = 6, 
-  showPagination = true, 
-  className = "" 
+const ReviewSystem = ({
+  limit = 6,
+  showPagination = true,
+  className = "",
 }: ReviewSystemProps) => {
   const [reviews, setReviews] = useState<ReviewWithPhotos[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,41 +49,47 @@ const ReviewSystem = ({
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
 
   // Fetch reviews from database
-  const fetchReviews = useCallback(async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('🔍 Fetching reviews for page:', page);
-
-      // Calculate offset for pagination
-      const offset = (page - 1) * reviewsPerPage;
-
-      // First, let's try a simple query to test basic functionality
-      console.log('📊 Testing basic reviews query...');
-      const { data: testData, error: testError } = await supabase
-        .from('guest_reviews')
-        .select('id, guest_name, rating, review_text, approved, created_at')
-        .eq('approved', true)
-        .limit(3);
-
-      if (testError) {
-        console.error('❌ Basic query failed:', testError);
-      } else {
-        console.log('✅ Basic query successful, found', testData?.length, 'approved reviews');
-      }
-
-      // First, try to fetch reviews with photos
-      let reviewsData, reviewsError, count;
-      
+  const fetchReviews = useCallback(
+    async (page: number = 1) => {
       try {
-        console.log('📸 Attempting to fetch reviews with photos...');
-        
-        // For homepage (limit=4, no pagination), prioritize best reviews
-        // For other pages, show all reviews with pagination
-        let query = supabase
-          .from('guest_reviews')
-          .select(`
+        setLoading(true);
+        setError(null);
+
+        console.log("🔍 Fetching reviews for page:", page);
+
+        // Calculate offset for pagination
+        const offset = (page - 1) * reviewsPerPage;
+
+        // First, let's try a simple query to test basic functionality
+        console.log("📊 Testing basic reviews query...");
+        const { data: testData, error: testError } = await supabase
+          .from("guest_reviews")
+          .select("id, guest_name, rating, review_text, approved, created_at")
+          .eq("approved", true)
+          .limit(3);
+
+        if (testError) {
+          console.error("❌ Basic query failed:", testError);
+        } else {
+          console.log(
+            "✅ Basic query successful, found",
+            testData?.length,
+            "approved reviews"
+          );
+        }
+
+        // First, try to fetch reviews with photos
+        let reviewsData, reviewsError, count;
+
+        try {
+          console.log("📸 Attempting to fetch reviews with photos...");
+
+          // For homepage (limit=4, no pagination), prioritize best reviews
+          // For other pages, show all reviews with pagination
+          let query = supabase
+            .from("guest_reviews")
+            .select(
+              `
             *,
             review_photos (
               id,
@@ -83,100 +97,125 @@ const ReviewSystem = ({
               caption,
               display_order
             )
-          `, { count: 'exact' })
-          .eq('approved', true);
+          `,
+              { count: "exact" }
+            )
+            .eq("approved", true);
 
-        if (limit === 4 && !showPagination) {
-          // Homepage: Show 4 best reviews (5-star with photos first, then by recency)
-          query = query
-            .order('rating', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(4);
-        } else {
-          // Other pages: Standard pagination
-          query = query
-            .order('created_at', { ascending: false })
-            .range(offset, offset + reviewsPerPage - 1);
-        }
-        
-        const { data, error, count: reviewCount } = await query;
-        
-        reviewsData = data;
-        reviewsError = error;
-        count = reviewCount;
-        
-        if (error) {
-          console.error('❌ Photos query failed:', error);
-        } else {
-          console.log('✅ Photos query successful, found', data?.length, 'reviews');
-          
-          // For homepage, filter and prioritize reviews with photos
-          if (limit === 4 && !showPagination && data) {
-            const reviewsWithPhotos = data.filter(review => 
-              review.review_photos && review.review_photos.length > 0
-            );
-            const reviewsWithoutPhotos = data.filter(review => 
-              !review.review_photos || review.review_photos.length === 0
-            );
-            
-            // Prioritize: 5-star with photos, then 4-star with photos, then others
-            const prioritized = [
-              ...reviewsWithPhotos.filter(r => r.rating === 5),
-              ...reviewsWithPhotos.filter(r => r.rating === 4),
-              ...reviewsWithPhotos.filter(r => r.rating < 4),
-              ...reviewsWithoutPhotos
-            ].slice(0, 4);
-            
-            reviewsData = prioritized;
-            console.log('🎯 Homepage: Prioritized', prioritized.length, 'best reviews');
+          if (limit === 4 && !showPagination) {
+            // Homepage: Show 4 best reviews (5-star with photos first, then by recency)
+            query = query
+              .order("rating", { ascending: false })
+              .order("created_at", { ascending: false })
+              .limit(4);
+          } else {
+            // Other pages: Standard pagination
+            query = query
+              .order("created_at", { ascending: false })
+              .range(offset, offset + reviewsPerPage - 1);
           }
+
+          const { data, error, count: reviewCount } = await query;
+
+          reviewsData = data;
+          reviewsError = error;
+          count = reviewCount;
+
+          if (error) {
+            console.error("❌ Photos query failed:", error);
+          } else {
+            console.log(
+              "✅ Photos query successful, found",
+              data?.length,
+              "reviews"
+            );
+
+            // For homepage, filter and prioritize reviews with photos
+            if (limit === 4 && !showPagination && data) {
+              const reviewsWithPhotos = data.filter(
+                (review) =>
+                  review.review_photos && review.review_photos.length > 0
+              );
+              const reviewsWithoutPhotos = data.filter(
+                (review) =>
+                  !review.review_photos || review.review_photos.length === 0
+              );
+
+              // Prioritize: 5-star with photos, then 4-star with photos, then others
+              const prioritized = [
+                ...reviewsWithPhotos.filter((r) => r.rating === 5),
+                ...reviewsWithPhotos.filter((r) => r.rating === 4),
+                ...reviewsWithPhotos.filter((r) => r.rating < 4),
+                ...reviewsWithoutPhotos,
+              ].slice(0, 4);
+
+              reviewsData = prioritized;
+              console.log(
+                "🎯 Homepage: Prioritized",
+                prioritized.length,
+                "best reviews"
+              );
+            }
+          }
+        } catch (photoError) {
+          console.log(
+            "❌ Photos query crashed, falling back to basic query:",
+            photoError
+          );
+
+          // Fallback to basic query without photos
+          const {
+            data,
+            error,
+            count: reviewCount,
+          } = await supabase
+            .from("guest_reviews")
+            .select("*", { count: "exact" })
+            .eq("approved", true)
+            .order("created_at", { ascending: false })
+            .range(offset, offset + reviewsPerPage - 1);
+
+          reviewsData = data;
+          reviewsError = error;
+          count = reviewCount;
+
+          console.log("📝 Fallback query result:", {
+            data: data?.length,
+            error,
+          });
         }
-      } catch (photoError) {
-        console.log('❌ Photos query crashed, falling back to basic query:', photoError);
-        
-        // Fallback to basic query without photos
-        const { data, error, count: reviewCount } = await supabase
-          .from('guest_reviews')
-          .select('*', { count: 'exact' })
-          .eq('approved', true)
-          .order('created_at', { ascending: false })
-          .range(offset, offset + reviewsPerPage - 1);
-        
-        reviewsData = data;
-        reviewsError = error;
-        count = reviewCount;
-        
-        console.log('📝 Fallback query result:', { data: data?.length, error });
+
+        if (reviewsError) {
+          console.error("Reviews fetch error details:", reviewsError);
+          console.error("Error message:", reviewsError.message);
+          console.error("Error code:", reviewsError.code);
+          throw reviewsError;
+        }
+
+        setReviews(reviewsData || []);
+        setTotalReviews(count || 0);
+
+        // Calculate average rating from approved reviews only
+        const { data: allReviews, error: avgError } = await supabase
+          .from("guest_reviews")
+          .select("rating")
+          .eq("approved", true);
+
+        if (!avgError && allReviews && allReviews.length > 0) {
+          const avg =
+            allReviews.reduce((sum, review) => sum + review.rating, 0) /
+            allReviews.length;
+          setAverageRating(Math.round(avg * 10) / 10); // Round to 1 decimal place
+        }
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+        setError("Failed to load reviews. Please try again later.");
+      } finally {
+        setLoading(false);
       }
-
-      if (reviewsError) {
-        console.error('Reviews fetch error details:', reviewsError);
-        console.error('Error message:', reviewsError.message);
-        console.error('Error code:', reviewsError.code);
-        throw reviewsError;
-      }
-
-      setReviews(reviewsData || []);
-      setTotalReviews(count || 0);
-
-      // Calculate average rating from approved reviews only
-      const { data: allReviews, error: avgError } = await supabase
-        .from('guest_reviews')
-        .select('rating')
-        .eq('approved', true);
-
-      if (!avgError && allReviews && allReviews.length > 0) {
-        const avg = allReviews.reduce((sum, review) => sum + review.rating, 0) / allReviews.length;
-        setAverageRating(Math.round(avg * 10) / 10); // Round to 1 decimal place
-      }
-
-    } catch (err) {
-      console.error('Error fetching reviews:', err);
-      setError('Failed to load reviews. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, [reviewsPerPage, limit, showPagination]);
+    },
+    [reviewsPerPage, limit, showPagination]
+  );
 
   useEffect(() => {
     fetchReviews(currentPage);
@@ -190,11 +229,11 @@ const ReviewSystem = ({
   };
 
   // Render star rating
-  const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'md') => {
+  const renderStars = (rating: number, size: "sm" | "md" | "lg" = "md") => {
     const sizeClasses = {
-      sm: 'w-3 h-3',
-      md: 'w-4 h-4',
-      lg: 'w-5 h-5'
+      sm: "w-3 h-3",
+      md: "w-4 h-4",
+      lg: "w-5 h-5",
     };
 
     return (
@@ -203,9 +242,9 @@ const ReviewSystem = ({
           <Star
             key={star}
             className={`${sizeClasses[size]} ${
-              star <= rating 
-                ? 'text-yellow-400 fill-yellow-400' 
-                : 'text-gray-400'
+              star <= rating
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-gray-400"
             }`}
           />
         ))}
@@ -215,10 +254,10 @@ const ReviewSystem = ({
 
   // Format date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -262,7 +301,9 @@ const ReviewSystem = ({
         <div className="flex flex-col items-center gap-4">
           <AlertCircle className="w-12 h-12 text-red-400" />
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Unable to Load Reviews</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Unable to Load Reviews
+            </h3>
             <p className="text-gray-400 mb-4">{error}</p>
             <button
               onClick={() => fetchReviews(currentPage)}
@@ -283,8 +324,12 @@ const ReviewSystem = ({
         <div className="flex flex-col items-center gap-4">
           <Star className="w-12 h-12 text-gray-400" />
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">No Reviews Yet</h3>
-            <p className="text-gray-400">Be the first to share your experience at Kampo Ibayo!</p>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              No Reviews Yet
+            </h3>
+            <p className="text-gray-400">
+              Be the first to share your experience at Kampo Ibayo!
+            </p>
           </div>
         </div>
       </div>
@@ -295,13 +340,20 @@ const ReviewSystem = ({
     <div className={className}>
       {/* Reviews Header with Stats */}
       <div className="text-center mb-8 sm:mb-12">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          {renderStars(averageRating, 'lg')}
-          <span className="text-2xl font-bold text-white ml-2">{averageRating}</span>
-          <span className="text-gray-400">({totalReviews} reviews)</span>
+        <div className="flex flex-col xs:flex-row items-center justify-center gap-1 xs:gap-2 mb-4">
+          {renderStars(averageRating, "lg")}
+          <div className="flex items-center gap-2">
+            <span className="text-xl xs:text-2xl font-bold text-white">
+              {averageRating}
+            </span>
+            <span className="text-gray-400 text-sm xs:text-base">
+              ({totalReviews} reviews)
+            </span>
+          </div>
         </div>
         <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
-          Read authentic reviews from families and adventurers who experienced Kampo Ibayo
+          Read authentic reviews from families and adventurers who experienced
+          Kampo Ibayo
         </p>
       </div>
 
@@ -333,12 +385,17 @@ const ReviewSystem = ({
             {/* Review Photos */}
             {review.review_photos && review.review_photos.length > 0 && (
               <div className="mb-4 sm:mb-6">
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
                   {review.review_photos
-                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                    .sort(
+                      (a, b) => (a.display_order || 0) - (b.display_order || 0)
+                    )
                     .slice(0, 3)
                     .map((photo) => (
-                      <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg">
+                      <div
+                        key={photo.id}
+                        className="relative aspect-square overflow-hidden rounded-lg"
+                      >
                         <Image
                           src={photo.photo_url}
                           alt={photo.caption || "Review photo"}
@@ -351,7 +408,8 @@ const ReviewSystem = ({
                 </div>
                 {review.review_photos.length > 3 && (
                   <p className="text-gray-500 text-xs mt-2">
-                    +{review.review_photos.length - 3} more photo{review.review_photos.length - 3 > 1 ? 's' : ''}
+                    +{review.review_photos.length - 3} more photo
+                    {review.review_photos.length - 3 > 1 ? "s" : ""}
                   </p>
                 )}
               </div>
@@ -359,7 +417,7 @@ const ReviewSystem = ({
 
             {/* Guest Info */}
             <div className="border-t border-gray-600 pt-3 sm:pt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0">
                 <div>
                   <p className="font-bold text-red-400 text-sm xs:text-base">
                     - {review.guest_name}
@@ -371,7 +429,7 @@ const ReviewSystem = ({
                     </div>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="xs:text-right">
                   <div className="flex items-center gap-1 text-gray-500 text-xs">
                     <Calendar className="w-3 h-3" />
                     <span>{formatDate(review.created_at)}</span>
@@ -398,7 +456,7 @@ const ReviewSystem = ({
             {[...Array(totalPages)].map((_, i) => {
               const page = i + 1;
               const isCurrentPage = page === currentPage;
-              
+
               // Show first page, last page, current page, and adjacent pages
               if (
                 page === 1 ||
@@ -411,17 +469,14 @@ const ReviewSystem = ({
                     onClick={() => goToPage(page)}
                     className={`px-3 py-1 rounded-lg transition-colors ${
                       isCurrentPage
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                     }`}
                   >
                     {page}
                   </button>
                 );
-              } else if (
-                page === currentPage - 2 ||
-                page === currentPage + 2
-              ) {
+              } else if (page === currentPage - 2 || page === currentPage + 2) {
                 return (
                   <span key={page} className="text-gray-500 px-1">
                     ...

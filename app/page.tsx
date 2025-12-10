@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { isMaintenanceMode } from "./utils/maintenanceMode";
 import {
   ChevronUp,
+  ChevronDown,
   Menu,
   X,
   User as UserIcon,
@@ -371,6 +372,8 @@ function Home() {
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [availabilityGuideOpen, setAvailabilityGuideOpen] = useState(true); // Open by default on desktop
   const [maintenanceActive, setMaintenanceActive] = useState(false);
+  // Amenities accordion state - null means all closed on mobile
+  const [openAmenityIndex, setOpenAmenityIndex] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     console.log(
@@ -1801,55 +1804,59 @@ function Home() {
                   </p>
                 </div>
 
-                {/* Key Features Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-green-500/50 transition-colors">
-                    <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <Leaf className="w-5 h-5 text-green-400" />
+                {/* Key Features Grid - Compact 2x2 on mobile */}
+                <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:gap-4 pt-4">
+                  <div className="flex flex-col xs:flex-row items-center xs:items-start gap-2 xs:gap-3 p-2 xs:p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-green-500/50 transition-colors text-center xs:text-left">
+                    <div className="w-8 h-8 xs:w-10 xs:h-10 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Leaf className="w-4 h-4 xs:w-5 xs:h-5 text-green-400" />
                     </div>
-                    <div>
-                      <h4 className="text-white font-medium">Eco-Friendly</h4>
-                      <p className="text-gray-400 text-sm">
+                    <div className="min-w-0">
+                      <h4 className="text-white font-medium text-xs xs:text-sm sm:text-base">
+                        Eco-Friendly
+                      </h4>
+                      <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm hidden xs:block">
                         Sustainable practices
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-blue-500/50 transition-colors">
-                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                      <Mountain className="w-5 h-5 text-blue-400" />
+                  <div className="flex flex-col xs:flex-row items-center xs:items-start gap-2 xs:gap-3 p-2 xs:p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-blue-500/50 transition-colors text-center xs:text-left">
+                    <div className="w-8 h-8 xs:w-10 xs:h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Mountain className="w-4 h-4 xs:w-5 xs:h-5 text-blue-400" />
                     </div>
-                    <div>
-                      <h4 className="text-white font-medium">Scenic Views</h4>
-                      <p className="text-gray-400 text-sm">
+                    <div className="min-w-0">
+                      <h4 className="text-white font-medium text-xs xs:text-sm sm:text-base">
+                        Scenic Views
+                      </h4>
+                      <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm hidden xs:block">
                         Nature&apos;s panorama
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-orange-500/50 transition-colors">
-                    <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                      <Users className="w-5 h-5 text-orange-400" />
+                  <div className="flex flex-col xs:flex-row items-center xs:items-start gap-2 xs:gap-3 p-2 xs:p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-orange-500/50 transition-colors text-center xs:text-left">
+                    <div className="w-8 h-8 xs:w-10 xs:h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 xs:w-5 xs:h-5 text-orange-400" />
                     </div>
-                    <div>
-                      <h4 className="text-white font-medium">
+                    <div className="min-w-0">
+                      <h4 className="text-white font-medium text-xs xs:text-sm sm:text-base">
                         Family-Friendly
                       </h4>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm hidden xs:block">
                         Perfect for all ages
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-yellow-500/50 transition-colors">
-                    <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                      <Award className="w-5 h-5 text-yellow-400" />
+                  <div className="flex flex-col xs:flex-row items-center xs:items-start gap-2 xs:gap-3 p-2 xs:p-3 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-yellow-500/50 transition-colors text-center xs:text-left">
+                    <div className="w-8 h-8 xs:w-10 xs:h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Award className="w-4 h-4 xs:w-5 xs:h-5 text-yellow-400" />
                     </div>
-                    <div>
-                      <h4 className="text-white font-medium">
+                    <div className="min-w-0">
+                      <h4 className="text-white font-medium text-xs xs:text-sm sm:text-base">
                         Premium Quality
                       </h4>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm hidden xs:block">
                         Exceptional service
                       </p>
                     </div>
@@ -1877,7 +1884,73 @@ function Home() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
+            {/* Mobile: Side-by-side compact comparison */}
+            <div className="grid grid-cols-2 gap-3 mb-6 sm:hidden">
+              {/* Summer Promo - Mobile */}
+              <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-3 rounded-xl overflow-hidden shadow-lg border border-red-600/30">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-white">Summer Deal</h3>
+                  <span className="bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow whitespace-nowrap">
+                    -₱3K
+                  </span>
+                </div>
+                <p className="text-xl font-extrabold text-white mb-0.5">
+                  ₱9,000
+                </p>
+                <p className="text-red-200 text-[10px] line-through opacity-75 mb-1">
+                  ₱12,000
+                </p>
+                <p className="text-red-100 text-[10px] opacity-90 mb-3">
+                  Mon - Thu
+                </p>
+                {maintenanceActive ? (
+                  <div className="bg-gray-600/80 text-gray-300 px-2 py-2 rounded-lg font-medium text-[10px] text-center">
+                    Unavailable
+                  </div>
+                ) : (
+                  <Link
+                    href="/book"
+                    className="bg-white/90 hover:bg-white text-red-800 px-2 py-2 rounded-lg font-semibold text-xs w-full text-center touch-manipulation min-h-[40px] flex items-center justify-center gap-1 shadow"
+                  >
+                    <span>Book</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
+
+              {/* Weekend Rate - Mobile */}
+              <div className="bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 p-3 rounded-xl overflow-hidden shadow-lg border border-gray-600">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-yellow-400">Weekend</h3>
+                  <span className="bg-yellow-400/20 text-yellow-300 text-[8px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                    Fri-Sun
+                  </span>
+                </div>
+                <p className="text-xl font-extrabold text-yellow-400 mb-0.5">
+                  ₱12,000
+                </p>
+                <p className="text-gray-400 text-[10px] mb-1">Standard Rate</p>
+                <p className="text-gray-300 text-[10px] opacity-90 mb-3">
+                  & Holidays
+                </p>
+                {maintenanceActive ? (
+                  <div className="bg-gray-600/80 text-gray-300 px-2 py-2 rounded-lg font-medium text-[10px] text-center">
+                    Unavailable
+                  </div>
+                ) : (
+                  <Link
+                    href="/book"
+                    className="bg-yellow-400/95 hover:bg-yellow-400 text-gray-900 px-2 py-2 rounded-lg font-semibold text-xs w-full text-center touch-manipulation min-h-[40px] flex items-center justify-center gap-1 shadow"
+                  >
+                    <span>Reserve</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop: Full pricing cards */}
+            <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
               {/* Summer Promo */}
               <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-red-600/30 hover:border-red-500/50">
                 <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1962,8 +2035,105 @@ function Home() {
               </div>
             </div>
 
-            {/* Compact Amenities Grid */}
-            <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:mb-8">
+            {/* Amenities - Accordion on Mobile, Grid on Desktop */}
+            {/* Mobile Accordion View */}
+            <div className="sm:hidden space-y-2 mb-6">
+              {[
+                {
+                  icon: <FaHome className="text-red-400" />,
+                  title: "Accommodation",
+                  items: [
+                    "2 poolside AC family rooms (8 pax each)",
+                    "Private bathrooms with bidet & hot/cold shower",
+                    "Camping area with full-sized campfire",
+                    "Treehouse with electricity & extra space",
+                    "Open shower area near pool with comfort room",
+                  ],
+                },
+                {
+                  icon: <FaGamepad className="text-red-400" />,
+                  title: "Entertainment & Fun",
+                  items: [
+                    "Swimming pool & poolside lounge",
+                    "Videoke & arcade machine",
+                    "Board games & gazebo dining area",
+                    "Function hall/stage for events",
+                    "Adventure hanging bridge access",
+                  ],
+                },
+                {
+                  icon: <FaUtensils className="text-red-400" />,
+                  title: "Kitchen & More",
+                  items: [
+                    "Fully-equipped kitchen with appliances",
+                    "Grill area & complete cooking utensils",
+                    "Hot/cold water dispenser (1st gallon FREE)",
+                    "8-vehicle parking & WiFi access",
+                    "Pet-friendly facility - all furbabies welcome",
+                  ],
+                },
+                {
+                  icon: <FaMapMarkedAlt className="text-red-400" />,
+                  title: "Special Features",
+                  items: [
+                    "Adventure hanging bridge (safe & secure)",
+                    "Nestled in peaceful farmlands",
+                    "Caretaker assistance & guided walk",
+                    "Easy landmark access (Dali Grocery)",
+                    "Exclusive countryside experience",
+                  ],
+                },
+              ].map((amenity, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 overflow-hidden"
+                >
+                  <button
+                    onClick={() =>
+                      setOpenAmenityIndex(
+                        openAmenityIndex === index ? null : index
+                      )
+                    }
+                    className="w-full flex items-center justify-between p-3 touch-manipulation min-h-[52px]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-red-500/20 rounded-lg flex items-center justify-center text-lg">
+                        {amenity.icon}
+                      </div>
+                      <h4 className="text-sm font-bold text-red-400">
+                        {amenity.title}
+                      </h4>
+                    </div>
+                    <div
+                      className={`w-6 h-6 flex items-center justify-center text-gray-400 transition-transform duration-200 ${
+                        openAmenityIndex === index ? "rotate-180" : ""
+                      }`}
+                    >
+                      <ChevronDown className="w-5 h-5" />
+                    </div>
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                      openAmenityIndex === index
+                        ? "max-h-64 opacity-100"
+                        : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <ul className="text-gray-300 text-xs space-y-1.5 px-3 pb-3">
+                      {amenity.items.map((item, itemIndex) => (
+                        <li key={itemIndex} className="flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop/Tablet Grid View */}
+            <div className="hidden sm:grid gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:mb-8">
               {/* Accommodation */}
               <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
                 <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
@@ -2136,7 +2306,7 @@ function Home() {
             <div className="text-center mt-8">
               <Link
                 href="/review"
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-full hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-full hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg touch-manipulation min-h-[48px]"
               >
                 <MessageCircleHeart className="w-5 h-5 mr-2" />
                 Share Your Experience
@@ -2179,17 +2349,17 @@ function Home() {
 
                 {/* Enhanced Important Booking Terms */}
                 <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-600/30 rounded-xl overflow-hidden mt-6">
-                  <div className="px-4 py-2 border-b border-red-600/20">
-                    <h4 className="text-red-400 font-semibold text-sm flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-red-400" />
-                      Important Booking Terms
-                      <span className="ml-auto bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full font-medium">
+                  <div className="px-3 sm:px-4 py-2 border-b border-red-600/20">
+                    <h4 className="text-red-400 font-semibold text-xs xs:text-sm flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-red-400 flex-shrink-0" />
+                      <span className="truncate">Important Booking Terms</span>
+                      <span className="ml-auto bg-red-500/20 text-red-400 text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
                         Required
                       </span>
                     </h4>
                   </div>
                   <div className="p-3">
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-xs xs:text-sm">
                       <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
                         <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
                           <span className="text-red-400 text-xs font-bold">
@@ -2251,17 +2421,17 @@ function Home() {
                     <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
                     Contact Details
                   </h3>
-                  <div className="space-y-2 sm:space-y-3">
+                  <div className="space-y-1 sm:space-y-2">
                     <a
                       href="tel:+639662815123"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-green-400 transition-colors group"
+                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-green-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
                     >
                       <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                       +63 966 281 5123
                     </a>
                     <a
                       href="mailto:kampoibayo@gmail.com"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group"
+                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
                     >
                       <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                       kampoibayo@gmail.com
@@ -2270,7 +2440,7 @@ function Home() {
                       href="https://www.facebook.com/profile.php?id=61562942638753"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group"
+                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
                     >
                       <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
                       Kampo Ibayo (Facebook)
@@ -2283,25 +2453,25 @@ function Home() {
                     <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
                     Operating Hours
                   </h3>
-                  <div className="space-y-1 sm:space-y-2 text-gray-300 text-sm xs:text-base sm:text-lg">
-                    <p className="flex justify-between">
+                  <div className="space-y-2 sm:space-y-3 text-gray-300">
+                    <div className="flex items-center justify-between min-h-[40px] text-sm xs:text-base sm:text-lg">
                       <span>Daily Operations</span>
-                      <span className="text-green-400 font-semibold">
+                      <span className="text-green-400 font-semibold text-right">
                         8:00 AM - 8:00 PM
                       </span>
-                    </p>
-                    <p className="flex justify-between">
+                    </div>
+                    <div className="flex items-center justify-between min-h-[40px] text-sm xs:text-base sm:text-lg">
                       <span>Check-in</span>
                       <span className="text-blue-400 font-semibold">
                         3:00 PM
                       </span>
-                    </p>
-                    <p className="flex justify-between">
+                    </div>
+                    <div className="flex items-center justify-between min-h-[40px] text-sm xs:text-base sm:text-lg">
                       <span>Check-out</span>
                       <span className="text-orange-400 font-semibold">
                         1:00 PM
                       </span>
-                    </p>
+                    </div>
                   </div>
                 </div>
 
@@ -2309,7 +2479,7 @@ function Home() {
                   href="https://www.facebook.com/profile.php?id=61562942638753"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl"
+                  className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl touch-manipulation min-h-[48px]"
                 >
                   <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5" />
                   Message us on Facebook
@@ -2345,16 +2515,16 @@ function Home() {
               </div>
 
               <div className="lg:col-span-8">
-                <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                <div className="grid grid-cols-3 gap-3 xs:gap-4 sm:gap-6 lg:gap-8">
                   <div className="text-center sm:text-left">
-                    <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wide">
+                    <h4 className="text-white font-semibold mb-2 sm:mb-4 text-[10px] xs:text-xs sm:text-sm uppercase tracking-wide">
                       Resort
                     </h4>
-                    <ul className="space-y-2 sm:space-y-3">
+                    <ul className="space-y-1 sm:space-y-2">
                       <li>
                         <a
                           href="#about"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           About
                         </a>
@@ -2362,7 +2532,7 @@ function Home() {
                       <li>
                         <a
                           href="#amenities"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           Amenities
                         </a>
@@ -2370,7 +2540,7 @@ function Home() {
                       <li>
                         <a
                           href="#gallery"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           Gallery
                         </a>
@@ -2378,7 +2548,7 @@ function Home() {
                       <li>
                         <a
                           href="#reviews"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           Reviews
                         </a>
@@ -2386,7 +2556,7 @@ function Home() {
                       <li>
                         <a
                           href="#contact"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           Contact
                         </a>
@@ -2397,14 +2567,14 @@ function Home() {
                   <div className="text-center sm:text-left">
                     {user && !isLoadingAuth ? (
                       <>
-                        <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wide">
+                        <h4 className="text-white font-semibold mb-2 sm:mb-4 text-[10px] xs:text-xs sm:text-sm uppercase tracking-wide">
                           Account
                         </h4>
-                        <ul className="space-y-2 sm:space-y-3">
+                        <ul className="space-y-1 sm:space-y-2">
                           <li>
                             <a
                               href="/bookings"
-                              className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                              className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                             >
                               My Bookings
                             </a>
@@ -2412,7 +2582,7 @@ function Home() {
                           <li>
                             <a
                               href="/profile"
-                              className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                              className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                             >
                               Profile
                             </a>
@@ -2420,7 +2590,7 @@ function Home() {
                           <li>
                             <a
                               href="/settings"
-                              className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                              className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                             >
                               Settings
                             </a>
@@ -2428,7 +2598,7 @@ function Home() {
                           <li>
                             <a
                               href="/legal"
-                              className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                              className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                             >
                               Legal
                             </a>
@@ -2460,7 +2630,7 @@ function Home() {
                                   }
                                 }
                               }}
-                              className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1 text-left w-full"
+                              className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1 text-center sm:text-left w-full"
                             >
                               Logout
                             </button>
@@ -2469,14 +2639,14 @@ function Home() {
                       </>
                     ) : (
                       <>
-                        <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wide">
+                        <h4 className="text-white font-semibold mb-2 sm:mb-4 text-[10px] xs:text-xs sm:text-sm uppercase tracking-wide">
                           Get Started
                         </h4>
-                        <ul className="space-y-2 sm:space-y-3">
+                        <ul className="space-y-1 sm:space-y-2">
                           <li>
                             <a
                               href="/auth"
-                              className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                              className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                             >
                               Login / Sign Up
                             </a>
@@ -2487,14 +2657,14 @@ function Home() {
                   </div>
 
                   <div className="text-center sm:text-left">
-                    <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wide">
+                    <h4 className="text-white font-semibold mb-2 sm:mb-4 text-[10px] xs:text-xs sm:text-sm uppercase tracking-wide">
                       Policies
                     </h4>
-                    <ul className="space-y-2 sm:space-y-3">
+                    <ul className="space-y-1 sm:space-y-2">
                       <li>
                         <a
                           href="/legal/faq"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           FAQ
                         </a>
@@ -2502,23 +2672,23 @@ function Home() {
                       <li>
                         <a
                           href="/legal/terms"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
-                          Terms & Privacy
+                          Terms
                         </a>
                       </li>
                       <li>
                         <a
                           href="/legal/cancellation"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
-                          Cancellation Policy
+                          Cancellation
                         </a>
                       </li>
                       <li>
                         <a
                           href="/legal/house-rules"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
                           House Rules
                         </a>
@@ -2526,9 +2696,9 @@ function Home() {
                       <li>
                         <a
                           href="/legal/help"
-                          className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm block py-1"
+                          className="text-gray-400 hover:text-white transition-colors text-[10px] xs:text-xs sm:text-sm block py-0.5 sm:py-1"
                         >
-                          Help Center
+                          Help
                         </a>
                       </li>
                     </ul>
@@ -2537,7 +2707,7 @@ function Home() {
               </div>
             </div>
 
-            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-800">
+            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-800 pb-safe">
               <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-center sm:text-left order-2 sm:order-1">
                   <p className="text-gray-400 text-sm">
@@ -2557,19 +2727,19 @@ function Home() {
                       href="https://www.facebook.com/profile.php?id=61562942638753"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all duration-300 group"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all duration-300 group touch-manipulation"
                     >
                       <Facebook className="w-4 h-4 text-gray-400 group-hover:text-white" />
                     </a>
                     <a
                       href="#"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-all duration-300 group"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-all duration-300 group touch-manipulation"
                     >
                       <Instagram className="w-4 h-4 text-gray-400 group-hover:text-white" />
                     </a>
                     <a
                       href="#"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-red-600 rounded-lg flex items-center justify-center transition-all duration-300 group"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-red-600 rounded-lg flex items-center justify-center transition-all duration-300 group touch-manipulation"
                     >
                       <Youtube className="w-4 h-4 text-gray-400 group-hover:text-white" />
                     </a>
@@ -2588,7 +2758,7 @@ function Home() {
         {showBackToTop && !chatbotOpen && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-red-500 hover:border-red-400 backdrop-blur-sm"
+            className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-red-500 hover:border-red-400 backdrop-blur-sm fixed-bottom-safe"
             aria-label="Back to top"
           >
             <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -2597,7 +2767,7 @@ function Home() {
 
         {/* Availability Modal */}
         {showAvailabilityModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-0 sm:p-2 md:p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-0 sm:p-2 md:p-4 overflow-y-auto modal-scroll-lock">
             <div className="bg-gray-900 rounded-none sm:rounded-xl md:rounded-2xl shadow-2xl w-full sm:max-w-[95vw] md:max-w-lg lg:max-w-xl xl:max-w-2xl border-0 sm:border border-gray-700 min-h-screen sm:min-h-0 sm:max-h-[98vh] md:max-h-[95vh] lg:max-h-[92vh] xl:max-h-[90vh] overflow-hidden flex flex-col mt-0 sm:mt-2 md:mt-0">
               {/* Modal Header - Mobile Safe */}
               <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 lg:p-6 border-b border-gray-700 bg-gray-900 flex-shrink-0 sticky top-0 z-10">
@@ -3061,7 +3231,7 @@ function Home() {
               </div>
 
               {/* Modal Footer - Mobile Safe Bottom */}
-              <div className="border-t border-gray-700 bg-gray-900 p-4 sm:p-5 md:p-6 flex-shrink-0 sticky bottom-0 z-10">
+              <div className="border-t border-gray-700 bg-gray-900 p-4 sm:p-5 md:p-6 flex-shrink-0 sticky bottom-0 z-10 modal-footer-safe">
                 <button
                   onClick={() => setShowAvailabilityModal(false)}
                   className="w-full bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-4 sm:py-3.5 md:py-4 rounded-lg md:rounded-xl font-semibold text-base sm:text-lg transition-all duration-200 min-h-[52px] touch-manipulation shadow-lg hover:shadow-xl"

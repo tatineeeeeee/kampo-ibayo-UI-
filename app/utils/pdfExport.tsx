@@ -304,6 +304,7 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={styles.logo} src={LOGO_URL} />
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>Kampo Ibayo Resort</Text>
@@ -553,6 +554,7 @@ const UsersPDFDocument: React.FC<UsersPDFProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={styles.logo} src={LOGO_URL} />
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>Kampo Ibayo Resort</Text>
@@ -769,6 +771,7 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={styles.logo} src={LOGO_URL} />
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>Kampo Ibayo Resort</Text>
@@ -1197,6 +1200,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={styles.logo} src={LOGO_URL} />
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>Kampo Ibayo Resort</Text>

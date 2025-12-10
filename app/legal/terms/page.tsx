@@ -31,7 +31,7 @@ export default function TermsPage() {
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
               >
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
               </Link>
@@ -62,7 +62,7 @@ export default function TermsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <button
               onClick={() => scrollToSection("terms")}
-              className={`p-3 rounded-lg transition-colors text-left ${
+              className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "terms"
                   ? "bg-red-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -73,7 +73,7 @@ export default function TermsPage() {
             </button>
             <button
               onClick={() => scrollToSection("privacy")}
-              className={`p-3 rounded-lg transition-colors text-left ${
+              className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "privacy"
                   ? "bg-red-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -84,7 +84,7 @@ export default function TermsPage() {
             </button>
             <button
               onClick={() => scrollToSection("liability")}
-              className={`p-3 rounded-lg transition-colors text-left ${
+              className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "liability"
                   ? "bg-red-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -95,7 +95,7 @@ export default function TermsPage() {
             </button>
             <button
               onClick={() => scrollToSection("contact")}
-              className={`p-3 rounded-lg transition-colors text-left ${
+              className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "contact"
                   ? "bg-red-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"

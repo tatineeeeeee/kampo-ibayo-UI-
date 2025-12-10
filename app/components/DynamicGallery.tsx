@@ -292,7 +292,7 @@ const DynamicGallery = () => {
           <div className="relative mb-8">
             {/* Main hero container */}
             <div
-              className="relative h-[60vh] sm:h-[70vh] lg:h-[80vh] max-h-[600px] rounded-xl overflow-hidden cursor-pointer group bg-gray-700"
+              className="relative h-[45vh] xs:h-[55vh] sm:h-[70vh] lg:h-[80vh] max-h-[600px] rounded-xl overflow-hidden cursor-pointer group bg-gray-700"
               onClick={() => {
                 setIsImageLoading(true);
                 setSelectedImage(0);
@@ -417,7 +417,7 @@ const DynamicGallery = () => {
               setIsImageLoading(true);
               setSelectedImage(0);
             }}
-            className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-full px-6 py-3 transition-all duration-300 group"
+            className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-full px-6 py-3 transition-all duration-300 group touch-manipulation min-h-[48px]"
           >
             <span className="text-white/80 text-sm group-hover:text-white">
               View all
@@ -535,7 +535,7 @@ const DynamicGallery = () => {
             </div>
 
             {/* Mobile swipe indicators - Positioned to avoid info panel overlap */}
-            <div className="absolute bottom-24 sm:hidden left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
+            <div className="absolute bottom-20 xs:bottom-24 sm:hidden left-1/2 transform -translate-x-1/2 flex gap-1.5 z-30">
               {displayImages.map((_, index) => (
                 <button
                   key={index}
@@ -543,9 +543,9 @@ const DynamicGallery = () => {
                     e.stopPropagation();
                     setSelectedImage(index);
                   }}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  className={`w-2.5 h-2.5 xs:w-3 xs:h-3 rounded-full transition-all duration-200 touch-manipulation ${
                     index === selectedImage
-                      ? "bg-white shadow-lg"
+                      ? "bg-white shadow-lg scale-110"
                       : "bg-white/40 hover:bg-white/60"
                   }`}
                   aria-label={`Go to image ${index + 1}`}
