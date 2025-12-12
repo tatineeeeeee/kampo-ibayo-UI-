@@ -7,7 +7,27 @@
     "app/api/user/download-receipt/route.ts": {
       "maxDuration": 15,
       "memory": 512
+    },
+    "app/api/sms/check-in-reminders/route.ts": {
+      "maxDuration": 30
     }
   },
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/sms/check-in-reminders?type=24h",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/sms/check-in-reminders?type=12h",
+      "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/sms/check-in-reminders?type=3h",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/sms/check-in-reminders?type=checkin",
+      "schedule": "45 6 * * *"
+    }
+  ]
 }

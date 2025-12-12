@@ -147,3 +147,20 @@ export const createCheckInDaySMS = (
   const baseMessage = `KAMPO IBAYO: Welcome day ${guestName}! Your room is ready for ${checkInTime} check-in. Pool towels & amenities prepared. Drive safe, see you soon!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
+
+// 12-hour reminder (morning of check-in day)
+export const createReminder12HourSMS = (
+  guestName: string,
+  checkInTime: string = "3PM"
+): string => {
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Just 12 hours until check-in at ${checkInTime}. Your paradise awaits! Pack your swimsuit & sunblock. See you!`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
+};
+
+// 3-hour reminder (final reminder before check-in)
+export const createReminder3HourSMS = (
+  guestName: string
+): string => {
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! 3 hours to check-in! Room is ready, pool is clean. We're excited to welcome you! Safe travels. See you very soon!`;
+  return baseMessage.padEnd(160, ' ').substring(0, 160);
+};
