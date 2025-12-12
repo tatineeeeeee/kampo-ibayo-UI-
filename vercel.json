@@ -18,16 +18,8 @@
       "schedule": "0 7 * * *"
     },
     {
-      "path": "/api/sms/check-in-reminders?type=12h",
-      "schedule": "0 19 * * *"
-    },
-    {
       "path": "/api/sms/check-in-reminders?type=3h",
       "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/sms/check-in-reminders?type=checkin",
-      "schedule": "45 6 * * *"
     }
   ]
 }
