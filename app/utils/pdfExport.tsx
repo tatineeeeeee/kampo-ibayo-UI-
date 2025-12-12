@@ -558,7 +558,7 @@ const UsersPDFDocument: React.FC<UsersPDFProps> = ({
             <Image style={styles.logo} src={LOGO_URL} />
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>Kampo Ibayo Resort</Text>
-              <Text style={styles.companyTagline}>User Database Report</Text>
+              <Text style={styles.companyTagline}>User Database</Text>
             </View>
           </View>
           <View style={styles.headerRight}>
@@ -1082,7 +1082,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
     0
   );
 
-  // ========== USER DATABASE CALCULATIONS ==========
+  // ========== USER REPORT CALCULATIONS ==========
   // Group data by unique customers (by email)
   const customerMap = new Map<
     string,
@@ -1208,7 +1208,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                 {isDailyOps
                   ? "Daily Operations Report"
                   : isUserDb
-                  ? "User Database Report"
+                  ? "User Report"
                   : "Booking Status Report"}
               </Text>
             </View>
@@ -1643,7 +1643,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
             </>
           )}
 
-          {/* USER DATABASE TABLE - Unique Customers sorted by spending */}
+          {/* USER REPORT TABLE - Unique Customers sorted by spending */}
           {isUserDb && (
             <>
               <Text
@@ -2085,7 +2085,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
             {isDailyOps
               ? "Daily Operations"
               : isUserDb
-              ? "User Database"
+              ? "User Report"
               : "Booking Status"}{" "}
             Report
           </Text>
@@ -2147,7 +2147,7 @@ export const exportUsersPDF = async (users: PDFExportable[]) => {
   const blob = await pdf(
     <UsersPDFDocument
       data={users}
-      title="User Database Report"
+      title="User Database"
       generatedAt={generatedAt}
     />
   ).toBlob();

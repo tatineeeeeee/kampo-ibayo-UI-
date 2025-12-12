@@ -49,7 +49,7 @@ const REPORT_TYPES = [
   },
   {
     id: "user-database",
-    name: "User Database",
+    name: "User Report",
     description:
       "Customer list with contact info, visits & spending (for marketing)",
     icon: Users,
@@ -407,7 +407,7 @@ export default function ReportsPage() {
           break;
 
         case "user-database":
-          // Simple user database for marketing and customer service
+          // Simple user report for marketing and customer service
           const guestDatabase = new Map();
 
           // Build simple guest list
@@ -1611,7 +1611,7 @@ export default function ReportsPage() {
             )}
             {selectedReport.id === "guest-registry" && (
               <p>
-                <strong>👥 User Database:</strong> COMPLETED stays only - Real
+                <strong>👥 User Report:</strong> COMPLETED stays only - Real
                 customer profiles for marketing, loyalty programs, and
                 personalized service
               </p>
@@ -2104,26 +2104,26 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* User Database Report Description */}
+        {/* User Report Description */}
         {selectedReport.id === "user-database" && (
           <div className="text-center py-12 max-w-2xl mx-auto">
             <Users className="w-16 h-16 mx-auto mb-4 text-purple-600" />
             <h3 className="text-lg font-semibold text-black mb-2">
-              User Database Report
+              User Report
             </h3>
             <p className="text-gray-600 mb-4">
-              This report shows your complete user database with contact
+              This report shows your complete user list with contact
               information, visit history, and spending patterns for marketing
               and customer service.
             </p>
             <p className="text-sm text-gray-500">
               Click the <strong>Export</strong> button above to download the
-              complete user database report as CSV.
+              complete user report as CSV.
             </p>
           </div>
         )}
 
-        {/* User Database Charts */}
+        {/* User Report Charts */}
         {selectedReport.id === "user-database" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-md">
