@@ -11,6 +11,8 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ShieldCheck,
+  Crown,
 } from "lucide-react";
 import { exportUsersCSV } from "../../utils/csvExport";
 import { exportUsersPDF } from "../../utils/pdfExport";
@@ -600,6 +602,11 @@ export default function UsersPage() {
   );
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
+  // 🔐 Enhanced role-based access control
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [isCurrentUserSuperAdmin, setIsCurrentUserSuperAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -617,6 +624,8 @@ export default function UsersPage() {
   // Standardized toast helpers
   const { success, error: showError, warning } = useToastHelpers();
 
+  // Staff can access this page but with view-only permissions (handled in canEditUserRole and canDeleteUser)
+
   const fetchUsers = useCallback(async () => {
     try {
       console.log("🔍 Fetching users...");
@@ -626,13 +635,28 @@ export default function UsersPage() {
         data: { session },
       } = await supabase.auth.getSession();
       if (session?.user) {
-        const { data: currentUserData } = await supabase
+        const { data: currentUserData, error: userError } = await supabase
           .from("users")
-          .select("role")
+          .select("role, id")
           .eq("auth_id", session.user.id)
           .single();
 
-        setIsCurrentUserAdmin(currentUserData?.role === "admin");
+        if (userError) {
+          console.error("❌ Error fetching current user:", userError);
+        } else {
+          console.log("✅ Current user data:", currentUserData);
+          const isAdmin = currentUserData?.role === "admin";
+          setIsCurrentUserAdmin(isAdmin);
+          setCurrentUserRole(currentUserData?.role || null);
+          // For now, treat all admins as having full admin powers until super admin column is added
+          setIsCurrentUserSuperAdmin(isAdmin);
+          setCurrentUserId(currentUserData?.id || null);
+          console.log("🔐 Admin status set:", {
+            isAdmin,
+            role: currentUserData?.role,
+            id: currentUserData?.id,
+          });
+        }
       }
 
       // Then fetch all users
@@ -655,9 +679,10 @@ export default function UsersPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Remove showError dependency to prevent infinite loop - showError is stable from useToastHelpers
+  }, []); // Run once on mount
 
   // ✅ OPTIMIZED: Delayed fetch to not block navigation
+  // Staff can now see users list (but with view-only permissions)
   useEffect(() => {
     const timer = setTimeout(() => fetchUsers(), 100);
     return () => clearTimeout(timer);
@@ -746,6 +771,42 @@ export default function UsersPage() {
       console.error("Error updating user role:", error);
       showError("Failed to update user role");
     }
+  };
+
+  // 🔐 Permission check: Can current user delete the target user?
+  const canDeleteUser = (targetUser: User): boolean => {
+    // Staff cannot delete anyone
+    if (currentUserRole === "staff") return false;
+
+    // Cannot delete yourself
+    if (targetUser.id === currentUserId) return false;
+
+    // Super Admin cannot be deleted by anyone
+    if (targetUser.is_super_admin) return false;
+
+    // Only Super Admin can delete other admins
+    if (targetUser.role === "admin" && !isCurrentUserSuperAdmin) return false;
+
+    // Admins and Super Admins can delete users and staff
+    return isCurrentUserAdmin || isCurrentUserSuperAdmin;
+  };
+
+  // 🔐 Permission check: Can current user edit the target user's role?
+  const canEditUserRole = (targetUser: User): boolean => {
+    // Staff cannot edit roles
+    if (currentUserRole === "staff") return false;
+
+    // Cannot edit your own role (must be done by another admin)
+    if (targetUser.id === currentUserId) return false;
+
+    // Super Admin's role cannot be changed
+    if (targetUser.is_super_admin) return false;
+
+    // Only Super Admin can change other admin's roles
+    if (targetUser.role === "admin" && !isCurrentUserSuperAdmin) return false;
+
+    // Admins and Super Admins can edit users and staff roles
+    return isCurrentUserAdmin || isCurrentUserSuperAdmin;
   };
 
   const handleDeleteClick = (user: User) => {
@@ -905,7 +966,10 @@ export default function UsersPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getRoleBadgeClass = (role: string) => {
+  const getRoleBadgeClass = (role: string, isSuperAdmin?: boolean) => {
+    if (isSuperAdmin) {
+      return "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border border-amber-300 shadow-sm";
+    }
     switch (role) {
       case "admin":
         return "bg-red-100 text-red-800 border border-red-200";
@@ -915,6 +979,32 @@ export default function UsersPage() {
       default:
         return "bg-green-100 text-green-800 border border-green-200";
     }
+  };
+
+  // Get role display with icon for super admin
+  const getRoleDisplay = (user: User) => {
+    if (user.is_super_admin) {
+      return (
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(
+            user.role || "admin",
+            true
+          )}`}
+        >
+          <Crown className="w-3 h-3" />
+          Super Admin
+        </span>
+      );
+    }
+    return (
+      <span
+        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(
+          user.role || "user"
+        )}`}
+      >
+        {user.role || "user"}
+      </span>
+    );
   };
 
   return (
@@ -1133,22 +1223,23 @@ export default function UsersPage() {
               {paginatedUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  className={`bg-gray-50 rounded-lg p-4 border ${
+                    user.is_super_admin
+                      ? "border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50"
+                      : "border-gray-200"
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-gray-900 flex items-center gap-2">
                         {user.name}
+                        {user.is_super_admin && (
+                          <Crown className="w-4 h-4 text-amber-500" />
+                        )}
                       </div>
                       <div className="text-xs text-gray-500">ID: {user.id}</div>
                     </div>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(
-                        user.role || "user"
-                      )}`}
-                    >
-                      {user.role || "user"}
-                    </span>
+                    {getRoleDisplay(user)}
                   </div>
                   <div className="text-sm text-gray-700 mb-1">{user.email}</div>
                   <div className="text-xs text-gray-500 mb-3">
@@ -1168,25 +1259,32 @@ export default function UsersPage() {
                     >
                       View Bookings
                     </button>
-                    {isCurrentUserAdmin && (
-                      <>
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setEditRole(user.role || "user");
-                            setShowEditModal(true);
-                          }}
-                          className="text-xs px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200"
-                        >
-                          Edit Role
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(user)}
-                          className="text-xs px-3 py-1.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
-                        >
-                          Delete
-                        </button>
-                      </>
+                    {canEditUserRole(user) && (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setEditRole(user.role || "user");
+                          setShowEditModal(true);
+                        }}
+                        className="text-xs px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200"
+                      >
+                        Edit Role
+                      </button>
+                    )}
+                    {canDeleteUser(user) && (
+                      <button
+                        onClick={() => handleDeleteClick(user)}
+                        className="text-xs px-3 py-1.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+                      >
+                        Delete
+                      </button>
+                    )}
+                    {/* Show protected badge for super admin */}
+                    {user.is_super_admin && (
+                      <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 rounded-md border border-amber-200 shadow-sm">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Protected
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1219,13 +1317,16 @@ export default function UsersPage() {
                   {paginatedUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <div>
+                        <div className="flex items-center gap-2">
                           <div className="text-sm font-medium text-gray-900">
                             {user.name}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {user.id}
-                          </div>
+                          {user.is_super_admin && (
+                            <Crown className="w-4 h-4 text-amber-500" />
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ID: {user.id}
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
@@ -1237,13 +1338,7 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(
-                            user.role || "user"
-                          )}`}
-                        >
-                          {user.role || "user"}
-                        </span>
+                        {getRoleDisplay(user)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {user.created_at ? formatDate(user.created_at) : "N/A"}
@@ -1258,25 +1353,32 @@ export default function UsersPage() {
                         >
                           View Bookings
                         </button>
-                        {isCurrentUserAdmin && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setEditRole(user.role || "user");
-                                setShowEditModal(true);
-                              }}
-                              className="text-indigo-600 hover:text-indigo-900"
-                            >
-                              Edit Role
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClick(user)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          </>
+                        {canEditUserRole(user) && (
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setEditRole(user.role || "user");
+                              setShowEditModal(true);
+                            }}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            Edit Role
+                          </button>
+                        )}
+                        {canDeleteUser(user) && (
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {/* Show protected badge for super admin */}
+                        {user.is_super_admin && (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 rounded-md border border-amber-200">
+                            <ShieldCheck className="w-3 h-3" />
+                            Protected
+                          </span>
                         )}
                       </td>
                     </tr>

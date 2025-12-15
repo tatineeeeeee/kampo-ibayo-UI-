@@ -212,17 +212,54 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Navigation items for reuse
-  const navItems = [
-    { href: "/admin", icon: Home, label: "Dashboard" },
-    { href: "/admin/bookings", icon: Calendar, label: "Bookings" },
-    { href: "/admin/users", icon: Users, label: "Users" },
-    { href: "/admin/reviews", icon: Star, label: "Reviews" },
-    { href: "/admin/payments", icon: CreditCard, label: "Payments" },
-    { href: "/admin/reports", icon: BarChart3, label: "Reports" },
-    { href: "/admin/gallery", icon: Camera, label: "Gallery" },
-    { href: "/admin/settings", icon: Settings, label: "Settings" },
+  // Navigation items for reuse - filtered based on role
+  // Staff cannot access Users and Settings pages
+  const allNavItems = [
+    { href: "/admin", icon: Home, label: "Dashboard", staffAllowed: true },
+    {
+      href: "/admin/bookings",
+      icon: Calendar,
+      label: "Bookings",
+      staffAllowed: true,
+    },
+    { href: "/admin/users", icon: Users, label: "Users", staffAllowed: true },
+    {
+      href: "/admin/reviews",
+      icon: Star,
+      label: "Reviews",
+      staffAllowed: true,
+    },
+    {
+      href: "/admin/payments",
+      icon: CreditCard,
+      label: "Payments",
+      staffAllowed: true,
+    },
+    {
+      href: "/admin/reports",
+      icon: BarChart3,
+      label: "Reports",
+      staffAllowed: true,
+    },
+    {
+      href: "/admin/gallery",
+      icon: Camera,
+      label: "Gallery",
+      staffAllowed: true,
+    },
+    {
+      href: "/admin/settings",
+      icon: Settings,
+      label: "Settings",
+      staffAllowed: false,
+    },
   ];
+
+  // Filter nav items based on user role
+  const navItems =
+    userRole === "staff"
+      ? allNavItems.filter((item) => item.staffAllowed)
+      : allNavItems;
 
   if (loading || authLoading) {
     return (

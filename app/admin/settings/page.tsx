@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../supabaseClient";
 import { useToastHelpers } from "../../components/Toast";
 import {
   saveMaintenanceSettings,
   getMaintenanceSettings,
 } from "../../utils/maintenanceMode";
-import { AdminOnly } from "../../hooks/useRoleAccess";
+import { AdminOnly, useRoleAccess } from "../../hooks/useRoleAccess";
 import type { User } from "@supabase/supabase-js";
 import {
   User as UserIcon,
@@ -17,9 +18,13 @@ import {
   Save,
   RefreshCw,
   AlertTriangle,
+  ShieldAlert,
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { isStaff, loading: roleLoading } = useRoleAccess();
+
   const [user, setUser] = useState<User | null>(null);
   const [adminData, setAdminData] = useState({
     name: "",
@@ -35,6 +40,33 @@ export default function SettingsPage() {
 
   // Toast helpers
   const { success, error: showError } = useToastHelpers();
+
+  // 🔐 Staff Access Denied - Redirect to dashboard
+  useEffect(() => {
+    if (!roleLoading && isStaff) {
+      router.replace("/admin");
+    }
+  }, [isStaff, roleLoading, router]);
+
+  // Show access denied page for staff while redirecting
+  if (isStaff) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center bg-gray-50 rounded-lg p-8">
+        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Staff members do not have permission to access the Settings page.
+          </p>
+          <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const loadData = async () => {
