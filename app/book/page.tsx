@@ -18,6 +18,8 @@ import {
   FaLightbulb,
   FaBan,
 } from "react-icons/fa";
+import { Rabbit, Bird } from "lucide-react";
+import { GiRat } from "react-icons/gi";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
@@ -1991,6 +1993,21 @@ function BookingPage() {
                         formData.pet ? "text-green-400" : "text-gray-500"
                       }`}
                     />
+                    <Rabbit
+                      className={`w-4 h-4 ${
+                        formData.pet ? "text-green-400" : "text-gray-500"
+                      }`}
+                    />
+                    <GiRat
+                      className={`w-4 h-4 ${
+                        formData.pet ? "text-green-400" : "text-gray-500"
+                      }`}
+                    />
+                    <Bird
+                      className={`w-4 h-4 ${
+                        formData.pet ? "text-green-400" : "text-gray-500"
+                      }`}
+                    />
                   </div>
                 </label>
 
@@ -2008,34 +2025,40 @@ function BookingPage() {
                           Domestic Pets Welcome
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            <FaDog className="w-3 h-3" /> Dogs
+                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            Dogs
                           </span>
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            <FaCat className="w-3 h-3" /> Cats
+                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            Cats
                           </span>
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            <FaPaw className="w-3 h-3" /> Small Pets
+                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            Rabbits
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            Hamsters
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            Birds
                           </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Pet guidelines */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center gap-2 text-gray-300">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-2 text-green-300">
                         <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
                         <span>No additional fees</span>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-300">
+                      <div className="flex items-center gap-2 text-green-300">
                         <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
                         <span>Pet-friendly spaces</span>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-300">
+                      <div className="flex items-center gap-2 text-green-300">
                         <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
                         <span>Please keep on leash</span>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-300">
+                      <div className="flex items-center gap-2 text-green-300">
                         <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
                         <span>Clean up after pet</span>
                       </div>
@@ -2112,7 +2135,7 @@ function BookingPage() {
                     <div className="text-sm text-gray-300 ml-7">
                       Pay half now, settle the balance on check-in
                     </div>
-                    {estimatedPrice && (
+                    {estimatedPrice !== null && estimatedPrice > 0 && (
                       <div className="text-lg font-bold text-blue-400 ml-7 mt-1">
                         ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
                       </div>
@@ -2150,7 +2173,7 @@ function BookingPage() {
                     <div className="text-sm text-gray-300 ml-7">
                       Pay the complete amount upfront
                     </div>
-                    {estimatedPrice && (
+                    {estimatedPrice !== null && estimatedPrice > 0 && (
                       <div className="text-lg font-bold text-green-400 ml-7 mt-1">
                         ₱{estimatedPrice.toLocaleString()}
                       </div>
@@ -2261,24 +2284,38 @@ function BookingPage() {
                 )}
 
                 {/* Show summary when dates are selected */}
-                {formData.checkIn && formData.checkOut && pricingBreakdown && (
-                  <div className="mt-3 p-3 bg-green-900/20 border border-green-600/30 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FaCheck className="w-4 h-4 text-green-400" />
-                        <span className="text-green-300 text-sm font-medium">
-                          {pricingBreakdown.totalNights}{" "}
-                          {pricingBreakdown.totalNights === 1
-                            ? "Night"
-                            : "Nights"}{" "}
-                          Selected
-                        </span>
+                {formData.checkIn && formData.checkOut && (
+                  <>
+                    {pricingBreakdown && pricingBreakdown.totalNights > 0 ? (
+                      <div className="mt-3 p-3 bg-green-900/20 border border-green-600/30 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FaCheck className="w-4 h-4 text-green-400" />
+                            <span className="text-green-300 text-sm font-medium">
+                              {pricingBreakdown.totalNights}{" "}
+                              {pricingBreakdown.totalNights === 1
+                                ? "Night"
+                                : "Nights"}{" "}
+                              Selected
+                            </span>
+                          </div>
+                          <span className="text-green-200 text-sm font-bold">
+                            ₱{pricingBreakdown.totalAmount.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-green-200 text-sm font-bold">
-                        ₱{pricingBreakdown.totalAmount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
+                    ) : formData.checkIn.toDateString() ===
+                      formData.checkOut.toDateString() ? (
+                      <div className="mt-3 p-3 bg-orange-900/20 border border-orange-600/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <FaExclamationTriangle className="w-4 h-4 text-orange-400" />
+                          <span className="text-orange-300 text-sm font-medium">
+                            Select a different check-out date
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
                 )}
 
                 {/* Calendar Legend */}
@@ -2291,7 +2328,7 @@ function BookingPage() {
                           "linear-gradient(135deg, #059669 0%, #047857 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-400">Open</span>
+                    <span className="text-gray-400">Available</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span
@@ -2301,7 +2338,7 @@ function BookingPage() {
                           "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-400">Selected</span>
+                    <span className="text-gray-400">Your Pick</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span
@@ -2345,7 +2382,7 @@ function BookingPage() {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-gray-600"></span>
-                    <span className="text-gray-400">N/A</span>
+                    <span className="text-gray-400">Unavailable</span>
                   </span>
                 </div>
               </div>
@@ -2547,10 +2584,84 @@ function BookingPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-4 border-t border-gray-700">
-                      <p className="text-gray-400 text-sm">
-                        Complete dates to see pricing
-                      </p>
+                    <div className="space-y-3">
+                      {/* Show different content based on date selection state */}
+                      {formData.checkIn &&
+                      formData.checkOut &&
+                      formData.checkIn.toDateString() ===
+                        formData.checkOut.toDateString() ? (
+                        // Same day selected - invalid booking
+                        <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-600/30">
+                          <div className="flex items-start gap-2">
+                            <FaExclamationTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-orange-300 text-sm font-medium">
+                                Same-day booking
+                              </p>
+                              <p className="text-orange-200/70 text-xs mt-1">
+                                Please select a different check-out date for at
+                                least 1 night stay.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : !formData.checkIn ? (
+                        // No dates selected - show rates preview
+                        <>
+                          <div className="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                            <p className="text-xs text-gray-400 mb-2 font-medium">
+                              Nightly Rates
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-300">
+                                  Mon - Thu
+                                </span>
+                                <span className="text-sm font-semibold text-white">
+                                  ₱9,000
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-300">
+                                  Fri - Sat
+                                </span>
+                                <span className="text-sm font-semibold text-white">
+                                  ₱12,000
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs pt-1 border-t border-gray-700/50">
+                                <span className="text-gray-500">
+                                  Extra guest (16+)
+                                </span>
+                                <span className="text-gray-400">
+                                  +₱300/night
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-center pt-1">
+                            <p className="text-gray-500 text-xs">
+                              Select dates above to calculate total
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        // Check-in selected, waiting for check-out
+                        <div className="p-3 bg-blue-900/20 rounded-lg border border-blue-600/30">
+                          <div className="flex items-start gap-2">
+                            <FaInfoCircle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-blue-300 text-sm font-medium">
+                                Select check-out date
+                              </p>
+                              <p className="text-blue-200/70 text-xs mt-1">
+                                Click another date on the calendar to complete
+                                your booking.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2561,9 +2672,13 @@ function BookingPage() {
             <div className="lg:col-span-2 mt-6">
               <button
                 type="submit"
-                disabled={!canCreateBooking || isSubmitting}
+                disabled={
+                  !canCreateBooking ||
+                  isSubmitting ||
+                  (estimatedPrice !== null && estimatedPrice === 0)
+                }
                 className={`w-full font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-lg relative overflow-hidden ${
-                  canCreateBooking && !isSubmitting
+                  canCreateBooking && !isSubmitting && estimatedPrice !== 0
                     ? "bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white hover:from-red-700 hover:via-red-800 hover:to-red-900 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
                     : "bg-gray-600 text-gray-300 cursor-not-allowed"
                 }`}
@@ -2574,7 +2689,7 @@ function BookingPage() {
                     <span>Processing Reservation...</span>
                   </div>
                 ) : canCreateBooking ? (
-                  estimatedPrice ? (
+                  estimatedPrice && estimatedPrice > 0 ? (
                     paymentType === "half" ? (
                       `Pay Down Payment - ₱${Math.round(
                         estimatedPrice * 0.5
@@ -2582,8 +2697,13 @@ function BookingPage() {
                     ) : (
                       `Pay Full Amount - ₱${estimatedPrice.toLocaleString()}`
                     )
+                  ) : estimatedPrice === 0 ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <FaExclamationTriangle className="w-4 h-4" /> Select Valid
+                      Dates
+                    </span>
                   ) : (
-                    " Complete Booking Details"
+                    "Complete Booking Details"
                   )
                 ) : (
                   <span className="flex items-center justify-center gap-2">
@@ -2591,11 +2711,14 @@ function BookingPage() {
                   </span>
                 )}
               </button>
-              {estimatedPrice && canCreateBooking && !isSubmitting && (
-                <p className="text-center text-sm text-gray-400 mt-3">
-                  By reserving, you agree to our booking terms and conditions
-                </p>
-              )}
+              {estimatedPrice !== null &&
+                estimatedPrice > 0 &&
+                canCreateBooking &&
+                !isSubmitting && (
+                  <p className="text-center text-sm text-gray-400 mt-3">
+                    By reserving, you agree to our booking terms and conditions
+                  </p>
+                )}
               {isSubmitting && (
                 <p className="text-center text-sm text-blue-400 mt-3 animate-pulse flex items-center justify-center gap-2">
                   <FaSpinner className="w-3 h-3 animate-spin" /> Securing your
