@@ -14,6 +14,7 @@ import {
   Camera,
   Menu,
   X,
+  Crown,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -153,6 +154,7 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
 function FullAdminLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [adminName, setAdminName] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
@@ -172,7 +174,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
 
   // ✅ OPTIMIZED: Debounced auth check to prevent navigation blocking
   useEffect(() => {
-    const authCheckTimer = setTimeout(() => {
+    const authCheckTimer = setTimeout(async () => {
       if (authLoading) return;
 
       if (
@@ -181,9 +183,30 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
         (userRole === "admin" || userRole === "staff")
       ) {
         setUser(authUser);
-        setAdminName(
-          `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`
-        );
+
+        // Fetch super admin status from database
+        try {
+          const { data: userData } = await supabase
+            .from("users")
+            .select("full_name, is_super_admin")
+            .eq("auth_id", authUser.id)
+            .single();
+
+          if (userData?.is_super_admin) {
+            setIsSuperAdmin(true);
+            setAdminName(userData?.full_name || "Super Admin");
+          } else {
+            setAdminName(
+              userData?.full_name ||
+                `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`
+            );
+          }
+        } catch {
+          setAdminName(
+            `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`
+          );
+        }
+
         setLoading(false);
         return;
       }
@@ -369,26 +392,45 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
             <AdminNotificationBell />
 
             <div className="flex flex-col gap-1">
-              <div className="hidden sm:flex items-center gap-2 text-gray-700 font-semibold bg-blue-50 px-3 py-1 rounded-full text-sm">
-                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              <div
+                className={`hidden sm:flex items-center gap-2 font-semibold px-3 py-1 rounded-full text-sm ${
+                  isSuperAdmin
+                    ? "bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800 border border-amber-300"
+                    : "bg-blue-50 text-gray-700"
+                }`}
+              >
+                {isSuperAdmin ? (
+                  <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                ) : (
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                )}
                 <span className="hidden md:inline">
                   {adminName || user?.email || "Admin User"}
                 </span>
                 <span className="md:hidden">
-                  {userRole?.charAt(0).toUpperCase()}
+                  {isSuperAdmin ? "SA" : userRole?.charAt(0).toUpperCase()}
                 </span>
               </div>
               {userRole && (
                 <div
-                  className={`text-xs px-2 sm:px-3 py-1 rounded-full text-center ${
-                    userRole === "admin"
+                  className={`text-xs px-2 sm:px-3 py-1 rounded-full text-center font-medium ${
+                    isSuperAdmin
+                      ? "bg-gradient-to-r from-yellow-200 to-amber-200 text-amber-900 border border-amber-400"
+                      : userRole === "admin"
                       ? "bg-red-100 text-red-700"
                       : userRole === "staff"
                       ? "bg-green-100 text-green-700"
                       : "bg-blue-100 text-blue-700"
                   }`}
                 >
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                  {isSuperAdmin ? (
+                    <span className="flex items-center justify-center gap-1">
+                      <Crown className="w-3 h-3" />
+                      Super Admin
+                    </span>
+                  ) : (
+                    userRole.charAt(0).toUpperCase() + userRole.slice(1)
+                  )}
                 </div>
               )}
             </div>

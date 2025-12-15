@@ -76,7 +76,8 @@ export default function AdminReviewsPage() {
           )
         `
         )
-        .order("created_at", { ascending: false });
+        .order("rating", { ascending: false }) // Sort by rating: 5 stars first, then 4, 3, 2, 1
+        .order("created_at", { ascending: false }); // Then by newest first
 
       if (error) throw error;
       console.log("✅ Successfully fetched reviews:", data?.length || 0);

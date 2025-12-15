@@ -2303,14 +2303,16 @@ function Home() {
               </h2>
             </div>
             <ReviewSystem limit={8} showPagination={false} className="" />
-            <div className="text-center mt-8">
+
+            {/* Call-to-Action Button */}
+            <div className="text-center mt-10">
               <Link
                 href="/review"
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-full hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg touch-manipulation min-h-[48px]"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold rounded-full hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl touch-manipulation"
               >
                 <MessageCircleHeart className="w-5 h-5 mr-2" />
                 Share Your Experience
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </div>
           </div>

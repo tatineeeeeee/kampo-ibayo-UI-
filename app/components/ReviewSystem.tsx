@@ -11,6 +11,9 @@ import {
   Calendar,
   CheckCircle,
   AlertCircle,
+  X,
+  Eye,
+  Filter,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -39,11 +42,24 @@ const ReviewSystem = ({
   className = "",
 }: ReviewSystemProps) => {
   const [reviews, setReviews] = useState<ReviewWithPhotos[]>([]);
+  const [allReviewsData, setAllReviewsData] = useState<ReviewWithPhotos[]>([]); // For modal
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalReviews, setTotalReviews] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
+
+  // Modal state
+  const [showAllReviewsModal, setShowAllReviewsModal] = useState(false);
+  const [modalFilter, setModalFilter] = useState<number | "all">("all");
+  const [modalLoading, setModalLoading] = useState(false);
+  const [ratingCounts, setRatingCounts] = useState<{ [key: number]: number }>({
+    5: 0,
+    4: 0,
+    3: 0,
+    2: 0,
+    1: 0,
+  });
 
   const reviewsPerPage = limit;
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
@@ -84,8 +100,8 @@ const ReviewSystem = ({
         try {
           console.log("📸 Attempting to fetch reviews with photos...");
 
-          // For homepage (limit=4, no pagination), prioritize best reviews
-          // For other pages, show all reviews with pagination
+          // Show ALL approved reviews, sorted by rating (highest first) for authenticity
+          // This follows industry standards (Airbnb, Booking.com, Google Reviews)
           let query = supabase
             .from("guest_reviews")
             .select(
@@ -100,19 +116,16 @@ const ReviewSystem = ({
           `,
               { count: "exact" }
             )
-            .eq("approved", true);
+            .eq("approved", true)
+            .order("rating", { ascending: false }) // 5★ first, then 4★, 3★, 2★, 1★
+            .order("created_at", { ascending: false }); // Then by newest
 
-          if (limit === 4 && !showPagination) {
-            // Homepage: Show 4 best reviews (5-star with photos first, then by recency)
-            query = query
-              .order("rating", { ascending: false })
-              .order("created_at", { ascending: false })
-              .limit(4);
+          if (!showPagination) {
+            // Homepage: Show limited reviews (all ratings, best first)
+            query = query.limit(limit);
           } else {
             // Other pages: Standard pagination
-            query = query
-              .order("created_at", { ascending: false })
-              .range(offset, offset + reviewsPerPage - 1);
+            query = query.range(offset, offset + reviewsPerPage - 1);
           }
 
           const { data, error, count: reviewCount } = await query;
@@ -130,30 +143,38 @@ const ReviewSystem = ({
               "reviews"
             );
 
-            // For homepage, filter and prioritize reviews with photos
-            if (limit === 4 && !showPagination && data) {
-              const reviewsWithPhotos = data.filter(
-                (review) =>
-                  review.review_photos && review.review_photos.length > 0
-              );
-              const reviewsWithoutPhotos = data.filter(
-                (review) =>
-                  !review.review_photos || review.review_photos.length === 0
-              );
+            // For homepage, prioritize reviews with photos within each rating tier
+            if (!showPagination && data) {
+              // Group by rating, then prioritize photos within each group
+              const groupByRating = (rating: number) => {
+                const withPhotos = data.filter(
+                  (r) =>
+                    r.rating === rating &&
+                    r.review_photos &&
+                    r.review_photos.length > 0
+                );
+                const withoutPhotos = data.filter(
+                  (r) =>
+                    r.rating === rating &&
+                    (!r.review_photos || r.review_photos.length === 0)
+                );
+                return [...withPhotos, ...withoutPhotos];
+              };
 
-              // Prioritize: 5-star with photos, then 4-star with photos, then others
+              // Sort: 5★ (photos first) → 4★ (photos first) → 3★ → 2★ → 1★
               const prioritized = [
-                ...reviewsWithPhotos.filter((r) => r.rating === 5),
-                ...reviewsWithPhotos.filter((r) => r.rating === 4),
-                ...reviewsWithPhotos.filter((r) => r.rating < 4),
-                ...reviewsWithoutPhotos,
-              ].slice(0, 4);
+                ...groupByRating(5),
+                ...groupByRating(4),
+                ...groupByRating(3),
+                ...groupByRating(2),
+                ...groupByRating(1),
+              ].slice(0, limit);
 
               reviewsData = prioritized;
               console.log(
-                "🎯 Homepage: Prioritized",
+                "🎯 Homepage: Showing",
                 prioritized.length,
-                "best reviews"
+                "reviews (all ratings, highest first, photos prioritized)"
               );
             }
           }
@@ -195,7 +216,7 @@ const ReviewSystem = ({
         setReviews(reviewsData || []);
         setTotalReviews(count || 0);
 
-        // Calculate average rating from approved reviews only
+        // Calculate average rating and rating counts from approved reviews only
         const { data: allReviews, error: avgError } = await supabase
           .from("guest_reviews")
           .select("rating")
@@ -206,6 +227,15 @@ const ReviewSystem = ({
             allReviews.reduce((sum, review) => sum + review.rating, 0) /
             allReviews.length;
           setAverageRating(Math.round(avg * 10) / 10); // Round to 1 decimal place
+
+          // Count reviews by rating
+          const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+          allReviews.forEach((review) => {
+            if (review.rating >= 1 && review.rating <= 5) {
+              counts[review.rating as keyof typeof counts]++;
+            }
+          });
+          setRatingCounts(counts);
         }
       } catch (err) {
         console.error("Error fetching reviews:", err);
@@ -216,6 +246,53 @@ const ReviewSystem = ({
     },
     [reviewsPerPage, limit, showPagination]
   );
+
+  // Fetch all reviews for modal
+  const fetchAllReviewsForModal = useCallback(async () => {
+    try {
+      setModalLoading(true);
+
+      const { data, error } = await supabase
+        .from("guest_reviews")
+        .select(
+          `
+          *,
+          review_photos (
+            id,
+            photo_url,
+            caption,
+            display_order
+          )
+        `
+        )
+        .eq("approved", true)
+        .order("rating", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setAllReviewsData(data || []);
+    } catch (err) {
+      console.error("Error fetching all reviews:", err);
+    } finally {
+      setModalLoading(false);
+    }
+  }, []);
+
+  // Open modal and fetch all reviews
+  const openAllReviewsModal = () => {
+    setShowAllReviewsModal(true);
+    setModalFilter("all");
+    if (allReviewsData.length === 0) {
+      fetchAllReviewsForModal();
+    }
+  };
+
+  // Get filtered reviews for modal
+  const getFilteredModalReviews = () => {
+    if (modalFilter === "all") return allReviewsData;
+    return allReviewsData.filter((review) => review.rating === modalFilter);
+  };
 
   useEffect(() => {
     fetchReviews(currentPage);
@@ -497,10 +574,192 @@ const ReviewSystem = ({
         </div>
       )}
 
+      {/* View All Reviews Button - Clean secondary style */}
+      {totalReviews > 0 && (
+        <div className="text-center mt-8">
+          <button
+            onClick={openAllReviewsModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-gray-600 hover:border-red-500 text-gray-300 hover:text-white font-medium rounded-lg transition-all duration-300"
+          >
+            <Eye className="w-4 h-4" />
+            View All {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
+          </button>
+        </div>
+      )}
+
       {/* Review Summary */}
       <div className="text-center mt-6 text-sm text-gray-400">
         Showing {reviews.length} of {totalReviews} verified guest reviews
       </div>
+
+      {/* All Reviews Modal */}
+      {showAllReviewsModal && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowAllReviewsModal(false)}
+        >
+          <div
+            className="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 sm:p-6 z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">
+                    All Guest Reviews
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    {renderStars(averageRating, "sm")}
+                    <span className="text-gray-400 text-sm">
+                      {averageRating} average · {totalReviews} reviews
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAllReviewsModal(false)}
+                  className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-400 hover:text-white" />
+                </button>
+              </div>
+
+              {/* Rating Filter */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400 text-sm mr-2">Filter:</span>
+                <button
+                  onClick={() => setModalFilter("all")}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    modalFilter === "all"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  }`}
+                >
+                  All ({totalReviews})
+                </button>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <button
+                    key={rating}
+                    onClick={() => setModalFilter(rating)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                      modalFilter === rating
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    } ${ratingCounts[rating] === 0 ? "opacity-50" : ""}`}
+                    disabled={ratingCounts[rating] === 0}
+                  >
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {rating} ({ratingCounts[rating]})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Content - Scrollable */}
+            <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-4 sm:p-6">
+              {modalLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                </div>
+              ) : getFilteredModalReviews().length === 0 ? (
+                <div className="text-center py-12">
+                  <Star className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400">
+                    No reviews found for this rating
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {getFilteredModalReviews().map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-gray-800 p-4 sm:p-6 rounded-xl hover:bg-gray-750 transition-colors"
+                    >
+                      {/* Rating and Date */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {renderStars(review.rating)}
+                          <span className="text-yellow-400 font-semibold">
+                            {review.rating}/5
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-500 text-xs sm:text-sm">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>{formatDate(review.created_at)}</span>
+                        </div>
+                      </div>
+
+                      {/* Review Text */}
+                      <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4">
+                        &ldquo;{review.review_text}&rdquo;
+                      </p>
+
+                      {/* Review Photos */}
+                      {review.review_photos &&
+                        review.review_photos.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                              {review.review_photos
+                                .sort(
+                                  (a, b) =>
+                                    (a.display_order || 0) -
+                                    (b.display_order || 0)
+                                )
+                                .map((photo) => (
+                                  <div
+                                    key={photo.id}
+                                    className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 overflow-hidden rounded-lg"
+                                  >
+                                    <Image
+                                      src={photo.photo_url}
+                                      alt={photo.caption || "Review photo"}
+                                      fill
+                                      className="object-cover"
+                                      sizes="96px"
+                                    />
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Guest Info */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-700">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-red-400">
+                            {review.guest_name}
+                          </span>
+                          {review.approved && (
+                            <div className="flex items-center gap-1 text-green-400 text-xs">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Verified</span>
+                            </div>
+                          )}
+                        </div>
+                        {review.guest_location && (
+                          <div className="flex items-center gap-1 text-gray-500 text-xs sm:text-sm">
+                            <MapPin className="w-3 h-3" />
+                            <span>{review.guest_location}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-4 text-center">
+              <p className="text-gray-400 text-sm">
+                Showing {getFilteredModalReviews().length}{" "}
+                {modalFilter === "all" ? "" : `${modalFilter}-star `}reviews
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
