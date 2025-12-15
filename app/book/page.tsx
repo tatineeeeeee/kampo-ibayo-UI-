@@ -10,6 +10,13 @@ import {
   FaHome,
   FaUser,
   FaSpinner,
+  FaDog,
+  FaCat,
+  FaPaw,
+  FaCheck,
+  FaInfoCircle,
+  FaLightbulb,
+  FaBan,
 } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
@@ -1821,10 +1828,13 @@ function BookingPage() {
                   Number of Guests <span className="text-red-500">*</span>
                 </label>
                 <div className="mb-3 p-3 bg-blue-900/20 border border-blue-600/40 rounded-lg">
-                  <p className="text-xs text-blue-200">
-                    ℹ️ <span className="font-semibold">Standard:</span> Up to 15
-                    guests included · ₱300/night per extra guest · Max 100
-                    guests
+                  <p className="text-xs text-blue-200 flex items-start gap-2">
+                    <FaInfoCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <span className="font-semibold">Standard:</span> Up to 15
+                      guests included · ₱300/night per extra guest · Max 100
+                      guests
+                    </span>
                   </p>
                 </div>
 
@@ -1925,32 +1935,123 @@ function BookingPage() {
                 </div>
               </div>
 
-              {/* Pet info */}
+              {/* Pet Section - Enhanced UI */}
               <div
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                className={`rounded-xl border-2 transition-all duration-300 overflow-hidden ${
                   formData.pet
-                    ? "bg-green-900/20 border-green-600"
+                    ? "bg-gradient-to-br from-green-900/30 to-emerald-900/20 border-green-500/60"
                     : "bg-gray-800/30 border-gray-600 hover:border-gray-500"
                 }`}
               >
-                <label className="flex items-start gap-3 cursor-pointer">
+                {/* Main Toggle */}
+                <label className="flex items-center gap-4 p-4 cursor-pointer">
+                  <div
+                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                      formData.pet
+                        ? "bg-green-500 border-green-500"
+                        : "border-gray-500 hover:border-gray-400"
+                    }`}
+                  >
+                    {formData.pet && (
+                      <FaCheck className="w-3.5 h-3.5 text-white" />
+                    )}
+                  </div>
                   <input
                     type="checkbox"
                     name="pet"
                     checked={formData.pet}
                     onChange={handleChange}
-                    className="mt-1 h-5 w-5 text-red-600 focus:ring-2 focus:ring-red-500 border-gray-600 rounded cursor-pointer"
+                    className="sr-only"
                   />
-                  <span className="flex-1">
-                    <span className="block font-semibold text-white">
-                      I will be bringing a pet 🐾
-                    </span>
-                    <span className="text-sm text-gray-400 mt-1 block">
-                      Pets are welcome at no additional cost. Please notify us
-                      in advance.
-                    </span>
-                  </span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <FaPaw
+                        className={`w-5 h-5 ${
+                          formData.pet ? "text-green-400" : "text-gray-400"
+                        }`}
+                      />
+                      <span
+                        className={`font-semibold ${
+                          formData.pet ? "text-green-200" : "text-white"
+                        }`}
+                      >
+                        I&apos;m bringing a pet
+                      </span>
+                    </div>
+                  </div>
+                  {/* Pet icons preview */}
+                  <div className="flex items-center gap-1.5">
+                    <FaDog
+                      className={`w-4 h-4 ${
+                        formData.pet ? "text-green-400" : "text-gray-500"
+                      }`}
+                    />
+                    <FaCat
+                      className={`w-4 h-4 ${
+                        formData.pet ? "text-green-400" : "text-gray-500"
+                      }`}
+                    />
+                  </div>
                 </label>
+
+                {/* Expanded Info - Only shows when pet is checked */}
+                {formData.pet && (
+                  <div className="px-4 pb-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                    {/* Divider */}
+                    <div className="h-px bg-green-600/30"></div>
+
+                    {/* Allowed pets */}
+                    <div className="flex items-start gap-3 p-3 bg-green-900/20 rounded-lg">
+                      <FaInfoCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="text-green-200 font-medium mb-2">
+                          Domestic Pets Welcome
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            <FaDog className="w-3 h-3" /> Dogs
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            <FaCat className="w-3 h-3" /> Cats
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
+                            <FaPaw className="w-3 h-3" /> Small Pets
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pet guidelines */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
+                        <span>No additional fees</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
+                        <span>Pet-friendly spaces</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
+                        <span>Please keep on leash</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
+                        <span>Clean up after pet</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Collapsed hint - Only shows when pet is NOT checked */}
+                {!formData.pet && (
+                  <div className="px-4 pb-3 -mt-1">
+                    <p className="text-xs text-gray-500">
+                      Dogs, cats, and small domestic pets welcome at no extra
+                      cost
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Special Request */}
@@ -2007,11 +2108,6 @@ function BookingPage() {
                       <span className="font-bold text-white">
                         50% Down Payment
                       </span>
-                      {paymentType === "half" && (
-                        <span className="text-blue-300 text-sm">
-                          ✓ Selected
-                        </span>
-                      )}
                     </div>
                     <div className="text-sm text-gray-300 ml-7">
                       Pay half now, settle the balance on check-in
@@ -2050,11 +2146,6 @@ function BookingPage() {
                         )}
                       </div>
                       <span className="font-bold text-white">Full Payment</span>
-                      {paymentType === "full" && (
-                        <span className="text-green-300 text-sm">
-                          ✓ Selected
-                        </span>
-                      )}
                     </div>
                     <div className="text-sm text-gray-300 ml-7">
                       Pay the complete amount upfront
@@ -2069,11 +2160,14 @@ function BookingPage() {
 
                 {/* Payment Benefits */}
                 <div className="mt-3 p-3 bg-gray-800/30 border border-gray-600 rounded-lg">
-                  <p className="text-xs text-gray-400">
-                    💡 <span className="font-semibold">Tip:</span>{" "}
-                    {paymentType === "half"
-                      ? "Down payment secures your booking. Pay remaining balance on arrival."
-                      : "Full payment provides peace of mind - no additional payments needed!"}
+                  <p className="text-xs text-gray-400 flex items-start gap-2">
+                    <FaLightbulb className="w-3.5 h-3.5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <span className="font-semibold">Tip:</span>{" "}
+                      {paymentType === "half"
+                        ? "Down payment secures your booking. Pay remaining balance on arrival."
+                        : "Full payment provides peace of mind - no additional payments needed!"}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -2150,127 +2244,108 @@ function BookingPage() {
                   />
                 </div>
 
-                {/* Multi-day booking instructions */}
-                <div className="mt-3 p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">ℹ</span>
+                {/* Multi-day booking instructions - Only show when no dates selected */}
+                {!formData.checkIn && (
+                  <div className="mt-3 p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FaInfoCircle className="w-4 h-4 text-blue-400" />
+                      <span className="text-blue-300 text-sm font-medium">
+                        Select Your Dates
+                      </span>
                     </div>
-                    <span className="text-blue-300 text-sm font-medium">
-                      Multi-Day Booking
-                    </span>
+                    <p className="text-blue-200 text-xs leading-relaxed">
+                      Click a date to set <strong>check-in</strong>, then click
+                      another for <strong>check-out</strong>.
+                    </p>
                   </div>
-                  <p className="text-blue-200 text-xs leading-relaxed">
-                    Select your <strong>check-in</strong> and{" "}
-                    <strong>check-out</strong> dates to book multiple nights.
-                    Rates:{" "}
-                    <span className="text-blue-100">
-                      ₱9,000/night (Mon-Thu)
-                    </span>{" "}
-                    •{" "}
-                    <span className="text-blue-100">
-                      ₱12,000/night (Fri-Sun, Holidays)
-                    </span>
-                    {formData.checkIn &&
-                      formData.checkOut &&
-                      pricingBreakdown && (
-                        <span className="block mt-1 text-blue-100">
-                          → Your stay:{" "}
-                          <strong>{pricingBreakdown.totalNights} nights</strong>{" "}
-                          • Total:{" "}
-                          <strong>
-                            ₱{pricingBreakdown.totalAmount.toLocaleString()}
-                          </strong>
-                        </span>
-                      )}
-                  </p>
-                </div>
+                )}
 
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs">
-                  <span className="flex items-center gap-2">
+                {/* Show summary when dates are selected */}
+                {formData.checkIn && formData.checkOut && pricingBreakdown && (
+                  <div className="mt-3 p-3 bg-green-900/20 border border-green-600/30 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FaCheck className="w-4 h-4 text-green-400" />
+                        <span className="text-green-300 text-sm font-medium">
+                          {pricingBreakdown.totalNights}{" "}
+                          {pricingBreakdown.totalNights === 1
+                            ? "Night"
+                            : "Nights"}{" "}
+                          Selected
+                        </span>
+                      </div>
+                      <span className="text-green-200 text-sm font-bold">
+                        ₱{pricingBreakdown.totalAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Calendar Legend */}
+                <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+                  <span className="flex items-center gap-1.5">
                     <span
-                      className="w-4 h-4 rounded"
+                      className="w-3 h-3 rounded"
                       style={{
                         background:
                           "linear-gradient(135deg, #059669 0%, #047857 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Open</span>
-                      <span className="sm:hidden">Open</span>
-                    </span>
+                    <span className="text-gray-400">Open</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     <span
-                      className="w-4 h-4 rounded"
+                      className="w-3 h-3 rounded"
                       style={{
                         background:
                           "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Selected</span>
-                      <span className="sm:hidden">Pick ✓</span>
-                    </span>
+                    <span className="text-gray-400">Selected</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     <span
-                      className="w-4 h-4 rounded"
+                      className="w-3 h-3 rounded"
                       style={{
                         background:
                           "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Check-in</span>
-                      <span className="sm:hidden">CHECK-IN</span>
-                    </span>
+                    <span className="text-gray-400">Check-in</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     <span
-                      className="w-4 h-4 rounded"
+                      className="w-3 h-3 rounded"
                       style={{
                         background:
                           "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Check-out</span>
-                      <span className="sm:hidden">CHECK-OUT</span>
-                    </span>
+                    <span className="text-gray-400">Check-out</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     <span
-                      className="w-4 h-4 rounded"
+                      className="w-3 h-3 rounded"
                       style={{
                         background:
                           "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Occupied</span>
-                      <span className="sm:hidden">Occupied</span>
-                    </span>
+                    <span className="text-gray-400">Occupied</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     <span
-                      className="w-4 h-4 rounded"
+                      className="w-3 h-3 rounded"
                       style={{
                         background:
                           "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)",
                       }}
                     ></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Full Day</span>
-                      <span className="sm:hidden">Full</span>
-                    </span>
+                    <span className="text-gray-400">Full</span>
                   </span>
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded bg-gray-600"></span>
-                    <span className="text-gray-300">
-                      <span className="hidden sm:inline">Unavailable</span>
-                      <span className="sm:hidden">N/A</span>
-                    </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded bg-gray-600"></span>
+                    <span className="text-gray-400">N/A</span>
                   </span>
                 </div>
               </div>
@@ -2334,26 +2409,16 @@ function BookingPage() {
                     <>
                       {/* Multi-day pricing breakdown */}
                       <div className="p-3 bg-gray-800/50 rounded-lg mb-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-gray-300 text-sm font-medium">
-                            Stay Duration:
-                          </span>
-                          <span className="text-white font-semibold text-sm">
-                            {pricingBreakdown.totalNights}{" "}
-                            {pricingBreakdown.totalNights === 1
-                              ? "Night"
-                              : "Nights"}
-                          </span>
-                        </div>
-
-                        {/* Detailed breakdown */}
+                        {/* Compact pricing breakdown */}
                         <div className="space-y-1.5 text-xs">
                           {pricingBreakdown.breakdown.weekdayNights > 0 && (
                             <div className="flex justify-between items-center">
                               <span className="text-gray-400">
-                                📅 Weekdays (
                                 {pricingBreakdown.breakdown.weekdayNights}{" "}
-                                nights × ₱9,000)
+                                {pricingBreakdown.breakdown.weekdayNights === 1
+                                  ? "weekday"
+                                  : "weekdays"}{" "}
+                                × ₱9,000
                               </span>
                               <span className="text-gray-200">
                                 ₱
@@ -2364,9 +2429,11 @@ function BookingPage() {
                           {pricingBreakdown.breakdown.weekendNights > 0 && (
                             <div className="flex justify-between items-center">
                               <span className="text-gray-400">
-                                🌴 Weekends/Holidays (
                                 {pricingBreakdown.breakdown.weekendNights}{" "}
-                                nights × ₱12,000)
+                                {pricingBreakdown.breakdown.weekendNights === 1
+                                  ? "weekend"
+                                  : "weekends"}{" "}
+                                × ₱12,000
                               </span>
                               <span className="text-gray-200">
                                 ₱
@@ -2374,17 +2441,6 @@ function BookingPage() {
                               </span>
                             </div>
                           )}
-                        </div>
-
-                        <div className="mt-2 pt-2 border-t border-gray-600">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300 text-sm font-medium">
-                              Base Rate Total:
-                            </span>
-                            <span className="text-white font-semibold">
-                              ₱{pricingBreakdown.totalBaseRate.toLocaleString()}
-                            </span>
-                          </div>
                         </div>
                       </div>
 
@@ -2428,42 +2484,39 @@ function BookingPage() {
                         parseInt(formData.guests) > 15 &&
                         pricingBreakdown &&
                         pricingBreakdown.totalNights > 1 && (
-                          <div className="text-xs text-yellow-300 bg-yellow-900/10 p-2 rounded">
-                            ℹ️ Extra guest fee: ₱300 ×{" "}
-                            {parseInt(formData.guests) - 15} guests ×{" "}
-                            {pricingBreakdown.totalNights} nights
+                          <div className="text-xs text-yellow-300 bg-yellow-900/10 p-2 rounded flex items-start gap-1.5">
+                            <FaInfoCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <span>
+                              Extra guest fee: ₱300 ×{" "}
+                              {parseInt(formData.guests) - 15} guests ×{" "}
+                              {pricingBreakdown.totalNights} nights
+                            </span>
                           </div>
                         )}
                       <div className="pt-3 mt-2 border-t-2 border-gray-700">
-                        {/* Payment breakdown based on selected payment type */}
+                        {/* Simplified Payment Summary */}
                         <div
                           key={paymentType}
                           className="transition-all duration-300"
                         >
                           {paymentType === "half" ? (
-                            <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3 shadow-lg">
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                                <span className="text-sm font-medium text-blue-300">
-                                  50% Down Payment Option
+                            <div className="space-y-3">
+                              {/* Main amount */}
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-300 text-sm">
+                                  Pay Now (50%)
                                 </span>
-                              </div>
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-base font-bold text-blue-300">
-                                  Payment Amount (50%):
-                                </span>
-                                <span className="text-xl font-bold text-blue-300">
+                                <span className="text-2xl font-bold text-blue-400">
                                   ₱
                                   {Math.round(
                                     estimatedPrice * 0.5
                                   ).toLocaleString()}
                                 </span>
                               </div>
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm text-blue-200">
-                                  Balance (on Arrival):
-                                </span>
-                                <span className="text-sm text-blue-200">
+                              {/* Balance info */}
+                              <div className="flex justify-between items-center text-sm text-gray-400">
+                                <span>Balance on arrival</span>
+                                <span>
                                   ₱
                                   {(
                                     estimatedPrice -
@@ -2471,52 +2524,22 @@ function BookingPage() {
                                   ).toLocaleString()}
                                 </span>
                               </div>
-                              <div className="flex justify-between items-center text-xs border-t border-blue-500/30 pt-2">
-                                <span className="text-blue-200">
-                                  Full Booking Cost:
-                                </span>
-                                <span className="text-blue-200">
-                                  ₱{estimatedPrice.toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="mt-2 pt-2 border-t border-blue-500/30">
-                                <div className="flex items-center gap-1 text-xs text-blue-200">
-                                  <span>💡</span>
-                                  <span>
-                                    Secure your booking with 50% down payment
-                                  </span>
-                                </div>
-                              </div>
                             </div>
                           ) : (
-                            <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-3 shadow-lg">
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span className="text-sm font-medium text-green-300">
-                                  Full Payment Option
+                            <div className="space-y-2">
+                              {/* Main amount */}
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-300 text-sm">
+                                  Total Payment
                                 </span>
-                              </div>
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-base font-bold text-green-300">
-                                  Total Payment (100%):
-                                </span>
-                                <span className="text-xl font-bold text-green-300">
+                                <span className="text-2xl font-bold text-green-400">
                                   ₱{estimatedPrice.toLocaleString()}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-sm text-green-200 mb-2">
-                                <span>✓</span>
-                                <span>
-                                  No additional payment required on arrival
-                                </span>
-                              </div>
-                              <div className="mt-2 pt-2 border-t border-green-500/30">
-                                <div className="flex items-center gap-1 text-xs text-green-200">
-                                  <span>✨</span>
-                                  <span>
-                                    Complete payment - no worries on check-in!
-                                  </span>
-                                </div>
+                              {/* Benefit */}
+                              <div className="flex items-center gap-1.5 text-xs text-green-300">
+                                <FaCheck className="w-3 h-3" />
+                                <span>No payment needed on arrival</span>
                               </div>
                             </div>
                           )}
@@ -2563,7 +2586,9 @@ function BookingPage() {
                     " Complete Booking Details"
                   )
                 ) : (
-                  "⚠️ Booking Limit Reached"
+                  <span className="flex items-center justify-center gap-2">
+                    <FaBan className="w-4 h-4" /> Booking Limit Reached
+                  </span>
                 )}
               </button>
               {estimatedPrice && canCreateBooking && !isSubmitting && (
@@ -2572,9 +2597,9 @@ function BookingPage() {
                 </p>
               )}
               {isSubmitting && (
-                <p className="text-center text-sm text-blue-400 mt-3 animate-pulse">
-                  ⏳ Securing your reservation... Please don&apos;t close this
-                  page
+                <p className="text-center text-sm text-blue-400 mt-3 animate-pulse flex items-center justify-center gap-2">
+                  <FaSpinner className="w-3 h-3 animate-spin" /> Securing your
+                  reservation... Please don&apos;t close this page
                 </p>
               )}
             </div>

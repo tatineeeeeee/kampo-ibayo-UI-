@@ -80,7 +80,7 @@ export const createBookingConfirmationSMS = (
   checkInDate: string
 ): string => {
   const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
-  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Booking ${formattedBookingNumber} received. Please upload payment proof to complete. Check-in: ${checkInDate} 3PM. Thanks!`;
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Booking ${formattedBookingNumber} received. Please upload proof of payment to complete. Check-in: ${checkInDate} 3PM. Thanks!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -127,7 +127,7 @@ export const createBookingRescheduleSMS = (
   newCheckInDate: string
 ): string => {
   const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
-  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Booking ${formattedBookingNumber} rescheduled to ${newCheckInDate}. Upload new payment proof if needed. See you then!`;
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}! Booking ${formattedBookingNumber} rescheduled to ${newCheckInDate}. Upload new proof of payment if needed. See you then!`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
@@ -136,7 +136,7 @@ export const createPaymentReviewSMS = (
   guestName: string
 ): string => {
   const formattedBookingNumber = formatBookingNumber(parseInt(bookingId));
-  const baseMessage = `KAMPO IBAYO: Hi ${guestName}, payment for ${formattedBookingNumber} needs review. Please resubmit payment proof. Contact: 09662815123`;
+  const baseMessage = `KAMPO IBAYO: Hi ${guestName}, payment for ${formattedBookingNumber} needs review. Please resubmit proof of payment. Contact: 09662815123`;
   return baseMessage.padEnd(160, ' ').substring(0, 160);
 };
 
