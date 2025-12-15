@@ -21,6 +21,7 @@ import { supabase } from "../supabaseClient";
 import type { User } from "@supabase/supabase-js";
 
 import { useAuth } from "../contexts/AuthContext";
+import AdminNotificationBell from "../components/AdminNotificationBell";
 
 // FIXED MODE: Use proper authentication but with navigation optimizations
 const USE_SIMPLE_MODE = false;
@@ -327,6 +328,9 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
             </h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Notification Bell */}
+            <AdminNotificationBell />
+
             <div className="flex flex-col gap-1">
               <div className="hidden sm:flex items-center gap-2 text-gray-700 font-semibold bg-blue-50 px-3 py-1 rounded-full text-sm">
                 <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
