@@ -861,7 +861,9 @@ export default function UsersPage() {
       });
 
       // Get the current session for authorization
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         showError("You must be logged in to delete users");
         return;
@@ -872,7 +874,7 @@ export default function UsersPage() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           userId: userId,

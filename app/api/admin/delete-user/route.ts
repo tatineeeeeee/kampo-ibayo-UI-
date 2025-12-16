@@ -42,10 +42,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Invalid or expired session' }, { status: 401 })
     }
 
-    // Get current user's role (is_super_admin column may not exist yet)
+    // Get current user's role and super admin status
     const { data: currentUser } = await supabaseAdmin
       .from('users')
-      .select('id, role')
+      .select('id, role, is_super_admin')
       .eq('auth_id', currentAuthUser.id)
       .single()
 
@@ -62,6 +62,8 @@ export async function DELETE(request: NextRequest) {
       })
       return NextResponse.json({ error: 'Permission denied - Admin access required' }, { status: 403 })
     }
+
+    const isCurrentUserSuperAdmin = currentUser.is_super_admin === true
 
     // Parse request body
     let requestBody
@@ -85,7 +87,7 @@ export async function DELETE(request: NextRequest) {
     if (userId) {
       const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, email, name, role')
+        .select('id, email, name, role, is_super_admin')
         .eq('id', userId)
         .single()
       userDetails = userData
@@ -102,14 +104,24 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 403 })
     }
 
-    // 2. Cannot delete other admins (for now, until super admin is set up)
-    if (userDetails?.role === 'admin') {
-      console.log('🔒 AUDIT: Admin deletion blocked', {
+    // 2. Super Admin cannot be deleted by anyone
+    if (userDetails?.is_super_admin) {
+      console.log('🔒 AUDIT: Super Admin deletion blocked', {
         timestamp: new Date().toISOString(),
         attemptedBy: currentUser.id,
         targetUser: userDetails.email
       })
-      return NextResponse.json({ error: 'Cannot delete administrator accounts' }, { status: 403 })
+      return NextResponse.json({ error: 'Cannot delete Super Admin accounts' }, { status: 403 })
+    }
+
+    // 3. Only Super Admin can delete other admins
+    if (userDetails?.role === 'admin' && !isCurrentUserSuperAdmin) {
+      console.log('🔒 AUDIT: Admin deletion blocked - requires Super Admin', {
+        timestamp: new Date().toISOString(),
+        attemptedBy: currentUser.id,
+        targetUser: userDetails.email
+      })
+      return NextResponse.json({ error: 'Only Super Admin can delete administrator accounts' }, { status: 403 })
     }
 
     // 🔒 AUDIT LOG: Admin user deletion initiated
