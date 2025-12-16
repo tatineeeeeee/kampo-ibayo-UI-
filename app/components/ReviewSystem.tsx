@@ -20,10 +20,10 @@ import Image from "next/image";
 type GuestReview = Tables<"guest_reviews">;
 
 interface ReviewPhotoSimple {
-  id: number;
+  id: string; // Supabase returns UUID strings for ids
   photo_url: string;
   caption: string | null;
-  display_order: number;
+  display_order: number | null;
 }
 
 interface ReviewWithPhotos extends GuestReview {

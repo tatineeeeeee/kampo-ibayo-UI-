@@ -186,15 +186,18 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
 
         // Fetch super admin status from database
         try {
-          const { data: userData } = await supabase
+          const { data: userData, error: userError } = await supabase
             .from("users")
             .select("full_name, is_super_admin")
             .eq("auth_id", authUser.id)
-            .single();
+            .maybeSingle<{
+              full_name: string | null;
+              is_super_admin: boolean | null;
+            }>();
 
-          if (userData?.is_super_admin) {
+          if (!userError && userData?.is_super_admin) {
             setIsSuperAdmin(true);
-            setAdminName(userData?.full_name || "Super Admin");
+            setAdminName(userData.full_name || "Super Admin");
           } else {
             setAdminName(
               userData?.full_name ||
