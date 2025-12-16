@@ -1841,53 +1841,48 @@ function BookingPage() {
                 </div>
 
                 {/* Quick Select Cards */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-2 mb-4">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, guests: "8" })}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-3 rounded-lg border transition-all duration-200 text-center ${
                       formData.guests === "8"
-                        ? "bg-red-600 border-red-500 shadow-lg shadow-red-500/30"
-                        : "bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800"
+                        ? "bg-white text-gray-900 border-white"
+                        : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
                     }`}
                   >
-                    <div className="text-3xl font-bold text-white">8</div>
-                    <div className="text-xs text-gray-300 mt-1">Small</div>
+                    <div className="text-2xl font-bold">8</div>
+                    <div className="text-xs opacity-70">Small</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, guests: "15" })}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-3 rounded-lg border transition-all duration-200 text-center relative ${
                       formData.guests === "15"
-                        ? "bg-red-600 border-red-500 shadow-lg shadow-red-500/30"
-                        : "bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800"
+                        ? "bg-white text-gray-900 border-white"
+                        : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
                     }`}
                   >
-                    <div className="text-3xl font-bold text-white">15</div>
-                    <div className="text-xs text-green-400 mt-1">Standard</div>
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-[10px] font-bold rounded text-white">BEST</div>
+                    <div className="text-2xl font-bold">15</div>
+                    <div className="text-xs opacity-70">Standard</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, guests: "30" })}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-3 rounded-lg border transition-all duration-200 text-center ${
                       formData.guests === "30"
-                        ? "bg-red-600 border-red-500 shadow-lg shadow-red-500/30"
-                        : "bg-gray-800/50 border-gray-600 hover:border-red-500 hover:bg-gray-800"
+                        ? "bg-white text-gray-900 border-white"
+                        : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
                     }`}
                   >
-                    <div className="text-3xl font-bold text-white">30</div>
-                    <div className="text-xs text-yellow-400 mt-1">Large</div>
+                    <div className="text-2xl font-bold">30</div>
+                    <div className="text-xs opacity-70">Large</div>
                   </button>
                 </div>
 
                 {/* Custom Counter */}
-                <div
-                  className={`flex items-center justify-between rounded-xl border-2 px-4 py-3 transition-all duration-200 ${
-                    formData.guests
-                      ? "bg-green-900/20 border-green-600"
-                      : "bg-gray-800/50 border-gray-600"
-                  }`}
-                >
+                <div className="flex items-center justify-between rounded-lg border border-gray-600 px-4 py-3 bg-gray-800/50">
                   <button
                     type="button"
                     onClick={() => {
@@ -1899,7 +1894,7 @@ function BookingPage() {
                         });
                       }
                     }}
-                    className="w-10 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-10 h-10 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-bold text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled={
                       !formData.guests || parseInt(formData.guests) <= 1
                     }
@@ -1907,13 +1902,13 @@ function BookingPage() {
                     −
                   </button>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-3xl font-bold text-white">
                       {formData.guests || 0}
                     </div>
                     <div className="text-xs text-gray-400">
                       {formData.guests
                         ? `guest${parseInt(formData.guests) > 1 ? "s" : ""}`
-                        : "Select guests"}
+                        : "Select"}
                     </div>
                   </div>
                   <button
@@ -1927,7 +1922,7 @@ function BookingPage() {
                         });
                       }
                     }}
-                    className="w-10 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-10 h-10 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-bold text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled={
                       !!(formData.guests && parseInt(formData.guests) >= 100)
                     }
