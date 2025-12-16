@@ -423,7 +423,7 @@ export default function TermsPage() {
                 <p className="text-gray-300 text-sm mb-1">
                   Email: kampoibayo@gmail.com
                 </p>
-                <p className="text-gray-300 text-sm">Phone: 0917-654-3210</p>
+                <p className="text-gray-300 text-sm">Phone: 0966-281-5123</p>
               </div>
 
               <div className="bg-gray-700/50 p-4 rounded-lg">

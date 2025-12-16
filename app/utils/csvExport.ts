@@ -29,7 +29,7 @@ const formatCurrency = (amount: number | null | undefined): string => {
 };
 
 // Helper to format Philippine phone number for display
-// Converts +639123456789 or 639123456789 to 0912-345-6789
+// Converts +639662815123 or 639662815123 to 0966-281-5123
 const formatPhoneNumber = (phone: string | null | undefined): string => {
   if (!phone) return '';
 
@@ -41,7 +41,7 @@ const formatPhoneNumber = (phone: string | null | undefined): string => {
     cleaned = '0' + cleaned.substring(2);
   }
 
-  // Format as 0912-345-6789
+  // Format as 0966-281-5123
   if (cleaned.length === 11 && cleaned.startsWith('0')) {
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
   }

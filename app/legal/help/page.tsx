@@ -23,8 +23,8 @@ export default function HelpPage() {
       type: "Emergency",
       icon: <Phone className="w-6 h-6" />,
       title: "Emergency Line",
-      contact: "0917-654-3210",
-      link: "tel:09176543210",
+      contact: "0966-281-5123",
+      link: "tel:+639662815123",
       description: "24/7 emergency assistance for current guests",
       color: "red",
     },
@@ -84,7 +84,7 @@ export default function HelpPage() {
         {
           question: "Who do I contact for assistance?",
           answer:
-            "On-site staff are available during business hours. For emergencies, call 0917-654-3210 anytime.",
+            "On-site staff are available during business hours. For emergencies, call 0966-281-5123 anytime.",
         },
         {
           question: "What if something is broken?",
@@ -138,7 +138,7 @@ export default function HelpPage() {
         {
           question: "Medical emergency?",
           answer:
-            "Call 911 immediately, then contact resort emergency line 0917-654-3210. Nearest hospital is 20 minutes away.",
+            "Call 911 immediately, then contact resort emergency line 0966-281-5123. Nearest hospital is 20 minutes away.",
         },
         {
           question: "Severe weather procedures?",
@@ -153,7 +153,7 @@ export default function HelpPage() {
         {
           question: "Security concerns?",
           answer:
-            "Contact resort security immediately at 0917-654-3210. Do not approach suspicious individuals yourself.",
+            "Contact resort security immediately at 0966-281-5123. Do not approach suspicious individuals yourself.",
         },
       ],
     },
@@ -232,11 +232,11 @@ export default function HelpPage() {
                 emergency line:
               </p>
               <a
-                href="tel:09176543210"
+                href="tel:+639662815123"
                 className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg font-medium transition-colors min-h-[48px] touch-manipulation"
               >
                 <Phone className="w-4 h-4" />
-                Emergency: 0917-654-3210
+                Emergency: 0966-281-5123
               </a>
             </div>
           </div>

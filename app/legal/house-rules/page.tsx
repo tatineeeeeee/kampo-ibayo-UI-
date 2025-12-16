@@ -115,7 +115,7 @@ export default function HouseRulesPage() {
         {
           rule: "Emergency Procedures",
           details:
-            "Emergency contact: 0917-654-3210. First aid kit available. Nearest hospital 20 minutes away. Know evacuation routes.",
+            "Emergency contact: 0966-281-5123. First aid kit available. Nearest hospital 20 minutes away. Know evacuation routes.",
         },
         {
           rule: "Security Measures",
@@ -391,7 +391,7 @@ export default function HouseRulesPage() {
                   • <strong>Issues:</strong> Report problems immediately
                 </li>
                 <li>
-                  • <strong>Emergency:</strong> Call 0917-654-3210
+                  • <strong>Emergency:</strong> Call 0966-281-5123
                 </li>
                 <li>
                   • <strong>Feedback:</strong> We value your input

@@ -692,7 +692,7 @@ const UserDataExportPDF = ({ data }: { data: ExportData }) => {
               Kampo Ibayo Resort • Brgy. Tapia, General Trias, Cavite
             </Text>
             <Text style={styles.footerText}>
-              Contact: 0917-123-4567 • info@kampoibayo.com
+              Contact: 0966-281-5123 • kampoibayo@gmail.com
             </Text>
           </View>
           <View style={styles.footerRight}>

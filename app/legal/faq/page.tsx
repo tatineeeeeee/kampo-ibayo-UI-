@@ -31,7 +31,7 @@ export default function FAQPage() {
         {
           question: "How do I make a reservation?",
           answer:
-            "You can book through our website, call us at 0917-654-3210, or message us on Facebook. We require a 50% deposit to secure your booking, with the remaining balance due upon check-in.",
+            "You can book through our website, call us at 0966-281-5123, or message us on Facebook. We require a 50% deposit to secure your booking, with the remaining balance due upon check-in.",
         },
         {
           question: "How far in advance should I book?",
@@ -154,7 +154,7 @@ export default function FAQPage() {
         {
           question: "How can I contact the resort during my stay?",
           answer:
-            "For emergencies: 0917-654-3210. For general inquiries: kampoibayo@gmail.com or Facebook message. On-site staff are available during business hours for immediate assistance.",
+            "For emergencies: 0966-281-5123. For general inquiries: kampoibayo@gmail.com or Facebook message. On-site staff are available during business hours for immediate assistance.",
         },
         {
           question: "What if I have special dietary requirements?",
@@ -170,7 +170,7 @@ export default function FAQPage() {
         {
           question: "What should I do in case of an emergency?",
           answer:
-            "Call our emergency number immediately: 0917-654-3210. For medical emergencies, call 911. The nearest hospital is 20 minutes away. We maintain first aid supplies on-site.",
+            "Call our emergency number immediately: 0966-281-5123. For medical emergencies, call 911. The nearest hospital is 20 minutes away. We maintain first aid supplies on-site.",
         },
       ],
     },
