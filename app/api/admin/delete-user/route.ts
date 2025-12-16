@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -28,24 +26,20 @@ export async function DELETE(request: NextRequest) {
       }
     )
 
-    // 🔐 Get the current user making the request for permission checks
-    const cookieStore = await cookies()
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-        },
-      }
-    )
+    // 🔐 Get the access token from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized - No token provided' }, { status: 401 })
+    }
 
-    const { data: { user: currentAuthUser } } = await supabaseAuth.auth.getUser()
+    const accessToken = authHeader.replace('Bearer ', '')
 
-    if (!currentAuthUser) {
-      return NextResponse.json({ error: 'Unauthorized - Not logged in' }, { status: 401 })
+    // Verify the token and get the user using admin client
+    const { data: { user: currentAuthUser }, error: authError } = await supabaseAdmin.auth.getUser(accessToken)
+
+    if (authError || !currentAuthUser) {
+      console.error('Auth verification failed:', authError)
+      return NextResponse.json({ error: 'Unauthorized - Invalid or expired session' }, { status: 401 })
     }
 
     // Get current user's role (is_super_admin column may not exist yet)

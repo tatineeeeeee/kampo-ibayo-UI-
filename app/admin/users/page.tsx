@@ -860,11 +860,19 @@ export default function UsersPage() {
         hasAuthId: !!userToDeleteData.auth_id,
       });
 
+      // Get the current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("You must be logged in to delete users");
+        return;
+      }
+
       // Use the hard delete API to remove from both database and auth
       const response = await fetch("/api/admin/delete-user", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           userId: userId,
