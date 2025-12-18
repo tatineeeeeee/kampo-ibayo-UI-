@@ -1611,8 +1611,8 @@ function Home() {
           .react-datepicker__day--occupied::after,
           .react-datepicker__day--occupied.react-datepicker__day--today::after,
           .react-datepicker__day--occupied.react-datepicker__day--selected::after {
-            content: "BUSY" !important;
-            font-size: 0.5rem !important;
+            content: "OCCUPIED" !important;
+            font-size: 0.45rem !important;
             padding: 1px 2px !important;
           }
 
@@ -2940,19 +2940,16 @@ function Home() {
                                   </span>
                                 </span>
                               </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-yellow-900/20 rounded-md border border-yellow-500/30 min-w-0">
+                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-amber-900/20 rounded-md border border-amber-500/30 min-w-0">
                                 <span
                                   className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
                                   style={{
                                     background:
-                                      "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)",
+                                      "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                                   }}
                                 ></span>
                                 <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  <span className="sm:hidden">Busy</span>
-                                  <span className="hidden sm:inline">
-                                    Occupied
-                                  </span>
+                                  Occupied
                                 </span>
                               </span>
                               <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-violet-900/20 rounded-md border border-violet-600/30 min-w-0">

@@ -1863,7 +1863,9 @@ function BookingPage() {
                         : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
                     }`}
                   >
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-[10px] font-bold rounded text-white">BEST</div>
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-[10px] font-bold rounded text-white">
+                      BEST
+                    </div>
                     <div className="text-2xl font-bold">15</div>
                     <div className="text-xs opacity-70">Standard</div>
                   </button>

@@ -45,6 +45,7 @@ import {
   ChevronRight,
   RotateCcw,
   MessageSquare,
+  Edit3,
 } from "lucide-react";
 import AvailabilityCalendar from "../components/AvailabilityCalendar";
 
@@ -2423,179 +2424,280 @@ function BookingsPageContent() {
           </div>
         )}
 
-        {/* Reschedule Modal */}
+        {/* Enhanced Reschedule Modal - Premium UI/UX */}
         {showRescheduleModal && selectedBooking && (
-          <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Reschedule Booking
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatBookingNumber(selectedBooking.id)}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                >
-                  ×
-                </button>
-              </div>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-300">
+              {/* Header - Sticky */}
+              <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 px-5 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                {/* Mobile drag indicator */}
+                <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4 sm:hidden"></div>
 
-              {/* Current Dates Display */}
-              <div className="mx-6 mt-4 mb-4">
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Current Dates
-                  </p>
-                  <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                      <Calendar className="w-5 h-5 text-white" />
+                    </div>
                     <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        Reschedule
+                      </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Check-in
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {new Date(
-                          selectedBooking.check_in_date
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Check-out
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {new Date(
-                          selectedBooking.check_out_date
-                        ).toLocaleDateString()}
+                        {formatBookingNumber(selectedBooking.id)}
                       </p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Calendar or Date Inputs Toggle */}
-              <div className="mx-6 mb-4">
-                <div className="flex gap-2">
                   <button
-                    onClick={() => setShowCalendar(!showCalendar)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      showCalendar
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                    }`}
+                    onClick={closeModal}
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
-                    📅 Calendar View
-                  </button>
-                  <button
-                    onClick={() => setShowCalendar(false)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      !showCalendar
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                    }`}
-                  >
-                    📝 Date Input
+                    <XCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   </button>
                 </div>
               </div>
 
-              {/* Calendar or Date Inputs */}
-              <div className="mx-6 mb-4">
-                {showCalendar ? (
-                  <div className="border rounded-lg overflow-hidden">
-                    <AvailabilityCalendar
-                      selectedCheckIn={
-                        selectedBooking.check_in_date.split("T")[0]
-                      }
-                      selectedCheckOut={
-                        selectedBooking.check_out_date.split("T")[0]
-                      }
-                      onDateSelect={handleCalendarDateSelect}
-                      excludeBookingId={selectedBooking.id}
-                      minDate={new Date().toISOString().split("T")[0]}
-                      isRescheduling={true}
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        New Check-in Date
-                      </label>
-                      <input
-                        type="date"
-                        value={newCheckInDate}
-                        onChange={(e) => setNewCheckInDate(e.target.value)}
-                        min={new Date().toISOString().split("T")[0]}
-                        className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none text-gray-900 dark:text-white"
-                      />
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto max-h-[calc(95vh-180px)] sm:max-h-[calc(90vh-200px)]">
+                {/* Current Booking Summary */}
+                <div className="px-5 pt-4">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        Current Dates
+                      </span>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+                          Check-in
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {new Date(
+                            selectedBooking.check_in_date
+                          ).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-gray-300 dark:text-gray-600">→</div>
+                      <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+                          Check-out
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {new Date(
+                            selectedBooking.check_out_date
+                          ).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        New Check-out Date
-                      </label>
-                      <input
-                        type="date"
-                        value={newCheckOutDate}
-                        onChange={(e) => setNewCheckOutDate(e.target.value)}
-                        min={
-                          newCheckInDate ||
-                          new Date().toISOString().split("T")[0]
+                {/* View Toggle */}
+                <div className="px-5 pt-4">
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                    <button
+                      onClick={() => setShowCalendar(true)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        showCalendar
+                          ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                          : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Calendar
+                    </button>
+                    <button
+                      onClick={() => setShowCalendar(false)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        !showCalendar
+                          ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                          : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Manual
+                    </button>
+                  </div>
+                </div>
+
+                {/* Date Selection */}
+                <div className="px-5 pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      Select New Dates
+                    </span>
+                  </div>
+
+                  {showCalendar ? (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800">
+                      <AvailabilityCalendar
+                        selectedCheckIn={
+                          selectedBooking.check_in_date.split("T")[0]
                         }
-                        className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none text-gray-900 dark:text-white"
+                        selectedCheckOut={
+                          selectedBooking.check_out_date.split("T")[0]
+                        }
+                        onDateSelect={handleCalendarDateSelect}
+                        excludeBookingId={selectedBooking.id}
+                        minDate={new Date().toISOString().split("T")[0]}
+                        isRescheduling={true}
                       />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                        <label className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          New Check-in
+                        </label>
+                        <input
+                          type="date"
+                          value={newCheckInDate}
+                          onChange={(e) => setNewCheckInDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-white text-base font-medium"
+                        />
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                        <label className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          New Check-out
+                        </label>
+                        <input
+                          type="date"
+                          value={newCheckOutDate}
+                          onChange={(e) => setNewCheckOutDate(e.target.value)}
+                          min={
+                            newCheckInDate ||
+                            new Date().toISOString().split("T")[0]
+                          }
+                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-white text-base font-medium"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Dates Preview */}
+                {newCheckInDate && newCheckOutDate && (
+                  <div className="px-5 pt-4">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-xs font-medium text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+                          New Dates Selected
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wide mb-0.5">
+                            Check-in
+                          </p>
+                          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                            {new Date(newCheckInDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-amber-400">→</div>
+                        <div className="flex-1 text-right">
+                          <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wide mb-0.5">
+                            Check-out
+                          </p>
+                          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                            {new Date(newCheckOutDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      {/* Nights calculation */}
+                      <div className="mt-3 pt-3 border-t border-amber-200/50 dark:border-amber-700/50">
+                        <p className="text-xs text-center text-amber-700 dark:text-amber-300">
+                          {Math.ceil(
+                            (new Date(newCheckOutDate).getTime() -
+                              new Date(newCheckInDate).getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          )}{" "}
+                          night
+                          {Math.ceil(
+                            (new Date(newCheckOutDate).getTime() -
+                              new Date(newCheckInDate).getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          ) !== 1
+                            ? "s"
+                            : ""}{" "}
+                          stay
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Policy Info */}
-              <div className="mx-6 mb-6">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    📅 Rescheduling is free if done 24+ hours before your
-                    current check-in date. Your original dates will be released
-                    when new dates are confirmed.
-                  </p>
+                {/* Policy Notice */}
+                <div className="px-5 pt-4 pb-4">
+                  <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-3">
+                    <Lightbulb className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                      <p className="font-medium">Free reschedule policy</p>
+                      <p className="text-blue-600/80 dark:text-blue-400/80">
+                        Reschedule at least 24 hours before check-in. Original
+                        dates will be released for new bookings.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 p-6 pt-0 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={closeModal}
-                  className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleRescheduleBooking}
-                  disabled={
-                    !newCheckInDate || !newCheckOutDate || rescheduleLoading
-                  }
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-                >
-                  {rescheduleLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b border-white"></div>
-                      Rescheduling...
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="w-4 h-4" />
-                      Confirm Reschedule
-                    </>
-                  )}
-                </button>
+              {/* Fixed Footer Actions */}
+              <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 pb-6 sm:pb-4">
+                <div className="flex gap-3">
+                  <button
+                    onClick={closeModal}
+                    className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3.5 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRescheduleBooking}
+                    disabled={
+                      !newCheckInDate || !newCheckOutDate || rescheduleLoading
+                    }
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25 active:scale-[0.98]"
+                  >
+                    {rescheduleLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Confirm</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
