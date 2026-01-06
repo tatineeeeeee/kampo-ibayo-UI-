@@ -1432,73 +1432,96 @@ export default function AuthPage() {
                 autoComplete="off"
               >
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg w-full sm:w-1/2">
-                    <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                    <input
-                      type="text"
-                      name="firstName"
-                      placeholder="First Name"
-                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                      autoComplete="new-firstname"
-                      required
-                    />
+                  <div className="w-full sm:w-1/2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                      <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="Enter your first name"
+                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                        autoComplete="new-firstname"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg w-full sm:w-1/2">
-                    <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+                  <div className="w-full sm:w-1/2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                      <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Enter your last name"
+                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                        autoComplete="new-lastname"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                    <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                     <input
-                      type="text"
-                      name="lastName"
-                      placeholder="Last Name"
+                      type="email"
+                      name="email"
+                      placeholder="your@email.com"
                       className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                      autoComplete="new-lastname"
+                      autoComplete="new-email"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                  <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="your@email.com"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                    autoComplete="new-email"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                  <FaPhone className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="09XX-XXX-XXXX (11 digits)"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                    autoComplete="new-phone"
-                    onChange={(e) => {
-                      const formatted = formatPhoneNumber(e.target.value);
-                      e.target.value = formatted;
-                    }}
-                    onBlur={(e) => {
-                      if (
-                        e.target.value &&
-                        !validatePhilippinePhone(e.target.value)
-                      ) {
-                        e.target.setCustomValidity(
-                          "Phone number must be exactly 11 digits (09XX-XXX-XXXX)"
-                        );
-                      } else {
-                        e.target.setCustomValidity("");
-                      }
-                    }}
-                    required
-                  />
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
+                    <FaPhone className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="09XX-XXX-XXXX (11 digits)"
+                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
+                      autoComplete="new-phone"
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        e.target.value = formatted;
+                      }}
+                      onBlur={(e) => {
+                        if (
+                          e.target.value &&
+                          !validatePhilippinePhone(e.target.value)
+                        ) {
+                          e.target.setCustomValidity(
+                            "Phone number must be exactly 11 digits (09XX-XXX-XXXX)"
+                          );
+                        } else {
+                          e.target.setCustomValidity("");
+                        }
+                      }}
+                      required
+                    />
+                  </div>
                 </div>
 
                 {/* Password Field - Full Width */}
                 <div className="space-y-2 sm:space-y-3">
                   <div className="w-full">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                      Password <span className="text-red-500">*</span>
+                    </label>
                     <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
                       <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                       <input
@@ -1559,6 +1582,9 @@ export default function AuthPage() {
 
                   {/* Confirm Password Field - Full Width */}
                   <div className="w-full">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                      Confirm Password <span className="text-red-500">*</span>
+                    </label>
                     <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
                       <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
                       <input

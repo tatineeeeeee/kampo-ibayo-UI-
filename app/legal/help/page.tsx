@@ -42,7 +42,7 @@ export default function HelpPage() {
       icon: <MessageCircle className="w-6 h-6" />,
       title: "Facebook Messenger",
       contact: "Kampo Ibayo Resort",
-      link: "#",
+      link: "https://www.facebook.com/profile.php?id=61562942638753",
       description: "Quick responses during business hours",
       color: "purple",
     },

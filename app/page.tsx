@@ -24,8 +24,6 @@ import {
   ArrowRight,
   CreditCard,
   Facebook,
-  Instagram,
-  Youtube,
   Leaf,
   Mountain,
   Star,
@@ -2732,18 +2730,6 @@ function Home() {
                       className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all duration-300 group touch-manipulation"
                     >
                       <Facebook className="w-4 h-4 text-gray-400 group-hover:text-white" />
-                    </a>
-                    <a
-                      href="#"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-all duration-300 group touch-manipulation"
-                    >
-                      <Instagram className="w-4 h-4 text-gray-400 group-hover:text-white" />
-                    </a>
-                    <a
-                      href="#"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-gray-800 hover:bg-red-600 rounded-lg flex items-center justify-center transition-all duration-300 group touch-manipulation"
-                    >
-                      <Youtube className="w-4 h-4 text-gray-400 group-hover:text-white" />
                     </a>
                   </div>
                 </div>
