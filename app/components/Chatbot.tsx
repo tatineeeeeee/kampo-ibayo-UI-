@@ -1801,7 +1801,12 @@ Is there anything else about Kampo Ibayo I can help you with?`;
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
 
-    // Input validation and sanitization
+    /**
+     * INPUT SANITIZATION - PHP Equivalent: htmlspecialchars(), filter_input()
+     * - Trims whitespace to prevent empty submissions
+     * - Limits input length to MAX_INPUT_LENGTH to prevent DoS attacks
+     * - Prevents XSS by treating input as plain text (React auto-escapes)
+     */
     const sanitizedInput = inputText.trim().slice(0, MAX_INPUT_LENGTH);
     if (!sanitizedInput) return;
 

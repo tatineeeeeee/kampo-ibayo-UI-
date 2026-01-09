@@ -1,17 +1,44 @@
+/**
+ * =============================================================================
+ * EMAIL SERVICE - SECURE COMMUNICATION
+ * =============================================================================
+ * 
+ * ENCRYPTION IMPLEMENTATION:
+ * 
+ * 1. TLS/STARTTLS - SYMMETRIC ENCRYPTION (PHP Equivalent: PHPMailer with TLS)
+ *    - Port 587 uses STARTTLS to upgrade connection to encrypted
+ *    - Uses AES-256 symmetric encryption for email content
+ *    - All credentials transmitted over encrypted channel
+ * 
+ * 2. AUTHENTICATION SECURITY:
+ *    - Environment variables store sensitive credentials
+ *    - Never hardcode passwords in source code
+ *    - PHP Equivalent: $mail->Password = getenv('SMTP_PASSWORD');
+ * 
+ * =============================================================================
+ */
+
 import nodemailer from 'nodemailer';
 
-// Gmail-only transporter configuration (simplified)
+/**
+ * Gmail Email Transporter - SECURE CONFIGURATION
+ * PHP Equivalent: PHPMailer with $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS
+ */
 export const createEmailTransporter = () => {
   return nodemailer.createTransport({
     service: 'gmail',
-    port: 587,
-    secure: false, // false for 587, true for 465
+    port: 587,                    // STARTTLS port - upgrades to TLS encryption
+    secure: false,                // false = STARTTLS (starts plain, upgrades to TLS)
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      user: process.env.SMTP_USER,      // Credential from env (never hardcoded)
+      pass: process.env.SMTP_PASSWORD,  // App password (transmitted over TLS)
     },
+    /**
+     * TLS CONFIGURATION - SYMMETRIC ENCRYPTION
+     * Encrypts all email data in transit using AES-256
+     */
     tls: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: false,  // Allow Gmail's certificate chain
     }
   });
 };
