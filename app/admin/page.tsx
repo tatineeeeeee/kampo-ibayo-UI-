@@ -28,7 +28,10 @@ interface DashboardStats {
   confirmedBookings: number;
   pendingBookings: number;
   cancelledBookings: number;
+  completedBookings: number;
   totalRevenue: number;
+  confirmedRevenue: number;
+  completedRevenue: number;
   averageBookingValue: number;
 }
 
@@ -40,6 +43,7 @@ interface ChartData {
     confirmed: number;
     cancelled: number;
     pending: number;
+    completed: number;
   }>;
   statusDistribution: Array<{ name: string; value: number; color: string }>;
 }
@@ -50,7 +54,10 @@ export default function DashboardPage() {
     confirmedBookings: 0,
     pendingBookings: 0,
     cancelledBookings: 0,
+    completedBookings: 0,
     totalRevenue: 0,
+    confirmedRevenue: 0,
+    completedRevenue: 0,
     averageBookingValue: 0,
   });
   const [chartData, setChartData] = useState<ChartData>({
@@ -93,27 +100,45 @@ export default function DashboardPage() {
           const cancelledBookings = bookings.filter(
             (b) => b.status === "cancelled"
           ).length;
+          const completedBookingsCount = bookings.filter(
+            (b) => b.status === "completed"
+          ).length;
 
           console.log("🔍 Debug - Booking counts:", {
             totalBookings,
             confirmedBookings,
             pendingBookings,
             cancelledBookings,
+            completedBookingsCount,
           });
 
-          const totalRevenue = bookings
+          // Revenue from confirmed bookings
+          const confirmedRevenue = bookings
             .filter((b) => b.status === "confirmed")
             .reduce((sum, b) => sum + (b.total_amount || 0), 0);
 
+          // Revenue from completed bookings
+          const completedRevenue = bookings
+            .filter((b) => b.status === "completed")
+            .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+
+          // Total revenue = confirmed + completed
+          const totalRevenue = confirmedRevenue + completedRevenue;
+
           const averageBookingValue =
-            confirmedBookings > 0 ? totalRevenue / confirmedBookings : 0;
+            (confirmedBookings + completedBookingsCount) > 0 
+              ? totalRevenue / (confirmedBookings + completedBookingsCount) 
+              : 0;
 
           setStats({
             totalBookings,
             confirmedBookings,
             pendingBookings,
             cancelledBookings,
+            completedBookings: completedBookingsCount,
             totalRevenue,
+            confirmedRevenue,
+            completedRevenue,
             averageBookingValue,
           });
 
@@ -125,6 +150,7 @@ export default function DashboardPage() {
               confirmed: number;
               cancelled: number;
               pending: number;
+              completed: number;
             }
           >();
           const now = new Date();
@@ -141,6 +167,7 @@ export default function DashboardPage() {
               confirmed: 0,
               cancelled: 0,
               pending: 0,
+              completed: 0,
             });
           }
 
@@ -163,6 +190,7 @@ export default function DashboardPage() {
                   confirmed: 0,
                   cancelled: 0,
                   pending: 0,
+                  completed: 0,
                 });
               }
 
@@ -175,6 +203,9 @@ export default function DashboardPage() {
                 current.cancelled += 1;
               } else if (booking.status === "pending") {
                 current.pending += 1;
+              } else if (booking.status === "completed") {
+                current.completed += 1;
+                current.revenue += booking.total_amount || 0;
               }
             }
           });
@@ -184,18 +215,25 @@ export default function DashboardPage() {
             ([name, data]) => ({
               name,
               revenue: data.revenue,
-              bookings: data.confirmed + data.cancelled + data.pending, // Total bookings
+              bookings: data.confirmed + data.cancelled + data.pending + data.completed, // Total bookings
               confirmed: data.confirmed,
               cancelled: data.cancelled,
               pending: data.pending,
+              completed: data.completed,
             })
           );
+
+          // Count completed bookings
+          const completedBookings = bookings.filter(
+            (b) => b.status === "completed"
+          ).length;
 
           // Status distribution for pie chart
           const statusDistribution = [
             { name: "Confirmed", value: confirmedBookings, color: "#10b981" },
             { name: "Pending", value: pendingBookings, color: "#f59e0b" },
             { name: "Cancelled", value: cancelledBookings, color: "#ef4444" },
+            { name: "Completed", value: completedBookings, color: "#3b82f6" },
           ].filter((item) => item.value > 0);
 
           setChartData({
@@ -239,7 +277,10 @@ export default function DashboardPage() {
             confirmedBookings: 0,
             pendingBookings: 0,
             cancelledBookings: 0,
+            completedBookings: 0,
             totalRevenue: 0,
+            confirmedRevenue: 0,
+            completedRevenue: 0,
             averageBookingValue: 0,
           });
           setChartData({
@@ -320,7 +361,7 @@ export default function DashboardPage() {
       )}
 
       {/* Key Performance Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
           <div className="flex items-center gap-3">
             <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
@@ -345,52 +386,75 @@ export default function DashboardPage() {
             <PhilippinePeso className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0" />
             <div className="min-w-0">
               <h3 className="text-gray-500 text-xs sm:text-sm font-medium">
-                Total Revenue
+                Confirmed Revenue
               </h3>
               <div className="text-2xl sm:text-3xl font-bold text-green-600 truncate">
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.totalRevenue.toLocaleString()
+                  formatCurrency(stats.confirmedRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Confirmed bookings only
+                {stats.confirmedBookings} bookings
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md sm:col-span-2 lg:col-span-1">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
           <div className="flex items-center gap-3">
-            <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 flex-shrink-0" />
+            <PhilippinePeso className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
             <div className="min-w-0">
               <h3 className="text-gray-500 text-xs sm:text-sm font-medium">
-                Pending Bookings
+                Completed Revenue
               </h3>
-              <div className="text-2xl sm:text-3xl font-bold text-yellow-600">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 truncate">
                 {loading ? (
-                  <span className="w-12 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
+                  <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.pendingBookings
+                  formatCurrency(stats.completedRevenue)
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">Need admin approval</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.completedBookings} bookings
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+          <div className="flex items-center gap-3">
+            <PhilippinePeso className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-gray-500 text-xs sm:text-sm font-medium">
+                Total Revenue
+              </h3>
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600 truncate">
+                {loading ? (
+                  <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
+                ) : (
+                  formatCurrency(stats.totalRevenue)
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Confirmed + Completed
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+      {/* Booking Status Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0" />
             <div className="min-w-0">
               <h3 className="text-gray-500 text-xs sm:text-sm">
-                Confirmed Bookings
+                Confirmed
               </h3>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
                 {loading ? (
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
@@ -403,16 +467,16 @@ export default function DashboardPage() {
 
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 flex-shrink-0" />
+            <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 flex-shrink-0" />
             <div className="min-w-0">
               <h3 className="text-gray-500 text-xs sm:text-sm">
-                Average Booking Value
+                Pending
               </h3>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              <div className="text-xl sm:text-2xl font-bold text-yellow-600">
                 {loading ? (
-                  <span className="w-16 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
+                  <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  formatCurrency(stats.averageBookingValue)
+                  stats.pendingBookings
                 )}
               </div>
             </div>
@@ -424,13 +488,31 @@ export default function DashboardPage() {
             <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 flex-shrink-0" />
             <div className="min-w-0">
               <h3 className="text-gray-500 text-xs sm:text-sm">
-                Cancelled Bookings
+                Cancelled
               </h3>
-              <div className="text-xl sm:text-2xl font-bold text-gray-900">
+              <div className="text-xl sm:text-2xl font-bold text-red-600">
                 {loading ? (
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
                   stats.cancelledBookings
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-gray-500 text-xs sm:text-sm">
+                Completed
+              </h3>
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">
+                {loading ? (
+                  <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
+                ) : (
+                  stats.completedBookings
                 )}
               </div>
             </div>
@@ -501,6 +583,7 @@ export default function DashboardPage() {
                   <Bar dataKey="confirmed" fill="#10b981" name="Confirmed" />
                   <Bar dataKey="pending" fill="#f59e0b" name="Pending" />
                   <Bar dataKey="cancelled" fill="#ef4444" name="Cancelled" />
+                  <Bar dataKey="completed" fill="#3b82f6" name="Completed" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
