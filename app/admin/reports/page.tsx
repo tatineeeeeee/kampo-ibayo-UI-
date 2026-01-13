@@ -1485,7 +1485,6 @@ export default function ReportsPage() {
               <option value="all">All Payment Types</option>
               <option value="gcash">GCash</option>
               <option value="maya">Maya</option>
-              <option value="cash">Cash (Walk-in)</option>
             </select>
           </div>
           <div>
@@ -1554,76 +1553,6 @@ export default function ReportsPage() {
           <TrendingUp className="w-6 h-6 text-blue-600" />
           {selectedReport.name} Analytics
         </h2>
-
-        {/* 📊 EXPLANATION PANEL */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-blue-800">
-              Chart Data Explanation
-            </h3>
-          </div>
-          <div className="text-sm text-blue-700">
-            <p>
-              <strong>📅 Date Range:</strong> All charts show bookings with
-              check-in dates from <strong>{startDate}</strong> to{" "}
-              <strong>{endDate}</strong>
-            </p>
-            <p>
-              <strong>🎯 Status Filter:</strong>{" "}
-              {statusFilter === "all"
-                ? "All booking statuses included"
-                : `Only ${statusFilter} bookings shown`}
-            </p>
-            <p>
-              <strong>💳 Payment Status:</strong>{" "}
-              {paymentStatusFilter === "all"
-                ? "All payment statuses included"
-                : `Only ${paymentStatusFilter} payments shown`}
-            </p>
-            <p>
-              <strong>💰 Payment Type:</strong>{" "}
-              {paymentMethodFilter === "all"
-                ? "All payment types included"
-                : `Only ${paymentMethodFilter} payments shown`}
-            </p>
-            <p>
-              <strong>📊 Total Filtered Bookings:</strong>{" "}
-              {filteredBookings.length} bookings match your criteria
-            </p>
-            {selectedReport.id === "daily-checklist" && (
-              <div>
-                <p>
-                  <strong>🏖️ Daily Operations:</strong> Shows current guests
-                  (confirmed) + pending arrivals for preparation
-                </p>
-                <p>
-                  <strong>⚠️ Status Logic:</strong> Current guests must be
-                  confirmed | Arrivals show confirmed + pending
-                </p>
-              </div>
-            )}
-            {selectedReport.id === "revenue-summary" && (
-              <p>
-                <strong>💰 Revenue Data:</strong> CONFIRMED & PAID bookings only
-                (excludes pending for financial accuracy)
-              </p>
-            )}
-            {selectedReport.id === "guest-registry" && (
-              <p>
-                <strong>👥 User Report:</strong> COMPLETED stays only - Real
-                customer profiles for marketing, loyalty programs, and
-                personalized service
-              </p>
-            )}
-            {selectedReport.id === "booking-calendar" && (
-              <p>
-                <strong>📋 Planning Data:</strong> Includes confirmed + pending
-                bookings for operational planning
-              </p>
-            )}
-          </div>
-        </div>
 
         {/* Daily Operations Report Description */}
         {selectedReport.id === "daily-operations" && (

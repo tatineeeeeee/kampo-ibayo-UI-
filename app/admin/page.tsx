@@ -126,8 +126,8 @@ export default function DashboardPage() {
           const totalRevenue = confirmedRevenue + completedRevenue;
 
           const averageBookingValue =
-            (confirmedBookings + completedBookingsCount) > 0 
-              ? totalRevenue / (confirmedBookings + completedBookingsCount) 
+            confirmedBookings + completedBookingsCount > 0
+              ? totalRevenue / (confirmedBookings + completedBookingsCount)
               : 0;
 
           setStats({
@@ -215,7 +215,8 @@ export default function DashboardPage() {
             ([name, data]) => ({
               name,
               revenue: data.revenue,
-              bookings: data.confirmed + data.cancelled + data.pending + data.completed, // Total bookings
+              bookings:
+                data.confirmed + data.cancelled + data.pending + data.completed, // Total bookings
               confirmed: data.confirmed,
               cancelled: data.cancelled,
               pending: data.pending,
@@ -392,7 +393,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  formatCurrency(stats.confirmedRevenue)
+                  stats.confirmedRevenue
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -413,7 +414,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  formatCurrency(stats.completedRevenue)
+                  stats.completedRevenue
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -434,7 +435,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  formatCurrency(stats.totalRevenue)
+                  stats.totalRevenue
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -451,9 +452,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0" />
             <div className="min-w-0">
-              <h3 className="text-gray-500 text-xs sm:text-sm">
-                Confirmed
-              </h3>
+              <h3 className="text-gray-500 text-xs sm:text-sm">Confirmed</h3>
               <div className="text-xl sm:text-2xl font-bold text-green-600">
                 {loading ? (
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
@@ -469,9 +468,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 flex-shrink-0" />
             <div className="min-w-0">
-              <h3 className="text-gray-500 text-xs sm:text-sm">
-                Pending
-              </h3>
+              <h3 className="text-gray-500 text-xs sm:text-sm">Pending</h3>
               <div className="text-xl sm:text-2xl font-bold text-yellow-600">
                 {loading ? (
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
@@ -487,9 +484,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 flex-shrink-0" />
             <div className="min-w-0">
-              <h3 className="text-gray-500 text-xs sm:text-sm">
-                Cancelled
-              </h3>
+              <h3 className="text-gray-500 text-xs sm:text-sm">Cancelled</h3>
               <div className="text-xl sm:text-2xl font-bold text-red-600">
                 {loading ? (
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
@@ -505,9 +500,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
             <div className="min-w-0">
-              <h3 className="text-gray-500 text-xs sm:text-sm">
-                Completed
-              </h3>
+              <h3 className="text-gray-500 text-xs sm:text-sm">Completed</h3>
               <div className="text-xl sm:text-2xl font-bold text-blue-600">
                 {loading ? (
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
