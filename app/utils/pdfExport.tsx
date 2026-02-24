@@ -233,14 +233,15 @@ const styles = StyleSheet.create({
 // Column width configurations for different report types
 const columnWidths = {
   bookings: {
-    id: "10%",
-    name: "15%",
-    dates: "15%",
-    guests: "8%",
-    amount: "12%",
-    paymentType: "12%",
-    status: "14%",
-    paymentStatus: "14%",
+    id: "9%",
+    type: "8%",
+    name: "14%",
+    dates: "14%",
+    guests: "7%",
+    amount: "11%",
+    paymentType: "11%",
+    status: "13%",
+    paymentStatus: "13%",
   },
   users: {
     name: "25%",
@@ -278,10 +279,13 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
   const totalBookings = data.length;
   const totalRevenue = data.reduce(
     (sum, b) => sum + ((b.total_amount as number) || 0),
-    0
+    0,
   );
   const confirmedCount = data.filter((b) => b.status === "confirmed").length;
   const pendingCount = data.filter((b) => b.status === "pending").length;
+  const walkInCount = data.filter((b) =>
+    String(b.special_requests || "").startsWith("[WALK-IN]"),
+  ).length;
 
   const getStatusStyle = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -342,6 +346,10 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
             <Text style={styles.summaryLabel}>Pending</Text>
             <Text style={styles.summaryValue}>{pendingCount}</Text>
           </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Walk-ins</Text>
+            <Text style={styles.summaryValue}>{walkInCount}</Text>
+          </View>
         </View>
 
         {/* Table */}
@@ -355,6 +363,14 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
               ]}
             >
               Booking ID
+            </Text>
+            <Text
+              style={[
+                styles.tableHeaderCell,
+                { width: columnWidths.bookings.type },
+              ]}
+            >
+              Type
             </Text>
             <Text
               style={[
@@ -427,6 +443,16 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
                 style={[styles.tableCell, { width: columnWidths.bookings.id }]}
               >
                 {formatBookingId(booking.id as number)}
+              </Text>
+              <Text
+                style={[
+                  styles.tableCell,
+                  { width: columnWidths.bookings.type, fontSize: 7 },
+                ]}
+              >
+                {String(booking.special_requests || "").startsWith("[WALK-IN]")
+                  ? "Walk-in"
+                  : "Online"}
               </Text>
               <Text
                 style={[
@@ -950,7 +976,7 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
                   ]}
                 >
                   {String(
-                    payment.original_method || payment.payment_method || ""
+                    payment.original_method || payment.payment_method || "",
                   ).toUpperCase()}
                 </Text>
                 <View
@@ -970,7 +996,7 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
                   ]}
                 >
                   {formatDate(
-                    (payment.check_in_date || payment.date) as string
+                    (payment.check_in_date || payment.date) as string,
                   )}
                 </Text>
               </View>
@@ -1071,15 +1097,15 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
 
   const totalGuestsToday = todayCheckIns.reduce(
     (sum, b) => sum + ((b.number_of_guests as number) || 0),
-    0
+    0,
   );
   const totalGuestsCheckingOut = todayCheckOuts.reduce(
     (sum, b) => sum + ((b.number_of_guests as number) || 0),
-    0
+    0,
   );
   const currentGuestsCount = currentGuestsData.reduce(
     (sum, b) => sum + ((b.number_of_guests as number) || 0),
-    0
+    0,
   );
 
   // ========== USER REPORT CALCULATIONS ==========
@@ -1131,18 +1157,18 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
   });
 
   const uniqueCustomers = Array.from(customerMap.values()).sort(
-    (a, b) => b.totalSpent - a.totalSpent
+    (a, b) => b.totalSpent - a.totalSpent,
   );
   const totalCustomers = uniqueCustomers.length;
   const totalCustomerSpending = uniqueCustomers.reduce(
     (sum, c) => sum + c.totalSpent,
-    0
+    0,
   );
   const avgCustomerSpending =
     totalCustomers > 0 ? totalCustomerSpending / totalCustomers : 0;
   const repeatCustomers = uniqueCustomers.filter((c) => c.bookings > 1).length;
   const vipCustomers = uniqueCustomers.filter(
-    (c) => c.totalSpent >= 50000 || c.bookings >= 3
+    (c) => c.totalSpent >= 50000 || c.bookings >= 3,
   ).length;
   const newCustomers = uniqueCustomers.filter((c) => c.bookings === 1).length;
 
@@ -1156,24 +1182,24 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
     );
   });
   const pendingBookings = data.filter(
-    (b) => (b.status as string)?.toLowerCase() === "pending"
+    (b) => (b.status as string)?.toLowerCase() === "pending",
   );
   const cancelledBookings = data.filter(
-    (b) => (b.status as string)?.toLowerCase() === "cancelled"
+    (b) => (b.status as string)?.toLowerCase() === "cancelled",
   );
 
   // Revenue calculations
   const confirmedRevenue = confirmedBookings.reduce(
     (sum, b) => sum + ((b.total_amount as number) || 0),
-    0
+    0,
   );
   const pendingRevenue = pendingBookings.reduce(
     (sum, b) => sum + ((b.total_amount as number) || 0),
-    0
+    0,
   );
   const lostRevenue = cancelledBookings.reduce(
     (sum, b) => sum + ((b.total_amount as number) || 0),
-    0
+    0,
   );
 
   const getStatusStyle = (status: string) => {
@@ -1208,8 +1234,8 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                 {isDailyOps
                   ? "Daily Operations Report"
                   : isUserDb
-                  ? "User Report"
-                  : "Booking Status Report"}
+                    ? "User Report"
+                    : "Booking Status Report"}
               </Text>
             </View>
           </View>
@@ -1414,7 +1440,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                             ]}
                           >
                             {String(
-                              booking.payment_status || "pending"
+                              booking.payment_status || "pending",
                             ).toUpperCase()}
                           </Text>
                         </View>
@@ -1519,7 +1545,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                             ]}
                           >
                             {String(
-                              booking.payment_status || "pending"
+                              booking.payment_status || "pending",
                             ).toUpperCase()}
                           </Text>
                         </View>
@@ -1586,7 +1612,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                     const today = new Date();
                     const daysLeft = Math.ceil(
                       (checkout.getTime() - today.getTime()) /
-                        (1000 * 60 * 60 * 24)
+                        (1000 * 60 * 60 * 24),
                     );
 
                     return (
@@ -1727,8 +1753,11 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                           customerType === "VIP"
                             ? styles.statusConfirmed
                             : customerType === "Returning"
-                            ? styles.statusPending
-                            : { backgroundColor: "#e5e7eb", color: "#374151" },
+                              ? styles.statusPending
+                              : {
+                                  backgroundColor: "#e5e7eb",
+                                  color: "#374151",
+                                },
                         ]}
                       >
                         {customerType.toUpperCase()}
@@ -2085,8 +2114,8 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
             {isDailyOps
               ? "Daily Operations"
               : isUserDb
-              ? "User Report"
-              : "Booking Status"}{" "}
+                ? "User Report"
+                : "Booking Status"}{" "}
             Report
           </Text>
           <Text
@@ -2124,7 +2153,7 @@ export const exportBookingsPDF = async (bookings: PDFExportable[]) => {
       data={bookings}
       title="Bookings Report"
       generatedAt={generatedAt}
-    />
+    />,
   ).toBlob();
 
   downloadPDF(blob, "kampo_ibayo_bookings");
@@ -2149,7 +2178,7 @@ export const exportUsersPDF = async (users: PDFExportable[]) => {
       data={users}
       title="User Database"
       generatedAt={generatedAt}
-    />
+    />,
   ).toBlob();
 
   downloadPDF(blob, "kampo_ibayo_users");
@@ -2174,7 +2203,7 @@ export const exportPaymentsPDF = async (payments: PDFExportable[]) => {
       data={payments}
       title="Payment Transactions Report"
       generatedAt={generatedAt}
-    />
+    />,
   ).toBlob();
 
   downloadPDF(blob, "kampo_ibayo_payments");
@@ -2184,7 +2213,7 @@ export const exportPaymentsPDF = async (payments: PDFExportable[]) => {
 export const exportReportsPDF = async (
   data: PDFExportable[],
   reportType: string,
-  dateRange?: { start: string; end: string }
+  dateRange?: { start: string; end: string },
 ) => {
   if (!data || data.length === 0) {
     throw new Error("No data to export");
@@ -2205,7 +2234,7 @@ export const exportReportsPDF = async (
       reportType={reportType}
       generatedAt={generatedAt}
       dateRange={dateRange}
-    />
+    />,
   ).toBlob();
 
   const filename = `kampo_ibayo_${reportType

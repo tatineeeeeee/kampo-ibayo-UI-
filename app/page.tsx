@@ -59,7 +59,7 @@ const Navbar = () => {
       { name: "Reviews", href: "#reviews" },
       { name: "Contact", href: "#contact" },
     ],
-    []
+    [],
   );
 
   // Ensure component is mounted before showing auth-dependent UI
@@ -76,7 +76,7 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       const sections = menuItems.map((item) =>
-        document.getElementById(item.href.substring(1))
+        document.getElementById(item.href.substring(1)),
       );
       const scrollPos = window.scrollY + 200;
       for (const section of sections) {
@@ -146,44 +146,46 @@ const Navbar = () => {
                 {userRole === "admin"
                   ? "👑 Admin"
                   : userRole === "staff"
-                  ? "👨‍💼 Staff"
-                  : "☰"}
+                    ? "👨‍💼 Staff"
+                    : "☰"}
               </button>
 
               {profileMenu && (
-                <div className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg overflow-hidden">
-                  {userRole === "admin" || userRole === "staff" ? (
+                <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 rounded shadow-lg overflow-hidden">
+                  {(userRole === "admin" || userRole === "staff") && (
                     <Link
                       href="/admin"
-                      className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm font-semibold border-b border-gray-100"
                     >
                       {userRole === "admin"
                         ? "👑 Admin Panel"
                         : "👨‍💼 Staff Panel"}
                     </Link>
-                  ) : (
-                    <>
-                      <Link
-                        href="/profile"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
-                      >
-                        <UserIcon className="w-4 h-4 mr-2" /> Profile
-                      </Link>
-                      <Link
-                        href="/bookings"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
-                      >
-                        <BookOpen className="w-4 h-4 mr-2" /> My Bookings
-                      </Link>
-                      <Link
-                        href="/review"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
-                      >
-                        <MessageCircleHeart className="w-4 h-4 mr-2" /> Leave
-                        Review
-                      </Link>
-                    </>
                   )}
+                  <Link
+                    href="/profile"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    <UserIcon className="w-4 h-4 mr-2" /> Profile
+                  </Link>
+                  <Link
+                    href="/bookings"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    <BookOpen className="w-4 h-4 mr-2" /> My Bookings
+                  </Link>
+                  <Link
+                    href="/book"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" /> Book Now
+                  </Link>
+                  <Link
+                    href="/review"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    <MessageCircleHeart className="w-4 h-4 mr-2" /> Leave Review
+                  </Link>
                   <button
                     onClick={async () => {
                       try {
@@ -281,32 +283,48 @@ const Navbar = () => {
                 Account
               </p>
               <div className="space-y-1">
-                {userRole === "admin" ? (
+                {(userRole === "admin" || userRole === "staff") && (
                   <Link
                     href="/admin"
-                    className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                    className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm font-semibold transition-colors border-b border-gray-700 mb-1"
                     onClick={() => setIsOpen(false)}
                   >
-                    <span className="mr-2">👑</span> Admin Dashboard
+                    <span className="mr-2">
+                      {userRole === "admin" ? "👑" : "👨‍💼"}
+                    </span>{" "}
+                    {userRole === "admin"
+                      ? "Admin Dashboard"
+                      : "Staff Dashboard"}
                   </Link>
-                ) : (
-                  <>
-                    <Link
-                      href="/profile"
-                      className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <UserIcon className="w-4 h-4 mr-2" /> My Profile
-                    </Link>
-                    <Link
-                      href="/bookings"
-                      className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <BookOpen className="w-4 h-4 mr-2" /> My Bookings
-                    </Link>
-                  </>
                 )}
+                <Link
+                  href="/profile"
+                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <UserIcon className="w-4 h-4 mr-2" /> My Profile
+                </Link>
+                <Link
+                  href="/bookings"
+                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <BookOpen className="w-4 h-4 mr-2" /> My Bookings
+                </Link>
+                <Link
+                  href="/book"
+                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Calendar className="w-4 h-4 mr-2" /> Book Now
+                </Link>
+                <Link
+                  href="/review"
+                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <MessageCircleHeart className="w-4 h-4 mr-2" /> Leave Review
+                </Link>
                 <button
                   onClick={async () => {
                     try {
@@ -376,7 +394,7 @@ function Home() {
     const now = new Date();
     console.log(
       "🗓️ Initializing currentMonth to:",
-      now.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      now.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
     );
     return now;
   });
@@ -408,12 +426,12 @@ function Home() {
       const startOfMonth = new Date(
         month.getFullYear(),
         month.getMonth() - 1,
-        15
+        15,
       ); // Start from mid previous month
       const endOfMonth = new Date(
         month.getFullYear(),
         month.getMonth() + 2,
-        15
+        15,
       ); // End in mid next month
 
       // Helper to format local date as YYYY-MM-DD (avoid timezone shifts)
@@ -428,10 +446,10 @@ function Home() {
         `🔍 Fetching bookings for month: ${month.toLocaleDateString("en-US", {
           month: "long",
           year: "numeric",
-        })}`
+        })}`,
       );
       console.log(
-        `📅 Date range: ${toYMD(startOfMonth)} to ${toYMD(endOfMonth)}`
+        `📅 Date range: ${toYMD(startOfMonth)} to ${toYMD(endOfMonth)}`,
       );
 
       // HOMEPAGE: Show BOTH confirmed AND pending bookings for availability display
@@ -441,16 +459,16 @@ function Home() {
         .in("status", ["confirmed", "pending"]) // Show both confirmed and pending bookings
         .or(
           `and(check_in_date.gte.${toYMD(
-            startOfMonth
+            startOfMonth,
           )},check_in_date.lte.${toYMD(
-            endOfMonth
+            endOfMonth,
           )}),and(check_out_date.gte.${toYMD(
-            startOfMonth
+            startOfMonth,
           )},check_out_date.lte.${toYMD(
-            endOfMonth
+            endOfMonth,
           )}),and(check_in_date.lte.${toYMD(
-            startOfMonth
-          )},check_out_date.gte.${toYMD(endOfMonth)})`
+            startOfMonth,
+          )},check_out_date.gte.${toYMD(endOfMonth)})`,
         )
         .limit(50); // Reasonable limit
 
@@ -479,7 +497,7 @@ function Home() {
         console.log(
           `🔒 Processing booking ${
             bookingIndex + 1
-          }: check-in ${checkInDate}, check-out ${checkOutDate}`
+          }: check-in ${checkInDate}, check-out ${checkOutDate}`,
         );
 
         // Count check-ins for the displayed month
@@ -492,7 +510,7 @@ function Home() {
           console.log(
             `� Check-in ${checkInDate}: ${prev + 1} arrivals (from booking ${
               bookingIndex + 1
-            })`
+            })`,
           );
         }
 
@@ -506,7 +524,7 @@ function Home() {
           console.log(
             `📤 Check-out ${checkOutDate}: ${
               prevCheckOuts + 1
-            } departures (from booking ${bookingIndex + 1})`
+            } departures (from booking ${bookingIndex + 1})`,
           );
         }
       });
@@ -528,7 +546,7 @@ function Home() {
       console.log("📊 Check-in counts for month (for UI display):", countsObj);
       console.log(
         "� Check-out counts for month (for same-day turnover):",
-        Object.fromEntries(checkOutCounts)
+        Object.fromEntries(checkOutCounts),
       );
       // setDayCounts(countsObj); // Removed since we're using React DatePicker
 
@@ -539,7 +557,7 @@ function Home() {
 
       console.log(
         "🚫 Fully booked (check-in capacity reached) dates:",
-        bookedArray
+        bookedArray,
       );
 
       // Cache the result (we can keep for future optimization)
@@ -558,7 +576,7 @@ function Home() {
     if (showAvailabilityModal) {
       console.log(
         "🚀 Modal opened or month changed, fetching data for:",
-        currentMonth
+        currentMonth,
       );
       fetchBookedDates(currentMonth);
     }
@@ -646,7 +664,7 @@ function Home() {
 
     const activeBookings = existingBookings.filter(
       (booking) =>
-        booking.status === "confirmed" || booking.status === "pending"
+        booking.status === "confirmed" || booking.status === "pending",
     );
 
     // Normalize date for comparison (remove time component)
@@ -738,31 +756,8 @@ function Home() {
     return `Bookings are available from today through ${maxYear}. For longer-term reservations, please contact us directly.`;
   };
 
-  // Check for admin role and redirect
-  useEffect(() => {
-    const checkAdminAndRedirect = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        // Check if user is admin
-        const { data: userData } = await supabase
-          .from("users")
-          .select("role")
-          .eq("auth_id", session.user.id);
-
-        const user = userData?.[0];
-        if (user?.role === "admin") {
-          console.log("Admin detected, redirecting to admin dashboard...");
-          router.push("/admin");
-          return;
-        }
-      }
-    };
-
-    checkAdminAndRedirect();
-  }, [router]);
+  // Admin/staff users can now view the customer site via "Customer View" link
+  // No automatic redirect - admins choose where to go via the navbar dropdown
 
   // Track scroll position for back-to-top button
   useEffect(() => {
@@ -790,7 +785,7 @@ function Home() {
           "🏠 Homepage maintenance check:",
           isActive,
           "Previous:",
-          lastKnownState
+          lastKnownState,
         ); // Debug log
 
         // Only update if state actually changed
@@ -799,7 +794,7 @@ function Home() {
             "🏠 Maintenance state changed from",
             lastKnownState,
             "to",
-            isActive
+            isActive,
           );
           setMaintenanceActive(isActive);
           lastKnownState = isActive;
@@ -830,7 +825,7 @@ function Home() {
       clearInterval(interval);
       window.removeEventListener(
         "maintenanceSettingsChanged",
-        handleSettingsChange
+        handleSettingsChange,
       );
     };
   }, []);
@@ -2089,7 +2084,7 @@ function Home() {
                   <button
                     onClick={() =>
                       setOpenAmenityIndex(
-                        openAmenityIndex === index ? null : index
+                        openAmenityIndex === index ? null : index,
                       )
                     }
                     className="w-full flex items-center justify-between p-3 touch-manipulation min-h-[52px]"
@@ -2833,7 +2828,7 @@ function Home() {
                                 const newDate = new Date(
                                   date.getFullYear(),
                                   date.getMonth() - 1,
-                                  1
+                                  1,
                                 );
                                 setCurrentMonth(newDate);
                                 fetchBookedDates(newDate);
@@ -2844,7 +2839,7 @@ function Home() {
                                 const newDate = new Date(
                                   date.getFullYear(),
                                   date.getMonth() + 1,
-                                  1
+                                  1,
                                 );
                                 setCurrentMonth(newDate);
                                 fetchBookedDates(newDate);

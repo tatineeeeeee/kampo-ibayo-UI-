@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Crown,
+  Globe,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -201,12 +202,12 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
           } else {
             setAdminName(
               userData?.full_name ||
-                `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`
+                `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`,
             );
           }
         } catch {
           setAdminName(
-            `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`
+            `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} User`,
           );
         }
 
@@ -362,8 +363,16 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        {/* Logout Button at Bottom */}
-        <div className="p-3 sm:p-4 border-t border-gray-200">
+        {/* Customer View & Logout at Bottom */}
+        <div className="p-3 sm:p-4 border-t border-gray-200 space-y-1">
+          <Link
+            href="/"
+            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors duration-200"
+            title="Switch to Customer View"
+          >
+            <Globe className="w-5 h-5" />
+            <span>Customer View</span>
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
@@ -420,10 +429,10 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
                     isSuperAdmin
                       ? "bg-gradient-to-r from-yellow-200 to-amber-200 text-amber-900 border border-amber-400"
                       : userRole === "admin"
-                      ? "bg-red-100 text-red-700"
-                      : userRole === "staff"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-blue-100 text-blue-700"
+                        ? "bg-red-100 text-red-700"
+                        : userRole === "staff"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
                   }`}
                 >
                   {isSuperAdmin ? (

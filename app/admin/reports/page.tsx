@@ -14,6 +14,7 @@ import {
   Clock,
   Phone,
   Users,
+  Footprints,
 } from "lucide-react";
 import { supabase } from "@/app/supabaseClient";
 import { Tables } from "@/database.types";
@@ -70,10 +71,14 @@ export default function ReportsPage() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
   );
   const [endDate, setEndDate] = useState(
-    new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
   );
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
@@ -89,7 +94,7 @@ export default function ReportsPage() {
       let query = supabase
         .from("bookings")
         .select(
-          "id, user_id, guest_name, guest_email, guest_phone, check_in_date, check_out_date, number_of_guests, total_amount, special_requests, brings_pet, status, created_at, updated_at, cancelled_by, cancelled_at, cancellation_reason, payment_intent_id, payment_status, payment_type, payment_amount, refund_id, refund_amount, refund_status, refund_reason, refund_processed_by, refund_processed_at"
+          "id, user_id, guest_name, guest_email, guest_phone, check_in_date, check_out_date, number_of_guests, total_amount, special_requests, brings_pet, status, created_at, updated_at, cancelled_by, cancelled_at, cancellation_reason, payment_intent_id, payment_status, payment_type, payment_amount, refund_id, refund_amount, refund_status, refund_reason, refund_processed_by, refund_processed_at",
         )
         .gte("check_in_date", startDate)
         .lte("check_in_date", endDate)
@@ -164,11 +169,11 @@ export default function ReportsPage() {
   };
 
   const confirmedBookings = filteredBookings.filter(
-    (b) => b.status === "confirmed"
+    (b) => b.status === "confirmed",
   );
   const totalRevenue = confirmedBookings.reduce(
     (sum, b) => sum + b.total_amount,
-    0
+    0,
   );
 
   // Pagination calculations using filtered bookings
@@ -244,13 +249,13 @@ export default function ReportsPage() {
 
           if (operationalActivity.length === 0) {
             const nextBooking = filteredBookings.find(
-              (b) => b.check_in_date > today
+              (b) => b.check_in_date > today,
             );
             const daysUntilNext = nextBooking
               ? Math.ceil(
                   (new Date(nextBooking.check_in_date).getTime() -
                     new Date().getTime()) /
-                    (1000 * 60 * 60 * 24)
+                    (1000 * 60 * 60 * 24),
                 )
               : 0;
 
@@ -280,6 +285,7 @@ export default function ReportsPage() {
             "Pet",
             "Booking ID",
             "Priority",
+            "Booking Type",
           ];
           rows = operationalActivity
             .map((booking) => {
@@ -379,7 +385,7 @@ export default function ReportsPage() {
                 booking.payment_status || "unknown",
                 `₱${
                   (booking.payment_amount || booking.total_amount)?.toFixed(
-                    2
+                    2,
                   ) || "0.00"
                 }`,
                 (() => {
@@ -393,6 +399,9 @@ export default function ReportsPage() {
                 booking.brings_pet ? "Pet Friendly" : "No Pets",
                 `KB-${String(booking.id).padStart(4, "0")}`,
                 priority,
+                String(booking.special_requests || "").startsWith("[WALK-IN]")
+                  ? "Walk-in"
+                  : "Online",
               ];
             })
             .sort((a, b) => {
@@ -459,7 +468,7 @@ export default function ReportsPage() {
           const todayPerf = new Date().toISOString().split("T")[0];
           const thisMonth = new Date().toISOString().slice(0, 7);
           const lastMonth = new Date(
-            new Date().setMonth(new Date().getMonth() - 1)
+            new Date().setMonth(new Date().getMonth() - 1),
           )
             .toISOString()
             .slice(0, 7);
@@ -467,18 +476,18 @@ export default function ReportsPage() {
           // Calculate key performance metrics
           const confirmedThisMonth = filteredBookings.filter(
             (b) =>
-              b.created_at?.startsWith(thisMonth) && b.status === "confirmed"
+              b.created_at?.startsWith(thisMonth) && b.status === "confirmed",
           ).length;
           const confirmedLastMonth = bookings.filter(
             (b) =>
-              b.created_at?.startsWith(lastMonth) && b.status === "confirmed"
+              b.created_at?.startsWith(lastMonth) && b.status === "confirmed",
           ).length;
 
           const currentGuests = filteredBookings.filter(
             (b) =>
               b.check_in_date <= todayPerf &&
               b.check_out_date > todayPerf &&
-              b.status === "confirmed"
+              b.status === "confirmed",
           ).length;
 
           const totalNights = filteredBookings.reduce((sum, b) => {
@@ -486,7 +495,7 @@ export default function ReportsPage() {
             const nights = Math.ceil(
               (new Date(b.check_out_date).getTime() -
                 new Date(b.check_in_date).getTime()) /
-                (1000 * 60 * 60 * 24)
+                (1000 * 60 * 60 * 24),
             );
             return sum + nights;
           }, 0);
@@ -495,7 +504,7 @@ export default function ReportsPage() {
           const maxCapacityPerDay = 15;
           const daysInPeriod = Math.ceil(
             (new Date(endDate).getTime() - new Date(startDate).getTime()) /
-              (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24),
           );
           const occupancyRate = (
             (totalNights / (maxCapacityPerDay * daysInPeriod)) *
@@ -509,7 +518,7 @@ export default function ReportsPage() {
             repeatGuestMap.set(email, (repeatGuestMap.get(email) || 0) + 1);
           });
           const repeatCustomers = Array.from(repeatGuestMap.values()).filter(
-            (count) => count > 1
+            (count) => count > 1,
           ).length;
 
           headers = [
@@ -521,7 +530,7 @@ export default function ReportsPage() {
           ];
 
           console.log(
-            `📊 Generating resort performance metrics for ${filteredBookings.length} bookings`
+            `📊 Generating resort performance metrics for ${filteredBookings.length} bookings`,
           );
 
           rows = [
@@ -538,8 +547,8 @@ export default function ReportsPage() {
               confirmedThisMonth > confirmedLastMonth
                 ? "📈 Growing"
                 : confirmedThisMonth < confirmedLastMonth
-                ? "📉 Declining"
-                : "➡️ Stable",
+                  ? "📉 Declining"
+                  : "➡️ Stable",
               confirmedThisMonth > confirmedLastMonth
                 ? "Keep up the good work!"
                 : "Consider marketing efforts",
@@ -551,8 +560,8 @@ export default function ReportsPage() {
               parseFloat(occupancyRate) > 70
                 ? "🟢 Excellent"
                 : parseFloat(occupancyRate) > 50
-                ? "🟡 Good"
-                : "🔴 Low",
+                  ? "🟡 Good"
+                  : "🔴 Low",
               parseFloat(occupancyRate) > 70
                 ? "Resort is busy - ensure quality service"
                 : "Room for more bookings",
@@ -565,8 +574,8 @@ export default function ReportsPage() {
               currentGuests > 10
                 ? "High capacity - monitor service quality"
                 : currentGuests > 0
-                ? "Moderate occupancy"
-                : "No guests currently",
+                  ? "Moderate occupancy"
+                  : "No guests currently",
             ],
             [
               "🔄 Repeat Customers",
@@ -578,8 +587,8 @@ export default function ReportsPage() {
               repeatCustomers > filteredBookings.length * 0.3
                 ? "🟢 Excellent loyalty"
                 : repeatCustomers > filteredBookings.length * 0.2
-                ? "🟡 Good retention"
-                : "🔴 Need improvement",
+                  ? "🟡 Good retention"
+                  : "🔴 Need improvement",
               repeatCustomers > filteredBookings.length * 0.3
                 ? "Great customer satisfaction!"
                 : "Focus on guest experience",
@@ -589,7 +598,7 @@ export default function ReportsPage() {
               `₱${(
                 filteredBookings.reduce(
                   (sum, b) => sum + (b.total_amount || 0),
-                  0
+                  0,
                 ) / Math.max(filteredBookings.length, 1)
               ).toFixed(0)}`,
               "Per booking average",
@@ -615,6 +624,7 @@ export default function ReportsPage() {
             "Payment Type",
             "Payment Status",
             "Booking Status",
+            "Booking Type",
           ];
 
           rows = filteredBookings.map((booking) => {
@@ -727,6 +737,9 @@ export default function ReportsPage() {
               paymentType,
               paymentStatusDisplay,
               bookingStatusDisplay,
+              String(booking.special_requests || "").startsWith("[WALK-IN]")
+                ? "Walk-in"
+                : "Online",
             ];
           });
 
@@ -738,6 +751,12 @@ export default function ReportsPage() {
             cancelled: 0,
             totalRevenue: 0,
             pendingRevenue: 0,
+            walkInBookings: filteredBookings.filter((b) =>
+              String(b.special_requests || "").startsWith("[WALK-IN]"),
+            ).length,
+            onlineBookings: filteredBookings.filter(
+              (b) => !String(b.special_requests || "").startsWith("[WALK-IN]"),
+            ).length,
           };
 
           filteredBookings.forEach((booking) => {
@@ -822,6 +841,63 @@ export default function ReportsPage() {
               "₱0",
               "❌ Lost",
               "",
+              "",
+              "",
+              "",
+            ],
+            ["", "", "", "", "", "", "", "", "", "", "", ""],
+            [
+              "BOOKING TYPE BREAKDOWN",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+            ],
+            [
+              "Walk-in Bookings:",
+              paymentSummary.walkInBookings.toString(),
+              "",
+              "",
+              "",
+              "",
+              `₱${filteredBookings
+                .filter((b) =>
+                  String(b.special_requests || "").startsWith("[WALK-IN]"),
+                )
+                .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+                .toLocaleString()}`,
+              "🚶 Walk-in",
+              "",
+              "",
+              "",
+              "",
+            ],
+            [
+              "Online Bookings:",
+              paymentSummary.onlineBookings.toString(),
+              "",
+              "",
+              "",
+              "",
+              `₱${filteredBookings
+                .filter(
+                  (b) =>
+                    !String(b.special_requests || "").startsWith("[WALK-IN]"),
+                )
+                .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+                .toLocaleString()}`,
+              "🌐 Online",
+              "",
+              "",
+              "",
+              "",
             ],
             ["", "", "", "", "", "", "", "", ""],
             ["PAYMENT STRUCTURE BREAKDOWN", "", "", "", "", "", "", "", ""],
@@ -833,7 +909,7 @@ export default function ReportsPage() {
                     b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
-                    b.payment_type === "half"
+                    b.payment_type === "half",
                 )
                 .length.toString(),
               "",
@@ -846,7 +922,7 @@ export default function ReportsPage() {
                     b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
-                    b.payment_type === "half"
+                    b.payment_type === "half",
                 )
                 .reduce((sum, b) => sum + (b.total_amount || 0), 0)
                 .toLocaleString()}`,
@@ -861,7 +937,7 @@ export default function ReportsPage() {
                     b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
-                    b.payment_type === "full"
+                    b.payment_type === "full",
                 )
                 .length.toString(),
               "",
@@ -874,7 +950,7 @@ export default function ReportsPage() {
                     b.status !== "cancelled" &&
                     (b.payment_status === "paid" ||
                       b.payment_status === "verified") &&
-                    b.payment_type === "full"
+                    b.payment_type === "full",
                 )
                 .reduce((sum, b) => sum + (b.total_amount || 0), 0)
                 .toLocaleString()}`,
@@ -888,7 +964,7 @@ export default function ReportsPage() {
               filteredBookings
                 .filter(
                   (b) =>
-                    b.status !== "cancelled" && b.payment_status === "pending"
+                    b.status !== "cancelled" && b.payment_status === "pending",
                 )
                 .length.toString(),
               "",
@@ -898,7 +974,7 @@ export default function ReportsPage() {
               `₱${filteredBookings
                 .filter(
                   (b) =>
-                    b.status !== "cancelled" && b.payment_status === "pending"
+                    b.status !== "cancelled" && b.payment_status === "pending",
                 )
                 .reduce((sum, b) => sum + (b.total_amount || 0), 0)
                 .toLocaleString()}`,
@@ -1012,7 +1088,8 @@ export default function ReportsPage() {
                 filteredBookings
                   .filter(
                     (b) =>
-                      b.status !== "cancelled" && b.payment_status === "pending"
+                      b.status !== "cancelled" &&
+                      b.payment_status === "pending",
                   )
                   .reduce((sum, b) => sum + (b.total_amount || 0), 0) +
                 filteredBookings
@@ -1035,7 +1112,7 @@ export default function ReportsPage() {
               ).toLocaleString()}`,
               "💵 CASH NEEDED",
               "",
-            ]
+            ],
           );
 
           filename = `booking-status-${startDate}-to-${endDate}.csv`;
@@ -1048,19 +1125,19 @@ export default function ReportsPage() {
           // Calculate money metrics
           const paidBookings = filteredBookings.filter(
             (b) =>
-              b.payment_status === "paid" || b.payment_status === "verified"
+              b.payment_status === "paid" || b.payment_status === "verified",
           );
 
           const pendingPayments = filteredBookings.filter(
             (b) =>
-              b.payment_status === "pending" || b.payment_status === "partial"
+              b.payment_status === "pending" || b.payment_status === "partial",
           );
 
           const upcomingCheckouts = filteredBookings.filter((b) => {
             const checkOut = new Date(b.check_out_date);
             const today = new Date(todayMoney);
             const nextWeek = new Date(
-              today.getTime() + 7 * 24 * 60 * 60 * 1000
+              today.getTime() + 7 * 24 * 60 * 60 * 1000,
             );
             return (
               checkOut >= today &&
@@ -1072,15 +1149,15 @@ export default function ReportsPage() {
           // Calculate totals
           const totalEarned = paidBookings.reduce(
             (sum, b) => sum + (b.total_amount || 0),
-            0
+            0,
           );
           const totalPending = pendingPayments.reduce(
             (sum, b) => sum + (b.total_amount || 0),
-            0
+            0,
           );
           const weeklyExpected = upcomingCheckouts.reduce(
             (sum, b) => sum + (b.total_amount || 0),
-            0
+            0,
           );
 
           // Payment method breakdown
@@ -1138,8 +1215,8 @@ export default function ReportsPage() {
               totalEarned > 100000
                 ? "🟢 Excellent"
                 : totalEarned > 50000
-                ? "🟡 Good"
-                : "🔴 Low",
+                  ? "🟡 Good"
+                  : "🔴 Low",
               "Money secured - track daily deposits",
             ],
             [
@@ -1154,8 +1231,8 @@ export default function ReportsPage() {
               pendingPayments.length === 0
                 ? "🟢 All paid"
                 : pendingPayments.length < 5
-                ? "🟡 Few pending"
-                : "🔴 Many pending",
+                  ? "🟡 Few pending"
+                  : "🔴 Many pending",
               pendingPayments.length > 0
                 ? "Follow up on pending payments ASAP"
                 : "All payments current",
@@ -1224,7 +1301,7 @@ export default function ReportsPage() {
 
       if (rows.length === 0) {
         alert(
-          `No ${selectedReport.name.toLowerCase()} data found for the selected period.`
+          `No ${selectedReport.name.toLowerCase()} data found for the selected period.`,
         );
         return;
       }
@@ -1249,7 +1326,7 @@ export default function ReportsPage() {
                       h.toLowerCase().includes("amount") ||
                       h.toLowerCase().includes("revenue") ||
                       h.toLowerCase().includes("value") ||
-                      h.toLowerCase().includes("spent")
+                      h.toLowerCase().includes("spent"),
                   )
                 ) {
                   value = num.toFixed(2);
@@ -1270,7 +1347,7 @@ export default function ReportsPage() {
 
               return `"${value}"`;
             })
-            .join(",")
+            .join(","),
         ),
       ].join("\n");
 
@@ -1519,7 +1596,7 @@ export default function ReportsPage() {
                           | object;
                       }[],
                       selectedReport.name,
-                      { start: startDate, end: endDate }
+                      { start: startDate, end: endDate },
                     );
                     showToast({
                       type: "success",
@@ -1594,7 +1671,7 @@ export default function ReportsPage() {
                       const end = new Date(endDate);
                       const daysDiff = Math.ceil(
                         (end.getTime() - start.getTime()) /
-                          (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24),
                       );
 
                       // Show up to 14 days to keep chart readable
@@ -1606,10 +1683,10 @@ export default function ReportsPage() {
                         const dateStr = date.toISOString().split("T")[0];
 
                         const checkIns = filteredBookings.filter(
-                          (b) => b.check_in_date === dateStr
+                          (b) => b.check_in_date === dateStr,
                         ).length;
                         const checkOuts = filteredBookings.filter(
-                          (b) => b.check_out_date === dateStr
+                          (b) => b.check_out_date === dateStr,
                         ).length;
 
                         dailyData.push({
@@ -1669,7 +1746,7 @@ export default function ReportsPage() {
                           .filter((b) => b.check_in_date === dateStr)
                           .reduce(
                             (sum, b) => sum + (b.number_of_guests || 0),
-                            0
+                            0,
                           );
 
                         dailyData.push({
@@ -1734,14 +1811,14 @@ export default function ReportsPage() {
                               size <= 2
                                 ? "1-2 People"
                                 : size <= 5
-                                ? "3-5 People"
-                                : size <= 10
-                                ? "6-10 People"
-                                : "11+ People";
+                                  ? "3-5 People"
+                                  : size <= 10
+                                    ? "6-10 People"
+                                    : "11+ People";
                             acc[category] = (acc[category] || 0) + 1;
                             return acc;
                           },
-                          {} as Record<string, number>
+                          {} as Record<string, number>,
                         );
 
                         const colors = [
@@ -1755,7 +1832,7 @@ export default function ReportsPage() {
                             name,
                             value,
                             color: colors[index % colors.length],
-                          })
+                          }),
                         );
                       })()}
                       cx="50%"
@@ -1768,19 +1845,22 @@ export default function ReportsPage() {
                     >
                       {filteredBookings.length > 0 &&
                         Object.entries(
-                          filteredBookings.reduce((acc, booking) => {
-                            const size = booking.number_of_guests || 1;
-                            const category =
-                              size <= 2
-                                ? "1-2 People"
-                                : size <= 5
-                                ? "3-5 People"
-                                : size <= 10
-                                ? "6-10 People"
-                                : "11+ People";
-                            acc[category] = (acc[category] || 0) + 1;
-                            return acc;
-                          }, {} as Record<string, number>)
+                          filteredBookings.reduce(
+                            (acc, booking) => {
+                              const size = booking.number_of_guests || 1;
+                              const category =
+                                size <= 2
+                                  ? "1-2 People"
+                                  : size <= 5
+                                    ? "3-5 People"
+                                    : size <= 10
+                                      ? "6-10 People"
+                                      : "11+ People";
+                              acc[category] = (acc[category] || 0) + 1;
+                              return acc;
+                            },
+                            {} as Record<string, number>,
+                          ),
                         ).map((_, index) => {
                           const colors = [
                             "#3b82f6",
@@ -1847,7 +1927,7 @@ export default function ReportsPage() {
                           monthlyGuests.set(
                             month,
                             monthlyGuests.get(month) +
-                              (booking.number_of_guests || 1)
+                              (booking.number_of_guests || 1),
                           );
                         }
                       });
@@ -1912,7 +1992,7 @@ export default function ReportsPage() {
                       const monthlyRevenue = new Map();
 
                       months.forEach((month) =>
-                        monthlyRevenue.set(month, { confirmed: 0, pending: 0 })
+                        monthlyRevenue.set(month, { confirmed: 0, pending: 0 }),
                       );
 
                       filteredBookings.forEach((booking) => {
@@ -1992,7 +2072,7 @@ export default function ReportsPage() {
                             if (!b.created_at || b.status !== "confirmed")
                               return false;
                             const bookingMonth = new Date(
-                              b.created_at
+                              b.created_at,
                             ).getMonth();
                             return bookingMonth === date.getMonth();
                           })
@@ -2099,11 +2179,11 @@ export default function ReportsPage() {
                             fill: name.includes("First")
                               ? "#ef4444"
                               : name.includes("Returning")
-                              ? "#f59e0b"
-                              : name.includes("Frequent")
-                              ? "#10b981"
-                              : "#8b5cf6",
-                          })
+                                ? "#f59e0b"
+                                : name.includes("Frequent")
+                                  ? "#10b981"
+                                  : "#8b5cf6",
+                          }),
                         );
                       })()}
                       cx="50%"
@@ -2166,12 +2246,12 @@ export default function ReportsPage() {
                         .sort(
                           (a, b) =>
                             new Date(a.created_at || "").getTime() -
-                            new Date(b.created_at || "").getTime()
+                            new Date(b.created_at || "").getTime(),
                         )
                         .forEach((booking) => {
                           if (booking.created_at && booking.guest_email) {
                             const monthIndex = new Date(
-                              booking.created_at
+                              booking.created_at,
                             ).getMonth();
                             const monthName = months[monthIndex];
 
@@ -2180,7 +2260,7 @@ export default function ReportsPage() {
                               uniqueCustomers.add(booking.guest_email);
                               monthlyCustomers.set(
                                 monthName,
-                                monthlyCustomers.get(monthName) + 1
+                                monthlyCustomers.get(monthName) + 1,
                               );
                             }
                           }
@@ -2198,7 +2278,7 @@ export default function ReportsPage() {
                           };
                         })
                         .filter(
-                          (item) => item.customers > 0 || item.newCustomers > 0
+                          (item) => item.customers > 0 || item.newCustomers > 0,
                         );
                     })()}
                   >
@@ -2270,12 +2350,12 @@ export default function ReportsPage() {
                       filteredBookings.forEach((booking) => {
                         if (booking.created_at) {
                           const monthIndex = new Date(
-                            booking.created_at
+                            booking.created_at,
                           ).getMonth();
                           const monthName = months[monthIndex];
                           monthlyBookings.set(
                             monthName,
-                            monthlyBookings.get(monthName) + 1
+                            monthlyBookings.get(monthName) + 1,
                           );
                         }
                       });
@@ -2351,7 +2431,7 @@ export default function ReportsPage() {
 
                         // Handle guests without email
                         const guestsWithoutEmail = filteredBookings.filter(
-                          (b) => !b.guest_email
+                          (b) => !b.guest_email,
                         ).length;
                         newGuests += guestsWithoutEmail;
 
@@ -2513,7 +2593,7 @@ export default function ReportsPage() {
                           name: "Special Requests",
                           value: filteredBookings.filter(
                             (b) =>
-                              b.special_requests && b.special_requests.trim()
+                              b.special_requests && b.special_requests.trim(),
                           ).length,
                         },
                         {
@@ -2522,7 +2602,7 @@ export default function ReportsPage() {
                             (b) =>
                               !b.brings_pet &&
                               (!b.special_requests ||
-                                !b.special_requests.trim())
+                                !b.special_requests.trim()),
                           ).length,
                         },
                       ]}
@@ -2597,7 +2677,7 @@ export default function ReportsPage() {
                           .map(([name, value]) => ({ name, value }))
                           .filter(
                             (item: { name: string; value: number }) =>
-                              item.value > 0
+                              item.value > 0,
                           );
                       })()}
                       cx="50%"
@@ -2638,7 +2718,7 @@ export default function ReportsPage() {
                         .filter(
                           (b) =>
                             b.payment_status === "paid" ||
-                            b.payment_status === "verified"
+                            b.payment_status === "verified",
                         )
                         .forEach((booking) => {
                           const method = booking.payment_type || "cash";
@@ -2667,13 +2747,13 @@ export default function ReportsPage() {
                         .map(([method, revenue]) => ({ method, revenue }))
                         .filter(
                           (item: { method: string; revenue: number }) =>
-                            item.revenue > 0
+                            item.revenue > 0,
                         )
                         .sort(
                           (
                             a: { method: string; revenue: number },
-                            b: { method: string; revenue: number }
-                          ) => b.revenue - a.revenue
+                            b: { method: string; revenue: number },
+                          ) => b.revenue - a.revenue,
                         );
                     })()}
                   >
@@ -2692,6 +2772,72 @@ export default function ReportsPage() {
                     <Bar dataKey="revenue" fill="#3b82f6" name="Revenue (₱)" />
                   </BarChart>
                 </ResponsiveContainer>
+              )}
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-md lg:col-span-2">
+              <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                <Footprints className="w-5 h-5 text-amber-600" />
+                Walk-in vs Online Bookings
+              </h3>
+              {isLoading ? (
+                <div className="h-32 bg-gray-100 animate-pulse rounded-lg"></div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-amber-50 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-amber-600">
+                      {
+                        filteredBookings.filter((b) =>
+                          String(b.special_requests || "").startsWith(
+                            "[WALK-IN]",
+                          ),
+                        ).length
+                      }
+                    </p>
+                    <p className="text-sm text-amber-700">Walk-in Bookings</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-blue-600">
+                      {
+                        filteredBookings.filter(
+                          (b) =>
+                            !String(b.special_requests || "").startsWith(
+                              "[WALK-IN]",
+                            ),
+                        ).length
+                      }
+                    </p>
+                    <p className="text-sm text-blue-700">Online Bookings</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-amber-600">
+                      {formatCurrency(
+                        filteredBookings
+                          .filter((b) =>
+                            String(b.special_requests || "").startsWith(
+                              "[WALK-IN]",
+                            ),
+                          )
+                          .reduce((sum, b) => sum + (b.total_amount || 0), 0),
+                      )}
+                    </p>
+                    <p className="text-sm text-amber-700">Walk-in Revenue</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-blue-600">
+                      {formatCurrency(
+                        filteredBookings
+                          .filter(
+                            (b) =>
+                              !String(b.special_requests || "").startsWith(
+                                "[WALK-IN]",
+                              ),
+                          )
+                          .reduce((sum, b) => sum + (b.total_amount || 0), 0),
+                      )}
+                    </p>
+                    <p className="text-sm text-blue-700">Online Revenue</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -2724,7 +2870,7 @@ export default function ReportsPage() {
                             b.check_in_date <
                               new Date(date.getTime() + 5 * 24 * 60 * 60 * 1000)
                                 .toISOString()
-                                .split("T")[0]
+                                .split("T")[0],
                         ).length;
 
                         next30Days.push({
@@ -2777,7 +2923,7 @@ export default function ReportsPage() {
                             acc[status] = (acc[status] || 0) + 1;
                             return acc;
                           },
-                          {} as Record<string, number>
+                          {} as Record<string, number>,
                         );
 
                         const colors = {
@@ -2794,7 +2940,7 @@ export default function ReportsPage() {
                             color:
                               colors[status as keyof typeof colors] ||
                               "#6b7280",
-                          })
+                          }),
                         );
                       })()}
                       cx="50%"
@@ -2807,11 +2953,14 @@ export default function ReportsPage() {
                     >
                       {filteredBookings.length > 0 &&
                         Object.entries(
-                          filteredBookings.reduce((acc, booking) => {
-                            const status = booking.status || "unknown";
-                            acc[status] = (acc[status] || 0) + 1;
-                            return acc;
-                          }, {} as Record<string, number>)
+                          filteredBookings.reduce(
+                            (acc, booking) => {
+                              const status = booking.status || "unknown";
+                              acc[status] = (acc[status] || 0) + 1;
+                              return acc;
+                            },
+                            {} as Record<string, number>,
+                          ),
                         ).map((_, index) => {
                           const colors = [
                             "#10b981",
@@ -2861,7 +3010,7 @@ export default function ReportsPage() {
                       : (() => {
                           const today = new Date().toISOString().split("T")[0];
                           const todayArrivals = filteredBookings.filter(
-                            (b) => b.check_in_date === today
+                            (b) => b.check_in_date === today,
                           ).length;
                           return todayArrivals > 0 ? todayArrivals : "None";
                         })()}
@@ -2869,12 +3018,12 @@ export default function ReportsPage() {
                   <p className="text-xs text-gray-500 mt-1">
                     {(() => {
                       const tomorrow = new Date(
-                        Date.now() + 24 * 60 * 60 * 1000
+                        Date.now() + 24 * 60 * 60 * 1000,
                       )
                         .toISOString()
                         .split("T")[0];
                       const tomorrowCount = filteredBookings.filter(
-                        (b) => b.check_in_date === tomorrow
+                        (b) => b.check_in_date === tomorrow,
                       ).length;
                       return tomorrowCount > 0
                         ? `${tomorrowCount} tomorrow`
@@ -2897,7 +3046,7 @@ export default function ReportsPage() {
                       : (() => {
                           const today = new Date().toISOString().split("T")[0];
                           const todayDepartures = filteredBookings.filter(
-                            (b) => b.check_out_date === today
+                            (b) => b.check_out_date === today,
                           ).length;
                           return todayDepartures > 0 ? todayDepartures : "None";
                         })()}
@@ -2924,7 +3073,7 @@ export default function ReportsPage() {
                             (b) =>
                               b.check_in_date <= today &&
                               b.check_out_date > today &&
-                              b.status === "confirmed"
+                              b.status === "confirmed",
                           ).length;
                           return currentGuests > 0 ? currentGuests : "None";
                         })()}
@@ -2948,7 +3097,7 @@ export default function ReportsPage() {
                       : (() => {
                           const today = new Date();
                           const next7Days = new Date(
-                            today.getTime() + 7 * 24 * 60 * 60 * 1000
+                            today.getTime() + 7 * 24 * 60 * 60 * 1000,
                           )
                             .toISOString()
                             .split("T")[0];
@@ -2957,7 +3106,7 @@ export default function ReportsPage() {
                           const upcomingBookings = filteredBookings.filter(
                             (b) =>
                               b.check_in_date >= todayStr &&
-                              b.check_in_date <= next7Days
+                              b.check_in_date <= next7Days,
                           ).length;
                           return upcomingBookings > 0
                             ? upcomingBookings
@@ -2988,8 +3137,8 @@ export default function ReportsPage() {
                       : (() => {
                           const uniqueEmails = new Set(
                             filteredBookings.map(
-                              (b) => b.guest_email || "No email"
-                            )
+                              (b) => b.guest_email || "No email",
+                            ),
                           );
                           return uniqueEmails.size;
                         })()}
@@ -3012,11 +3161,11 @@ export default function ReportsPage() {
                           bookings.forEach((b) => {
                             guestCounts.set(
                               b.guest_email,
-                              (guestCounts.get(b.guest_email) || 0) + 1
+                              (guestCounts.get(b.guest_email) || 0) + 1,
                             );
                           });
                           return Array.from(guestCounts.values()).filter(
-                            (count) => count > 1
+                            (count) => count > 1,
                           ).length;
                         })()}
                   </p>
@@ -3061,11 +3210,11 @@ export default function ReportsPage() {
                           bookings.forEach((b) => {
                             guestCounts.set(
                               b.guest_email,
-                              (guestCounts.get(b.guest_email) || 0) + 1
+                              (guestCounts.get(b.guest_email) || 0) + 1,
                             );
                           });
                           return Array.from(guestCounts.values()).filter(
-                            (count) => count >= 3
+                            (count) => count >= 3,
                           ).length;
                         })()}
                   </p>
@@ -3116,7 +3265,7 @@ export default function ReportsPage() {
                       : formatCurrency(
                           confirmedBookings.length > 0
                             ? totalRevenue / confirmedBookings.length
-                            : 0
+                            : 0,
                         )}
                   </p>
                 </div>
@@ -3140,7 +3289,7 @@ export default function ReportsPage() {
                               sum +
                               Math.ceil(
                                 (checkOut.getTime() - checkIn.getTime()) /
-                                  (1000 * 60 * 60 * 24)
+                                  (1000 * 60 * 60 * 24),
                               )
                             );
                           }, 0);
@@ -3167,7 +3316,7 @@ export default function ReportsPage() {
                       : (() => {
                           const today = new Date();
                           return filteredBookings.filter(
-                            (b) => new Date(b.check_in_date) >= today
+                            (b) => new Date(b.check_in_date) >= today,
                           ).length;
                         })()}
                   </p>
@@ -3187,7 +3336,7 @@ export default function ReportsPage() {
                       : (() => {
                           const today = new Date();
                           const next30 = new Date(
-                            today.getTime() + 30 * 24 * 60 * 60 * 1000
+                            today.getTime() + 30 * 24 * 60 * 60 * 1000,
                           );
                           return filteredBookings.filter((b) => {
                             const checkIn = new Date(b.check_in_date);
@@ -3213,7 +3362,7 @@ export default function ReportsPage() {
                           return filteredBookings.filter(
                             (b) =>
                               new Date(b.check_in_date) >= today &&
-                              b.status === "confirmed"
+                              b.status === "confirmed",
                           ).length;
                         })()}
                   </p>
@@ -3235,7 +3384,7 @@ export default function ReportsPage() {
                           return filteredBookings.filter(
                             (b) =>
                               new Date(b.check_in_date) >= today &&
-                              b.status === "pending"
+                              b.status === "pending",
                           ).length;
                         })()}
                   </p>
@@ -3288,8 +3437,8 @@ export default function ReportsPage() {
                         booking.status === "confirmed"
                           ? "bg-green-100 text-green-800"
                           : booking.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
                       }`}
                     >
                       {booking.status || "Unknown"}
@@ -3398,8 +3547,8 @@ export default function ReportsPage() {
                             booking.status === "confirmed"
                               ? "bg-green-100 text-green-800"
                               : booking.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
                           }`}
                         >
                           {booking.status || "Unknown"}
@@ -3413,15 +3562,15 @@ export default function ReportsPage() {
                               booking.cancelled_by === "user"
                                 ? "bg-orange-100 text-orange-800"
                                 : booking.cancelled_by === "admin"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-gray-100 text-gray-800"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-gray-100 text-gray-800"
                             }`}
                           >
                             {booking.cancelled_by === "user"
                               ? "Guest"
                               : booking.cancelled_by === "admin"
-                              ? "Admin"
-                              : booking.cancelled_by}
+                                ? "Admin"
+                                : booking.cancelled_by}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-xs">-</span>
@@ -3498,7 +3647,7 @@ export default function ReportsPage() {
                           >
                             {page}
                           </button>
-                        )
+                        ),
                       )}
                     </div>
 

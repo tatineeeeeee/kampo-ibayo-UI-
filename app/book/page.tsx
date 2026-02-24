@@ -25,7 +25,10 @@ import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
 import { useToastHelpers } from "../components/Toast";
 import { isMaintenanceMode } from "../utils/maintenanceMode";
-import { cleanPhoneForDatabase } from "../utils/phoneUtils";
+import {
+  cleanPhoneForDatabase,
+  validatePhilippinePhone,
+} from "../utils/phoneUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -175,7 +178,7 @@ function BookingPage() {
         },
       };
     },
-    []
+    [],
   );
 
   // Legacy single-day price calculation (for backward compatibility)
@@ -186,7 +189,7 @@ function BookingPage() {
       return calculateMultiDayPrice(checkInDate, nextDay, guestCount)
         .totalAmount;
     },
-    [calculateMultiDayPrice]
+    [calculateMultiDayPrice],
   );
 
   // Data loading useEffect
@@ -197,7 +200,7 @@ function BookingPage() {
     const todayLocal = new Date(
       today.getFullYear(),
       today.getMonth(),
-      today.getDate()
+      today.getDate(),
     );
     setMinDate(todayLocal);
 
@@ -233,7 +236,7 @@ function BookingPage() {
         } else {
           console.error(
             "Error checking booking limits:",
-            bookingLimitsResult.reason
+            bookingLimitsResult.reason,
           );
           setCanCreateBooking(true); // Fallback to allow booking
         }
@@ -300,7 +303,7 @@ function BookingPage() {
         } else {
           console.error(
             "Error loading user data:",
-            userData.status === "rejected" ? userData.reason : "No user data"
+            userData.status === "rejected" ? userData.reason : "No user data",
           );
         }
 
@@ -310,7 +313,7 @@ function BookingPage() {
         } else {
           console.error(
             "Error fetching bookings:",
-            existingBookingsData.reason
+            existingBookingsData.reason,
           );
           setExistingBookings([]); // Fallback to empty array
         }
@@ -352,7 +355,7 @@ function BookingPage() {
       const pricing = calculateMultiDayPrice(
         formData.checkIn,
         formData.checkOut,
-        guestCount
+        guestCount,
       );
       setEstimatedPrice(pricing.totalAmount);
       setPricingBreakdown(pricing);
@@ -360,7 +363,7 @@ function BookingPage() {
       const pricing = calculateMultiDayPrice(
         formData.checkIn,
         formData.checkOut,
-        15
+        15,
       );
       setEstimatedPrice(pricing.totalAmount);
       setPricingBreakdown(pricing);
@@ -417,7 +420,7 @@ function BookingPage() {
 
     const activeBookings = existingBookings.filter(
       (booking) =>
-        booking.status === "confirmed" || booking.status === "pending"
+        booking.status === "confirmed" || booking.status === "pending",
     );
 
     // Normalize date for comparison (remove time component)
@@ -477,7 +480,7 @@ function BookingPage() {
     // Filter confirmed and pending bookings
     const activeBookings = existingBookings.filter(
       (booking) =>
-        booking.status === "confirmed" || booking.status === "pending"
+        booking.status === "confirmed" || booking.status === "pending",
     );
 
     const unavailableDates: Date[] = [];
@@ -509,7 +512,7 @@ function BookingPage() {
   // Enhanced multi-day conflict detection with detailed messaging
   const checkBookingConflict = (
     checkInDate: Date | null,
-    checkOutDate: Date | null
+    checkOutDate: Date | null,
   ) => {
     if (!checkInDate || !checkOutDate)
       return { hasConflict: false, message: "" };
@@ -528,7 +531,7 @@ function BookingPage() {
     // Filter confirmed and pending bookings for conflict checking
     const activeBookings = existingBookings.filter(
       (booking) =>
-        booking.status === "confirmed" || booking.status === "pending"
+        booking.status === "confirmed" || booking.status === "pending",
     );
 
     // Generate all dates in the new booking range (excluding checkout day)
@@ -591,7 +594,7 @@ function BookingPage() {
 
       // Find overlapping dates
       const overlapping = newBookingDates.filter((date) =>
-        existingDates.includes(date)
+        existingDates.includes(date),
       );
 
       if (overlapping.length > 0) {
@@ -607,7 +610,7 @@ function BookingPage() {
       const firstConflict = conflictingBookings[0];
       const conflictStart = new Date(firstConflict.conflictDates[0]);
       const conflictEnd = new Date(
-        firstConflict.conflictDates[firstConflict.conflictDates.length - 1]
+        firstConflict.conflictDates[firstConflict.conflictDates.length - 1],
       );
       conflictEnd.setDate(conflictEnd.getDate() + 1); // Add one day since we want the end date
 
@@ -618,13 +621,13 @@ function BookingPage() {
         hasConflict: true,
         message: `Your booking conflicts with an existing reservation. The dates ${conflictStart.toLocaleDateString(
           "en-US",
-          { month: "short", day: "numeric" }
+          { month: "short", day: "numeric" },
         )} to ${conflictEnd.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         })} overlap with a booking from ${existingCheckIn.toLocaleDateString(
           "en-US",
-          { month: "short", day: "numeric" }
+          { month: "short", day: "numeric" },
         )} to ${existingCheckOut.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
@@ -663,7 +666,7 @@ function BookingPage() {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, type, value } = e.target;
 
@@ -702,7 +705,7 @@ function BookingPage() {
       warning(
         "Booking Limit Reached",
         limitMessage ||
-          "You have reached the maximum number of pending bookings (3). Please wait for confirmation or cancel existing pending bookings."
+          "You have reached the maximum number of pending bookings (3). Please wait for confirmation or cancel existing pending bookings.",
       );
       setIsSubmitting(false);
       return;
@@ -712,7 +715,7 @@ function BookingPage() {
     if (!formData.name.trim()) {
       showError(
         "Profile Information Missing",
-        "Your profile name is required. Please update your profile first."
+        "Your profile name is required. Please update your profile first.",
       );
       setIsSubmitting(false);
       return;
@@ -721,7 +724,7 @@ function BookingPage() {
     if (!formData.email.trim()) {
       showError(
         "Profile Information Missing",
-        "Your profile email is required. Please update your profile first."
+        "Your profile email is required. Please update your profile first.",
       );
       setIsSubmitting(false);
       return;
@@ -737,7 +740,7 @@ function BookingPage() {
     if (parseInt(formData.guests) > 100) {
       showError(
         "Guest Limit Exceeded",
-        "Maximum capacity is 100 guests. Please contact us directly for larger events."
+        "Maximum capacity is 100 guests. Please contact us directly for larger events.",
       );
       setIsSubmitting(false);
       return;
@@ -747,7 +750,7 @@ function BookingPage() {
     if (!formData.checkIn || !formData.checkOut) {
       showError(
         "Missing Dates",
-        "Please select both check-in and check-out dates"
+        "Please select both check-in and check-out dates",
       );
       setIsSubmitting(false);
       return;
@@ -764,12 +767,12 @@ function BookingPage() {
     const daysDifference = Math.ceil(
       (new Date(formData.checkOut).getTime() -
         new Date(formData.checkIn).getTime()) /
-        (1000 * 60 * 60 * 24)
+        (1000 * 60 * 60 * 24),
     );
     if (daysDifference > 30) {
       showError(
         "Stay Too Long",
-        "Maximum stay is 30 nights. For longer stays, please contact us directly."
+        "Maximum stay is 30 nights. For longer stays, please contact us directly.",
       );
       setIsSubmitting(false);
       return;
@@ -779,16 +782,28 @@ function BookingPage() {
     if (daysDifference < 1) {
       showError(
         "Invalid Stay",
-        "Minimum stay is 1 night. Please select at least one night."
+        "Minimum stay is 1 night. Please select at least one night.",
       );
       setIsSubmitting(false);
       return;
     }
 
+    // Validate Philippine phone number if provided
+    if (formData.phone.trim()) {
+      if (!validatePhilippinePhone(formData.phone.trim())) {
+        showError(
+          "Invalid Phone Number",
+          "Please enter a valid Philippine mobile number (e.g. 09171234567 or +639171234567).",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     // Check for booking conflicts
     const conflictCheck = checkBookingConflict(
       formData.checkIn,
-      formData.checkOut
+      formData.checkOut,
     );
     if (conflictCheck.hasConflict) {
       showError("Booking Conflict", conflictCheck.message);
@@ -800,7 +815,7 @@ function BookingPage() {
     const pricing = calculateMultiDayPrice(
       formData.checkIn!,
       formData.checkOut!,
-      parseInt(formData.guests)
+      parseInt(formData.guests),
     );
     const totalAmount = pricing.totalAmount;
     const paymentAmount =
@@ -854,7 +869,7 @@ function BookingPage() {
           "Booking Failed",
           `Error creating booking: ${
             error.message || "Unknown error"
-          }. Please try again.`
+          }. Please try again.`,
         );
       } else {
         // Booking created successfully - redirect to manual payment upload
@@ -869,7 +884,7 @@ function BookingPage() {
           "Redirecting to upload page with booking ID:",
           data.id,
           "URL:",
-          uploadUrl
+          uploadUrl,
         );
 
         try {
@@ -929,12 +944,12 @@ function BookingPage() {
                   bookingDetails: emailBookingDetails,
                   phoneNumber: bookingData.guest_phone, // Add phone for SMS
                 }),
-              }
+              },
             );
 
             if (!emailResponse.ok) {
               console.warn(
-                "Email sending failed, but booking was created successfully"
+                "Email sending failed, but booking was created successfully",
               );
             }
           } catch (emailError) {
@@ -951,7 +966,7 @@ function BookingPage() {
       setIsSubmitting(false);
       showError(
         "Unexpected Error",
-        "Unexpected error creating booking. Please try again."
+        "Unexpected error creating booking. Please try again.",
       );
     }
   };
@@ -969,7 +984,8 @@ function BookingPage() {
           color: white !important;
           font-family: inherit !important;
           border-radius: 1rem !important;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
+          box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.3),
             0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
           min-height: 480px !important;
           max-height: 480px !important;
@@ -2543,7 +2559,7 @@ function BookingPage() {
                                 <span className="text-2xl font-bold text-blue-400">
                                   ₱
                                   {Math.round(
-                                    estimatedPrice * 0.5
+                                    estimatedPrice * 0.5,
                                   ).toLocaleString()}
                                 </span>
                               </div>
@@ -2689,7 +2705,7 @@ function BookingPage() {
                   estimatedPrice && estimatedPrice > 0 ? (
                     paymentType === "half" ? (
                       `Pay Down Payment - ₱${Math.round(
-                        estimatedPrice * 0.5
+                        estimatedPrice * 0.5,
                       ).toLocaleString()}`
                     ) : (
                       `Pay Full Amount - ₱${estimatedPrice.toLocaleString()}`

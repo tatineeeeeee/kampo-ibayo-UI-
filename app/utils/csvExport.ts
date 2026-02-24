@@ -164,7 +164,17 @@ export const exportBookingsCSV = (bookings: CSVExportable[]) => {
         return status.charAt(0).toUpperCase() + status.slice(1);
       }
     },
-    { key: 'special_requests', header: 'Special Requests', format: (v: unknown) => String(v || 'None') },
+    {
+      key: 'special_requests', header: 'Booking Type', format: (v: unknown) => {
+        return String(v || '').startsWith('[WALK-IN]') ? 'Walk-in' : 'Online';
+      }
+    },
+    {
+      key: 'special_requests', header: 'Special Requests', format: (v: unknown) => {
+        const s = String(v || 'None');
+        return s.startsWith('[WALK-IN]') ? s.replace('[WALK-IN]', '').trim() || 'None' : s;
+      }
+    },
     { key: 'created_at', header: 'Booked On', format: (v: unknown) => formatDate(v as string) },
   ];
 
@@ -320,7 +330,17 @@ export const exportFilteredBookingsCSV = (
         return status.charAt(0).toUpperCase() + status.slice(1);
       }
     },
-    { key: 'special_requests', header: 'Special Requests', format: (v: unknown) => String(v || 'None') },
+    {
+      key: 'special_requests', header: 'Booking Type', format: (v: unknown) => {
+        return String(v || '').startsWith('[WALK-IN]') ? 'Walk-in' : 'Online';
+      }
+    },
+    {
+      key: 'special_requests', header: 'Special Requests', format: (v: unknown) => {
+        const s = String(v || 'None');
+        return s.startsWith('[WALK-IN]') ? s.replace('[WALK-IN]', '').trim() || 'None' : s;
+      }
+    },
     { key: 'created_at', header: 'Booked On', format: (v: unknown) => formatDate(v as string) },
   ];
 

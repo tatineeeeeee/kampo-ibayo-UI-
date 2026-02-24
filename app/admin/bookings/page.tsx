@@ -10,7 +10,12 @@ import {
   ChevronsRight,
   Download,
   FileText,
+  UserPlus,
+  CalendarDays,
+  Footprints,
 } from "lucide-react";
+import Link from "next/link";
+import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 import { Tables } from "../../../database.types";
 import { displayPhoneNumber } from "../../utils/phoneUtils";
 import {
@@ -58,7 +63,7 @@ interface PaymentHistoryEntry {
 // Smart booking workflow status that considers both booking and payment proof
 function getSmartWorkflowStatus(
   booking: Booking,
-  paymentProof?: PaymentProof | null
+  paymentProof?: PaymentProof | null,
 ) {
   const bookingStatus = booking.status || "pending";
   const paymentStatus = booking.payment_status || "pending";
@@ -168,6 +173,22 @@ function getSmartWorkflowStatus(
         description: "Booking confirmed but payment still under review",
         actionNeeded: "Verify payment proof to complete workflow",
       };
+    } else if (paymentStatus === "paid" || !paymentProof) {
+      // Walk-in cash bookings or confirmed bookings with no proof needed
+      return {
+        step: "confirmed",
+        priority: 1,
+        badge: "bg-green-100 text-green-800",
+        text: "Confirmed",
+        description:
+          paymentStatus === "paid"
+            ? "Booking confirmed and paid"
+            : "Booking confirmed — awaiting payment",
+        actionNeeded:
+          paymentStatus === "paid"
+            ? "Send check-in reminders"
+            : "Collect payment from guest",
+      };
     }
   }
 
@@ -232,7 +253,7 @@ function PaymentStatusCell({
         if (error) {
           console.error(
             `❌ PaymentStatusCell: Error fetching payment proof for booking ${booking.id}:`,
-            error
+            error,
           );
           throw error;
         }
@@ -244,13 +265,13 @@ function PaymentStatusCell({
           // This ensures new pending proofs show "Payment Review" even if there are older rejected ones
           const pendingProof = data.find((proof) => proof.status === "pending");
           const verifiedProof = data.find(
-            (proof) => proof.status === "verified"
+            (proof) => proof.status === "verified",
           );
           const rejectedProof = data.find(
-            (proof) => proof.status === "rejected"
+            (proof) => proof.status === "rejected",
           );
           const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled"
+            (proof) => proof.status === "cancelled",
           );
 
           selectedProof =
@@ -286,11 +307,11 @@ function PaymentStatusCell({
         (payload) => {
           console.log(
             `🔥 Real-time payment proof update for booking ${booking.id}:`,
-            payload
+            payload,
           );
           // Force immediate refresh on any payment proof change
           setTimeout(() => fetchPaymentProof(), 10); // Very short delay for database consistency
-        }
+        },
       )
       .subscribe();
 
@@ -409,7 +430,7 @@ function SmartWorkflowStatusCell({
         if (error) {
           console.error(
             `❌ SmartWorkflowStatusCell: Error fetching payment proof for booking ${booking.id}:`,
-            error
+            error,
           );
           throw error;
         }
@@ -420,13 +441,13 @@ function SmartWorkflowStatusCell({
           // Priority: pending > verified > rejected > cancelled
           const pendingProof = data.find((proof) => proof.status === "pending");
           const verifiedProof = data.find(
-            (proof) => proof.status === "verified"
+            (proof) => proof.status === "verified",
           );
           const rejectedProof = data.find(
-            (proof) => proof.status === "rejected"
+            (proof) => proof.status === "rejected",
           );
           const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled"
+            (proof) => proof.status === "cancelled",
           );
 
           selectedProof =
@@ -462,7 +483,7 @@ function SmartWorkflowStatusCell({
         () => {
           // Refresh payment proof data immediately when changes occur
           fetchPaymentProof();
-        }
+        },
       )
       .subscribe();
 
@@ -516,7 +537,7 @@ function SmartConfirmButton({
         if (error) {
           console.error(
             `❌ SmartConfirmButton: Error fetching payment proof for booking ${booking.id}:`,
-            error
+            error,
           );
           throw error;
         }
@@ -527,13 +548,13 @@ function SmartConfirmButton({
           // Priority: pending > verified > rejected > cancelled
           const pendingProof = data.find((proof) => proof.status === "pending");
           const verifiedProof = data.find(
-            (proof) => proof.status === "verified"
+            (proof) => proof.status === "verified",
           );
           const rejectedProof = data.find(
-            (proof) => proof.status === "rejected"
+            (proof) => proof.status === "rejected",
           );
           const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled"
+            (proof) => proof.status === "cancelled",
           );
 
           selectedProof =
@@ -548,7 +569,7 @@ function SmartConfirmButton({
       } catch (error) {
         console.error(
           "SmartConfirmButton: Error fetching payment proof:",
-          error
+          error,
         );
         setPaymentProof(null);
       } finally {
@@ -690,13 +711,13 @@ function PaymentProofButton({
           // Priority: pending > verified > rejected > cancelled
           const pendingProof = data.find((proof) => proof.status === "pending");
           const verifiedProof = data.find(
-            (proof) => proof.status === "verified"
+            (proof) => proof.status === "verified",
           );
           const rejectedProof = data.find(
-            (proof) => proof.status === "rejected"
+            (proof) => proof.status === "rejected",
           );
           const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled"
+            (proof) => proof.status === "cancelled",
           );
 
           selectedProof =
@@ -732,7 +753,7 @@ function PaymentProofButton({
         () => {
           // Immediately refresh payment proof data when changes occur
           fetchPaymentProof();
-        }
+        },
       )
       .subscribe();
 
@@ -850,10 +871,10 @@ function PaymentProofButton({
   const buttonClasses =
     variant === "modal"
       ? `w-full px-3 py-2 text-white rounded-md text-xs transition text-center ${getButtonStyle(
-          paymentProof.status
+          paymentProof.status,
         )}`
       : `h-7 w-full px-2 py-1 text-white rounded text-xs transition text-center flex items-center justify-center ${getButtonStyle(
-          paymentProof.status
+          paymentProof.status,
         )}`;
 
   return (
@@ -994,6 +1015,13 @@ export default function BookingsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Reschedule state
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [rescheduleCheckIn, setRescheduleCheckIn] = useState("");
+  const [rescheduleCheckOut, setRescheduleCheckOut] = useState("");
+  const [rescheduleReason, setRescheduleReason] = useState("");
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+
   // Payment proof state
   const [showPaymentProofModal, setShowPaymentProofModal] = useState(false);
   const [selectedPaymentProof, setSelectedPaymentProof] =
@@ -1006,7 +1034,7 @@ export default function BookingsPage() {
 
   // Payment history state
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryEntry[]>(
-    []
+    [],
   );
   const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
@@ -1019,7 +1047,7 @@ export default function BookingsPage() {
   const [newBookingAlert, setNewBookingAlert] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✨ For triggering component refreshes on payment proof updates
   const [lastRealTimeEvent, setLastRealTimeEvent] = useState<string | null>(
-    null
+    null,
   ); // Track real-time events
   const [realTimeStatus, setRealTimeStatus] = useState<
     "connecting" | "active" | "degraded" | "offline"
@@ -1111,7 +1139,7 @@ export default function BookingsPage() {
               if (!document.hidden) {
                 success(
                   "💸 Payment Proof Uploaded!",
-                  `Booking ${payload.new.id} (${payload.new.guest_name}) uploaded payment proof - Ready for review!`
+                  `Booking ${payload.new.id} (${payload.new.guest_name}) uploaded payment proof - Ready for review!`,
                 );
                 setRefreshTrigger((prev) => prev + 1);
               }
@@ -1143,7 +1171,7 @@ export default function BookingsPage() {
                     console.error("❌ Failed to cancel payment proofs:", error);
                   } else {
                     console.log(
-                      `✅ Auto-cancelled ALL payment proofs for booking ${payload.new.id} (cancelled by ${cancelledBy})`
+                      `✅ Auto-cancelled ALL payment proofs for booking ${payload.new.id} (cancelled by ${cancelledBy})`,
                     );
                   }
                 } catch (error) {
@@ -1159,7 +1187,7 @@ export default function BookingsPage() {
                   payload.new.cancelled_by === "user" ? "user" : "admin";
                 warning(
                   "🚫 Booking Cancelled",
-                  `Booking ${payload.new.id} (${payload.new.guest_name}) was cancelled by ${cancelledBy}`
+                  `Booking ${payload.new.id} (${payload.new.guest_name}) was cancelled by ${cancelledBy}`,
                 );
                 setRefreshTrigger((prev) => prev + 1);
                 setTimeout(() => setRefreshTrigger((prev) => prev + 1), 500);
@@ -1175,7 +1203,7 @@ export default function BookingsPage() {
                 setNewBookingAlert(
                   `${
                     payload.new.guest_name || "Guest"
-                  } cancelled their booking 💔`
+                  } cancelled their booking 💔`,
                 );
                 setTimeout(() => setNewBookingAlert(null), 5000);
               }
@@ -1207,12 +1235,12 @@ export default function BookingsPage() {
             setBookings((prevBookings) => {
               // Prevent duplicates - check if booking already exists
               const existingIndex = prevBookings.findIndex(
-                (b) => b.id === payload.new.id
+                (b) => b.id === payload.new.id,
               );
 
               if (existingIndex >= 0) {
                 return prevBookings.map((booking, index) =>
-                  index === existingIndex ? newBookingWithStatus : booking
+                  index === existingIndex ? newBookingWithStatus : booking,
                 );
               } else {
                 // Add new booking and maintain proper sort order (newest first by created_at)
@@ -1220,7 +1248,7 @@ export default function BookingsPage() {
                 return updatedBookings.sort(
                   (a, b) =>
                     new Date(b.created_at || "").getTime() -
-                    new Date(a.created_at || "").getTime()
+                    new Date(a.created_at || "").getTime(),
                 );
               }
             });
@@ -1228,7 +1256,7 @@ export default function BookingsPage() {
             // Show instant visual alert for new bookings
             if (!document.hidden) {
               setNewBookingAlert(
-                `New booking from ${payload.new.guest_name || "Guest"}! 🎉`
+                `New booking from ${payload.new.guest_name || "Guest"}! 🎉`,
               );
               setTimeout(() => setNewBookingAlert(null), 5000);
             }
@@ -1250,14 +1278,14 @@ export default function BookingsPage() {
                     prevBookings.map((booking) =>
                       booking.id === payload.new.id
                         ? { ...booking, user_exists: false }
-                        : booking
-                    )
+                        : booking,
+                    ),
                   );
                 }
               } catch (error) {
                 console.warn(
                   "Failed to verify user status for new booking:",
-                  error
+                  error,
                 );
               }
             }, 1000);
@@ -1265,11 +1293,11 @@ export default function BookingsPage() {
             // Remove deleted booking immediately from admin UI
             setBookings((prevBookings) => {
               return prevBookings.filter(
-                (booking) => booking.id !== payload.old.id
+                (booking) => booking.id !== payload.old.id,
               );
             });
           }
-        }
+        },
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -1293,7 +1321,7 @@ export default function BookingsPage() {
           setTimeout(() => {
             fetchBookings(false, true); // Silent sync - won't show loading state
           }, 500);
-        }
+        },
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -1365,7 +1393,7 @@ export default function BookingsPage() {
               selectedBooking.id === newProof.booking_id
             ) {
               console.log(
-                "🔄 Modal is open for updated proof - refreshing payment history"
+                "🔄 Modal is open for updated proof - refreshing payment history",
               );
               fetchPaymentHistory(newProof.booking_id);
 
@@ -1417,7 +1445,7 @@ export default function BookingsPage() {
             if (!document.hidden) {
               success(
                 "🎉 Payment Proof Uploaded!",
-                `New payment proof received for booking ${payload.new.booking_id} - Ready for review!`
+                `New payment proof received for booking ${payload.new.booking_id} - Ready for review!`,
               );
 
               // Also show browser notification if permitted
@@ -1451,7 +1479,7 @@ export default function BookingsPage() {
               selectedBooking.id === payload.new.booking_id
             ) {
               console.log(
-                "🔄 Modal is open for this booking - refreshing payment history and proof data"
+                "🔄 Modal is open for this booking - refreshing payment history and proof data",
               );
               fetchPaymentHistory(payload.new.booking_id);
 
@@ -1473,7 +1501,7 @@ export default function BookingsPage() {
                 } catch (error) {
                   console.error(
                     "Failed to update modal with latest proof:",
-                    error
+                    error,
                   );
                 }
               })();
@@ -1496,11 +1524,11 @@ export default function BookingsPage() {
           if (payload.eventType === "DELETE" && payload.old) {
             warning(
               "🗑️ Payment Proof Deleted",
-              `Payment proof for booking ${payload.old.booking_id} was deleted`
+              `Payment proof for booking ${payload.old.booking_id} was deleted`,
             );
             setRefreshTrigger((prev) => prev + 1);
           }
-        }
+        },
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -1572,11 +1600,15 @@ export default function BookingsPage() {
       filtered = filtered.filter((booking) => booking.user_exists);
     }
 
-    // Then filter by status
-    if (statusFilter !== "all") {
+    // Then filter by status or walk-in type
+    if (statusFilter === "walk-in") {
+      filtered = filtered.filter((booking) =>
+        String(booking.special_requests || "").startsWith("[WALK-IN]"),
+      );
+    } else if (statusFilter !== "all") {
       filtered = filtered.filter(
         (booking) =>
-          booking.status?.toLowerCase() === statusFilter.toLowerCase()
+          booking.status?.toLowerCase() === statusFilter.toLowerCase(),
       );
     }
 
@@ -1691,7 +1723,7 @@ export default function BookingsPage() {
         console.error("❌ Error fetching bookings:", error);
         // Show user-friendly error message
         showError(
-          `Failed to fetch bookings: ${error.message || "Unknown error"}`
+          `Failed to fetch bookings: ${error.message || "Unknown error"}`,
         );
         return;
       }
@@ -1704,7 +1736,7 @@ export default function BookingsPage() {
 
       // Step 2: Get all unique user IDs from bookings
       const userIds = Array.from(
-        new Set(bookingsData.map((booking) => booking.user_id).filter(Boolean))
+        new Set(bookingsData.map((booking) => booking.user_id).filter(Boolean)),
       );
 
       // Step 3: Single query to check which users exist (MUCH faster than N queries)
@@ -1719,7 +1751,7 @@ export default function BookingsPage() {
         if (usersError) {
           console.warn(
             "⚠️ Error fetching users (continuing with default):",
-            usersError
+            usersError,
           );
           // Continue with all users marked as existing
           existingUserIds = new Set(userIds);
@@ -1727,7 +1759,7 @@ export default function BookingsPage() {
           existingUserIds = new Set(
             existingUsers
               ?.map((user) => user.auth_id)
-              .filter((id): id is string => Boolean(id)) || []
+              .filter((id): id is string => Boolean(id)) || [],
           );
         }
       }
@@ -1753,7 +1785,7 @@ export default function BookingsPage() {
         const getPriority = (
           status: string,
           paymentStatus: string,
-          cancelledBy: string | null
+          cancelledBy: string | null,
         ) => {
           // SPECIAL CASE: When viewing cancelled filter, all cancelled bookings get same priority for pure date sorting
           if (currentStatusFilter === "cancelled" && status === "cancelled") {
@@ -1819,7 +1851,7 @@ export default function BookingsPage() {
   // Handle payment proof verification
   const handlePaymentProofAction = async (
     action: "approve" | "reject",
-    proofId: number
+    proofId: number,
   ) => {
     // Prevent double-clicking
     if (paymentProofLoading) {
@@ -1882,7 +1914,7 @@ export default function BookingsPage() {
           signal: controller.signal,
         }),
         15000,
-        "Payment proof verification timed out"
+        "Payment proof verification timed out",
       );
 
       clearTimeout(timeoutId);
@@ -1904,7 +1936,7 @@ export default function BookingsPage() {
       success(
         action === "approve"
           ? "Payment proof approved successfully!"
-          : "Payment proof rejected successfully!"
+          : "Payment proof rejected successfully!",
       );
 
       // 🚀 CRITICAL: Trigger real-time component updates immediately BEFORE closing modal
@@ -1955,7 +1987,7 @@ export default function BookingsPage() {
       }
 
       showError(
-        `Error updating payment proof: ${errorMessage}. Please try again.`
+        `Error updating payment proof: ${errorMessage}. Please try again.`,
       );
 
       // Don't close modal on error, let user retry
@@ -1989,8 +2021,8 @@ export default function BookingsPage() {
     // Optimistic update - immediately update UI for instant feedback
     setBookings((prevBookings) =>
       prevBookings.map((booking) =>
-        booking.id === bookingId ? { ...booking, status: newStatus } : booking
-      )
+        booking.id === bookingId ? { ...booking, status: newStatus } : booking,
+      ),
     );
 
     try {
@@ -2050,7 +2082,7 @@ export default function BookingsPage() {
       showError(
         `Error updating booking status: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
       // Revert optimistic update on error
       fetchBookings(true);
@@ -2077,7 +2109,7 @@ export default function BookingsPage() {
 
   const handleAdminCancelBooking = async (
     bookingId: number,
-    shouldRefund: boolean = false
+    shouldRefund: boolean = false,
   ) => {
     if (!adminCancellationReason.trim()) {
       warning("Please provide a reason for cancellation");
@@ -2117,14 +2149,14 @@ export default function BookingsPage() {
                 refundType: "full", // Admin can give full refund
                 processedBy: "admin",
               }),
-            }
+            },
           );
 
           if (refundApiResponse.ok) {
             refundResponse = await refundApiResponse.json();
             console.log(
               "✅ Admin refund processed successfully:",
-              refundResponse.refund_amount
+              refundResponse.refund_amount,
             );
           } else {
             const refundErrorText = await refundApiResponse.text();
@@ -2138,10 +2170,10 @@ export default function BookingsPage() {
                 const { refund_amount, max_amount } = refundErrorData;
                 warning(
                   `PayMongo Test Mode Limit`,
-                  `Booking amount: ₱${refund_amount.toLocaleString()} exceeds PayMongo TEST MODE limit of ₱${max_amount.toLocaleString()}. For ₱9K-₱12K bookings, switch to LIVE MODE or process refund manually. This limit only applies to test mode.`
+                  `Booking amount: ₱${refund_amount.toLocaleString()} exceeds PayMongo TEST MODE limit of ₱${max_amount.toLocaleString()}. For ₱9K-₱12K bookings, switch to LIVE MODE or process refund manually. This limit only applies to test mode.`,
                 );
                 console.log(
-                  "ℹ️ Manual refund required due to PayMongo TEST MODE limits"
+                  "ℹ️ Manual refund required due to PayMongo TEST MODE limits",
                 );
               } else if (
                 refundErrorData.error &&
@@ -2149,25 +2181,25 @@ export default function BookingsPage() {
               ) {
                 warning(
                   "Payment Processing Error",
-                  "Unable to process automatic refund. Please handle the refund manually through PayMongo dashboard."
+                  "Unable to process automatic refund. Please handle the refund manually through PayMongo dashboard.",
                 );
               } else {
                 warning(
                   "Refund Failed",
-                  "Booking will be cancelled but automatic refund failed. Please process the refund manually."
+                  "Booking will be cancelled but automatic refund failed. Please process the refund manually.",
                 );
               }
             } catch {
               warning(
                 "Refund Failed",
-                "Booking will be cancelled but automatic refund failed. Please process the refund manually."
+                "Booking will be cancelled but automatic refund failed. Please process the refund manually.",
               );
             }
           }
         } catch (refundError) {
           console.error("❌ Refund API error:", refundError);
           warning(
-            "Booking will be cancelled but refund failed. Please process manually."
+            "Booking will be cancelled but refund failed. Please process manually.",
           );
         }
       }
@@ -2209,7 +2241,7 @@ export default function BookingsPage() {
       showError(
         `Error cancelling booking: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     } finally {
       setIsProcessing(false);
@@ -2233,6 +2265,68 @@ export default function BookingsPage() {
     setIsProcessing(false);
     setPaymentSummary(null); // Clear payment summary
     setPaymentHistory([]); // Clear payment history
+    // Reset reschedule state
+    setShowRescheduleModal(false);
+    setRescheduleCheckIn("");
+    setRescheduleCheckOut("");
+    setRescheduleReason("");
+    setRescheduleLoading(false);
+  };
+
+  // Admin reschedule handler
+  const handleAdminReschedule = async () => {
+    if (!selectedBooking || !rescheduleCheckIn || !rescheduleCheckOut) {
+      warning("Please select both check-in and check-out dates");
+      return;
+    }
+
+    // Validate not same dates
+    const curIn = new Date(selectedBooking.check_in_date).toDateString();
+    const curOut = new Date(selectedBooking.check_out_date).toDateString();
+    if (
+      new Date(rescheduleCheckIn).toDateString() === curIn &&
+      new Date(rescheduleCheckOut).toDateString() === curOut
+    ) {
+      warning("New dates are the same as current dates");
+      return;
+    }
+
+    setRescheduleLoading(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const response = await fetch("/api/admin/reschedule-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: selectedBooking.id,
+          newCheckIn: rescheduleCheckIn,
+          newCheckOut: rescheduleCheckOut,
+          adminId: user?.id || "admin",
+          reason: rescheduleReason || "Rescheduled by admin",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const pricingInfo = result.pricing;
+        const msg = pricingInfo
+          ? `Booking rescheduled! New amount: ₱${pricingInfo.newAmount.toLocaleString()} (${pricingInfo.nightsCount} night${pricingInfo.nightsCount > 1 ? "s" : ""})`
+          : "Booking rescheduled successfully!";
+        success(msg);
+        fetchBookings();
+        closeModal();
+      } else {
+        showError(result.error || "Failed to reschedule booking");
+      }
+    } catch (error) {
+      console.error("Reschedule error:", error);
+      showError("Network error — please try again");
+    } finally {
+      setRescheduleLoading(false);
+    }
   };
 
   // Pagination helpers
@@ -2291,18 +2385,18 @@ export default function BookingsPage() {
                   realTimeStatus === "active"
                     ? "bg-green-500"
                     : realTimeStatus === "degraded"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
                 } ${realTimeStatus === "active" ? "animate-pulse" : ""}`}
               ></div>
               <span className="text-sm font-medium text-gray-700">
                 {realTimeStatus === "active"
                   ? "Real-time Active"
                   : realTimeStatus === "degraded"
-                  ? "Sync Mode"
-                  : realTimeStatus === "connecting"
-                  ? "Connecting..."
-                  : "Offline Mode"}
+                    ? "Sync Mode"
+                    : realTimeStatus === "connecting"
+                      ? "Connecting..."
+                      : "Offline Mode"}
               </span>
             </div>
 
@@ -2419,31 +2513,41 @@ export default function BookingsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-md p-3 sm:p-4">
-        {/* Search Bar */}
+        {/* Search Bar + Walk-in Button */}
         <div className="mb-3 sm:mb-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by booking number (KB-0001), guest name, email, phone, or ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+          <div className="flex gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search by booking number (KB-0001), guest name, email, phone, or ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg
+                  className="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
             </div>
+            <Link
+              href="/admin/bookings/walk-in"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap font-medium text-sm shadow-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Walk-in Booking</span>
+              <span className="sm:hidden">Walk-in</span>
+            </Link>
           </div>
           {searchTerm && (
             <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -2502,7 +2606,7 @@ export default function BookingsPage() {
                 (
                 {
                   bookings.filter(
-                    (b) => b.status?.toLowerCase() === "confirmed"
+                    (b) => b.status?.toLowerCase() === "confirmed",
                   ).length
                 }
                 )
@@ -2522,7 +2626,7 @@ export default function BookingsPage() {
                 (
                 {
                   bookings.filter(
-                    (b) => b.status?.toLowerCase() === "completed"
+                    (b) => b.status?.toLowerCase() === "completed",
                   ).length
                 }
                 )
@@ -2542,7 +2646,28 @@ export default function BookingsPage() {
                 (
                 {
                   bookings.filter(
-                    (b) => b.status?.toLowerCase() === "cancelled"
+                    (b) => b.status?.toLowerCase() === "cancelled",
+                  ).length
+                }
+                )
+              </span>
+            </button>
+            <button
+              onClick={() => setStatusFilter("walk-in")}
+              className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                statusFilter === "walk-in"
+                  ? "bg-amber-100 text-amber-700 border border-amber-200"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+              }`}
+            >
+              <Footprints className="w-3.5 h-3.5" />
+              <span className="sm:hidden">Walk</span>
+              <span className="hidden sm:inline">Walk-in</span>
+              <span className="ml-1">
+                (
+                {
+                  bookings.filter((b) =>
+                    String(b.special_requests || "").startsWith("[WALK-IN]"),
                   ).length
                 }
                 )
@@ -2552,7 +2677,10 @@ export default function BookingsPage() {
           {(statusFilter !== "all" || searchTerm) && (
             <p className="text-xs sm:text-sm text-gray-600 mt-2">
               Showing {filteredBookings.length} of {bookings.length} bookings
-              {statusFilter !== "all" && ` with status "${statusFilter}"`}
+              {statusFilter === "walk-in" && " (walk-in bookings)"}
+              {statusFilter !== "all" &&
+                statusFilter !== "walk-in" &&
+                ` with status "${statusFilter}"`}
               {searchTerm && ` matching "${searchTerm}"`}
             </p>
           )}
@@ -2595,7 +2723,7 @@ export default function BookingsPage() {
                         | null
                         | undefined
                         | object;
-                    }[]
+                    }[],
                   );
                   success("Bookings exported to CSV successfully!");
                 } catch (error) {
@@ -2628,7 +2756,7 @@ export default function BookingsPage() {
                         | null
                         | undefined
                         | object;
-                    }[]
+                    }[],
                   );
                   success("Bookings exported to PDF successfully!");
                 } catch (error) {
@@ -2707,9 +2835,16 @@ export default function BookingsPage() {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <span className="font-mono font-bold text-blue-700 text-xs">
-                        {formatBookingNumber(booking.id)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-blue-700 text-xs">
+                          {formatBookingNumber(booking.id)}
+                        </span>
+                        {booking.special_requests?.startsWith("[WALK-IN]") && (
+                          <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[9px] font-bold rounded-full inline-flex items-center gap-0.5">
+                            <Footprints className="w-2.5 h-2.5" /> Walk-in
+                          </span>
+                        )}
+                      </div>
                       <h4 className="font-semibold text-gray-900 mt-1">
                         {booking.guest_name}
                       </h4>
@@ -2862,6 +2997,13 @@ export default function BookingsPage() {
                       <td className="p-2 text-center">
                         <div className="font-mono font-bold text-blue-700 text-xs whitespace-nowrap">
                           {formatBookingNumber(booking.id)}
+                          {booking.special_requests?.startsWith(
+                            "[WALK-IN]",
+                          ) && (
+                            <span className="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[9px] font-bold rounded-full inline-flex items-center gap-0.5">
+                              <Footprints className="w-2.5 h-2.5" />
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="p-3 text-black">
@@ -2974,16 +3116,16 @@ export default function BookingsPage() {
                                     if (allProofs && allProofs.length > 0) {
                                       // Priority: pending > verified > rejected > cancelled
                                       const pendingProof = allProofs.find(
-                                        (p) => p.status === "pending"
+                                        (p) => p.status === "pending",
                                       );
                                       const verifiedProof = allProofs.find(
-                                        (p) => p.status === "verified"
+                                        (p) => p.status === "verified",
                                       );
                                       const rejectedProof = allProofs.find(
-                                        (p) => p.status === "rejected"
+                                        (p) => p.status === "rejected",
                                       );
                                       const cancelledProof = allProofs.find(
-                                        (p) => p.status === "cancelled"
+                                        (p) => p.status === "cancelled",
                                       );
 
                                       const prioritizedProof =
@@ -2997,7 +3139,7 @@ export default function BookingsPage() {
                                   } catch (error) {
                                     console.log(
                                       "No payment proof found or error:",
-                                      error
+                                      error,
                                     );
                                   }
                                 }
@@ -3185,7 +3327,7 @@ export default function BookingsPage() {
                   <div className="text-right">
                     <span
                       className={`inline-block px-3 py-1 rounded-md text-xs font-semibold text-white ${getStatusColor(
-                        selectedBooking.status || "pending"
+                        selectedBooking.status || "pending",
                       )}`}
                     >
                       {(selectedBooking.status || "pending")
@@ -3244,7 +3386,7 @@ export default function BookingsPage() {
                             <span className="font-medium text-green-700">
                               ₱
                               {Math.round(
-                                selectedBooking.total_amount * 0.5
+                                selectedBooking.total_amount * 0.5,
                               ).toLocaleString()}
                             </span>
                           </div>
@@ -3253,7 +3395,7 @@ export default function BookingsPage() {
                             <span className="font-medium text-orange-700">
                               ₱
                               {Math.round(
-                                selectedBooking.total_amount * 0.5
+                                selectedBooking.total_amount * 0.5,
                               ).toLocaleString()}
                             </span>
                           </div>
@@ -3278,7 +3420,7 @@ export default function BookingsPage() {
                     const amountPaid = paymentSummary?.totalPaid || 0;
                     const progressPercent = Math.min(
                       100,
-                      Math.round((amountPaid / requiredDownpayment) * 100)
+                      Math.round((amountPaid / requiredDownpayment) * 100),
                     );
                     const isComplete = amountPaid >= requiredDownpayment;
 
@@ -3327,7 +3469,7 @@ export default function BookingsPage() {
                           {selectedBooking.payment_type === "full"
                             ? selectedBooking.total_amount.toLocaleString()
                             : Math.round(
-                                selectedBooking.total_amount * 0.5
+                                selectedBooking.total_amount * 0.5,
                               ).toLocaleString()}
                         </span>
                       </div>
@@ -3352,7 +3494,7 @@ export default function BookingsPage() {
                         const amountPaid = paymentSummary?.totalPaid || 0;
                         const stillOwedOnline = Math.max(
                           0,
-                          requiredDownpayment - amountPaid
+                          requiredDownpayment - amountPaid,
                         );
 
                         return stillOwedOnline > 0 ? (
@@ -3406,7 +3548,7 @@ export default function BookingsPage() {
                           {selectedBooking.payment_type === "full"
                             ? "0"
                             : Math.round(
-                                selectedBooking.total_amount * 0.5
+                                selectedBooking.total_amount * 0.5,
                               ).toLocaleString()}
                         </span>
                       </div>
@@ -3432,8 +3574,8 @@ export default function BookingsPage() {
                             selectedBooking.payment_status === "verified"
                               ? "bg-green-100 text-green-800"
                               : selectedBooking.payment_status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {selectedBooking.payment_status || "pending"}
@@ -3493,11 +3635,21 @@ export default function BookingsPage() {
                 {/* Special Requests */}
                 {selectedBooking.special_requests && (
                   <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-3">
-                    <h4 className="text-sm font-semibold text-orange-700 mb-2">
+                    <h4 className="text-sm font-semibold text-orange-700 mb-2 flex items-center gap-2">
                       Special Requests
+                      {selectedBooking.special_requests.startsWith(
+                        "[WALK-IN]",
+                      ) && (
+                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full inline-flex items-center gap-0.5">
+                          <Footprints className="w-3 h-3" /> Walk-in Booking
+                        </span>
+                      )}
                     </h4>
                     <p className="text-gray-700 text-sm">
-                      {selectedBooking.special_requests}
+                      {selectedBooking.special_requests.replace(
+                        /^\[WALK-IN\]\s*/,
+                        "",
+                      )}
                     </p>
                   </div>
                 )}
@@ -3513,7 +3665,8 @@ export default function BookingsPage() {
               {/* ACTIVE BOOKINGS (Pending or Confirmed) - Show actions */}
               {(selectedBooking.status === "pending" ||
                 selectedBooking.status === "confirmed") &&
-              !showCancelModal ? (
+              !showCancelModal &&
+              !showRescheduleModal ? (
                 <div className="space-y-4">
                   {/* Status Banner - Adapts based on booking status */}
                   {selectedBooking.status === "confirmed" && (
@@ -3527,7 +3680,7 @@ export default function BookingsPage() {
                           <span className="text-green-600 text-xs ml-2">
                             Check-in:{" "}
                             {new Date(
-                              selectedBooking.check_in_date
+                              selectedBooking.check_in_date,
                             ).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -3578,16 +3731,16 @@ export default function BookingsPage() {
 
                               if (allProofs && allProofs.length > 0) {
                                 const pendingProof = allProofs.find(
-                                  (p) => p.status === "pending"
+                                  (p) => p.status === "pending",
                                 );
                                 const verifiedProof = allProofs.find(
-                                  (p) => p.status === "verified"
+                                  (p) => p.status === "verified",
                                 );
                                 const rejectedProof = allProofs.find(
-                                  (p) => p.status === "rejected"
+                                  (p) => p.status === "rejected",
                                 );
                                 const cancelledProof = allProofs.find(
-                                  (p) => p.status === "cancelled"
+                                  (p) => p.status === "cancelled",
                                 );
                                 const prioritizedProof =
                                   pendingProof ||
@@ -3600,7 +3753,7 @@ export default function BookingsPage() {
                             } catch (error) {
                               console.log(
                                 "No payment proof found or error:",
-                                error
+                                error,
                               );
                             }
                           }
@@ -3628,6 +3781,19 @@ export default function BookingsPage() {
                             }}
                           />
                         )}
+                        {/* Reschedule button */}
+                        <button
+                          onClick={() => {
+                            setShowRescheduleModal(true);
+                            setRescheduleCheckIn("");
+                            setRescheduleCheckOut("");
+                            setRescheduleReason("");
+                          }}
+                          className="w-full px-4 py-2 rounded-md text-sm font-semibold transition flex items-center justify-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                        >
+                          <CalendarDays className="w-4 h-4" />
+                          Reschedule Booking
+                        </button>
                         {/* Cancel button for all active bookings */}
                         <button
                           onClick={() => setShowCancelModal(true)}
@@ -3650,6 +3816,117 @@ export default function BookingsPage() {
                       className="px-8 py-2 bg-gray-600 text-white rounded-md text-sm font-medium hover:bg-gray-700 transition"
                     >
                       Close
+                    </button>
+                  </div>
+                </div>
+              ) : showRescheduleModal ? (
+                <div className="space-y-4">
+                  {/* Reschedule Header */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDays className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-bold text-gray-800">
+                      Reschedule Booking
+                    </h3>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                    <strong>Current dates:</strong>{" "}
+                    {new Date(selectedBooking.check_in_date).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric", year: "numeric" },
+                    )}
+                    {" → "}
+                    {new Date(
+                      selectedBooking.check_out_date,
+                    ).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </div>
+
+                  {/* Calendar */}
+                  <div className="max-h-[340px] overflow-y-auto">
+                    <AvailabilityCalendar
+                      selectedCheckIn={rescheduleCheckIn}
+                      selectedCheckOut={rescheduleCheckOut}
+                      onDateSelect={(checkIn, checkOut) => {
+                        setRescheduleCheckIn(checkIn);
+                        setRescheduleCheckOut(checkOut);
+                      }}
+                      excludeBookingId={selectedBooking.id}
+                      minDate={new Date().toISOString().split("T")[0]}
+                      isRescheduling={true}
+                    />
+                  </div>
+
+                  {rescheduleCheckIn && rescheduleCheckOut && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
+                      <strong>New dates:</strong>{" "}
+                      {new Date(
+                        rescheduleCheckIn + "T00:00:00",
+                      ).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                      {" → "}
+                      {new Date(
+                        rescheduleCheckOut + "T00:00:00",
+                      ).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </div>
+                  )}
+
+                  {/* Reason (optional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Reason (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={rescheduleReason}
+                      onChange={(e) => setRescheduleReason(e.target.value)}
+                      placeholder="e.g. Guest requested date change"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleAdminReschedule}
+                      disabled={
+                        rescheduleLoading ||
+                        !rescheduleCheckIn ||
+                        !rescheduleCheckOut
+                      }
+                      className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition shadow-sm text-white ${
+                        rescheduleLoading ||
+                        !rescheduleCheckIn ||
+                        !rescheduleCheckOut
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      }`}
+                    >
+                      {rescheduleLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Processing...
+                        </span>
+                      ) : (
+                        "Confirm Reschedule"
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowRescheduleModal(false)}
+                      disabled={rescheduleLoading}
+                      className="px-6 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-50"
+                    >
+                      ← Back
                     </button>
                   </div>
                 </div>
@@ -3902,7 +4179,7 @@ export default function BookingsPage() {
                           onClick={() =>
                             handleAdminCancelBooking(
                               selectedBooking.id,
-                              shouldRefund
+                              shouldRefund,
                             )
                           }
                           disabled={isProcessing}
@@ -3910,8 +4187,8 @@ export default function BookingsPage() {
                             isProcessing
                               ? "bg-gray-400 cursor-not-allowed"
                               : shouldRefund
-                              ? "bg-green-600 hover:bg-green-700"
-                              : "bg-red-600 hover:bg-red-700"
+                                ? "bg-green-600 hover:bg-green-700"
+                                : "bg-red-600 hover:bg-red-700"
                           } text-white`}
                         >
                           {isProcessing ? (
@@ -4023,8 +4300,8 @@ export default function BookingsPage() {
                         selectedPaymentProof.status === "pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : selectedPaymentProof.status === "verified"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                       }`}
                     >
                       {selectedPaymentProof.status}
@@ -4034,7 +4311,7 @@ export default function BookingsPage() {
                     <span className="font-medium text-black">Uploaded:</span>
                     <p className="text-black">
                       {new Date(
-                        selectedPaymentProof.uploaded_at
+                        selectedPaymentProof.uploaded_at,
                       ).toLocaleString()}
                     </p>
                   </div>
@@ -4156,8 +4433,8 @@ export default function BookingsPage() {
                                   entry.status === "verified"
                                     ? "bg-green-100 text-green-800"
                                     : entry.status === "rejected"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-yellow-100 text-yellow-800"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-yellow-100 text-yellow-800"
                                 }`}
                               >
                                 {entry.status}
@@ -4172,7 +4449,7 @@ export default function BookingsPage() {
                                   year: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                }
+                                },
                               )}
                             </span>
                           </div>
@@ -4232,7 +4509,7 @@ export default function BookingsPage() {
                                   year: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                }
+                                },
                               )}
                             </div>
                           )}
@@ -4517,7 +4794,7 @@ export default function BookingsPage() {
                     <p className="text-blue-600 text-xs mt-2">
                       Verified on:{" "}
                       {new Date(
-                        selectedPaymentProof.verified_at
+                        selectedPaymentProof.verified_at,
                       ).toLocaleString()}
                     </p>
                   )}
@@ -4533,7 +4810,7 @@ export default function BookingsPage() {
                       onClick={() =>
                         handlePaymentProofAction(
                           "approve",
-                          selectedPaymentProof.id
+                          selectedPaymentProof.id,
                         )
                       }
                       disabled={paymentProofLoading}
@@ -4574,13 +4851,13 @@ export default function BookingsPage() {
                             !customRejectionReason.trim())
                         ) {
                           showError(
-                            "Please select a reason for rejection before proceeding."
+                            "Please select a reason for rejection before proceeding.",
                           );
                           return;
                         }
                         handlePaymentProofAction(
                           "reject",
-                          selectedPaymentProof.id
+                          selectedPaymentProof.id,
                         );
                       }}
                       disabled={paymentProofLoading}

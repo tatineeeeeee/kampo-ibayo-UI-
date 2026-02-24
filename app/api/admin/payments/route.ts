@@ -30,6 +30,7 @@ interface ConsolidatedPayment {
   verified_by: string | null;
   admin_notes: string | null;
   has_payment_proof: boolean;
+  is_walk_in: boolean;
   updated_at: string | null;
   total_proofs: number;
   payment_proof_id: number | null;
@@ -62,7 +63,8 @@ export async function GET() {
         updated_at,
         status,
         guest_name,
-        guest_email
+        guest_email,
+        special_requests
       `)
       .order('created_at', { ascending: false });
 
@@ -78,7 +80,7 @@ export async function GET() {
         .from('payment_proofs')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (proofsError) {
         paymentProofs = [];
       } else {
@@ -99,10 +101,10 @@ export async function GET() {
 
     // Step 4: Transform bookings with consolidated payment data (ONE ROW PER BOOKING)
     const payments: ConsolidatedPayment[] = [];
-    
+
     bookings.forEach((booking) => {
       const proofs = allProofsByBookingId.get(booking.id) || [];
-      
+
       // Debug logging for payment type issues
       if (!booking.payment_type) {
         console.log(`⚠️ Missing payment_type for booking ${booking.id}:`, {
@@ -112,7 +114,7 @@ export async function GET() {
           total_amount: booking.total_amount
         });
       }
-      
+
       // Separate payment types
       const originalProof = proofs.find(p => p.payment_method !== 'cash_on_arrival') || null;
       const balanceProof = proofs.find(p => p.payment_method === 'cash_on_arrival') || null;
@@ -127,17 +129,24 @@ export async function GET() {
         admin_notes: proof.admin_notes,
         sequence: index + 1
       }));
-      
+
       // Calculate consolidated amounts and status
       const totalPaidAmount = proofs
         .filter(p => p.status === 'verified')
         .reduce((sum, p) => sum + p.amount, 0);
       const hasPendingProofs = proofs.some(p => p.status === 'pending');
       const hasRejectedProofs = proofs.some(p => p.status === 'rejected');
-      
+
       // Determine overall booking status
+      const isWalkIn = String(booking.special_requests || '').startsWith('[WALK-IN]');
       let consolidatedStatus = 'pending';
-      if (totalPaidAmount >= (booking.total_amount || 0)) {
+      if (isWalkIn && booking.status === 'confirmed') {
+        // Walk-in confirmed bookings are always considered paid (cash on spot)
+        consolidatedStatus = 'paid';
+      } else if (totalPaidAmount >= (booking.total_amount || 0) && totalPaidAmount > 0) {
+        consolidatedStatus = 'paid';
+      } else if (booking.payment_status === 'paid' && proofs.length === 0) {
+        // Other cash bookings: no proofs but booking marked as paid
         consolidatedStatus = 'paid';
       } else if (originalProof && originalProof.status === 'verified') {
         consolidatedStatus = 'partially_paid';
@@ -146,13 +155,21 @@ export async function GET() {
       } else if (hasRejectedProofs) {
         consolidatedStatus = 'needs_resubmission';
       }
-      
+
       // Create single consolidated entry per booking
+      const walkInPaidAmount = isWalkIn && booking.status === 'confirmed'
+        ? (booking.total_amount || 0)
+        : 0;
+
       payments.push({
         id: booking.id,
         user: booking.guest_name || booking.guest_email || 'Unknown User',
         email: booking.guest_email || null,
-        amount: totalPaidAmount || booking.payment_amount || booking.total_amount || 0,
+        amount: totalPaidAmount > 0
+          ? totalPaidAmount
+          : walkInPaidAmount > 0
+            ? walkInPaidAmount
+            : (booking.payment_status === 'paid' ? (booking.payment_amount || booking.total_amount || 0) : (booking.payment_amount || booking.total_amount || 0)),
         date: booking.created_at ? new Date(booking.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
@@ -162,24 +179,25 @@ export async function GET() {
         payment_intent_id: booking.payment_intent_id,
         booking_status: booking.status,
         payment_status: booking.payment_status,
-        
+
         // Original payment reference
         original_reference: originalProof?.reference_number || null,
         original_method: originalProof?.payment_method || null,
         original_amount: originalProof?.amount || null,
         original_status: (originalProof?.status as 'pending' | 'verified' | 'rejected') || 'pending',
-        
+
         // Balance payment reference  
         balance_reference: balanceProof?.reference_number || null,
         balance_method: balanceProof?.payment_method || null,
         balance_amount: balanceProof?.amount || null,
         balance_status: (balanceProof?.status as 'pending' | 'verified' | 'rejected') || null,
-        
+
         booking_id: booking.id,
         verified_at: originalProof?.verified_at || balanceProof?.verified_at || null,
         verified_by: originalProof?.verified_by || balanceProof?.verified_by || null,
         admin_notes: originalProof?.admin_notes || balanceProof?.admin_notes || null,
         has_payment_proof: proofs.length > 0,
+        is_walk_in: isWalkIn,
         payment_type: (booking.payment_type as 'half' | 'full') || 'full',
         total_amount: booking.total_amount,
         updated_at: booking.updated_at,
@@ -199,9 +217,9 @@ export async function GET() {
 
   } catch (error) {
     console.error('API error:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error' 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

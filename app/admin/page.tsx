@@ -9,6 +9,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Footprints,
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import {
@@ -29,6 +30,7 @@ interface DashboardStats {
   pendingBookings: number;
   cancelledBookings: number;
   completedBookings: number;
+  walkInBookings: number;
   totalRevenue: number;
   confirmedRevenue: number;
   completedRevenue: number;
@@ -55,6 +57,7 @@ export default function DashboardPage() {
     pendingBookings: 0,
     cancelledBookings: 0,
     completedBookings: 0,
+    walkInBookings: 0,
     totalRevenue: 0,
     confirmedRevenue: 0,
     completedRevenue: 0,
@@ -77,7 +80,9 @@ export default function DashboardPage() {
         // Enhanced query for charts - get both created_at and check_in_date for monthly data
         const { data: bookings, error: bookingsError } = await supabase
           .from("bookings")
-          .select("status, total_amount, created_at, check_in_date")
+          .select(
+            "status, total_amount, created_at, check_in_date, special_requests",
+          )
           .order("created_at", { ascending: false })
           .limit(500); // Limit for performance
 
@@ -86,22 +91,25 @@ export default function DashboardPage() {
         console.log(
           "🔍 Debug - Raw bookings from database:",
           bookings?.length || 0,
-          "bookings found"
+          "bookings found",
         );
 
         if (bookings && bookings.length > 0) {
           const totalBookings = bookings.length;
           const confirmedBookings = bookings.filter(
-            (b) => b.status === "confirmed"
+            (b) => b.status === "confirmed",
           ).length;
           const pendingBookings = bookings.filter(
-            (b) => b.status === "pending"
+            (b) => b.status === "pending",
           ).length;
           const cancelledBookings = bookings.filter(
-            (b) => b.status === "cancelled"
+            (b) => b.status === "cancelled",
           ).length;
           const completedBookingsCount = bookings.filter(
-            (b) => b.status === "completed"
+            (b) => b.status === "completed",
+          ).length;
+          const walkInBookingsCount = bookings.filter((b) =>
+            String(b.special_requests || "").startsWith("[WALK-IN]"),
           ).length;
 
           console.log("🔍 Debug - Booking counts:", {
@@ -136,6 +144,7 @@ export default function DashboardPage() {
             pendingBookings,
             cancelledBookings,
             completedBookings: completedBookingsCount,
+            walkInBookings: walkInBookingsCount,
             totalRevenue,
             confirmedRevenue,
             completedRevenue,
@@ -221,12 +230,12 @@ export default function DashboardPage() {
               cancelled: data.cancelled,
               pending: data.pending,
               completed: data.completed,
-            })
+            }),
           );
 
           // Count completed bookings
           const completedBookings = bookings.filter(
-            (b) => b.status === "completed"
+            (b) => b.status === "completed",
           ).length;
 
           // Status distribution for pie chart
@@ -262,12 +271,12 @@ export default function DashboardPage() {
                     year: "numeric",
                   })
                 : "No created_at",
-            }))
+            })),
           );
 
           console.log(
             "🔍 Debug - Monthly data map:",
-            Array.from(monthlyData.entries())
+            Array.from(monthlyData.entries()),
           );
           console.log("🔍 Debug - Final monthlyRevenue:", monthlyRevenue);
         } else {
@@ -279,6 +288,7 @@ export default function DashboardPage() {
             pendingBookings: 0,
             cancelledBookings: 0,
             completedBookings: 0,
+            walkInBookings: 0,
             totalRevenue: 0,
             confirmedRevenue: 0,
             completedRevenue: 0,
@@ -292,7 +302,7 @@ export default function DashboardPage() {
       } catch (err) {
         console.error("❌ Error fetching dashboard stats:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to load statistics"
+          err instanceof Error ? err.message : "Failed to load statistics",
         );
       } finally {
         console.log("✅ Dashboard stats fetch completed");
@@ -447,7 +457,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Booking Status Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0" />
@@ -506,6 +516,22 @@ export default function DashboardPage() {
                   <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
                   stats.completedBookings
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+          <div className="flex items-center gap-3">
+            <Footprints className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-gray-500 text-xs sm:text-sm">Walk-ins</h3>
+              <div className="text-xl sm:text-2xl font-bold text-amber-600">
+                {loading ? (
+                  <span className="w-12 h-6 bg-gray-200 animate-pulse rounded inline-block"></span>
+                ) : (
+                  stats.walkInBookings
                 )}
               </div>
             </div>

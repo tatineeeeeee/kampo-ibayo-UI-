@@ -43,7 +43,7 @@ export default function AvailabilityCalendar({
   const [bookedDates, setBookedDates] = useState<BookedDate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState<"check-in" | "check-out">(
-    "check-in"
+    "check-in",
   );
   const [newCheckIn, setNewCheckIn] = useState(""); // NEW dates being selected for reschedule
   const [newCheckOut, setNewCheckOut] = useState("");
@@ -79,7 +79,7 @@ export default function AvailabilityCalendar({
         const startOfRange = new Date(
           now.getFullYear(),
           now.getMonth() - 1,
-          15
+          15,
         ); // Start from mid previous month
         const endOfRange = new Date(now.getFullYear(), now.getMonth() + 2, 15); // End in mid next month
 
@@ -97,16 +97,16 @@ export default function AvailabilityCalendar({
           .in("status", ["confirmed", "pending"]) // Show BOTH confirmed AND pending bookings (same as homepage)
           .or(
             `and(check_in_date.gte.${toYMD(
-              startOfRange
+              startOfRange,
             )},check_in_date.lte.${toYMD(
-              endOfRange
+              endOfRange,
             )}),and(check_out_date.gte.${toYMD(
-              startOfRange
+              startOfRange,
             )},check_out_date.lte.${toYMD(
-              endOfRange
+              endOfRange,
             )}),and(check_in_date.lte.${toYMD(
-              startOfRange
-            )},check_out_date.gte.${toYMD(endOfRange)})`
+              startOfRange,
+            )},check_out_date.gte.${toYMD(endOfRange)})`,
           )
           .limit(50);
 
@@ -134,10 +134,10 @@ export default function AvailabilityCalendar({
               checkOut: booking.check_out_date,
               status: booking.status,
               checkInFormatted: new Date(
-                booking.check_in_date
+                booking.check_in_date,
               ).toLocaleDateString(),
               checkOutFormatted: new Date(
-                booking.check_out_date
+                booking.check_out_date,
               ).toLocaleDateString(),
             });
           });
@@ -157,7 +157,7 @@ export default function AvailabilityCalendar({
 
   // Check if a date is booked (returns the booking status type) - EXACT SAME LOGIC AS HOMEPAGE
   const getDateBookingStatus = (
-    date: Date
+    date: Date,
   ): "available" | "checkin" | "checkout" | "busy" | "full" => {
     // Don't show capacity indicators for past dates (before today)
     const today = new Date();
@@ -171,7 +171,7 @@ export default function AvailabilityCalendar({
 
     const activeBookings = bookedDates.filter(
       (booking) =>
-        booking.status === "confirmed" || booking.status === "pending"
+        booking.status === "confirmed" || booking.status === "pending",
     );
 
     // Normalize date for comparison (remove time component)
@@ -203,7 +203,7 @@ export default function AvailabilityCalendar({
         console.log(
           `    Booking ${
             bookingIndex + 1
-          }: ${checkIn.toLocaleDateString()} to ${checkOut.toLocaleDateString()}`
+          }: ${checkIn.toLocaleDateString()} to ${checkOut.toLocaleDateString()}`,
         );
       }
 
@@ -224,7 +224,7 @@ export default function AvailabilityCalendar({
         isOccupied = true;
         if (isDebugDate)
           console.log(
-            `    ✅ ${targetDateStr} is OCCUPIED (between ${checkIn.toLocaleDateString()} and ${checkOut.toLocaleDateString()})`
+            `    ✅ ${targetDateStr} is OCCUPIED (between ${checkIn.toLocaleDateString()} and ${checkOut.toLocaleDateString()})`,
           );
       }
     });
@@ -317,7 +317,7 @@ export default function AvailabilityCalendar({
 
     if (isBlocked) {
       console.log(
-        `🚫 [isDateBlocked] Blocking ${targetDateStr} (current booking: ${selectedCheckIn} to ${selectedCheckOut})`
+        `🚫 [isDateBlocked] Blocking ${targetDateStr} (current booking: ${selectedCheckIn} to ${selectedCheckOut})`,
       );
     }
 
@@ -371,8 +371,30 @@ export default function AvailabilityCalendar({
     }
   };
 
+  // Determine the earliest month the user can navigate to
+  const getMinMonth = () => {
+    if (minDate) {
+      const [y, m] = minDate.split("-").map(Number);
+      return { year: y, month: m - 1 }; // JS months are 0-indexed
+    }
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  };
+
+  const canGoPrev = () => {
+    const min = getMinMonth();
+    const prevMonth = new Date(currentDate);
+    prevMonth.setMonth(prevMonth.getMonth() - 1);
+    return (
+      prevMonth.getFullYear() > min.year ||
+      (prevMonth.getFullYear() === min.year &&
+        prevMonth.getMonth() >= min.month)
+    );
+  };
+
   // Navigate months
   const navigateMonth = (direction: "prev" | "next") => {
+    if (direction === "prev" && !canGoPrev()) return;
     const newDate = new Date(currentDate);
     if (direction === "prev") {
       newDate.setMonth(newDate.getMonth() - 1);
@@ -570,8 +592,14 @@ export default function AvailabilityCalendar({
       {/* Calendar Header - Responsive */}
       <div className="flex items-center justify-between p-2 sm:p-4 lg:p-5 bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600">
         <button
+          type="button"
           onClick={() => navigateMonth("prev")}
-          className="p-1.5 sm:p-2 lg:p-3 rounded-full bg-gray-700/60 hover:bg-gray-600/80 transition-all duration-200 active:scale-95 border border-gray-500/50"
+          disabled={!canGoPrev()}
+          className={`p-1.5 sm:p-2 lg:p-3 rounded-full transition-all duration-200 active:scale-95 border border-gray-500/50 ${
+            canGoPrev()
+              ? "bg-gray-700/60 hover:bg-gray-600/80 cursor-pointer"
+              : "bg-gray-800/40 opacity-40 cursor-not-allowed"
+          }`}
         >
           <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
         </button>
@@ -587,6 +615,7 @@ export default function AvailabilityCalendar({
         </h3>
 
         <button
+          type="button"
           onClick={() => navigateMonth("next")}
           className="p-1.5 sm:p-2 lg:p-3 rounded-full bg-gray-700/60 hover:bg-gray-600/80 transition-all duration-200 active:scale-95 border border-gray-500/50"
         >
@@ -626,6 +655,7 @@ export default function AvailabilityCalendar({
             const statusIndicator = getDateStatusIndicator(date);
             return (
               <button
+                type="button"
                 key={index}
                 onClick={() => handleDateClick(date)}
                 className={getDateClasses(date)}
@@ -634,8 +664,8 @@ export default function AvailabilityCalendar({
                   isDateBooked(date)
                     ? "Not available - Resort is booked"
                     : isDateInPast(date)
-                    ? "Past date - Cannot select"
-                    : "Available for booking"
+                      ? "Past date - Cannot select"
+                      : "Available for booking"
                 }
               >
                 <span className="relative z-10">{date.getDate()}</span>
@@ -722,7 +752,7 @@ export default function AvailabilityCalendar({
                       const checkOutDate = new Date(newCheckOut + "T00:00:00");
                       const nights = Math.ceil(
                         (checkOutDate.getTime() - checkInDate.getTime()) /
-                          (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24),
                       );
                       return `${nights} night${nights !== 1 ? "s" : ""}`;
                     })()}

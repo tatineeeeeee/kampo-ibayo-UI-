@@ -11,6 +11,7 @@ import {
   BarChart3,
   Clock,
   PhilippinePeso,
+  Footprints,
 } from "lucide-react";
 import { exportPaymentsCSV } from "../../utils/csvExport";
 import { exportPaymentsPDF } from "../../utils/pdfExport";
@@ -47,6 +48,7 @@ interface Payment {
   verified_by: string | null;
   admin_notes: string | null;
   has_payment_proof: boolean;
+  is_walk_in?: boolean;
   payment_type: string | null;
   total_amount: number | null;
   payment_proof_id: number | null;
@@ -157,7 +159,7 @@ export default function PaymentsPage() {
 
       // Test 2: POST with real-world test data
       console.log(
-        "2️⃣ Testing POST /api/admin/mark-balance-paid with realistic data"
+        "2️⃣ Testing POST /api/admin/mark-balance-paid with realistic data",
       );
       const testBookingId = 1; // Use a small number that should exist
       const testPaymentId = 1; // Use a small number that should exist
@@ -175,7 +177,7 @@ export default function PaymentsPage() {
       console.log(
         "POST Response:",
         postResponse.status,
-        postResponse.statusText
+        postResponse.statusText,
       );
 
       if (postResponse.ok) {
@@ -197,31 +199,31 @@ export default function PaymentsPage() {
 
           if (postResponse.status === 404 && errorText.includes("not found")) {
             console.log(
-              "✅ POST method reached API but returned expected validation error (test records not found)"
+              "✅ POST method reached API but returned expected validation error (test records not found)",
             );
             success(
-              "🎉 API endpoint is working correctly! Ready for real data."
+              "🎉 API endpoint is working correctly! Ready for real data.",
             );
           } else if (postResponse.status === 400) {
             console.log(
               "✅ POST method working - returned validation error as expected:",
-              errorData.error
+              errorData.error,
             );
             success(
-              "🎉 API endpoint is working correctly! Validation is functioning."
+              "🎉 API endpoint is working correctly! Validation is functioning.",
             );
           } else {
             console.error("❌ Unexpected POST error:", errorData);
             showError(
               `API test failed: ${postResponse.status} - ${
                 errorData.error || errorText
-              }`
+              }`,
             );
           }
         } catch (parseError) {
           console.error("❌ Could not parse error response:", parseError);
           showError(
-            `API test failed: ${postResponse.status} - Could not parse response`
+            `API test failed: ${postResponse.status} - Could not parse response`,
           );
         }
       }
@@ -326,7 +328,7 @@ export default function PaymentsPage() {
       console.log("✅ Success:", result);
 
       success(
-        `Balance of ₱${balanceAmount.toLocaleString()} marked as paid on arrival!`
+        `Balance of ₱${balanceAmount.toLocaleString()} marked as paid on arrival!`,
       );
       fetchPayments(); // Refresh the data
       setShowBalanceModal(false);
@@ -393,15 +395,15 @@ export default function PaymentsPage() {
           reason: isBookingCancelled
             ? "Booking is cancelled"
             : hasExistingBalancePayment
-            ? "Balance payment already exists"
-            : isOverpaid
-            ? "OVERPAID - Customer paid more than total amount"
-            : (payment.original_amount || 0) === payment.total_amount
-            ? "Already paid in full"
-            : (payment.original_amount || 0) > (payment.total_amount || 0)
-            ? "Overpaid"
-            : "Invalid amounts or missing data",
-        }
+              ? "Balance payment already exists"
+              : isOverpaid
+                ? "OVERPAID - Customer paid more than total amount"
+                : (payment.original_amount || 0) === payment.total_amount
+                  ? "Already paid in full"
+                  : (payment.original_amount || 0) > (payment.total_amount || 0)
+                    ? "Overpaid"
+                    : "Invalid amounts or missing data",
+        },
       );
     }
 
@@ -489,7 +491,7 @@ export default function PaymentsPage() {
           // Search by amounts
           payment.total_amount?.toString().includes(searchTerm.trim()) ||
           payment.original_amount?.toString().includes(searchTerm.trim()) ||
-          payment.amount?.toString().includes(searchTerm.trim())
+          payment.amount?.toString().includes(searchTerm.trim()),
       );
     }
 
@@ -644,7 +646,7 @@ export default function PaymentsPage() {
                   (p) =>
                     p.booking_status?.toLowerCase() !== "cancelled" &&
                     (p.status?.toLowerCase() === "paid" ||
-                      p.status?.toLowerCase() === "verified")
+                      p.status?.toLowerCase() === "verified"),
                 ).length
               }
               )
@@ -667,7 +669,7 @@ export default function PaymentsPage() {
                   (p) =>
                     p.booking_status?.toLowerCase() !== "cancelled" &&
                     (p.status?.toLowerCase() === "pending" ||
-                      p.status?.toLowerCase() === "pending_verification")
+                      p.status?.toLowerCase() === "pending_verification"),
                 ).length
               }
               )
@@ -690,7 +692,7 @@ export default function PaymentsPage() {
                   (p) =>
                     p.booking_status?.toLowerCase() === "cancelled" ||
                     p.status?.toLowerCase() === "cancelled" ||
-                    p.status?.toLowerCase() === "rejected"
+                    p.status?.toLowerCase() === "rejected",
                 ).length
               }
               )
@@ -748,7 +750,7 @@ export default function PaymentsPage() {
                   .filter(
                     (p) =>
                       p.status?.toLowerCase() === "paid" ||
-                      p.status?.toLowerCase() === "verified"
+                      p.status?.toLowerCase() === "verified",
                   )
                   .reduce((sum, p) => sum + p.amount, 0)
                   .toLocaleString()}
@@ -779,7 +781,7 @@ export default function PaymentsPage() {
                     (p) =>
                       p.payment_type === "half" &&
                       (p.status?.toLowerCase() === "paid" ||
-                        p.status?.toLowerCase() === "verified")
+                        p.status?.toLowerCase() === "verified"),
                   )
                   .reduce((sum, p) => sum + p.amount, 0)
                   .toLocaleString()}{" "}
@@ -811,7 +813,7 @@ export default function PaymentsPage() {
                     (p) =>
                       p.payment_type === "full" &&
                       (p.status?.toLowerCase() === "paid" ||
-                        p.status?.toLowerCase() === "verified")
+                        p.status?.toLowerCase() === "verified"),
                   )
                   .reduce((sum, p) => sum + p.amount, 0)
                   .toLocaleString()}{" "}
@@ -835,7 +837,7 @@ export default function PaymentsPage() {
                   filteredPayments.filter(
                     (p) =>
                       p.status?.toLowerCase() === "pending" ||
-                      p.status?.toLowerCase() === "pending_verification"
+                      p.status?.toLowerCase() === "pending_verification",
                   ).length
                 }
               </p>
@@ -865,12 +867,12 @@ export default function PaymentsPage() {
                           | null
                           | undefined
                           | object;
-                      }[]
+                      }[],
                     );
                     success(
                       `${filteredPayments.length} payment${
                         filteredPayments.length !== 1 ? "s" : ""
-                      } exported to CSV successfully!`
+                      } exported to CSV successfully!`,
                     );
                   } catch (error) {
                     console.error("Export error:", error);
@@ -902,12 +904,12 @@ export default function PaymentsPage() {
                           | null
                           | undefined
                           | object;
-                      }[]
+                      }[],
                     );
                     success(
                       `${filteredPayments.length} payment${
                         filteredPayments.length !== 1 ? "s" : ""
-                      } exported to PDF successfully!`
+                      } exported to PDF successfully!`,
                     );
                   } catch (error) {
                     console.error("Export error:", error);
@@ -976,9 +978,17 @@ export default function PaymentsPage() {
                         {payment.guest_name || payment.user}
                       </p>
                       <p className="text-xs text-gray-500">{payment.email}</p>
-                      <p className="text-xs text-gray-400">
-                        {formatBookingNumber(payment.booking_id)}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-gray-400">
+                          {formatBookingNumber(payment.booking_id)}
+                        </p>
+                        {payment.is_walk_in && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                            <Footprints className="w-2.5 h-2.5" />
+                            Walk-in
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span className="text-lg font-bold text-green-600">
                       ₱{(payment.original_amount || 0).toLocaleString()}
@@ -1004,10 +1014,10 @@ export default function PaymentsPage() {
                           payment.booking_status?.toLowerCase() === "cancelled"
                             ? "bg-red-100 text-red-800"
                             : payment.original_status === "verified"
-                            ? "bg-green-100 text-green-800"
-                            : payment.original_status === "rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
+                              ? "bg-green-100 text-green-800"
+                              : payment.original_status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {payment.booking_status?.toLowerCase() === "cancelled"
@@ -1081,8 +1091,16 @@ export default function PaymentsPage() {
                           <div className="text-xs text-gray-500">
                             {payment.email}
                           </div>
-                          <div className="text-xs text-gray-400">
-                            {formatBookingNumber(payment.booking_id)}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-gray-400">
+                              {formatBookingNumber(payment.booking_id)}
+                            </span>
+                            {payment.is_walk_in && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                                <Footprints className="w-2.5 h-2.5" />
+                                Walk-in
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -1209,30 +1227,30 @@ export default function PaymentsPage() {
                             "cancelled"
                               ? "bg-red-100 text-red-800"
                               : payment.original_status === "verified" &&
-                                (payment.payment_type === "full" ||
-                                  payment.balance_status === "verified")
-                              ? "bg-green-100 text-green-800"
-                              : payment.original_status === "verified" &&
-                                payment.payment_type === "half"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : payment.original_status === "rejected"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
+                                  (payment.payment_type === "full" ||
+                                    payment.balance_status === "verified")
+                                ? "bg-green-100 text-green-800"
+                                : payment.original_status === "verified" &&
+                                    payment.payment_type === "half"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : payment.original_status === "rejected"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {payment.booking_status?.toLowerCase() === "cancelled"
                             ? "cancelled"
                             : payment.payment_type === "full" &&
-                              payment.original_status === "verified"
-                            ? "paid"
-                            : payment.payment_type === "half" &&
-                              payment.original_status === "verified" &&
-                              payment.balance_status === "verified"
-                            ? "paid"
-                            : payment.payment_type === "half" &&
-                              payment.original_status === "verified"
-                            ? "partially_paid"
-                            : payment.original_status || "pending"}
+                                payment.original_status === "verified"
+                              ? "paid"
+                              : payment.payment_type === "half" &&
+                                  payment.original_status === "verified" &&
+                                  payment.balance_status === "verified"
+                                ? "paid"
+                                : payment.payment_type === "half" &&
+                                    payment.original_status === "verified"
+                                  ? "partially_paid"
+                                  : payment.original_status || "pending"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1289,7 +1307,7 @@ export default function PaymentsPage() {
                           const hasBalancePayment = payments.some(
                             (p) =>
                               p.booking_id === payment.booking_id &&
-                              p.reference_number?.startsWith("ARRIVAL-")
+                              p.reference_number?.startsWith("ARRIVAL-"),
                           );
 
                           if (
@@ -1427,7 +1445,7 @@ export default function PaymentsPage() {
                       {Math.min(startIndex + 1, filteredPayments.length)} to{" "}
                       {Math.min(
                         startIndex + itemsPerPage,
-                        filteredPayments.length
+                        filteredPayments.length,
                       )}{" "}
                       of {filteredPayments.length} payments
                     </span>
@@ -1486,7 +1504,7 @@ export default function PaymentsPage() {
                                 {pageNumber}
                               </button>
                             );
-                          }
+                          },
                         )}
 
                         <button
@@ -1769,14 +1787,14 @@ export default function PaymentsPage() {
                                   <div
                                     className={`font-mono px-2 py-1 rounded text-xs ${
                                       proof.reference_number.startsWith(
-                                        "ARRIVAL-"
+                                        "ARRIVAL-",
                                       )
                                         ? "text-amber-700 bg-amber-50"
                                         : "text-blue-700 bg-blue-50"
                                     }`}
                                   >
                                     {proof.reference_number.startsWith(
-                                      "ARRIVAL-"
+                                      "ARRIVAL-",
                                     )
                                       ? "🏨"
                                       : "💳"}{" "}
@@ -1794,7 +1812,7 @@ export default function PaymentsPage() {
                               <td className="px-4 py-3 text-sm">
                                 <span
                                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                    proof.status
+                                    proof.status,
                                   )}`}
                                 >
                                   {proof.status}
@@ -1809,7 +1827,7 @@ export default function PaymentsPage() {
                                     day: "numeric",
                                     hour: "2-digit",
                                     minute: "2-digit",
-                                  }
+                                  },
                                 )}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-600">
@@ -1823,7 +1841,7 @@ export default function PaymentsPage() {
                                 )}
                               </td>
                             </tr>
-                          )
+                          ),
                         )}
                       </tbody>
                     </table>
