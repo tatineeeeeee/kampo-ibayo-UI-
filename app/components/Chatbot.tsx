@@ -863,12 +863,6 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
     followUpQuestions: 0,
   });
 
-  // Debug session analytics
-  useEffect(() => {
-    if (sessionAnalytics.questionsAnswered > 0) {
-    }
-  }, [sessionAnalytics]);
-
   // Performance optimization: Create keyword index for O(1) lookups
   const keywordIndex = useMemo(() => {
     const index = new Map<string, FAQItem[]>();

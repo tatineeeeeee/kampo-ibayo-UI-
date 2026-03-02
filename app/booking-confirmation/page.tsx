@@ -43,10 +43,6 @@ function BookingConfirmationContent() {
       return;
     }
 
-    // Log payment intent ID for debugging
-    if (paymentIntentId) {
-    }
-
     const fetchBookingDetails = async () => {
       try {
         const { data, error } = await supabase

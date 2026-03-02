@@ -31,10 +31,7 @@ export class OCRService {
     if (!this.worker || !this.isInitialized) {
       try {
         this.worker = await Tesseract.createWorker('eng', 1, {
-          logger: (message: { status: string; progress: number }) => {
-            if (message.status === 'recognizing text') {
-            }
-          },
+          logger: () => {},
         });
 
         // Enhanced configuration for payment receipt recognition
@@ -619,13 +616,7 @@ export class OCRService {
     ];
     
     for (const pattern of datePatterns) {
-      const matches = [...cleanedText.matchAll(pattern)];
-      if (matches.length > 0) {
-      }
       cleanedText = cleanedText.replace(pattern, ' [DATE_REMOVED] ');
-    }
-    
-    if (cleanedText !== text) {
     }
     
     // CRITICAL FIX: Method-specific patterns to avoid confusion

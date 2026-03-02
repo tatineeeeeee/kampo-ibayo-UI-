@@ -838,9 +838,6 @@ function BookingsPageContent() {
             }
           }
 
-          if (eventType === "INSERT" && newRecord) {
-          }
-
           if (eventType === "DELETE" && oldRecord) {
             setBookings((prevBookings) =>
               prevBookings.filter((booking) => booking.id !== oldRecord.id)
@@ -888,10 +885,7 @@ function BookingsPageContent() {
           }
         }
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-        }
-      });
+      .subscribe();
 
     // ✨ NEW: Real-time subscription for user's payment proofs - INSTANT verification/rejection updates
     const userPaymentProofsSubscription = supabase
@@ -956,10 +950,7 @@ function BookingsPageContent() {
           }
         }
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-        }
-      });
+      .subscribe();
 
     return () => {
       userBookingsSubscription.unsubscribe();
@@ -975,18 +966,14 @@ function BookingsPageContent() {
 
       // First, check and auto-cancel any pending bookings older than 7 days
       try {
-        const cancelledBookings = await checkAndExpirePendingBookings();
-        if (cancelledBookings.length > 0) {
-        }
+        await checkAndExpirePendingBookings();
       } catch (error) {
         console.error("Error checking pending bookings:", error);
       }
 
       // Auto-complete confirmed bookings that have passed their checkout date
       try {
-        const completedCount = await autoCompleteFinishedBookings();
-        if (completedCount > 0) {
-        }
+        await autoCompleteFinishedBookings();
       } catch (error) {
         console.error("Error auto-completing bookings:", error);
       }

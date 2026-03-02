@@ -105,10 +105,6 @@ export async function GET() {
     bookings.forEach((booking) => {
       const proofs = allProofsByBookingId.get(booking.id) || [];
 
-      // Debug logging for payment type issues
-      if (!booking.payment_type) {
-      }
-
       // Separate payment types
       const originalProof = proofs.find(p => p.payment_method !== 'cash_on_arrival') || null;
       const balanceProof = proofs.find(p => p.payment_method === 'cash_on_arrival') || null;

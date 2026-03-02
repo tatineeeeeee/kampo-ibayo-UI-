@@ -99,9 +99,6 @@ export default function PaymentsPage() {
   const [selectedPaymentHistory, setSelectedPaymentHistory] =
     useState<Payment | null>(null);
 
-  // Function to debug specific payment
-  const debugPayment = (payment: Payment) => {
-  };
 
   // Function to test API connectivity
   const testApiConnectivity = async () => {
@@ -112,9 +109,7 @@ export default function PaymentsPage() {
         method: "GET",
       });
 
-      if (getResponse.ok) {
-        const getData = await getResponse.json();
-      } else {
+      if (!getResponse.ok) {
         console.error("❌ GET test failed");
         showError("GET method test failed");
         return;
@@ -136,8 +131,7 @@ export default function PaymentsPage() {
       });
 
       if (postResponse.ok) {
-        const postData = await postResponse.json();
-        success("🎉 API endpoint is working! Test was successful.");
+        success("API endpoint is working! Test was successful.");
       } else {
         try {
           const errorText = await postResponse.text();
@@ -315,9 +309,6 @@ export default function PaymentsPage() {
       return false;
     }
 
-    // Only log debug info if conditions aren't met to reduce console spam
-    if (isHalfPayment && !hasRemainingBalance && payment.id) {
-    }
 
     // Don't allow marking balance as paid for overpaid bookings, if balance already exists, or if booking is cancelled
     return (
@@ -1244,13 +1235,6 @@ export default function PaymentsPage() {
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                   OVERPAID
                                 </span>
-                                <button
-                                  onClick={() => debugPayment(payment)}
-                                  className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                                  title="Debug this payment"
-                                >
-                                  🔍
-                                </button>
                               </div>
                             );
                           }
@@ -1261,33 +1245,15 @@ export default function PaymentsPage() {
                               : 0;
                             if (balanceAmount <= 0) {
                               return (
-                                <div className="flex items-center gap-1">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    PAID IN FULL
-                                  </span>
-                                  <button
-                                    onClick={() => debugPayment(payment)}
-                                    className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                                    title="Debug this payment"
-                                  >
-                                    🔍
-                                  </button>
-                                </div>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  PAID IN FULL
+                                </span>
                               );
                             } else {
                               return (
-                                <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-400">
-                                    Balance: ₱{balanceAmount.toLocaleString()}
-                                  </span>
-                                  <button
-                                    onClick={() => debugPayment(payment)}
-                                    className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                                    title="Debug this payment"
-                                  >
-                                    🔍
-                                  </button>
-                                </div>
+                                <span className="text-xs text-gray-400">
+                                  Balance: ₱{balanceAmount.toLocaleString()}
+                                </span>
                               );
                             }
                           }

@@ -56,10 +56,6 @@ export default function AvailabilityCalendar({
     return `${parseInt(month)}/${parseInt(day)}/${year}`;
   };
 
-  // Debug logging only when needed
-  if (process.env.NODE_ENV === "development" && excludeBookingId) {
-  }
-
   // Load booked dates from database (SAME LOGIC AS HOMEPAGE)
   useEffect(() => {
     const loadBookedDates = async () => {
@@ -162,25 +158,12 @@ export default function AvailabilityCalendar({
     let isCheckOut = false;
     let isOccupied = false;
 
-    // Optional debug logging for development
-    const targetDateStr = targetDate.toLocaleDateString();
-    const isDebugDate =
-      process.env.NODE_ENV === "development" &&
-      (targetDateStr.includes("11/27") ||
-        targetDateStr.includes("11/28") ||
-        targetDateStr.includes("11/29") ||
-        targetDateStr.includes("11/30"));
-
-    activeBookings.forEach((booking, bookingIndex) => {
+    activeBookings.forEach((booking) => {
       const checkIn = new Date(booking.check_in_date);
       checkIn.setHours(0, 0, 0, 0);
 
       const checkOut = new Date(booking.check_out_date);
       checkOut.setHours(0, 0, 0, 0);
-
-      // Simplified debug logging
-      if (isDebugDate) {
-      }
 
       // Check if this date is a check-in date
       if (targetDate.getTime() === checkIn.getTime()) {
@@ -283,9 +266,6 @@ export default function AvailabilityCalendar({
     // For Nov 27-29 booking: block Nov 27 and Nov 28, allow Nov 29
     const isBlocked =
       targetDateStr >= selectedCheckIn && targetDateStr < selectedCheckOut;
-
-    if (isBlocked) {
-    }
 
     return isBlocked;
   };
