@@ -45,7 +45,6 @@ function BookingConfirmationContent() {
 
     // Log payment intent ID for debugging
     if (paymentIntentId) {
-      console.log('Payment Intent ID:', paymentIntentId);
     }
 
     const fetchBookingDetails = async () => {
@@ -75,7 +74,6 @@ function BookingConfirmationContent() {
           if (data.payment_intent_id || paymentIntentId) {
             const checkPaymentIntentId = data.payment_intent_id || paymentIntentId;
             
-            console.log('🔍 Immediately checking PayMongo status for:', checkPaymentIntentId);
             
             try {
               const statusResponse = await fetch('/api/paymongo/check-payment-status', {
@@ -90,7 +88,6 @@ function BookingConfirmationContent() {
 
               if (statusResponse.ok) {
                 const statusData = await statusResponse.json();
-                console.log('✅ Initial PayMongo status check:', statusData);
                 
                 if (statusData.booking) {
                   setBooking(statusData.booking);
@@ -135,7 +132,6 @@ function BookingConfirmationContent() {
                 clearInterval(pollPaymentStatus);
               } else if (pollCount >= maxPolls) {
                 // After timeout, check PayMongo directly before giving up
-                console.log('⏰ Payment timeout - checking PayMongo directly');
                 
                 try {
                   const statusResponse = await fetch('/api/paymongo/check-payment-status', {
@@ -150,7 +146,6 @@ function BookingConfirmationContent() {
 
                   if (statusResponse.ok) {
                     const statusData = await statusResponse.json();
-                    console.log('✅ Got direct PayMongo status:', statusData);
                     
                     if (statusData.booking) {
                       setBooking(statusData.booking);

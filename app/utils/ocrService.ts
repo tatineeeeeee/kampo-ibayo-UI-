@@ -33,7 +33,6 @@ export class OCRService {
         this.worker = await Tesseract.createWorker('eng', 1, {
           logger: (message: { status: string; progress: number }) => {
             if (message.status === 'recognizing text') {
-              console.log(`🔍 OCR Progress: ${(message.progress * 100).toFixed(0)}%`);
             }
           },
         });
@@ -64,7 +63,6 @@ export class OCRService {
         });
 
         this.isInitialized = true;
-        console.log('✅ Enhanced OCR Service initialized with optimal settings');
       } catch (error) {
         console.error('❌ OCR Service initialization failed:', error);
         throw error;
@@ -80,7 +78,6 @@ export class OCRService {
         await this.worker.terminate();
         this.worker = null;
         this.isInitialized = false;
-        console.log('🧹 Enhanced OCR worker terminated successfully');
       }
     } catch (error) {
       console.warn('⚠️ Error terminating OCR worker:', error);
@@ -136,8 +133,6 @@ export class OCRService {
     const startTime = Date.now();
     
     try {
-      console.log('🚀 Starting enhanced OCR processing with advanced preprocessing...');
-      console.log('📝 Processing file:', file.name, 'Size:', (file.size / 1024).toFixed(1), 'KB');
       
       // Initialize worker if needed
       const worker = await this.initializeWorker();
@@ -147,11 +142,9 @@ export class OCRService {
       }
 
       // Enhanced image preprocessing for better accuracy
-      console.log('🖼️ Applying advanced image preprocessing...');
       const preprocessedImageUrl = await this.preprocessImage(file);
       
       // Process with timeout protection
-      console.log('🔍 Starting OCR text recognition...');
       const recognizePromise = worker.recognize(preprocessedImageUrl);
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('OCR processing timeout (30s)')), 30000);
@@ -163,9 +156,6 @@ export class OCRService {
       const rawText = result.data.text;
       let confidence = result.data.confidence;
       
-      console.log(`⏱️ OCR completed in ${processingTime}ms`);
-      console.log('📝 Raw OCR text length:', rawText.length);
-      console.log('🔍 Initial OCR confidence:', confidence.toFixed(1) + '%');
       
       // Enhanced pattern extraction with validation
       const extracted = this.extractPaymentInfo(rawText);
@@ -197,7 +187,6 @@ export class OCRService {
         
         // Apply boost but cap at reasonable maximum
         confidence = Math.min(confidence + confidenceBoost, 95);
-        console.log(`🚀 Confidence enhanced to ${confidence.toFixed(1)}% (+${confidenceBoost})`);
       }
       
       // Enhanced validation and warnings
@@ -232,14 +221,6 @@ export class OCRService {
         processingTime
       };
 
-      console.log('✅ Enhanced OCR result:', {
-        hasAmount: !!finalResult.amount,
-        hasReference: !!finalResult.referenceNumber,
-        method: finalResult.method,
-        confidence: finalResult.confidence.toFixed(1) + '%',
-        warnings: finalResult.warnings?.length || 0,
-        processingTime: processingTime + 'ms'
-      });
 
       return finalResult;
       
@@ -324,10 +305,6 @@ export class OCRService {
     const lowerText = text.toLowerCase();
     let method: OCRResult['method'] = 'unknown';
     
-    console.log('🔍 COMPREHENSIVE PAYMENT METHOD DETECTION:');
-    console.log('  - Text length:', text.length);
-    console.log('  - Full OCR text for analysis:', text);
-    console.log('  - Lower text (first 300 chars):', lowerText.substring(0, 300));
     
     // CRITICAL: Enhanced GCash detection with specific phrases the user mentioned
     const gcashDetectionPhrases = [
@@ -372,7 +349,6 @@ export class OCRService {
     for (const phrase of gcashDetectionPhrases) {
       if (lowerText.includes(phrase)) {
         hasGCashPhrase = true;
-        console.log(`  ✅ GCASH PHRASE DETECTED: "${phrase}"`);
         break;
       }
     }
@@ -382,7 +358,6 @@ export class OCRService {
     for (const phrase of mayaDetectionPhrases) {
       if (lowerText.includes(phrase)) {
         hasMayaPhrase = true;
-        console.log(`  ✅ MAYA PHRASE DETECTED: "${phrase}"`);
         break;
       }
     }
@@ -411,7 +386,6 @@ export class OCRService {
     for (const pattern of mayaSpecificPatterns) {
       if (pattern.test(text)) {
         mayaPatternMatches++;
-        console.log(`  ✅ MAYA PATTERN MATCH: ${pattern}`);
       }
     }
 
@@ -419,37 +393,27 @@ export class OCRService {
     for (const pattern of gcashSpecificPatterns) {
       if (pattern.test(text)) {
         gcashPatternMatches++;
-        console.log(`  ✅ GCASH PATTERN MATCH: ${pattern}`);
       }
     }
 
     // DECISION LOGIC (prioritize explicit phrase detection first)
-    console.log(`  📊 Detection Summary:`);
-    console.log(`     GCash phrases: ${hasGCashPhrase ? '✅' : '❌'}, patterns: ${gcashPatternMatches}`);
-    console.log(`     Maya phrases: ${hasMayaPhrase ? '✅' : '❌'}, patterns: ${mayaPatternMatches}`);
 
     // If a Maya/PayMaya phrase is explicitly present, prefer it (avoid numeric-pattern tie-breakers)
     if (hasMayaPhrase) {
       method = 'maya';
-      console.log('  🎯 FINAL: MAYA detected (phrase)');
     } else if (hasGCashPhrase) {
       method = 'gcash';
-      console.log('  🎯 FINAL: GCASH detected (phrase)');
     } else {
       // When no explicit phrases, decide based on pattern counts first
       if (gcashPatternMatches > mayaPatternMatches) {
         method = 'gcash';
-        console.log('  🎯 FINAL: GCASH detected (pattern count)');
       } else if (mayaPatternMatches > gcashPatternMatches) {
         method = 'maya';
-        console.log('  🎯 FINAL: MAYA detected (pattern count)');
       } else {
         const bankKeywords = ['bank', 'bdo', 'bpi', 'metrobank', 'unionbank', 'bca', 'atm', 'debit', 'credit card'];
         if (bankKeywords.some(keyword => lowerText.includes(keyword))) {
           method = 'bank';
-          console.log('  🎯 FINAL: BANK detected');
         } else {
-          console.log('  ❌ FINAL: No payment method detected');
         }
       }
     }
@@ -459,11 +423,6 @@ export class OCRService {
     // Pass the referenceNumber to help locate amounts near the reference when OCR splits lines
     const amount = this.extractAmount(text, method, referenceNumber); // Pass method and reference for context-aware extraction
     
-    console.log('🎯 FINAL EXTRACTION RESULTS:');
-    console.log('  - Method:', method);
-    console.log('  - Reference:', referenceNumber);
-    console.log('  - Amount:', amount);
-    console.log('🔍 PAYMENT METHOD DETECTION END');
     
     return {
       referenceNumber,
@@ -474,8 +433,6 @@ export class OCRService {
 
   // Extract reference number based on payment method
   private static extractReferenceNumber(text: string, method: OCRResult['method']): string | null {
-    console.log('🔍 REFERENCE EXTRACTION for method:', method);
-    console.log('🔍 Text to scan:', text.substring(0, 500));
 
     const patterns = {
       gcash: [
@@ -543,11 +500,9 @@ export class OCRService {
     };
 
     const methodPatterns = patterns[method] || patterns.unknown;
-    console.log(`🎯 Using ${methodPatterns.length} patterns for method: ${method}`);
     
     // For Maya, try Maya ID patterns first before other patterns
     if (method === 'maya') {
-      console.log('🔍 Maya ID extraction...');
       
       // STAGE 1: Try to extract Maya Reference ID pattern first (highest priority)
       const mayaIdPatterns = [
@@ -576,10 +531,8 @@ export class OCRService {
           const correctLength = mayaId.replace(/\s/g, '').length >= 10 && mayaId.replace(/\s/g, '').length <= 12;
           const notAccountNumber = !/^[0-9]{10,}$/.test(mayaId.replace(/\s/g, '')); // Exclude pure numeric strings
           
-          console.log('🔍 Maya ID candidate:', { mayaId, hasLetters, correctLength, notAccountNumber });
           
           if (hasLetters && correctLength && notAccountNumber) {
-            console.log('✅ FOUND Valid Maya Reference ID:', mayaId);
             return mayaId;
           }
         }
@@ -594,19 +547,16 @@ export class OCRService {
       for (const pattern of tracePatterns) {
         const match = text.match(pattern);
         if (match && match[1]) {
-          console.log('✅ FOUND Maya trace/InstaPay ref:', match[1]);
           return match[1];
         }
       }
       
-      console.log('❌ No Maya reference found');
       return null;
     }
     
     // For GCash and other methods, use pattern matching with enhanced cleaning
     for (let i = 0; i < methodPatterns.length; i++) {
       const pattern = methodPatterns[i];
-      console.log(`🔍 Trying pattern ${i + 1}:`, pattern);
       
       const matches = text.match(pattern);
       if (matches) {
@@ -618,7 +568,6 @@ export class OCRService {
           ref = ref.trim();
           
           if (method === 'gcash') {
-            console.log('🧹 GCash reference candidate:', ref);
             
             // GCash: Maintain readable spaced format for long reference numbers
             ref = ref.replace(/\s+/g, ' '); // Normalize spacing
@@ -629,16 +578,12 @@ export class OCRService {
             // Format different GCash reference types
             if (/^\d{14}$/.test(cleanRef)) {
               ref = cleanRef.replace(/(\d{4})(\d{3})(\d{7})/, '$1 $2 $3');
-              console.log('✅ Formatted 14-digit GCash ref:', ref);
             } else if (/^\d{13}$/.test(cleanRef)) {
               ref = cleanRef.replace(/(\d{4})(\d{3})(\d{6})/, '$1 $2 $3');
-              console.log('✅ Formatted 13-digit GCash ref:', ref);
             } else if (/^\d{11}$/.test(cleanRef)) {
               ref = cleanRef.replace(/(\d{4})(\d{4})(\d{3})/, '$1 $2 $3');
-              console.log('✅ Formatted 11-digit GCash ref:', ref);
             } else if (cleanRef.length >= 8 && cleanRef.length <= 15) {
               // Keep cleaned format
-              console.log('✅ GCash ref (cleaned):', ref);
             }
           } else {
             // Bank transfers: Remove extra spaces
@@ -651,25 +596,19 @@ export class OCRService {
               !/^(amount|total|php|gcash|maya|paymaya|3000|30000|13500|365)$/i.test(cleanRefForValidation) &&
               !/^[0-9]{1,4}\.?[0-9]{0,2}$/.test(cleanRefForValidation)) {
             
-            console.log('✅ Found reference number:', ref, 'from pattern:', pattern);
             return ref;
           } else {
-            console.log('❌ Reference filtered out:', ref);
           }
         }
       } else {
-        console.log('❌ Pattern did not match');
       }
     }
 
-    console.log('❌ No reference number found for method:', method);
     return null;
   }
 
   // Extract amount from text with enhanced patterns for GCash and Maya
   private static extractAmount(text: string, detectedMethod?: OCRResult['method'], referenceNumber?: string | null): number | null {
-    console.log('💰 Starting ENHANCED amount extraction from text:', text.substring(0, 200));
-    console.log('💰 Detected payment method for context:', detectedMethod);
     
     // PRE-FILTER: Remove known date patterns from the text to prevent them from being matched as amounts
     let cleanedText = text;
@@ -682,15 +621,11 @@ export class OCRService {
     for (const pattern of datePatterns) {
       const matches = [...cleanedText.matchAll(pattern)];
       if (matches.length > 0) {
-        console.log(`🗓️ Found date pattern matches:`, matches.map(m => m[0]));
       }
       cleanedText = cleanedText.replace(pattern, ' [DATE_REMOVED] ');
     }
     
     if (cleanedText !== text) {
-      console.log('🗓️ Pre-filtered date patterns from text');
-      console.log('   Original length:', text.length);
-      console.log('   Cleaned length:', cleanedText.length);
     }
     
     // CRITICAL FIX: Method-specific patterns to avoid confusion
@@ -763,14 +698,11 @@ export class OCRService {
 
     for (let i = 0; i < patterns.length; i++) {
       const pattern = patterns[i];
-      console.log(`🔍 Trying ${detectedMethod || 'generic'} pattern ${i + 1}/${patterns.length}:`, pattern.toString());
       
       const matches = [...cleanedText.matchAll(pattern)];
-      console.log(`   Found ${matches.length} matches`);
       
       if (matches.length === 0 && pattern.toString().includes('P')) {
         // Special debug for P patterns since we're looking for P100
-        console.log(`   📝 Debug P pattern on text: "${cleanedText.substring(0, 200)}"`);
       }
       
       for (const match of matches) {
@@ -779,10 +711,6 @@ export class OCRService {
         const amountStr = rawAmountStr.replace(/[^\d.,]/g, ''); // Remove everything except digits, commas, periods
         const amount = this.parseAmountString(amountStr);
         
-        console.log(`   → Raw: "${rawAmountStr}", Clean: "${amountStr}", Amount: ${amount}`);
-        console.log(`   → Full match context: "${fullMatch}"`);
-        console.log(`   → Pattern index that matched: ${i + 1}/${patterns.length}`);
-        console.log(`   → Pattern that matched: ${pattern}`);
         
         // CRITICAL: OCR Correction for common misreadings
         let correctedAmount = amount;
@@ -792,7 +720,6 @@ export class OCRService {
           const contextHasTransactionFee = /0\.00/.test(cleanedText);
           if (contextHasSmallAmounts || contextHasTransactionFee) {
             correctedAmount = 1.00;
-            console.log(`   🔄 OCR CORRECTION: P100 → P1.00 (detected misreading)`);
           }
         }
         
@@ -801,11 +728,9 @@ export class OCRService {
           const matchText = fullMatch.toLowerCase();
           const matchContext = cleanedText.substring(Math.max(0, cleanedText.indexOf(fullMatch) - 30), cleanedText.indexOf(fullMatch) + fullMatch.length + 30).toLowerCase();
           
-          console.log(`   → Context (±30 chars): "${matchContext}"`);
           
           // CRITICAL: Skip if this match contains date removal markers or is a date remnant
           if (matchContext.includes('[date_removed]') || fullMatch.includes('[DATE_REMOVED]')) {
-            console.log('   ❌ Skipped: Date removal marker detected');
             continue;
           }
           
@@ -856,26 +781,21 @@ export class OCRService {
                                 (matchContext.includes('trace') || matchContext.includes('ref no'));
           
           if (isReference) {
-            console.log('   ❌ Skipped: Reference/trace number detected');
             continue;
           }
           
           if (finalIsDate) {
             if (isSpecificDatePattern) {
-              console.log('   ❌ Skipped: Specific date pattern detected (Nov 14, 2025 -> 14,202 scenario)');
             } else {
-              console.log('   ❌ Skipped: Date detected (finalIsDate)');
             }
             continue;
           }
           
           if (isAccountNumber) {
-            console.log('   ❌ Skipped: Account number detected (10+ digits without currency):', amountStr);
             continue;
           }
           
           if (isTraceNumber) {
-            console.log('   ❌ Skipped: Potential trace number (6-7 digits without currency):', amount);
             continue;
           }
           
@@ -887,7 +807,6 @@ export class OCRService {
             // Only reconstruct when there are explicit thousand indicators (',000', 'thousand', 'k')
             if (hasThousandIndicators) {
               const reconstructedAmount = correctedAmount * 1000;
-              console.log(`   🔄 Reconstructed amount: ₱${correctedAmount} → ₱${reconstructedAmount.toLocaleString()} (detected partial read)`);
               foundAmounts.push({ 
                 amount: reconstructedAmount, 
                 priority: 15, 
@@ -920,19 +839,16 @@ export class OCRService {
           // ENHANCED: Special priority for standalone decimal amounts in Maya context (like 1.00, 2.50)
           if (detectedMethod === 'maya' && typeof correctedAmount === 'number' && correctedAmount <= 10 && (correctedAmount % 1 !== 0 || correctedAmount.toString().includes('.00'))) {
             priority += 15; // High priority for standalone small decimal amounts in Maya
-            console.log(`   🎯 Maya standalone decimal bonus: +15 priority for "${correctedAmount}"`);
           }
           
           // Special bonus for 'P' followed directly by numbers (common OCR pattern)
           if (/\bp\d+/i.test(fullMatch) && typeof correctedAmount === 'number') {
             priority += 12; // High priority for P100, P50 etc patterns
-            console.log(`   ✨ P+number pattern bonus: +12 priority for "${fullMatch}"`);
           }
           
           // Special bonus for OCR corrections
           if (correctedAmount !== amount) {
             priority += 20;
-            console.log(`   ⭐ OCR correction bonus: +20 priority (${amount} → ${correctedAmount})`);
           }
           
           // Context bonus
@@ -952,10 +868,8 @@ export class OCRService {
           if (typeof correctedAmount === 'number' && correctedAmount >= 1000) priority += 3; // Larger amounts are more likely correct
           if (typeof correctedAmount === 'number' && correctedAmount >= 100 && correctedAmount < 1000000) priority += 2; // Reasonable payment range
           
-          console.log(`   ✅ Valid amount found: ₱${correctedAmount.toLocaleString()} (priority: ${priority}) from: "${fullMatch}"`);
           foundAmounts.push({ amount: correctedAmount, priority, source: fullMatch });
         } else {
-          console.log(`   ❌ Invalid amount: ${correctedAmount} (outside range 0-1,000,000)`);
         }
       }
     }
@@ -968,7 +882,6 @@ export class OCRService {
           const windowStart = Math.max(0, refIndex - 200);
           const windowEnd = Math.min(text.length, refIndex + referenceNumber.length + 200);
           const nearby = text.substring(windowStart, windowEnd);
-          console.log('🔎 No amounts found in cleaned text; searching near reference:', nearby);
 
           // Try simpler currency patterns in the nearby window (use original text for this targeted search)
           const nearbyPatterns = [ /₱[\s\u00A0\u200B]*([\d.,]{1,})/g, /(?:\bphp\b|\bP\b)[\s\u00A0\u200B]*([\d.,]{1,})/gi ];
@@ -979,7 +892,6 @@ export class OCRService {
                 const s = mm[1] || mm[0];
                 const val = this.parseAmountString(s.replace(/[^\d.,]/g, ''));
                 if (val && val > 0 && val < 1000000) {
-                  console.log('🔎 Found nearby amount', val, 'from', s);
                   foundAmounts.push({ amount: val, priority: 25, source: `nearby:${s}` });
                 }
               }
@@ -993,7 +905,6 @@ export class OCRService {
     }
     // Return the highest priority amount
     if (foundAmounts.length > 0) {
-      console.log(`💰 Found ${foundAmounts.length} potential amounts, selecting best match...`);
       
       // Sort by priority first, then by amount value for tie-breaking
       const sortedAmounts = foundAmounts.sort((a, b) => {
@@ -1002,12 +913,10 @@ export class OCRService {
       });
       
       const selectedAmount = sortedAmounts[0];
-      console.log(`🎯 Selected amount: ₱${selectedAmount.amount.toLocaleString()} (priority: ${selectedAmount.priority}) from: "${selectedAmount.source}"`);
       
       return selectedAmount.amount;
     }
 
-    console.log('❌ No valid amounts found in text');
     return null;
   }
 
@@ -1032,7 +941,6 @@ export class OCRService {
       // Z -> 2 (less common but occurs)
       fixed = fixed.replace(/([0-9])Z([0-9A-F])/g, '$12$2');
       
-      console.log('🔧 Maya ID OCR correction:', ref, '->', fixed);
     }
     
     return fixed;
@@ -1043,13 +951,11 @@ export class OCRService {
     if (!amountStr || typeof amountStr !== 'string') return null;
 
     let s = amountStr.trim();
-    console.log(`🔍 parseAmountString input: "${s}"`);
     
     // Remove non-breaking spaces and zero-width spaces
     s = s.replace(/\u00A0|\u200B/g, '');
     // Keep only digits, dots and commas
     s = s.replace(/[^0-9.,]/g, '');
-    console.log(`🔍 After cleanup: "${s}"`);
 
     if (!s) return null;
 
@@ -1083,11 +989,9 @@ export class OCRService {
 
     // Final cleanup
     s = s.replace(/[^0-9\.]/g, '');
-    console.log(`🔍 Final string to parse: "${s}"`);
     if (!s) return null;
 
     const n = parseFloat(s);
-    console.log(`🔍 Parsed result: ${n}`);
     if (isNaN(n)) return null;
     return n;
   }

@@ -106,21 +106,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('📄 Starting PDF generation for email...');
-    console.log('🔍 Receipt data validation passed');
-    console.log('🛠️ Calling ReactPdfReceiptService.generateReceiptBlob...');
 
     // Generate PDF buffer with React-PDF (Vercel optimized)
     const pdfBuffer = await ReactPdfReceiptService.generateReceiptBlob(receiptData);
 
-    console.log('✅ PDF generation for email completed!');
-    console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
 
     // Check if we got the fallback PDF (jsPDF is typically smaller)
     if (pdfBuffer.length < 50000) {
-      console.log('⚠️ WARNING: Unusually small PDF size from React-PDF');
     } else {
-      console.log('🎉 SUCCESS: React-PDF generated successfully for email (high quality)');
     }
 
     // Setup email transporter
@@ -240,7 +233,6 @@ export async function POST(request: NextRequest) {
     await transporter.sendMail(mailOptions);
 
     // Log receipt generation
-    console.log(`✅ Receipt generated and emailed for booking ${bookingId} to ${userEmail}`);
 
     return NextResponse.json({
       success: true,

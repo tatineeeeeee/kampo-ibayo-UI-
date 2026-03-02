@@ -22,7 +22,6 @@ export async function validateUserAction(): Promise<{ isValid: boolean; userRole
       .single();
 
     if (userError || !userData) {
-      console.log("🚫 Action blocked: User account has been deleted");
       
       // Force logout
       await supabase.auth.signOut();

@@ -159,10 +159,6 @@ export default function SettingsPage() {
   const handleSaveResortSettings = async () => {
     setSaving(true);
     try {
-      console.log("⚙️ Admin saving settings:", {
-        maintenance_mode: resortSettings.maintenance_mode,
-        emergency_contact: resortSettings.emergency_contact,
-      }); // Debug log
 
       // Save maintenance settings to database (cross-device)
       await saveMaintenanceSettings({
@@ -177,7 +173,6 @@ export default function SettingsPage() {
 
       // Dispatch a custom event to notify other components in same session
       if (typeof window !== "undefined") {
-        console.log("⚙️ Dispatching maintenanceSettingsChanged event"); // Debug log
         window.dispatchEvent(new CustomEvent("maintenanceSettingsChanged"));
       }
     } catch (error) {

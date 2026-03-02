@@ -20,8 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📧 Sending booking confirmation for:', bookingDetails.bookingId);
-    console.log('📱 SMS Phone number provided:', phoneNumber ? 'Yes' : 'No');
 
     // Send confirmation email to guest
     const guestEmail = createBookingConfirmationEmail(bookingDetails);
@@ -35,14 +33,12 @@ export async function POST(request: NextRequest) {
     let smsResult = null;
     if (phoneNumber) {
       try {
-        console.log('📱 Sending SMS confirmation to:', phoneNumber);
         const smsMessage = createBookingConfirmationSMS(
           bookingDetails.bookingId,
           bookingDetails.guestName,
           bookingDetails.checkIn
         );
         smsResult = await sendSMS({ phone: phoneNumber, message: smsMessage });
-        console.log('📱 SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
       } catch (smsError) {
         console.error('📱 SMS Error (non-critical):', smsError);
         smsResult = { success: false, error: 'SMS service temporarily unavailable' };

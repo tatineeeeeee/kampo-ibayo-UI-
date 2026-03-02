@@ -55,11 +55,6 @@ export async function DELETE(request: NextRequest) {
 
     // 🔐 Only admins can delete users
     if (currentUser.role !== 'admin') {
-      console.log('🔒 AUDIT: Non-admin attempted user deletion', {
-        timestamp: new Date().toISOString(),
-        currentUserRole: currentUser.role,
-        currentUserId: currentUser.id
-      })
       return NextResponse.json({ error: 'Permission denied - Admin access required' }, { status: 403 })
     }
 
@@ -80,7 +75,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID or Auth ID required' }, { status: 400 })
     }
 
-    console.log('Delete request received:', { userId: !!userId, authId: !!authId })
 
     // Get user details before deletion for audit logging and permission checks
     let userDetails = null
@@ -97,49 +91,23 @@ export async function DELETE(request: NextRequest) {
 
     // 1. Cannot delete yourself
     if (userDetails?.id === currentUser.id) {
-      console.log('🔒 AUDIT: Self-deletion attempt blocked', {
-        timestamp: new Date().toISOString(),
-        userId: currentUser.id
-      })
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 403 })
     }
 
     // 2. Super Admin cannot be deleted by anyone
     if (userDetails?.is_super_admin) {
-      console.log('🔒 AUDIT: Super Admin deletion blocked', {
-        timestamp: new Date().toISOString(),
-        attemptedBy: currentUser.id,
-        targetUser: userDetails.email
-      })
       return NextResponse.json({ error: 'Cannot delete Super Admin accounts' }, { status: 403 })
     }
 
     // 3. Only Super Admin can delete other admins
     if (userDetails?.role === 'admin' && !isCurrentUserSuperAdmin) {
-      console.log('🔒 AUDIT: Admin deletion blocked - requires Super Admin', {
-        timestamp: new Date().toISOString(),
-        attemptedBy: currentUser.id,
-        targetUser: userDetails.email
-      })
       return NextResponse.json({ error: 'Only Super Admin can delete administrator accounts' }, { status: 403 })
     }
 
     // 🔒 AUDIT LOG: Admin user deletion initiated
-    console.log('🔒 AUDIT: Admin user deletion initiated', {
-      timestamp: new Date().toISOString(),
-      targetUserId: userId,
-      targetAuthId: authId,
-      targetUserEmail: userDetails?.email,
-      targetUserName: userDetails?.name,
-      targetUserRole: userDetails?.role,
-      adminIpAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      adminUserAgent: request.headers.get('user-agent') || 'unknown',
-      action: 'ADMIN_DELETE_USER'
-    })
 
     // Delete from database first (using the database user ID)
     if (userId) {
-      console.log('Deleting from database...')
       const { error: dbError } = await supabaseAdmin
         .from('users')
         .delete()
@@ -152,12 +120,10 @@ export async function DELETE(request: NextRequest) {
           details: dbError.message
         }, { status: 500 })
       }
-      console.log('Successfully deleted from database')
     }
 
     // Delete from auth (using the auth ID)
     if (authId) {
-      console.log('Deleting from auth...')
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(authId)
 
       if (authError) {
@@ -168,24 +134,10 @@ export async function DELETE(request: NextRequest) {
           authError: authError.message
         }, { status: 200 })
       }
-      console.log('Successfully deleted from auth')
     }
 
-    console.log('User deletion completed successfully')
 
     // 🔒 AUDIT LOG: Admin user deletion completed
-    console.log('🔒 AUDIT: Admin user deletion completed successfully', {
-      timestamp: new Date().toISOString(),
-      targetUserId: userId,
-      targetAuthId: authId,
-      targetUserEmail: userDetails?.email,
-      targetUserName: userDetails?.name,
-      targetUserRole: userDetails?.role,
-      adminIpAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      deletedFromDatabase: !!userId,
-      deletedFromAuth: !!authId,
-      action: 'ADMIN_DELETE_USER_SUCCESS'
-    })
 
     return NextResponse.json({
       success: true,

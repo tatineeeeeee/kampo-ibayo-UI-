@@ -71,7 +71,6 @@ export async function safeLogout(supabase: { auth: { signOut: (options?: { scope
       timeoutMs,
       'Logout operation timed out'
     );
-    console.log('✅ Supabase logout successful');
   } catch (error) {
     if (error instanceof TimeoutError) {
       console.warn('⏰ Logout timed out, proceeding with local cleanup');

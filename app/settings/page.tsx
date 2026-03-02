@@ -184,7 +184,6 @@ export default function SettingsPage() {
           .single();
 
         if (!userError && userRecord) {
-          console.log("📱 User database record loaded:", userRecord);
         } else {
           console.warn("⚠️ Could not load user database record:", userError);
         }
@@ -194,7 +193,6 @@ export default function SettingsPage() {
         const dbPhone = userRecord?.phone || "";
         const finalPhone = dbPhone || authPhone; // Database phone takes priority
 
-        console.log("📱 Phone loading:", { authPhone, dbPhone, finalPhone });
 
         setProfileData({
           name: data.session.user.user_metadata?.name || "",
@@ -552,7 +550,6 @@ export default function SettingsPage() {
 
         // Clear ALL localStorage and sessionStorage data
         if (result.clearStorage) {
-          console.log("🧹 Clearing all browser storage after account deletion");
           localStorage.clear();
           sessionStorage.clear();
 

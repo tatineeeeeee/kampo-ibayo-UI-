@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
   try {
     const { proofId, action, adminId, adminNotes, rejectionReason } = await request.json();
 
-    console.log('🔧 Server: Verifying payment proof:', { proofId, action, adminId, rejectionReason });
 
     // Validate input
     if (!proofId || !action || !adminId) {
@@ -42,7 +41,6 @@ export async function POST(request: NextRequest) {
     };
 
     const newStatus = statusMap[action as keyof typeof statusMap];
-    console.log('📝 Server: Mapping action to status:', { action, newStatus });
 
     // Prepare admin notes with rejection reason if applicable
     let finalAdminNotes = adminNotes || null;
@@ -52,7 +50,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Update payment proof with service role permissions (without verified_by field)
-    console.log('💾 Server: Attempting database update with status:', newStatus);
 
     const { data: paymentProof, error: updateError } = await supabase
       .from('payment_proofs')
@@ -66,7 +63,6 @@ export async function POST(request: NextRequest) {
       .select('*, bookings(id, user_id, guest_email, check_in_date, check_out_date, number_of_guests, total_amount)')
       .single();
 
-    console.log('💾 Server: Database update result:', { paymentProof, updateError });
 
     if (updateError) {
       console.error('❌ Server: Payment proof update error:', updateError);
@@ -76,7 +72,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Server: Payment proof updated successfully');
 
     // Update booking status based on payment proof action
     try {
@@ -109,7 +104,6 @@ export async function POST(request: NextRequest) {
           console.warn('⚠️ Server: Could not update booking status:', bookingUpdateError);
           // Don't fail the whole operation - payment proof update is more important
         } else {
-          console.log('✅ Server: Booking status updated successfully:', bookingStatusUpdate);
         }
       }
     } catch (bookingError) {
@@ -119,7 +113,6 @@ export async function POST(request: NextRequest) {
 
     // Send email notifications
     try {
-      console.log('📧 Server: Sending email notification...');
 
       if (action === 'approve') {
         // Email user about approved payment
@@ -170,13 +163,11 @@ export async function POST(request: NextRequest) {
         if (!approveEmailResponse.ok) {
           console.warn('⚠️ Server: Failed to send approval email, but continuing...');
         } else {
-          console.log('✅ Server: Approval email sent successfully');
         }
 
         // Send SMS notification for payment approval (if phone number available)
         if (paymentProof.bookings && typeof paymentProof.bookings === 'object' && 'guest_phone' in paymentProof.bookings && paymentProof.bookings.guest_phone) {
           try {
-            console.log('📱 Server: Sending payment approval SMS...');
             const { sendSMS, createPaymentApprovedSMS } = await import('@/app/utils/smsService');
 
             const smsMessage = createPaymentApprovedSMS(
@@ -196,7 +187,6 @@ export async function POST(request: NextRequest) {
               message: smsMessage
             });
 
-            console.log('📱 Server: SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
           } catch (smsError) {
             console.error('📱 Server: SMS Error (non-critical):', smsError);
           }
@@ -262,7 +252,6 @@ export async function POST(request: NextRequest) {
         if (!rejectEmailResponse.ok) {
           console.warn('⚠️ Server: Failed to send rejection email, but continuing...');
         } else {
-          console.log('✅ Server: Rejection email sent successfully');
         }
       }
 

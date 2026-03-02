@@ -32,7 +32,6 @@ export function ReceiptManager({
     setIsDownloading(true);
 
     try {
-      console.log(`📄 Downloading receipt for booking ${booking.id}...`);
 
       const response = await fetch("/api/user/download-receipt", {
         method: "POST",
@@ -74,9 +73,6 @@ export function ReceiptManager({
         duration: 4000,
       });
 
-      console.log(
-        `✅ Receipt downloaded successfully for booking ${booking.id}`
-      );
     } catch (error) {
       console.error("Receipt download error:", error);
       showToast({
@@ -97,9 +93,6 @@ export function ReceiptManager({
     setIsEmailing(true);
 
     try {
-      console.log(
-        `📧 Emailing receipt for booking ${booking.id} to ${userEmail}...`
-      );
 
       const response = await fetch("/api/user/generate-receipt", {
         method: "POST",
@@ -131,9 +124,6 @@ export function ReceiptManager({
         duration: 5000,
       });
 
-      console.log(
-        `✅ Receipt emailed successfully for booking ${booking.id} to ${userEmail}`
-      );
     } catch (error) {
       console.error("Email receipt error:", error);
       showToast({

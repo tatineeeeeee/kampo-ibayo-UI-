@@ -305,10 +305,6 @@ function PaymentStatusCell({
           filter: `booking_id=eq.${booking.id}`,
         },
         (payload) => {
-          console.log(
-            `🔥 Real-time payment proof update for booking ${booking.id}:`,
-            payload,
-          );
           // Force immediate refresh on any payment proof change
           setTimeout(() => fetchPaymentProof(), 10); // Very short delay for database consistency
         },
@@ -1106,7 +1102,6 @@ export default function BookingsPage() {
   useEffect(() => {
     // Delayed fetch to not block navigation
     const timer = setTimeout(() => {
-      console.log("🚀 Starting initial fetchBookings...");
       fetchBookings();
     }, 100);
 
@@ -1170,9 +1165,6 @@ export default function BookingsPage() {
                   if (error) {
                     console.error("❌ Failed to cancel payment proofs:", error);
                   } else {
-                    console.log(
-                      `✅ Auto-cancelled ALL payment proofs for booking ${payload.new.id} (cancelled by ${cancelledBy})`,
-                    );
                   }
                 } catch (error) {
                   console.error("💥 Error cancelling payment proofs:", error);
@@ -1392,9 +1384,6 @@ export default function BookingsPage() {
               selectedBooking &&
               selectedBooking.id === newProof.booking_id
             ) {
-              console.log(
-                "🔄 Modal is open for updated proof - refreshing payment history",
-              );
               fetchPaymentHistory(newProof.booking_id);
 
               // Update the selected payment proof to reflect status change immediately
@@ -1403,7 +1392,6 @@ export default function BookingsPage() {
                 selectedPaymentProof.id === newProof.id
               ) {
                 setSelectedPaymentProof(newProof as PaymentProof);
-                console.log("✅ Modal updated with status change");
               }
 
               // Also fetch the latest payment proof to ensure we have the most current data
@@ -1421,7 +1409,6 @@ export default function BookingsPage() {
                     setSelectedPaymentProof(latestProof);
                   }
                 } catch (error) {
-                  console.log("Error fetching latest proof:", error);
                 }
               })();
             }
@@ -1478,9 +1465,6 @@ export default function BookingsPage() {
               selectedBooking &&
               selectedBooking.id === payload.new.booking_id
             ) {
-              console.log(
-                "🔄 Modal is open for this booking - refreshing payment history and proof data",
-              );
               fetchPaymentHistory(payload.new.booking_id);
 
               // Update the selected payment proof to the new one IMMEDIATELY
@@ -1496,7 +1480,6 @@ export default function BookingsPage() {
 
                   if (latestProof) {
                     setSelectedPaymentProof(latestProof);
-                    console.log("✅ Modal updated with latest payment proof");
                   }
                 } catch (error) {
                   console.error(
@@ -1926,11 +1909,8 @@ export default function BookingsPage() {
       }
 
       const result = await response.json();
-      console.log("🌐 API Response data:", result);
 
-      console.log("✅ Payment proof updated successfully via API");
 
-      console.log("🎉 Payment proof action completed successfully!");
 
       // Show success message first
       success(
@@ -2133,7 +2113,6 @@ export default function BookingsPage() {
         booking?.payment_status === "paid" &&
         booking?.payment_intent_id
       ) {
-        console.log("💰 Processing admin-initiated refund");
 
         try {
           const refundApiResponse = await fetch(
@@ -2154,10 +2133,6 @@ export default function BookingsPage() {
 
           if (refundApiResponse.ok) {
             refundResponse = await refundApiResponse.json();
-            console.log(
-              "✅ Admin refund processed successfully:",
-              refundResponse.refund_amount,
-            );
           } else {
             const refundErrorText = await refundApiResponse.text();
             console.error("❌ Refund processing failed:", refundErrorText);
@@ -2171,9 +2146,6 @@ export default function BookingsPage() {
                 warning(
                   `PayMongo Test Mode Limit`,
                   `Booking amount: ₱${refund_amount.toLocaleString()} exceeds PayMongo TEST MODE limit of ₱${max_amount.toLocaleString()}. For ₱9K-₱12K bookings, switch to LIVE MODE or process refund manually. This limit only applies to test mode.`,
-                );
-                console.log(
-                  "ℹ️ Manual refund required due to PayMongo TEST MODE limits",
                 );
               } else if (
                 refundErrorData.error &&
@@ -2487,7 +2459,6 @@ export default function BookingsPage() {
               <span>Refresh Trigger: #{refreshTrigger}</span>
               <button
                 onClick={() => {
-                  console.log("🔄 MANUAL: Forcing refresh trigger increment");
                   setRefreshTrigger((prev) => prev + 1);
                 }}
                 className="text-blue-600 hover:text-blue-800 underline"
@@ -3137,10 +3108,6 @@ export default function BookingsPage() {
                                       setSelectedPaymentProof(prioritizedProof);
                                     }
                                   } catch (error) {
-                                    console.log(
-                                      "No payment proof found or error:",
-                                      error,
-                                    );
                                   }
                                 }
                               }}
@@ -3751,10 +3718,6 @@ export default function BookingsPage() {
                                 setSelectedPaymentProof(prioritizedProof);
                               }
                             } catch (error) {
-                              console.log(
-                                "No payment proof found or error:",
-                                error,
-                              );
                             }
                           }
                         }}

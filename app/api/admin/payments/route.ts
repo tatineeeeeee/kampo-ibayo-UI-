@@ -107,12 +107,6 @@ export async function GET() {
 
       // Debug logging for payment type issues
       if (!booking.payment_type) {
-        console.log(`⚠️ Missing payment_type for booking ${booking.id}:`, {
-          id: booking.id,
-          payment_type: booking.payment_type,
-          payment_amount: booking.payment_amount,
-          total_amount: booking.total_amount
-        });
       }
 
       // Separate payment types

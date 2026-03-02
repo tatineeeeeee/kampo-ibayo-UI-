@@ -529,9 +529,6 @@ export default function ReportsPage() {
             "Staff Notes",
           ];
 
-          console.log(
-            `📊 Generating resort performance metrics for ${filteredBookings.length} bookings`,
-          );
 
           rows = [
             [

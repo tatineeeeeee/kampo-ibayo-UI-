@@ -873,19 +873,12 @@ function BookingPage() {
         );
       } else {
         // Booking created successfully - redirect to manual payment upload
-        console.log("Booking created successfully:", data);
 
         // Show success message
         success("Booking Created!", "Redirecting to payment upload...");
 
         // Multiple redirect attempts to ensure reliability
         const uploadUrl = `/upload-payment-proof?bookingId=${data.id}`;
-        console.log(
-          "Redirecting to upload page with booking ID:",
-          data.id,
-          "URL:",
-          uploadUrl,
-        );
 
         try {
           // Primary redirect method
@@ -2120,7 +2113,6 @@ function BookingPage() {
                     key="half-payment"
                     type="button"
                     onClick={() => {
-                      console.log("Setting payment type to half"); // Debug log
                       setPaymentType("half");
                     }}
                     className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
@@ -2160,7 +2152,6 @@ function BookingPage() {
                     key="full-payment"
                     type="button"
                     onClick={() => {
-                      console.log("Setting payment type to full"); // Debug log
                       setPaymentType("full");
                     }}
                     className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${

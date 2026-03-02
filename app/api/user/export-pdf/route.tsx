@@ -720,7 +720,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("📄 Generating PDF export for user:", data.userId.slice(0, 8));
 
     // Generate PDF
     const pdfDocument = <UserDataExportPDF data={data} />;
@@ -728,11 +727,6 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await pdfBlob.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
 
-    console.log(
-      "✅ PDF export generated successfully, size:",
-      pdfBuffer.length,
-      "bytes"
-    );
 
     return new NextResponse(pdfBuffer, {
       status: 200,

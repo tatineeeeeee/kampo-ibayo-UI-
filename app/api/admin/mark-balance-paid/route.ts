@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
 
 export async function GET() {
-  console.log('✅ Mark balance paid API - GET method working');
   return NextResponse.json({
     message: 'Mark balance paid API is available',
     timestamp: new Date().toISOString(),
@@ -11,11 +10,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🚀 Mark balance paid API - POST method called');
   
   try {
     const body = await request.json();
-    console.log('📥 Received data:', body);
     
     const { bookingId, balanceAmount, totalAmount, paymentMethod } = body;
     
@@ -24,7 +21,6 @@ export async function POST(request: NextRequest) {
     const numBalanceAmount = parseFloat(String(balanceAmount));
     const numTotalAmount = parseFloat(String(totalAmount));
     
-    console.log('🔢 Converted values:', { numBookingId, numBalanceAmount, numTotalAmount });
     
     // Validate numbers
     if (isNaN(numBookingId) || isNaN(numBalanceAmount) || isNaN(numTotalAmount)) {
@@ -43,7 +39,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Get original payment proof by booking_id
-    console.log('🔍 Finding original payment proof for booking:', numBookingId);
     
     const { data: paymentProofs, error: paymentError } = await supabaseAdmin
       .from('payment_proofs')
@@ -78,7 +73,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('✅ Found original payment:', originalPayment.id);
     
     // Get booking
     const { data: booking, error: bookingError } = await supabaseAdmin
@@ -95,7 +89,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('✅ Found booking:', booking);
     
     // Validate booking
     if (booking.status === 'cancelled') {
@@ -123,7 +116,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Create balance payment
-    console.log('💾 Creating balance payment...');
     const { data: balancePayment, error: insertError } = await supabaseAdmin
       .from('payment_proofs')
       .insert({
@@ -148,7 +140,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('✅ Balance payment created:', balancePayment.id);
     
     // Update booking
     const { error: updateError } = await supabaseAdmin
@@ -164,7 +155,6 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ Booking update warning:', updateError);
     }
     
-    console.log('🎉 Balance payment completed successfully');
     
     return NextResponse.json({
       success: true,

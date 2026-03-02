@@ -148,7 +148,6 @@ export async function POST(request: NextRequest) {
 
           if (smsResponse.ok) {
             smsResult = await smsResponse.json();
-            console.log('Cancellation SMS sent successfully');
           }
         } catch (smsError) {
           console.error('Failed to send cancellation SMS (non-blocking):', smsError);

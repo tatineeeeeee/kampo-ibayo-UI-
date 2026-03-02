@@ -216,7 +216,6 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
       }
 
       if (!authLoading) {
-        console.log("🔐 Admin layout: Redirecting to auth (non-blocking)");
         setTimeout(() => router.replace("/auth"), 100);
       }
     }, 50); // 50ms delay to not block navigation
@@ -463,7 +462,6 @@ export default function AdminLayout({
 }) {
   // TEST: Use simple layout to see if navigation works without auth complexity
   if (USE_SIMPLE_MODE) {
-    console.log("🧪 USING SIMPLE MODE - No auth blocking for navigation test");
     return <SimpleAdminLayout>{children}</SimpleAdminLayout>;
   }
 

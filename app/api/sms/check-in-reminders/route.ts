@@ -11,7 +11,6 @@ export async function POST(request: Request) {
     const url = new URL(request.url);
     const reminderType = (url.searchParams.get('type') as ReminderType) || '24h';
 
-    console.log(`🔄 Running ${reminderType} check-in reminder job...`);
 
     // Calculate the target date based on reminder type
     const now = new Date();
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
       targetDateString = localNow.toISOString().split('T')[0];
     }
 
-    console.log(`📅 Checking for bookings with check-in date: ${targetDateString} (${reminderType} reminder)`);
 
     // Get all confirmed bookings with check-in date matching target
     const { data: bookings, error: fetchError } = await supabase
@@ -58,7 +56,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`📱 Found ${bookings?.length || 0} bookings for ${reminderType} reminder`);
 
     if (!bookings || bookings.length === 0) {
       return NextResponse.json({
@@ -96,7 +93,6 @@ export async function POST(request: Request) {
           reminderMessage = createBookingReminderSMS(booking.guest_name, checkInDate);
         }
 
-        console.log(`📱 Sending ${reminderType} reminder to ${booking.guest_name} at ${booking.guest_phone}`);
 
         const smsResult = await sendSMS({
           phone: booking.guest_phone as string,
@@ -105,7 +101,6 @@ export async function POST(request: Request) {
 
         if (smsResult.success) {
           successCount++;
-          console.log(`✅ ${reminderType} reminder sent to ${booking.guest_name}`);
         } else {
           errorCount++;
           console.error(`❌ Failed to send ${reminderType} reminder to ${booking.guest_name}:`, smsResult.error);
@@ -138,7 +133,6 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log(`✅ ${reminderType} reminder job complete: ${successCount} sent, ${errorCount} failed`);
 
     return NextResponse.json({
       success: true,

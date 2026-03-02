@@ -59,7 +59,6 @@ export default function AdminReviewsPage() {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
-      console.log("🔍 Fetching reviews...");
 
       const { data, error } = await supabase
         .from("guest_reviews")
@@ -80,7 +79,6 @@ export default function AdminReviewsPage() {
         .order("created_at", { ascending: false }); // Then by newest first
 
       if (error) throw error;
-      console.log("✅ Successfully fetched reviews:", data?.length || 0);
       setReviews(data || []);
     } catch (error) {
       console.error("❌ Error fetching reviews:", error);

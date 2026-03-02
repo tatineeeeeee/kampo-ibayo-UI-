@@ -628,7 +628,6 @@ export default function UsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      console.log("🔍 Fetching users...");
 
       // Get current user role first
       const {
@@ -644,18 +643,12 @@ export default function UsersPage() {
         if (userError) {
           console.error("❌ Error fetching current user:", userError);
         } else {
-          console.log("✅ Current user data:", currentUserData);
           const isAdmin = currentUserData?.role === "admin";
           setIsCurrentUserAdmin(isAdmin);
           setCurrentUserRole(currentUserData?.role || null);
           // For now, treat all admins as having full admin powers until super admin column is added
           setIsCurrentUserSuperAdmin(isAdmin);
           setCurrentUserId(currentUserData?.id || null);
-          console.log("🔐 Admin status set:", {
-            isAdmin,
-            role: currentUserData?.role,
-            id: currentUserData?.id,
-          });
         }
       }
 
@@ -669,7 +662,6 @@ export default function UsersPage() {
         console.error("❌ Error fetching users:", error);
         showError("Failed to fetch users");
       } else {
-        console.log("✅ Successfully fetched users:", data?.length || 0);
         setUsers(data || []);
       }
     } catch (error) {
@@ -842,23 +834,7 @@ export default function UsersPage() {
       }
 
       // 🔒 CLIENT-SIDE AUDIT LOG: Admin initiating user deletion
-      console.log("🔒 ADMIN AUDIT: Initiating user deletion from admin panel", {
-        timestamp: new Date().toISOString(),
-        adminAction: "DELETE_USER_INITIATED",
-        targetUser: {
-          id: userToDeleteData.id,
-          email: userToDeleteData.email,
-          name: userToDeleteData.name,
-          role: userToDeleteData.role,
-        },
-        adminPanelLocation: "/admin/users",
-        userAgent: navigator.userAgent,
-      });
 
-      console.log("Attempting to delete user:", {
-        userId,
-        hasAuthId: !!userToDeleteData.auth_id,
-      });
 
       // Get the current session for authorization
       const {
@@ -882,7 +858,6 @@ export default function UsersPage() {
         }),
       });
 
-      console.log("Delete API response status:", response.status);
 
       // Check if response is JSON
       const contentType = response.headers.get("content-type");
@@ -893,7 +868,6 @@ export default function UsersPage() {
       }
 
       const result = await response.json();
-      console.log("Delete API result:", result);
 
       if (!response.ok) {
         const errorMsg =
@@ -904,21 +878,6 @@ export default function UsersPage() {
       // Handle successful response
       if (result.success) {
         // 🔒 CLIENT-SIDE AUDIT LOG: Admin user deletion completed
-        console.log("🔒 ADMIN AUDIT: User deletion completed successfully", {
-          timestamp: new Date().toISOString(),
-          adminAction: "DELETE_USER_COMPLETED",
-          targetUser: {
-            id: userToDeleteData.id,
-            email: userToDeleteData.email,
-            name: userToDeleteData.name,
-            role: userToDeleteData.role,
-          },
-          result: {
-            success: true,
-            hasAuthError: !!result.authError,
-          },
-          adminPanelLocation: "/admin/users",
-        });
 
         const message =
           result.message ||

@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (result.success) {
-      console.log(`Cancellation SMS sent successfully to ${phoneNumber} for booking ${bookingDetails.booking_number}`);
       return NextResponse.json({ 
         success: true, 
         message: 'Cancellation SMS sent successfully',

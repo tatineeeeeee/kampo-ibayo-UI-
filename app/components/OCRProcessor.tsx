@@ -68,7 +68,6 @@ export default function OCRProcessor({
   // Auto-process when file changes
   useEffect(() => {
     if (file && !autoProcessed) {
-      console.log("🤖 Auto-processing uploaded image...");
       processImage();
       setAutoProcessed(true);
     } else if (!file) {

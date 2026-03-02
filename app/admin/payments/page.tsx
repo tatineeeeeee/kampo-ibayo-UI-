@@ -101,56 +101,19 @@ export default function PaymentsPage() {
 
   // Function to debug specific payment
   const debugPayment = (payment: Payment) => {
-    console.group(`🔍 Payment Debug Analysis - ID: ${payment.id}`);
-    console.log("Basic Info:", {
-      id: payment.id,
-      bookingId: payment.booking_id,
-      user: payment.user,
-      status: payment.status,
-    });
-    console.log("Amount Analysis:", {
-      amount: payment.amount,
-      totalAmount: payment.total_amount,
-      paymentType: payment.payment_type,
-      difference: payment.total_amount
-        ? payment.total_amount - payment.amount
-        : "N/A",
-      isFullyPaid: payment.amount >= (payment.total_amount || 0),
-    });
-    console.log("Eligibility Check:", {
-      isHalfPayment: payment.payment_type === "half",
-      isVerified:
-        payment.status?.toLowerCase() === "paid" ||
-        payment.status?.toLowerCase() === "verified",
-      hasValidAmounts:
-        payment.total_amount &&
-        payment.amount &&
-        payment.total_amount > 0 &&
-        payment.amount > 0,
-      hasRemainingBalance:
-        payment.total_amount &&
-        payment.amount &&
-        payment.amount < payment.total_amount,
-      canMarkBalance: canMarkBalanceAsPaid(payment),
-    });
-    console.groupEnd();
   };
 
   // Function to test API connectivity
   const testApiConnectivity = async () => {
     try {
-      console.log("🧪 Testing mark-balance-paid API connectivity...");
 
       // Test 1: GET on mark-balance-paid
-      console.log("1️⃣ Testing GET /api/admin/mark-balance-paid");
       const getResponse = await fetch("/api/admin/mark-balance-paid", {
         method: "GET",
       });
-      console.log("GET Response:", getResponse.status, getResponse.statusText);
 
       if (getResponse.ok) {
         const getData = await getResponse.json();
-        console.log("GET Data:", getData);
       } else {
         console.error("❌ GET test failed");
         showError("GET method test failed");
@@ -158,9 +121,6 @@ export default function PaymentsPage() {
       }
 
       // Test 2: POST with real-world test data
-      console.log(
-        "2️⃣ Testing POST /api/admin/mark-balance-paid with realistic data",
-      );
       const testBookingId = 1; // Use a small number that should exist
       const testPaymentId = 1; // Use a small number that should exist
       const postResponse = await fetch("/api/admin/mark-balance-paid", {
@@ -174,20 +134,13 @@ export default function PaymentsPage() {
           paymentMethod: "cash_on_arrival",
         }),
       });
-      console.log(
-        "POST Response:",
-        postResponse.status,
-        postResponse.statusText,
-      );
 
       if (postResponse.ok) {
         const postData = await postResponse.json();
-        console.log("POST Data:", postData);
         success("🎉 API endpoint is working! Test was successful.");
       } else {
         try {
           const errorText = await postResponse.text();
-          console.log("POST Error Response:", errorText);
 
           // Parse the error if it's JSON
           let errorData;
@@ -198,17 +151,10 @@ export default function PaymentsPage() {
           }
 
           if (postResponse.status === 404 && errorText.includes("not found")) {
-            console.log(
-              "✅ POST method reached API but returned expected validation error (test records not found)",
-            );
             success(
               "🎉 API endpoint is working correctly! Ready for real data.",
             );
           } else if (postResponse.status === 400) {
-            console.log(
-              "✅ POST method working - returned validation error as expected:",
-              errorData.error,
-            );
             success(
               "🎉 API endpoint is working correctly! Validation is functioning.",
             );
@@ -281,12 +227,6 @@ export default function PaymentsPage() {
     setProcessingBalance(true);
 
     try {
-      console.log("🔄 Marking balance as paid:", {
-        bookingId: payment.booking_id,
-        balanceAmount,
-        totalAmount: payment.total_amount,
-        originalAmount: payment.original_amount,
-      });
 
       const requestBody = {
         bookingId: Number(payment.booking_id),
@@ -295,7 +235,6 @@ export default function PaymentsPage() {
         paymentMethod: "cash_on_arrival",
       };
 
-      console.log("📤 Sending request:", requestBody);
 
       const response = await fetch("/api/admin/mark-balance-paid", {
         method: "POST",
@@ -305,7 +244,6 @@ export default function PaymentsPage() {
         body: JSON.stringify(requestBody),
       });
 
-      console.log("📡 Response:", response.status, response.statusText);
 
       if (!response.ok) {
         let errorMessage = "Failed to mark balance as paid";
@@ -325,7 +263,6 @@ export default function PaymentsPage() {
 
       // Parse successful response
       const result = await response.json();
-      console.log("✅ Success:", result);
 
       success(
         `Balance of ₱${balanceAmount.toLocaleString()} marked as paid on arrival!`,
@@ -380,31 +317,6 @@ export default function PaymentsPage() {
 
     // Only log debug info if conditions aren't met to reduce console spam
     if (isHalfPayment && !hasRemainingBalance && payment.id) {
-      console.log(
-        `🔍 Payment ${payment.id} (Booking: ${payment.booking_id}) cannot be marked:`,
-        {
-          paymentType: payment.payment_type,
-          originalAmount: payment.original_amount,
-          totalAmount: payment.total_amount,
-          balanceAmount,
-          isOriginalVerified,
-          hasValidAmounts,
-          isOverpaid,
-          hasExistingBalancePayment,
-          isBookingCancelled,
-          reason: isBookingCancelled
-            ? "Booking is cancelled"
-            : hasExistingBalancePayment
-              ? "Balance payment already exists"
-              : isOverpaid
-                ? "OVERPAID - Customer paid more than total amount"
-                : (payment.original_amount || 0) === payment.total_amount
-                  ? "Already paid in full"
-                  : (payment.original_amount || 0) > (payment.total_amount || 0)
-                    ? "Overpaid"
-                    : "Invalid amounts or missing data",
-        },
-      );
     }
 
     // Don't allow marking balance as paid for overpaid bookings, if balance already exists, or if booking is cancelled

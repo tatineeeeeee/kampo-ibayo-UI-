@@ -52,7 +52,6 @@ export async function POST() {
 
         if (!updateError) {
           updatedCount++;
-          console.log(`✅ Fixed booking ${booking.id}: set payment_type to "${paymentType}"`);
         } else {
           console.error(`❌ Failed to update booking ${booking.id}:`, updateError);
         }

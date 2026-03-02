@@ -18,9 +18,6 @@ export interface SMSResponse {
  */
 export const sendSMS = async (smsData: SMSData): Promise<SMSResponse> => {
   try {
-    console.log('📱 Sending SMS via SMS-Gate.app Direct API...');
-    console.log('📞 To:', smsData.phone);
-    console.log('💬 Message length:', smsData.message.length);
 
     const username = process.env.SMSGATE_USERNAME;
     const password = process.env.SMSGATE_PASSWORD;
@@ -31,7 +28,6 @@ export const sendSMS = async (smsData: SMSData): Promise<SMSResponse> => {
 
     // Ensure phone number is in international format (+63 for Philippines)
     const formattedPhone = formatPhoneToInternational(smsData.phone);
-    console.log('📞 Phone conversion:', smsData.phone, '->', formattedPhone);
 
     // Direct API call to SMS-Gate.app using the WORKING 3rdparty endpoint
     const response = await fetch('https://api.sms-gate.app/3rdparty/v1/message', {
@@ -53,8 +49,6 @@ export const sendSMS = async (smsData: SMSData): Promise<SMSResponse> => {
     }
 
     const result = await response.json();
-    console.log('✅ SMS sent successfully via SMS-Gate.app');
-    console.log('� Response:', result);
 
     return {
       success: true,

@@ -105,7 +105,6 @@ const ReviewSubmissionForm = ({
 
     try {
       // Test Supabase connection first
-      console.log('🔗 Testing Supabase connection...');
       const { error: connectionError } = await supabase
         .from('guest_reviews')
         .select('count')
@@ -116,7 +115,6 @@ const ReviewSubmissionForm = ({
         throw new Error(`Database connection failed: ${connectionError.message}`);
       }
       
-      console.log('✅ Supabase connection successful');
 
       // Check if user already submitted a review for this booking
       if (bookingId && user?.id) {
@@ -155,7 +153,6 @@ const ReviewSubmissionForm = ({
             }
             
             // Show rejection message and allow resubmission
-            console.log('🔄 Previous review was rejected, allowing resubmission...');
             setError('Your previous review was not approved by our moderation team. You can submit a new review that follows our guidelines.');
             
             // Delete the old rejected review to allow resubmission
@@ -181,16 +178,6 @@ const ReviewSubmissionForm = ({
         return;
       }
 
-      console.log('📋 User info:', { id: user.id, email: user.email });
-      console.log('📝 Form data before submission:', {
-        user_id: user.id,
-        guest_name: formData.guestName.trim(),
-        guest_location: formData.guestLocation.trim() || null,
-        rating: formData.rating,
-        reviewText: formData.reviewText.trim(),
-        bookingId: formData.bookingId,
-        hasBookingId: Boolean(formData.bookingId)
-      });
 
       // Smart moderation: Only flag obviously problematic content
       const shouldAutoApprove = (reviewText: string) => {
@@ -210,7 +197,6 @@ const ReviewSubmissionForm = ({
 
       const isAutoApproved = shouldAutoApprove(formData.reviewText);
       
-      console.log(`📋 Review Moderation: ${isAutoApproved ? 'AUTO-APPROVED' : 'FLAGGED'} - Will ${isAutoApproved ? 'publish immediately' : 'require admin review'}`);
 
       // Prepare review data matching the table structure
       const reviewData = {
@@ -235,15 +221,6 @@ const ReviewSubmissionForm = ({
         ...(formData.bookingId && formData.bookingId > 0 && { booking_id: formData.bookingId })
       };
 
-      console.log('🚀 Final review data to insert:', reviewData);
-      console.log('🔍 Data types check:', {
-        user_id_type: typeof reviewData.user_id,
-        user_id_value: reviewData.user_id,
-        rating_type: typeof reviewData.rating,
-        rating_value: reviewData.rating,
-        guest_name_type: typeof reviewData.guest_name,
-        guest_location_type: typeof reviewData.guest_location
-      });
 
       // Insert review into database
       const { data: insertData, error: insertError } = await supabase
@@ -251,7 +228,6 @@ const ReviewSubmissionForm = ({
         .insert([reviewData])
         .select('*'); // Select all fields to see what was inserted
 
-      console.log('📊 Database response:', { data: insertData, error: insertError });
 
       if (insertError) {
         console.error('❌ Database insertion error details:', insertError);
@@ -266,7 +242,6 @@ const ReviewSubmissionForm = ({
       // Handle photo uploads if any photos were selected
       if (photos.length > 0 && insertData && insertData[0]) {
         const reviewId = insertData[0].id;
-        console.log('📸 Uploading photos for review ID:', reviewId, 'Type:', typeof reviewId);
         
         try {
           for (let i = 0; i < photos.length; i++) {
@@ -302,7 +277,6 @@ const ReviewSubmissionForm = ({
             if (photoDbError) {
               console.error('❌ Photo database insert error:', photoDbError);
             } else {
-              console.log('✅ Photo uploaded successfully:', fileName);
             }
           }
         } catch (photoError) {
@@ -568,7 +542,6 @@ const ReviewSubmissionForm = ({
           <PhotoUpload
             onPhotosChange={(selectedPhotos) => {
               setPhotos(selectedPhotos);
-              console.log('Photos selected:', selectedPhotos.length);
             }}
             maxPhotos={3}
             className="space-y-3"

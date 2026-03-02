@@ -31,7 +31,6 @@ export async function POST() {
       return NextResponse.json({ completedCount: 0 });
     }
 
-    console.log(`Found ${finishedBookings.length} confirmed booking(s) past checkout date`);
 
     const bookingIds = finishedBookings.map(booking => booking.id);
 
@@ -52,7 +51,6 @@ export async function POST() {
       );
     }
 
-    console.log(`✅ Auto-completed ${finishedBookings.length} booking(s)`);
     return NextResponse.json({ completedCount: finishedBookings.length });
 
   } catch (error) {

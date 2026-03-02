@@ -89,7 +89,6 @@ export const sendEmail = async (emailData: EmailTemplate) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {
     console.error('Error sending email:', error);
@@ -743,7 +742,6 @@ export const testEmailConnection = async () => {
   try {
     const transporter = createEmailTransporter();
     await transporter.verify();
-    console.log('✅ Email server connection successful');
     return { success: true, message: 'Email server connection successful' };
   } catch (error) {
     console.error('❌ Email server connection failed:', error);

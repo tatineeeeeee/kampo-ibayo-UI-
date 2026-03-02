@@ -72,7 +72,6 @@ function ImageUploadModal({
         console.error("No user found");
         return;
       }
-      console.log("Current user:", user); // Debug log
 
       const uploadPromises = Array.from(selectedFiles).map(
         async (file, index) => {
@@ -98,18 +97,6 @@ function ImageUploadModal({
           } = supabase.storage.from("gallery-images").getPublicUrl(filePath);
 
           // Save metadata to database
-          console.log("Attempting to insert:", {
-            file_name: fileName,
-            storage_path: filePath,
-            public_url: publicUrl,
-            category,
-            caption: caption || null,
-            alt_text: caption || file.name,
-            file_size: file.size,
-            mime_type: file.type,
-            uploaded_by: user.id,
-            display_order: 0,
-          });
 
           const { error: dbError } = await supabase
             .from("gallery_images")

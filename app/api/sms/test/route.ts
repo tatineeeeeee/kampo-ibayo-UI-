@@ -13,15 +13,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('📱 Testing SMS service...');
-    console.log('📞 Phone:', phoneNumber);
-    console.log('💬 Message:', message);
 
     // Send test SMS
     const result = await sendSMS({ phone: phoneNumber, message });
 
     if (result.success) {
-      console.log('✅ Test SMS sent successfully!');
       return NextResponse.json({
         success: true,
         message: 'SMS sent successfully!',
@@ -47,7 +43,6 @@ export async function POST(request: NextRequest) {
 // GET method for testing connectivity
 export async function GET() {
   try {
-    console.log('🔍 Checking SMS service configuration...');
     
     const username = process.env.SMSGATE_USERNAME;
     const password = process.env.SMSGATE_PASSWORD;

@@ -38,7 +38,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    console.log('Processing account deletion request for user:', userId)
 
     // First, verify the user exists
     const { data: existingUser, error: fetchError } = await supabaseAdmin
@@ -53,15 +52,6 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 🔒 AUDIT LOG: Account deletion attempt
-    console.log('🔒 AUDIT: User account deletion initiated', {
-      timestamp: new Date().toISOString(),
-      userId: userId,
-      userEmail: existingUser.email,
-      userName: existingUser.name,
-      userRole: existingUser.role,
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      userAgent: request.headers.get('user-agent') || 'unknown'
-    })
 
     // Safety check: Don't delete admin accounts through this endpoint
     if (existingUser.role === 'admin') {
@@ -148,7 +138,6 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log('Account deletion eligibility verified. Processing deletion...')
 
     // Anonymize old booking records instead of deleting them (for business records)
     if (bookings && bookings.length > 0) {
@@ -169,7 +158,6 @@ export async function DELETE(request: NextRequest) {
         }, { status: 500 })
       }
 
-      console.log(`Anonymized ${bookings.length} booking record(s)`)
     }
 
     // Delete user from database
@@ -185,7 +173,6 @@ export async function DELETE(request: NextRequest) {
       }, { status: 500 })
     }
 
-    console.log('User profile deleted from database')
 
     // Delete from authentication system
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
@@ -199,19 +186,8 @@ export async function DELETE(request: NextRequest) {
       }, { status: 200 })
     }
 
-    console.log('User authentication record deleted')
 
     // 🔒 AUDIT LOG: Successful account deletion
-    console.log('🔒 AUDIT: User account deletion completed successfully', {
-      timestamp: new Date().toISOString(),
-      userId: userId,
-      userEmail: existingUser.email,
-      userName: existingUser.name,
-      userRole: existingUser.role,
-      bookingsAnonymized: bookings ? bookings.length : 0,
-      totalBookings: bookings ? bookings.length : 0,
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown'
-    })
 
     return NextResponse.json({
       success: true,

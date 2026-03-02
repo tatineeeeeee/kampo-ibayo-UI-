@@ -101,7 +101,6 @@ export async function POST(request: NextRequest) {
       let smsResult = null;
       if (booking.guest_phone) {
         try {
-          console.log('📱 Sending confirmation SMS to:', booking.guest_phone);
           // Create approval SMS message
           const smsMessage = createBookingApprovalSMS(
             booking.id.toString(),
@@ -109,7 +108,6 @@ export async function POST(request: NextRequest) {
             emailBookingDetails.checkIn
           );
           smsResult = await sendSMS({ phone: booking.guest_phone, message: smsMessage });
-          console.log('📱 SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
         } catch (smsError) {
           console.error('📱 SMS Error (non-critical):', smsError);
           smsResult = { success: false, error: 'SMS service temporarily unavailable' };

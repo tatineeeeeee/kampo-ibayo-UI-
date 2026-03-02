@@ -58,13 +58,6 @@ export default function AvailabilityCalendar({
 
   // Debug logging only when needed
   if (process.env.NODE_ENV === "development" && excludeBookingId) {
-    console.log("📅 [AvailabilityCalendar] Reschedule mode:", {
-      selectedCheckIn,
-      selectedCheckOut,
-      excludeBookingId,
-      newCheckIn,
-      newCheckOut,
-    });
   }
 
   // Load booked dates from database (SAME LOGIC AS HOMEPAGE)
@@ -123,23 +116,10 @@ export default function AvailabilityCalendar({
           return;
         }
 
-        console.log("📅 AvailabilityCalendar fetched bookings:", data);
-        console.log("📅 Excluded booking ID:", excludeBookingId);
 
         // Debug: Log each booking's dates in a readable format
         if (data && data.length > 0) {
           data.forEach((booking, index) => {
-            console.log(`Booking ${index + 1}:`, {
-              checkIn: booking.check_in_date,
-              checkOut: booking.check_out_date,
-              status: booking.status,
-              checkInFormatted: new Date(
-                booking.check_in_date,
-              ).toLocaleDateString(),
-              checkOutFormatted: new Date(
-                booking.check_out_date,
-              ).toLocaleDateString(),
-            });
           });
         }
 
@@ -200,32 +180,21 @@ export default function AvailabilityCalendar({
 
       // Simplified debug logging
       if (isDebugDate) {
-        console.log(
-          `    Booking ${
-            bookingIndex + 1
-          }: ${checkIn.toLocaleDateString()} to ${checkOut.toLocaleDateString()}`,
-        );
       }
 
       // Check if this date is a check-in date
       if (targetDate.getTime() === checkIn.getTime()) {
         isCheckIn = true;
-        if (isDebugDate) console.log(`    ✅ ${targetDateStr} is CHECK-IN`);
       }
 
       // Check if this date is a check-out date
       if (targetDate.getTime() === checkOut.getTime()) {
         isCheckOut = true;
-        if (isDebugDate) console.log(`    ✅ ${targetDateStr} is CHECK-OUT`);
       }
 
       // Check if this date is between check-in and check-out (occupied)
       if (targetDate > checkIn && targetDate < checkOut) {
         isOccupied = true;
-        if (isDebugDate)
-          console.log(
-            `    ✅ ${targetDateStr} is OCCUPIED (between ${checkIn.toLocaleDateString()} and ${checkOut.toLocaleDateString()})`,
-          );
       }
     });
 
@@ -316,9 +285,6 @@ export default function AvailabilityCalendar({
       targetDateStr >= selectedCheckIn && targetDateStr < selectedCheckOut;
 
     if (isBlocked) {
-      console.log(
-        `🚫 [isDateBlocked] Blocking ${targetDateStr} (current booking: ${selectedCheckIn} to ${selectedCheckOut})`,
-      );
     }
 
     return isBlocked;

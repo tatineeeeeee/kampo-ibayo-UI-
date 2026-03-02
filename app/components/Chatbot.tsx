@@ -866,7 +866,6 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
   // Debug session analytics
   useEffect(() => {
     if (sessionAnalytics.questionsAnswered > 0) {
-      console.log("🤖 AI Session Analytics:", sessionAnalytics);
     }
   }, [sessionAnalytics]);
 
@@ -1237,12 +1236,6 @@ export default function Chatbot({ onOpenStateChange }: ChatbotProps = {}) {
     const detectedLanguage = detectLanguage(userMessage);
     const intentAnalysis = analyzeUserIntent(userMessage);
 
-    console.log("🤖 AI Analysis:", {
-      detectedLanguage,
-      intent: intentAnalysis.intent,
-      confidence: intentAnalysis.confidence,
-      entities: intentAnalysis.entities,
-    });
 
     // Update conversation context for AI learning
     updateConversationContext(

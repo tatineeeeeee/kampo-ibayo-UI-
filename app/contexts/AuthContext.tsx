@@ -41,9 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.getItem("in_password_reset") === "true";
 
         if (inPasswordReset) {
-          console.log(
-            "🔒 AuthContext: In password reset mode, skipping auto-login"
-          );
           setUser(null);
           setUserRole(null);
           setLoading(false);
@@ -54,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let session = null;
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
-            console.log(`🔄 AuthContext: Session check attempt ${attempt}/3`);
 
             const sessionPromise = supabase.auth.getSession();
             const timeoutPromise = new Promise((_, reject) =>
@@ -68,10 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             session = result.data?.session;
             break; // Success - exit retry loop
           } catch (retryError) {
-            console.log(
-              `⚠️ AuthContext: Attempt ${attempt} failed:`,
-              retryError
-            );
             if (attempt === 3) {
               throw retryError; // Final attempt failed
             }
@@ -118,19 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔔 AuthContext: Auth state change:", event);
 
       // ✅ THROTTLE: Ignore rapid auth changes that can block navigation
       if (event === "TOKEN_REFRESHED") {
-        console.log(
-          "🔄 AuthContext: Token refreshed (ignoring to prevent navigation hang)"
-        );
         return;
       }
 
       // Always handle SIGNED_OUT events
       if (event === "SIGNED_OUT") {
-        console.log("🚪 AuthContext: User signed out");
         setUser(null);
         setUserRole(null);
         return;
@@ -143,22 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // During password reset, ignore all auth events except SIGNED_OUT
       if (inPasswordReset) {
-        console.log(
-          "🔒 AuthContext: Ignoring auth change during password reset:",
-          event
-        );
         return;
       }
 
       // Handle normal sign in events
       if (session?.user) {
-        console.log("👤 AuthContext: User signed in");
         setUser(session.user);
 
         // ✅ NON-BLOCKING: Fetch user role without blocking navigation
         setTimeout(async () => {
           try {
-            console.log("🔄 AuthContext: Fetching user role (non-blocking)...");
             const { data: userData } = await supabase
               .from("users")
               .select("role")
@@ -166,7 +147,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .single();
 
             setUserRole(userData?.role || "user");
-            console.log("✅ AuthContext: User role fetched (non-blocking)");
           } catch (error) {
             console.error("❌ AuthContext: Failed to fetch user role:", error);
             setUserRole("user");
@@ -230,9 +210,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 🛡️ COMPLETELY DISABLED: Auto-refresh was causing 30-second navigation hanging
   useEffect(() => {
-    console.log(
-      "🔕 AuthContext: Auto-refresh COMPLETELY DISABLED to fix navigation hanging"
-    );
     // All auto-refresh logic removed to prevent navigation issues
   }, []); // Empty dependency array, no auto-refresh
 

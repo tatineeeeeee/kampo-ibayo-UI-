@@ -3,13 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { ReactPdfReceiptService } from '../../../utils/reactPdfReceiptService';
 
 export async function POST(request: NextRequest) {
-  console.log('🚀 PDF Download API - Starting receipt generation with React-PDF...');
-  console.log('📊 Environment check:', {
-    NODE_ENV: process.env.NODE_ENV,
-    VERCEL: !!process.env.VERCEL,
-    REACT_PDF_MIGRATION: 'v2.0',
-    timestamp: new Date().toISOString()
-  });
 
   try {
     const { bookingId, userEmail, userName } = await request.json();
@@ -113,22 +106,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('📄 Starting PDF generation process...');
-    console.log('🔍 Receipt data validation passed');
-    console.log('🛠️ Calling ReactPdfReceiptService.generatePDFReceipt...');
 
     // Generate PDF with React-PDF (Vercel optimized)
     const pdfBuffer = await ReactPdfReceiptService.generatePDFReceipt(receiptData);
 
-    console.log('✅ PDF generation completed successfully!');
-    console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
-    console.log('🔍 PDF buffer type:', typeof pdfBuffer);
 
     // Check if we got the fallback PDF (jsPDF is typically smaller)
     if (pdfBuffer.length < 50000) {
-      console.log('⚠️ WARNING: Unusually small PDF size from React-PDF');
     } else {
-      console.log('🎉 SUCCESS: React-PDF generated successfully (high quality)');
     }
 
     // Return PDF as downloadable response  

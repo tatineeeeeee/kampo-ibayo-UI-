@@ -21,9 +21,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('📱 Testing SMS service...');
-    console.log('📞 Phone:', targetPhone);
-    console.log('🧪 Test Type:', testType || 'basic');
 
     let smsMessage: string;
 
@@ -47,13 +44,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('💬 Message:', smsMessage);
 
     // Send test SMS
     const result = await sendSMS({ phone: targetPhone, message: smsMessage });
 
     if (result.success) {
-      console.log('✅ Test SMS sent successfully!');
       
       // Extract formatted phone from the SMS service (we need to format it here too for the response)
       let formattedPhone = targetPhone;
@@ -97,7 +92,6 @@ export async function POST(request: NextRequest) {
 // GET method for SMS service status check
 export async function GET() {
   try {
-    console.log('🔍 Checking SMS service status...');
     
     const username = process.env.SMSGATE_USERNAME;
     const password = process.env.SMSGATE_PASSWORD;

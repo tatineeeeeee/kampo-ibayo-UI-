@@ -33,7 +33,6 @@ export async function POST(request: Request) {
             html: html || text, // HTML version
         });
 
-        console.log('Message sent: %s', info.messageId);
 
         return NextResponse.json({
             message: 'Email sent successfully',
