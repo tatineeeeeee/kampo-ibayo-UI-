@@ -130,8 +130,10 @@ export default function DashboardPage() {
             .filter((b) => b.status === "completed")
             .reduce((sum, b) => sum + (b.total_amount || 0), 0);
 
-          // Total revenue = confirmed + completed
-          const totalRevenue = confirmedRevenue + completedRevenue;
+          // Total revenue = all bookings (pending + confirmed + completed)
+          const totalRevenue = bookings
+            .filter((b) => b.status !== "cancelled")
+            .reduce((sum, b) => sum + (b.total_amount || 0), 0);
 
           const averageBookingValue =
             confirmedBookings + completedBookingsCount > 0
@@ -330,9 +332,8 @@ export default function DashboardPage() {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -403,7 +404,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.confirmedRevenue
+                  formatCurrency(stats.confirmedRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -424,7 +425,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.completedRevenue
+                  formatCurrency(stats.completedRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -445,11 +446,11 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.totalRevenue
+                  formatCurrency(stats.totalRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Confirmed + Completed
+                Pending + Confirmed + Completed
               </p>
             </div>
           </div>
@@ -557,9 +558,10 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip
+                    labelStyle={{ color: "#000" }}
                     formatter={(value, name) => [
                       name === "revenue"
-                        ? formatCurrency(value as number)
+                        ? `₱${formatCurrency(value as number)}`
                         : value,
                       name === "revenue" ? "Revenue" : "Bookings",
                     ]}
@@ -597,7 +599,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
+                  <Tooltip labelStyle={{ color: "#000" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                   <Bar dataKey="confirmed" fill="#10b981" name="Confirmed" />
                   <Bar dataKey="pending" fill="#f59e0b" name="Pending" />
