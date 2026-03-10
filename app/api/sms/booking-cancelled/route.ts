@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendSMS } from '@/app/utils/smsService';
+import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateInternalOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { phoneNumber, bookingDetails } = await request.json();
 
     // Validate required fields

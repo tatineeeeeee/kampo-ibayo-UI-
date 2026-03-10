@@ -249,7 +249,7 @@ function BookingPage() {
           try {
             const { data: profileData, error: profileError } = await supabase
               .from("users")
-              .select("name, email, phone")
+              .select("full_name, email, phone")
               .eq("auth_id", user.id)
               .single();
 
@@ -257,7 +257,7 @@ function BookingPage() {
               // Use database data (more reliable)
               setFormData((prevData) => ({
                 ...prevData,
-                name: profileData.name || prevData.name,
+                name: profileData.full_name || prevData.name,
                 email: profileData.email || user.email || prevData.email,
                 phone: profileData.phone || prevData.phone,
               }));

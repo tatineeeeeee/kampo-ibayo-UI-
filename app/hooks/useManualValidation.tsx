@@ -13,7 +13,7 @@ export function useManualValidation() {
 
       const { data: userData, error } = await supabase
         .from("users")
-        .select("role, name, email")
+        .select("role, full_name, email")
         .eq("auth_id", session.user.id)
         .single();
 

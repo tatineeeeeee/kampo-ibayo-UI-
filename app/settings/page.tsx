@@ -316,7 +316,7 @@ export default function SettingsPage() {
         const { error: dbError } = await supabase
           .from("users")
           .update({
-            name: profileData.name,
+            full_name: profileData.name,
             phone: cleanedPhone,
           })
           .eq("auth_id", user.id);
@@ -505,11 +505,18 @@ export default function SettingsPage() {
 
       info("Processing account deletion...");
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        return;
+      }
+
       // Call the account deletion API
       const response = await fetch("/api/user/delete-account", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           userId: user.id,
@@ -695,10 +702,18 @@ export default function SettingsPage() {
         );
       } else if (format === "pdf") {
         // PDF Export - call API to generate PDF
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          showError("Authentication required. Please log in again.");
+          setExporting(false);
+          return;
+        }
+
         const response = await fetch("/api/user/export-pdf", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             userId: user.id,

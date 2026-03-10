@@ -128,7 +128,7 @@ export default function DashboardPage() {
           const totalBookings = bookings.length;
           const averageBookingValue =
             confirmedBookings + completedBookingsCount > 0
-              ? totalRevenue / (confirmedBookings + completedBookingsCount)
+              ? (confirmedRevenue + completedRevenue) / (confirmedBookings + completedBookingsCount)
               : 0;
 
           setStats({

@@ -38,7 +38,7 @@ export const createEmailTransporter = () => {
      * Encrypts all email data in transit using AES-256
      */
     tls: {
-      rejectUnauthorized: false,  // Allow Gmail's certificate chain
+      rejectUnauthorized: true,  // Validate SSL certificates
     }
   });
 };

@@ -2,120 +2,125 @@
  * =============================================================================
  * SERVER-SIDE AUTHENTICATION UTILITY
  * =============================================================================
- * 
- * PHP FRAMEWORK SECURITY EQUIVALENTS:
- * 
- * 1. SESSION MANAGEMENT (PHP: session_start(), $_SESSION['user_id'])
- *    - Uses JWT tokens instead of server-side sessions
- *    - supabase.auth.getSession() validates the JWT signature
- *    - Equivalent to: if(!isset($_SESSION['user_id'])) { die('Unauthorized'); }
- * 
- * 2. ROLE-BASED ACCESS CONTROL (PHP: if($_SESSION['role'] !== 'admin'))
- *    - Checks user role from database after session validation
- *    - Prevents unauthorized access to admin functions
- * 
- * 3. JWT TOKEN SECURITY:
- *    - Tokens signed with RS256 (asymmetric encryption)
- *    - Cannot be forged without Supabase's private key
- *    - Automatically expires to prevent session hijacking
- * 
+ *
+ * Extracts JWT from the Authorization header and verifies it server-side
+ * using supabaseAdmin.auth.getUser(token). This is the correct pattern
+ * for Next.js API routes (no browser session available on the server).
+ *
+ * Pattern follows the gold standard from api/admin/delete-user/route.ts.
  * =============================================================================
  */
 
-import { NextRequest } from 'next/server';
-import { supabase } from '@/app/supabaseClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from './supabaseAdmin';
 
-interface User {
-  id: string;
-  name: string;
+export interface AuthenticatedUser {
+  authId: string;       // Supabase auth UUID
+  userId: string;       // Database users.id
   email: string;
+  name: string;
   role: string;
+  isSuperAdmin: boolean;
 }
 
+export type AuthSuccess = { success: true; user: AuthenticatedUser };
+export type AuthFailure = { success: false; error: string; status: number };
+export type AuthResult = AuthSuccess | AuthFailure;
+
+export type InternalAuthResult =
+  | { success: true; internal: true }
+  | AuthSuccess
+  | AuthFailure;
+
 /**
- * Validates admin/staff access for protected API routes
- * 
- * PHP Equivalent:
- *   session_start();
- *   if(!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
- *     http_response_code(401);
- *     die(json_encode(['error' => 'Unauthorized']));
- *   }
+ * Validates any authenticated user from the Authorization: Bearer <token> header.
  */
-export async function validateAdminAccess(): Promise<{
-  isValid: boolean;
-  user?: User;
-  error?: string
-}> {
-  try {
-    /**
-     * SESSION VALIDATION - PHP Equivalent: session_start(); if(isset($_SESSION['user_id']))
-     * JWT token is verified using asymmetric encryption (RS256)
-     */
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session?.user) {
-      return {
-        isValid: false,
-        error: 'Authentication required'
-      };
-    }
-
-    // Get user data from database to check role
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, name, email, role')
-      .eq('auth_id', session.user.id)
-      .single();
-
-    if (userError || !userData) {
-      return {
-        isValid: false,
-        error: 'User not found'
-      };
-    }
-
-    // Check if user has admin or staff role
-    if (userData.role !== 'admin' && userData.role !== 'staff') {
-      return {
-        isValid: false,
-        error: 'Admin or Staff access required'
-      };
-    }
-
-    return {
-      isValid: true,
-      user: userData as User
-    };
-  } catch (error) {
-    console.error('Server auth validation error:', error);
-    return {
-      isValid: false,
-      error: 'Authentication validation failed'
-    };
+export async function validateAuth(request: NextRequest): Promise<AuthResult> {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { success: false, error: 'Unauthorized - No token provided', status: 401 };
   }
+
+  const accessToken = authHeader.replace('Bearer ', '');
+
+  const { data: { user: authUser }, error: authError } =
+    await supabaseAdmin.auth.getUser(accessToken);
+
+  if (authError || !authUser) {
+    return { success: false, error: 'Invalid or expired session', status: 401 };
+  }
+
+  const { data: dbUser, error: dbError } = await supabaseAdmin
+    .from('users')
+    .select('id, full_name, email, role, is_super_admin')
+    .eq('auth_id', authUser.id)
+    .single();
+
+  if (dbError || !dbUser) {
+    return { success: false, error: 'User not found', status: 401 };
+  }
+
+  return {
+    success: true,
+    user: {
+      authId: authUser.id,
+      userId: dbUser.id,
+      email: dbUser.email,
+      name: dbUser.full_name,
+      role: dbUser.role || 'user',
+      isSuperAdmin: dbUser.is_super_admin === true,
+    },
+  };
 }
 
 /**
- * Higher-order function to protect admin API routes
+ * Validates admin or staff access. Returns 403 if user is authenticated but lacks the role.
  */
-export function withAdminAuth(handler: (request: NextRequest, user: User) => Promise<Response>) {
-  return async (request: NextRequest): Promise<Response> => {
-    const auth = await validateAdminAccess();
+export async function validateAdminAuth(request: NextRequest): Promise<AuthResult> {
+  const result = await validateAuth(request);
+  if (!result.success) return result;
 
-    if (!auth.isValid) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: auth.error || 'Access denied'
-        }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
+  if (result.user.role !== 'admin' && result.user.role !== 'staff') {
+    return { success: false, error: 'Admin or staff access required', status: 403 };
+  }
 
-    return handler(request, auth.user!);
-  };
+  return result;
+}
+
+/**
+ * For internal email/SMS routes: accepts either admin Bearer token OR x-internal-secret header.
+ */
+export async function validateInternalOrAdmin(request: NextRequest): Promise<InternalAuthResult> {
+  // Check for internal API secret first (server-to-server calls)
+  const internalSecret = request.headers.get('x-internal-secret');
+  if (internalSecret && process.env.INTERNAL_API_SECRET && internalSecret === process.env.INTERNAL_API_SECRET) {
+    return { success: true, internal: true };
+  }
+
+  // Fall back to admin auth
+  return validateAdminAuth(request);
+}
+
+/**
+ * For cron/automated routes: checks x-cron-secret header OR accepts admin auth.
+ */
+export async function validateCronOrAdmin(request: NextRequest): Promise<InternalAuthResult> {
+  // Check for cron secret first
+  const cronSecret = request.headers.get('x-cron-secret');
+  if (cronSecret && process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) {
+    return { success: true, internal: true };
+  }
+
+  // Fall back to admin auth
+  return validateAdminAuth(request);
+}
+
+/**
+ * Helper to return a JSON error response from an AuthFailure.
+ */
+export function authErrorResponse(result: AuthFailure): NextResponse {
+  return NextResponse.json(
+    { success: false, error: result.error },
+    { status: result.status }
+  );
 }

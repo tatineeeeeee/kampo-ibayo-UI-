@@ -248,7 +248,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
       label: "Bookings",
       staffAllowed: true,
     },
-    { href: "/admin/users", icon: Users, label: "Users", staffAllowed: true },
+    { href: "/admin/users", icon: Users, label: "Users", staffAllowed: false },
     {
       href: "/admin/reviews",
       icon: Star,

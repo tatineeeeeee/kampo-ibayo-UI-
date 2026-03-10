@@ -1,35 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await validateAdminAuth(request);
+        if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
         const { bookingId, newCheckIn, newCheckOut, adminId, reason } =
             await request.json();
 
         // Validate required fields
-        if (!bookingId || !newCheckIn || !newCheckOut || !adminId) {
+        if (!bookingId || !newCheckIn || !newCheckOut) {
             return NextResponse.json(
                 { success: false, error: "Missing required fields" },
                 { status: 400 }
-            );
-        }
-
-        // Verify admin role
-        const { data: adminUser, error: adminError } = await supabaseAdmin
-            .from("users")
-            .select("role")
-            .eq("id", adminId)
-            .single();
-
-        if (adminError || !adminUser || !["admin", "staff"].includes(adminUser.role)) {
-            return NextResponse.json(
-                { success: false, error: "Unauthorized — admin access required" },
-                { status: 403 }
             );
         }
 
@@ -121,7 +106,7 @@ export async function POST(request: NextRequest) {
 
             while (cur < checkOut) {
                 const dow = cur.getDay();
-                const isWeekend = dow === 0 || dow === 6;
+                const isWeekend = dow === 0 || dow === 5 || dow === 6;
                 nights.push({ date: new Date(cur), rate: isWeekend ? 12000 : 9000, isWeekend });
                 cur.setDate(cur.getDate() + 1);
             }
@@ -157,6 +142,7 @@ export async function POST(request: NextRequest) {
                 check_in_date: newCheckInDateTime,
                 check_out_date: newCheckOutDateTime,
                 total_amount: pricing.totalAmount,
+                payment_amount: booking.payment_type === 'half' ? Math.round(pricing.totalAmount * 0.5) : pricing.totalAmount,
                 // Walk-ins stay confirmed; online bookings reset to pending since payment may need updating
                 payment_status: isWalkIn ? booking.payment_status : "pending",
                 special_requests: finalNotes,
@@ -201,7 +187,7 @@ export async function POST(request: NextRequest) {
                 `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/email/booking-rescheduled`,
                 {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json", "x-internal-secret": process.env.INTERNAL_API_SECRET || "" },
                     body: JSON.stringify(emailData),
                 }
             ).catch((err) => console.warn("Email notification failed:", err));

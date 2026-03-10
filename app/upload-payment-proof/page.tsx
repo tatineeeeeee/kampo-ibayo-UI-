@@ -548,8 +548,14 @@ function UploadPaymentProofContent() {
       if (!user?.id) return;
 
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const response = await fetch(
-          `/api/user/payment-history/${bookingId}?userId=${user.id}`
+          `/api/user/payment-history/${bookingId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+          }
         );
 
         if (!response.ok) {

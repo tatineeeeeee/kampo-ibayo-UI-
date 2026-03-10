@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Download, Mail, Loader2 } from "lucide-react";
 import { useToast } from "./Toast";
+import { supabase } from "@/app/supabaseClient";
 import { Tables } from "../../database.types";
 
 type Booking = Tables<"bookings">;
@@ -32,11 +33,22 @@ export function ReceiptManager({
     setIsDownloading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast({
+          type: "error",
+          title: "Authentication Error",
+          message: "You must be logged in to download a receipt.",
+          duration: 5000,
+        });
+        return;
+      }
 
       const response = await fetch("/api/user/download-receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId: booking.id,
@@ -93,11 +105,22 @@ export function ReceiptManager({
     setIsEmailing(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast({
+          type: "error",
+          title: "Authentication Error",
+          message: "You must be logged in to email a receipt.",
+          duration: 5000,
+        });
+        return;
+      }
 
       const response = await fetch("/api/user/generate-receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId: booking.id,

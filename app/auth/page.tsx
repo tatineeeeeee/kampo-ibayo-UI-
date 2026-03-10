@@ -492,7 +492,7 @@ export default function AuthPage() {
         // Check user role from database
         const { data: userData, error: userError } = await supabase
           .from("users")
-          .select("role, name, email")
+          .select("role, full_name, email")
           .eq("auth_id", data.user.id)
           .single();
 
@@ -687,7 +687,7 @@ export default function AuthPage() {
           // Store extra user info in your "users" table
           const { error: insertError } = await supabase.from("users").insert({
             auth_id: data.user.id,
-            name: `${firstName} ${lastName}`,
+            full_name: `${firstName} ${lastName}`,
             email: email,
             phone: cleanedPhone, // Store in international format (+63XXXXXXXXXX)
             role: "user", // Regular users are always "user" role

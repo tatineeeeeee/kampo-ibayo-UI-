@@ -1666,7 +1666,20 @@ export default function BookingsPage() {
   const fetchPaymentHistory = async (bookingId: number) => {
     setPaymentHistoryLoading(true);
     try {
-      const response = await fetch(`/api/admin/payment-history/${bookingId}`);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error("Authentication required for payment history");
+        setPaymentHistory([]);
+        setPaymentSummary(null);
+        setPaymentHistoryLoading(false);
+        return;
+      }
+
+      const response = await fetch(`/api/admin/payment-history/${bookingId}`, {
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -1875,11 +1888,17 @@ export default function BookingsPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
       const response = await withTimeout(
         fetch("/api/admin/verify-payment-proof", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             proofId: proofId,
@@ -2007,11 +2026,17 @@ export default function BookingsPage() {
 
     try {
       if (newStatus === "confirmed") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error("Authentication required. Please log in again.");
+        }
+
         // Use the new API route that sends email notifications
         const response = await fetch("/api/admin/confirm-booking", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ bookingId }),
         });
@@ -2179,11 +2204,19 @@ export default function BookingsPage() {
       // Calculate refund amount based on actual amount paid
       const refundAmount = shouldRefund ? paymentSummary?.totalPaid || 0 : 0;
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        setIsProcessing(false);
+        return;
+      }
+
       // Cancel the booking
       const response = await fetch("/api/admin/cancel-booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId,
@@ -2266,16 +2299,25 @@ export default function BookingsPage() {
     setRescheduleLoading(true);
     try {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        setRescheduleLoading(false);
+        return;
+      }
+
       const response = await fetch("/api/admin/reschedule-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           bookingId: selectedBooking.id,
           newCheckIn: rescheduleCheckIn,
           newCheckOut: rescheduleCheckOut,
-          adminId: user?.id || "admin",
+          adminId: session.user?.id || "admin",
           reason: rescheduleReason || "Rescheduled by admin",
         }),
       });

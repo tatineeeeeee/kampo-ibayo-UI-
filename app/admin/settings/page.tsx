@@ -81,13 +81,13 @@ export default function SettingsPage() {
       // Get admin data from database
       const { data: userData, error } = await supabase
         .from("users")
-        .select("name, email, phone")
+        .select("full_name, email, phone")
         .eq("auth_id", session.user.id)
         .single();
 
       if (!error && userData) {
         setAdminData({
-          name: userData.name || "",
+          name: userData.full_name || "",
           email: userData.email || session.user.email || "",
           phone: userData.phone || "",
         });
@@ -131,7 +131,7 @@ export default function SettingsPage() {
       const { error: dbError } = await supabase
         .from("users")
         .update({
-          name: adminData.name,
+          full_name: adminData.name,
           email: adminData.email,
           phone: adminData.phone,
         })

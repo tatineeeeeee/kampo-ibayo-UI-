@@ -80,9 +80,15 @@ export async function safeLogout(supabase: { auth: { signOut: (options?: { scope
     // Continue with cleanup regardless of Supabase response
   }
 
-  // Always clear local storage
+  // Clear auth-related storage only (not all user preferences)
   if (typeof window !== 'undefined') {
-    localStorage.clear();
+    localStorage.removeItem('supabase.auth.token');
+    // Clear any Supabase-specific auth keys
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+      }
+    }
     sessionStorage.clear();
   }
 }

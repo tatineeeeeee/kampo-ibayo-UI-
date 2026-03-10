@@ -9,12 +9,10 @@ import { displayPhoneNumber } from "../utils/phoneUtils";
 import { formatBookingNumber } from "../utils/bookingNumber";
 import {
   checkAndExpirePendingBookings,
-  autoCompleteFinishedBookings,
   getDaysPending,
   shouldShowExpirationWarning,
   getExpirationWarningMessage,
   getUserBookingStats,
-  cleanupOldCompletedBookings,
   BookingStats,
 } from "../utils/bookingUtils";
 import { useToast } from "../components/Toast";
@@ -971,19 +969,7 @@ function BookingsPageContent() {
         console.error("Error checking pending bookings:", error);
       }
 
-      // Auto-complete confirmed bookings that have passed their checkout date
-      try {
-        await autoCompleteFinishedBookings();
-      } catch (error) {
-        console.error("Error auto-completing bookings:", error);
-      }
-
-      // Clean up old completed bookings (keep only 5 most recent)
-      try {
-        await cleanupOldCompletedBookings(user.id);
-      } catch (error) {
-        console.error("Error cleaning up old completed bookings:", error);
-      }
+      // Note: Auto-complete and cleanup are handled server-side via cron jobs
 
       // Load booking stats
       try {
@@ -1172,10 +1158,17 @@ function BookingsPageContent() {
   ) => {
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error("Authentication required for cancellation");
+        return;
+      }
+
       const response = await fetch("/api/user/cancel-booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId,
@@ -1354,10 +1347,25 @@ function BookingsPageContent() {
     setRescheduleLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast({
+          type: "error",
+          title: "Authentication Error",
+          message: "You must be logged in to reschedule a booking.",
+          duration: 5000,
+        });
+        setRescheduleLoading(false);
+        return;
+      }
+
       // Call backend API to reschedule
       const response = await fetch("/api/user/reschedule-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           bookingId: selectedBooking.id,
           newCheckIn: newCheckInDate,

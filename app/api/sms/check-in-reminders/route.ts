@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { sendSMS, createBookingReminderSMS, createReminder12HourSMS, createReminder3HourSMS, createCheckInDaySMS } from '@/app/utils/smsService';
 import { supabase } from '@/app/supabaseClient';
+import { validateCronOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 // Reminder types: 24h, 12h, 3h, checkin (exact 3PM)
 type ReminderType = '24h' | '12h' | '3h' | 'checkin';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await validateCronOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     // Get reminder type from query params or body
     const url = new URL(request.url);
     const reminderType = (url.searchParams.get('type') as ReminderType) || '24h';
@@ -157,8 +161,11 @@ export async function POST(request: Request) {
 }
 
 // GET method to check what reminders would be sent (for testing)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await validateCronOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDateString = tomorrow.toISOString().split('T')[0];

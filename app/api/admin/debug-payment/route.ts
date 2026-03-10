@@ -1,15 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const bookingId = searchParams.get('bookingId');
-  
+
   if (!bookingId) {
     return NextResponse.json({ error: 'Booking ID required' }, { status: 400 });
   }
 
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
     // Get the specific booking with all fields
     const { data: booking, error } = await supabaseAdmin
       .from('bookings')
@@ -42,9 +45,8 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('API error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error' 
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }

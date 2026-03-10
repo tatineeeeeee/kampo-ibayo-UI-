@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Calendar, Users, CreditCard, ArrowRight, Phone, Mail } from 'lucide-react';
 import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/app/supabaseClient';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { displayPhoneNumber } from '@/app/utils/phoneUtils';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ interface BookingDetails {
 function BookingConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,10 +38,20 @@ function BookingConfirmationContent() {
   const bookingId = searchParams.get('booking_id');
   const paymentIntentId = searchParams.get('payment_intent_id'); // For future webhook validation
 
+  // Redirect to auth if not logged in
   useEffect(() => {
-    if (!bookingId) {
-      setError('No booking ID provided');
-      setLoading(false);
+    if (!authLoading && !user) {
+      router.push('/auth');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (!bookingId || !user) {
+      if (!user && !authLoading) return; // Will redirect above
+      if (!bookingId) {
+        setError('No booking ID provided');
+        setLoading(false);
+      }
       return;
     }
 
@@ -49,6 +61,7 @@ function BookingConfirmationContent() {
           .from('bookings')
           .select('*')
           .eq('id', parseInt(bookingId))
+          .eq('user_id', user.id)
           .single();
 
         if (error) {

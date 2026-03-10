@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createBookingConfirmationEmail, createAdminNotificationEmail, BookingDetails } from '@/app/utils/emailService';
 import { sendSMS, createBookingConfirmationSMS } from '@/app/utils/smsService';
+import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 interface BookingConfirmationRequest {
   bookingDetails: BookingDetails;
@@ -9,6 +10,9 @@ interface BookingConfirmationRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateInternalOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const body = await request.json();
     const { bookingDetails, phoneNumber } = body as BookingConfirmationRequest;
 

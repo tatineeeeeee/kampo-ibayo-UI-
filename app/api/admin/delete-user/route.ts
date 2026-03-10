@@ -81,7 +81,7 @@ export async function DELETE(request: NextRequest) {
     if (userId) {
       const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, email, name, role, is_super_admin')
+        .select('id, email, full_name, role, is_super_admin')
         .eq('id', userId)
         .single()
       userDetails = userData
@@ -116,8 +116,7 @@ export async function DELETE(request: NextRequest) {
       if (dbError) {
         console.error('Database deletion error:', dbError)
         return NextResponse.json({
-          error: 'Failed to delete user from database',
-          details: dbError.message
+          error: 'Failed to delete user from database'
         }, { status: 500 })
       }
     }
@@ -130,8 +129,7 @@ export async function DELETE(request: NextRequest) {
         console.error('Auth deletion error:', authError)
         return NextResponse.json({
           success: true,
-          message: 'User deleted from database, auth deletion failed',
-          authError: authError.message
+          message: 'User deleted from database, auth deletion may be incomplete'
         }, { status: 200 })
       }
     }
@@ -148,10 +146,8 @@ export async function DELETE(request: NextRequest) {
     console.error('Unexpected error in delete API:', error)
 
     // Ensure we always return valid JSON
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({
-      error: 'Internal server error',
-      message: errorMessage
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }

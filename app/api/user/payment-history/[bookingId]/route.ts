@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,25 +20,22 @@ interface PaymentProof {
   verified_at: string | null;
 }
 
-export async function GET(    
+export async function GET(
   request: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
+    const auth = await validateAuth(request as any);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { bookingId: bookingIdParam } = await params;
     const bookingId = parseInt(bookingIdParam);
-    
+
     if (isNaN(bookingId)) {
       return NextResponse.json({ error: 'Invalid booking ID' }, { status: 400 });
     }
 
-    // Get the user ID from the request headers (passed from client)
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 401 });
-    }
+    const userId = auth.user.authId;
 
     // Fetch all payment proofs for this booking by this user, ordered by upload date (newest first)
     const { data: paymentHistory, error } = await supabase
@@ -82,7 +80,6 @@ export async function GET(
       status: proof.status,
       uploadedAt: proof.uploaded_at,
       verifiedAt: proof.verified_at,
-      adminNotes: proof.admin_notes,
       isLatest: index === 0 // Mark the most recent submission
     }));
 

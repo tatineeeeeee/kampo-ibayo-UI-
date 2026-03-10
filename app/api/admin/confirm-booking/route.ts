@@ -24,10 +24,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createBookingConfirmedEmail, BookingDetails } from '@/app/utils/emailService';
 import { sendSMS, createBookingApprovalSMS } from '@/app/utils/smsService';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const body = await request.json();
     const { bookingId } = body;
 
@@ -46,7 +50,7 @@ export async function POST(request: NextRequest) {
      * 
      * Supabase automatically uses parameterized queries - user input is bound safely
      */
-    const { data: booking, error: fetchError } = await supabase
+    const { data: booking, error: fetchError } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('id', bookingId)  // Parameterized: prevents SQL injection
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update booking status to confirmed
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('bookings')
       .update({ status: 'confirmed' })
       .eq('id', bookingId);

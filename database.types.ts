@@ -416,7 +416,7 @@ export type Database = {
           id: string
           instance_id: string | null
           auth_id: string | null
-          name: string
+          full_name: string
           aud: string | null
           email: string
           role: string | null
@@ -456,7 +456,7 @@ export type Database = {
           id?: string
           instance_id?: string | null
           auth_id?: string | null
-          name: string
+          full_name: string
           aud?: string | null
           email: string
           role?: string | null
@@ -496,7 +496,7 @@ export type Database = {
           id?: string
           instance_id?: string | null
           auth_id?: string | null
-          name?: string
+          full_name?: string
           aud?: string | null
           email?: string
           role?: string | null

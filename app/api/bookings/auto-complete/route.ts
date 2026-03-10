@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../app/utils/supabaseAdmin';
+import { validateCronOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 /**
  * POST /api/bookings/auto-complete
  * Auto-complete confirmed bookings that have passed their checkout date
  * This runs server-side with admin privileges to bypass RLS
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await validateCronOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     // Get today's date in YYYY-MM-DD format for accurate comparison
     const today = new Date();
     const todayString = today.toISOString().split('T')[0]; // e.g., "2025-11-25"

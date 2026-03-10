@@ -16,6 +16,7 @@ import {
 import { exportPaymentsCSV } from "../../utils/csvExport";
 import { exportPaymentsPDF } from "../../utils/pdfExport";
 import { useToastHelpers } from "../../components/Toast";
+import { supabase } from "@/app/supabaseClient";
 import { formatBookingNumber } from "../../utils/bookingNumber";
 
 interface Payment {
@@ -103,10 +104,18 @@ export default function PaymentsPage() {
   // Function to test API connectivity
   const testApiConnectivity = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        return;
+      }
 
       // Test 1: GET on mark-balance-paid
       const getResponse = await fetch("/api/admin/mark-balance-paid", {
         method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
       });
 
       if (!getResponse.ok) {
@@ -120,7 +129,10 @@ export default function PaymentsPage() {
       const testPaymentId = 1; // Use a small number that should exist
       const postResponse = await fetch("/api/admin/mark-balance-paid", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           bookingId: testBookingId,
           originalPaymentId: testPaymentId,
@@ -176,8 +188,17 @@ export default function PaymentsPage() {
   // Function to fix missing payment types
   const fixMissingPaymentTypes = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        return;
+      }
+
       const response = await fetch("/api/admin/fix-payment-types", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
       });
 
       if (response.ok) {
@@ -221,6 +242,12 @@ export default function PaymentsPage() {
     setProcessingBalance(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        setProcessingBalance(false);
+        return;
+      }
 
       const requestBody = {
         bookingId: Number(payment.booking_id),
@@ -234,6 +261,7 @@ export default function PaymentsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestBody),
       });
@@ -430,7 +458,18 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     try {
-      const response = await fetch("/api/admin/payments");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError("Authentication required. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch("/api/admin/payments", {
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch payments");
       }

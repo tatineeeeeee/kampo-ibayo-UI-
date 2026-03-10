@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ReactPdfReceiptService } from '../../../utils/reactPdfReceiptService';
 import nodemailer from 'nodemailer';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { bookingId, userEmail, userName } = await request.json();
 
     // Validate required fields
@@ -34,6 +38,14 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Booking not found or access denied'
       }, { status: 404 });
+    }
+
+    // Ownership check: user can only generate receipts for their own bookings
+    if (booking.user_id !== auth.user.authId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Access denied: you can only generate receipts for your own bookings'
+      }, { status: 403 });
     }
 
     // Security: Verify booking is confirmed

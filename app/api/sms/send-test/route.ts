@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  sendSMS, 
-  createBookingConfirmationSMS, 
-  createBookingCancellationSMS, 
-  createBookingReminderSMS 
+import {
+  sendSMS,
+  createBookingConfirmationSMS,
+  createBookingCancellationSMS,
+  createBookingReminderSMS
 } from '@/app/utils/smsService';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { phoneNumber, testType, phone, message } = await request.json();
 
     // Use phone parameter if phoneNumber is not provided (for compatibility)
@@ -90,9 +94,11 @@ export async function POST(request: NextRequest) {
 }
 
 // GET method for SMS service status check
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const username = process.env.SMSGATE_USERNAME;
     const password = process.env.SMSGATE_PASSWORD;
 
@@ -109,7 +115,7 @@ export async function GET() {
       message: 'SMS service configured and ready',
       status: 'ready',
       config: {
-        username: username,
+        usernameConfigured: !!username,
         passwordConfigured: !!password,
         serviceUrl: 'https://smsgate.app/3rdparty/v1/message',
         provider: 'SMS-Gate.app'

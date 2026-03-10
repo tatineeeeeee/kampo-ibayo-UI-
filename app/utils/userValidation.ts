@@ -17,7 +17,7 @@ export async function validateUserAction(): Promise<{ isValid: boolean; userRole
     // Check if user still exists in database
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("role, name, email")
+      .select("role, full_name, email")
       .eq("auth_id", session.user.id)
       .single();
 

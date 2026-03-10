@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 const PAYMONGO_SECRET_KEY = process.env.PAYMONGO_SECRET_KEY;
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
     const { searchParams } = new URL(request.url);
     const paymentIntentId = searchParams.get('payment_intent_id');
 

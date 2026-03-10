@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateInternalOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { guestName, guestEmail, rating, reviewText, stayDates, reviewId } = await request.json();
 
     // Create transporter (using same config as your existing email system)

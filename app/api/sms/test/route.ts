@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendSMS } from '@/app/utils/smsService';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { phoneNumber, message } = await request.json();
 
     // Validate input
@@ -41,9 +45,11 @@ export async function POST(request: NextRequest) {
 }
 
 // GET method for testing connectivity
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const username = process.env.SMSGATE_USERNAME;
     const password = process.env.SMSGATE_PASSWORD;
 
@@ -58,8 +64,8 @@ export async function GET() {
       success: true,
       message: 'SMS service configured correctly',
       config: {
-        username: username,
-        passwordSet: !!password
+        usernameConfigured: !!username,
+        passwordConfigured: !!password
       }
     });
 

@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createUserCancellationConfirmationEmail, createUserCancellationAdminNotification, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
 import { supabaseAdmin as supabase } from '@/app/utils/supabaseAdmin';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { bookingId, userId, cancellationReason } = body;
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
-    if (!bookingId || !userId) {
+    const body = await request.json();
+    const { bookingId, cancellationReason } = body;
+    const userId = auth.user.authId;
+
+    if (!bookingId) {
       return NextResponse.json(
-        { success: false, error: 'Booking ID and User ID are required' },
+        { success: false, error: 'Booking ID is required' },
         { status: 400 }
       );
     }
@@ -64,6 +69,7 @@ export async function POST(request: NextRequest) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
           },
           body: JSON.stringify({
             bookingId: booking.id,
@@ -157,7 +163,7 @@ export async function POST(request: NextRequest) {
       let refundDetails: RefundDetails | undefined = undefined;
 
       // Calculate what the refund would be based on timing policy
-      const downPayment = booking.total_amount * 0.5;
+      const downPayment = booking.payment_type === 'full' ? booking.total_amount : booking.total_amount * 0.5;
       const checkInDate = new Date(booking.check_in_date);
       const currentTime = new Date();
       const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
@@ -248,7 +254,7 @@ export async function POST(request: NextRequest) {
       try {
         const smsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sms/booking-cancelled`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
           body: JSON.stringify({
             phoneNumber: booking.guest_phone,
             bookingDetails: {

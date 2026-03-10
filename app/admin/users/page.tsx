@@ -154,7 +154,7 @@ function DeleteConfirmModal({
         {/* User Info Card */}
         <div className="bg-gray-50 rounded-lg p-3 mb-4">
           <div className="text-sm">
-            <p className="font-medium text-gray-900">{user.name || "N/A"}</p>
+            <p className="font-medium text-gray-900">{user.full_name || "N/A"}</p>
             <p className="text-gray-600">{user.email}</p>
             <p className="text-xs text-gray-500 mt-1">Role: {user.role}</p>
             <p className="text-xs text-gray-500">ID: {user.id}</p>
@@ -351,7 +351,7 @@ function UserBookingsModal({ user, onClose }: UserBookingsModalProps) {
         <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Bookings for {user.name}
+              Bookings for {user.full_name}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {user.email} • User ID: {user.id}
@@ -695,7 +695,7 @@ export default function UsersPage() {
       filtered = filtered.filter(
         (user) =>
           // Search by name
-          user.name?.toLowerCase().includes(searchLower) ||
+          user.full_name?.toLowerCase().includes(searchLower) ||
           // Search by email
           user.email?.toLowerCase().includes(searchLower) ||
           // Search by ID
@@ -908,7 +908,7 @@ export default function UsersPage() {
         targetUser: {
           id: userForAudit?.id || userId,
           email: userForAudit?.email || "unknown",
-          name: userForAudit?.name || "unknown",
+          name: userForAudit?.full_name || "unknown",
           role: userForAudit?.role || "unknown",
         },
         error: error instanceof Error ? error.message : "Unknown error",
@@ -1201,7 +1201,7 @@ export default function UsersPage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="font-medium text-gray-900 flex items-center gap-2">
-                        {user.name}
+                        {user.full_name}
                         {user.is_super_admin && (
                           <Crown className="w-4 h-4 text-amber-500" />
                         )}
@@ -1288,7 +1288,7 @@ export default function UsersPage() {
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="text-sm font-medium text-gray-900">
-                            {user.name}
+                            {user.full_name}
                           </div>
                           {user.is_super_admin && (
                             <Crown className="w-4 h-4 text-amber-500" />
@@ -1475,7 +1475,7 @@ export default function UsersPage() {
             <p className="text-gray-700 mb-4">
               Change role for:{" "}
               <span className="font-medium text-gray-900">
-                {selectedUser.name}
+                {selectedUser.full_name}
               </span>
             </p>
 

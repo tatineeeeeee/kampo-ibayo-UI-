@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Server-side Supabase client with service role key for admin operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // This bypasses RLS
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { proofId, action, adminId, adminNotes, rejectionReason } = await request.json();
 
 
@@ -49,13 +41,15 @@ export async function POST(request: NextRequest) {
       finalAdminNotes = adminNotes ? `${rejectionNote}\n\nADMIN NOTES: ${adminNotes}` : rejectionNote;
     }
 
-    // Update payment proof with service role permissions (without verified_by field)
+    // Update payment proof with service role permissions
+    const adminAuthId = (auth as { success: true; user: { authId: string } }).user.authId;
 
-    const { data: paymentProof, error: updateError } = await supabase
+    const { data: paymentProof, error: updateError } = await supabaseAdmin
       .from('payment_proofs')
       .update({
         status: newStatus,
         verified_at: new Date().toISOString(),
+        verified_by: adminAuthId,
         admin_notes: finalAdminNotes,
         updated_at: new Date().toISOString()
       })
@@ -95,7 +89,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (bookingStatusUpdate) {
-        const { error: bookingUpdateError } = await supabase
+        const { error: bookingUpdateError } = await supabaseAdmin
           .from('bookings')
           .update(bookingStatusUpdate)
           .eq('id', paymentProof.booking_id);
@@ -118,7 +112,7 @@ export async function POST(request: NextRequest) {
         // Email user about approved payment
         const approveEmailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/send`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
           body: JSON.stringify({
             to: paymentProof.bookings.guest_email,
             subject: '✅ Payment Verified - Kampo Ibayow Resort',
@@ -196,7 +190,7 @@ export async function POST(request: NextRequest) {
         // Email user about rejected payment with resubmission instructions
         const rejectEmailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/send`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
           body: JSON.stringify({
             to: paymentProof.bookings.guest_email,
             subject: '⚠️ Payment Proof Needs Correction - Kampo Ibayow Resort',

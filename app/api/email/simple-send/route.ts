@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    const auth = await validateInternalOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const body = await request.json();
     const { to, subject, text, html } = body;
 
@@ -19,7 +23,7 @@ export async function POST(request: Request) {
             pass: process.env.SMTP_PASSWORD,
         },
         tls: {
-            rejectUnauthorized: false,
+            rejectUnauthorized: true,
         }
     });
 

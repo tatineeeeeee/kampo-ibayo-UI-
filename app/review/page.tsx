@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaHome, FaUser } from 'react-icons/fa';
@@ -23,6 +24,7 @@ interface Booking {
 
 export default function ReviewPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -36,9 +38,12 @@ export default function ReviewPage() {
     amenities: 0
   });
 
+  // Redirect to auth if not logged in
   useEffect(() => {
-    // Component mounted
-  }, []);
+    if (!loading && !user) {
+      router.push('/auth');
+    }
+  }, [user, loading, router]);
 
   const handleBookingSelect = (booking: Booking) => {
     setSelectedBooking(booking);

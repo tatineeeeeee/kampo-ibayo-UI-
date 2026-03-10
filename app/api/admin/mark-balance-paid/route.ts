@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   return NextResponse.json({
     message: 'Mark balance paid API is available',
     timestamp: new Date().toISOString(),
@@ -10,8 +18,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  
+
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const body = await request.json();
     
     const { bookingId, balanceAmount, totalAmount, paymentMethod } = body;
@@ -170,10 +181,8 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : 'No stack trace'
     });
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        details: error instanceof Error ? error.stack : 'No additional details'
+      {
+        error: 'Internal server error'
       },
       { status: 500 }
     );

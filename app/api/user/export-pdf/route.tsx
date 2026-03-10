@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import React from "react";
+import { validateAuth, authErrorResponse, AuthFailure, AuthSuccess } from '@/app/utils/serverAuth';
 import {
   Document,
   Page,
@@ -711,6 +712,9 @@ const UserDataExportPDF = ({ data }: { data: ExportData }) => {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const data: ExportData = await request.json();
 
     if (!data.userId) {
@@ -720,6 +724,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify ownership - users can only export their own data
+    if (data.userId !== (auth as AuthSuccess).user.authId) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
+    }
 
     // Generate PDF
     const pdfDocument = <UserDataExportPDF data={data} />;

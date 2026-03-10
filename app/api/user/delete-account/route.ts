@@ -1,8 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth'
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     // Validate environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing environment variables for account deletion')
@@ -38,11 +42,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
+    // Verify the authenticated user can only delete their own account
+    if (auth.user.authId !== userId) {
+      return NextResponse.json({ error: 'You can only delete your own account' }, { status: 403 })
+    }
 
     // First, verify the user exists
     const { data: existingUser, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('id, auth_id, email, name, role')
+      .select('id, auth_id, email, full_name, role')
       .eq('auth_id', userId)
       .single()
 
@@ -204,10 +212,8 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Unexpected error in account deletion:', error)
 
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({
-      error: 'Internal server error during account deletion',
-      message: errorMessage
+      error: 'Internal server error during account deletion'
     }, { status: 500 })
   }
 }

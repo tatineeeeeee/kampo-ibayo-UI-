@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 // Initialize Supabase admin client for database operations
 const supabaseAdmin = createClient(
@@ -9,10 +10,14 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { bookingId, newCheckIn, newCheckOut, userId } = await request.json();
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const { bookingId, newCheckIn, newCheckOut } = await request.json();
+    const userId = auth.user.authId;
 
     // Validate required fields
-    if (!bookingId || !newCheckIn || !newCheckOut || !userId) {
+    if (!bookingId || !newCheckIn || !newCheckOut) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -122,7 +127,7 @@ export async function POST(request: NextRequest) {
       // Calculate each night between check-in and check-out
       while (currentNight < checkOutDate) {
         const dayOfWeek = currentNight.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6; // Sunday = 0, Friday = 5, Saturday = 6
 
         // Simple weekend/holiday logic (can be expanded later)
         const nightRate = isWeekend ? 12000 : 9000;
@@ -166,6 +171,7 @@ export async function POST(request: NextRequest) {
         check_in_date: newCheckInDateTime,
         check_out_date: newCheckOutDateTime,
         total_amount: newTotalAmount,
+        payment_amount: booking.payment_type === 'half' ? Math.round(newTotalAmount * 0.5) : newTotalAmount,
         payment_status: 'pending', // Reset payment status since amount changed
         updated_at: new Date().toISOString()
       })
@@ -214,14 +220,14 @@ export async function POST(request: NextRequest) {
           month: 'long',
           day: 'numeric'
         }),
-        totalAmount: booking.total_amount,
+        totalAmount: newTotalAmount,
         guests: booking.number_of_guests
       };
 
       // Send reschedule confirmation email and SMS (fire and forget)
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/booking-rescheduled`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
         body: JSON.stringify(emailData)
       }).catch(error => {
         console.warn('Email/SMS notification failed:', error);
