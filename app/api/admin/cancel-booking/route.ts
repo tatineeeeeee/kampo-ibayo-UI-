@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
     const { error: paymentProofError } = await supabaseAdmin
       .from('payment_proofs')
       .update({
-        status: 'cancelled',
-        admin_notes: 'Automatically cancelled due to admin booking cancellation'
+        status: 'rejected',
+        admin_notes: 'Automatically rejected due to admin booking cancellation'
       })
       .eq('booking_id', bookingId)
       .in('status', ['pending']); // Only update pending payment proofs

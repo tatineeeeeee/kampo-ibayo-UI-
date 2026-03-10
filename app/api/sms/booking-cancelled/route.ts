@@ -26,9 +26,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format the cancellation message (exactly 160 characters)
-    const baseMessage = `KAMPO IBAYO RESORT: Dear ${bookingDetails.name || 'Guest'}, booking ${bookingDetails.booking_number || 'N/A'} has been cancelled. Refund will be processed within 5-10 business days. Call: 09662815123`;
-    const message = baseMessage.padEnd(160, ' ').substring(0, 160);
+    // Format the cancellation message — only mention refund if one is actually being processed
+    const refundLine = bookingDetails.refund_status === 'processing' && bookingDetails.refund_amount
+      ? ` Refund of P${Number(bookingDetails.refund_amount).toLocaleString()} will be processed within 5-10 business days.`
+      : '';
+    const baseMessage = `KAMPO IBAYO RESORT: Dear ${bookingDetails.name || 'Guest'}, booking ${bookingDetails.booking_number || 'N/A'} has been cancelled.${refundLine} Call: 09662815123`;
+    const message = baseMessage.substring(0, 160);
 
     // Send SMS using existing service
     const result = await sendSMS({
