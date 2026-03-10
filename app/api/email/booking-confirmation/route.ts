@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createBookingConfirmationEmail, createAdminNotificationEmail, BookingDetails } from '@/app/utils/emailService';
 import { sendSMS, createBookingConfirmationSMS } from '@/app/utils/smsService';
-import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 interface BookingConfirmationRequest {
   bookingDetails: BookingDetails;
@@ -10,8 +10,14 @@ interface BookingConfirmationRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await validateInternalOrAdmin(request);
-    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+    // Accept internal secret (server-to-server) OR any authenticated user (regular user booking + admin walk-in)
+    const internalSecret = request.headers.get('x-internal-secret');
+    const isInternal = internalSecret && process.env.INTERNAL_API_SECRET && internalSecret === process.env.INTERNAL_API_SECRET;
+
+    if (!isInternal) {
+      const auth = await validateAuth(request);
+      if (!auth.success) return authErrorResponse(auth as AuthFailure);
+    }
 
     const body = await request.json();
     const { bookingDetails, phoneNumber } = body as BookingConfirmationRequest;

@@ -12,9 +12,11 @@ export async function POST(request: NextRequest) {
     const auth = await validateCronOrAdmin(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
-    // Get today's date in YYYY-MM-DD format for accurate comparison
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0]; // e.g., "2025-11-25"
+    // Get today's date in Philippine timezone (UTC+8) for accurate comparison
+    const now = new Date();
+    const philippinesOffset = 8 * 60 * 60 * 1000;
+    const philippinesTime = new Date(now.getTime() + philippinesOffset);
+    const todayString = philippinesTime.toISOString().split('T')[0]; // e.g., "2025-11-25" in PH time
 
     // Find confirmed bookings where checkout date has passed
     const { data: finishedBookings, error: fetchError } = await supabaseAdmin

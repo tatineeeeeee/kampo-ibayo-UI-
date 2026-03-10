@@ -63,6 +63,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Guard: prevent confirming cancelled or already confirmed bookings
+    if (booking.status === 'cancelled') {
+      return NextResponse.json(
+        { success: false, error: 'Cannot confirm a cancelled booking' },
+        { status: 400 }
+      );
+    }
+
+    if (booking.status === 'confirmed') {
+      return NextResponse.json(
+        { success: false, error: 'Booking is already confirmed' },
+        { status: 400 }
+      );
+    }
+
     // Update booking status to confirmed
     const { error: updateError } = await supabaseAdmin
       .from('bookings')

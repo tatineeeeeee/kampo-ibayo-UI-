@@ -926,12 +926,14 @@ function BookingPage() {
               email: bookingData.guest_email,
             };
 
+            const { data: { session: emailSession } } = await supabase.auth.getSession();
             const emailResponse = await fetch(
               "/api/email/booking-confirmation",
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
+                  "Authorization": `Bearer ${emailSession?.access_token}`,
                 },
                 body: JSON.stringify({
                   bookingDetails: emailBookingDetails,
