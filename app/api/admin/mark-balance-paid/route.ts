@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,8 +24,13 @@ export async function POST(request: NextRequest) {
     const auth = await validateAdminAuth(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`mark-balance:${ip}`, 10, 60_000)) {
+      return NextResponse.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
+
     const body = await request.json();
-    
+
     const { bookingId, balanceAmount, totalAmount, paymentMethod } = body;
     
     // Convert to numbers
@@ -152,18 +158,29 @@ export async function POST(request: NextRequest) {
     }
     
     
-    // Update booking
-    const { error: updateError } = await supabaseAdmin
+    // Atomic update: only mark paid if not already paid (prevents race conditions)
+    const { data: bookingUpdated, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update({
         payment_status: 'paid',
         payment_amount: numTotalAmount,
         updated_at: new Date().toISOString()
       })
-      .eq('id', numBookingId);
-      
+      .eq('id', numBookingId)
+      .neq('payment_status', 'paid')
+      .select('id');
+
     if (updateError) {
       console.warn('⚠️ Booking update warning:', updateError);
+    }
+
+    if (!bookingUpdated || bookingUpdated.length === 0) {
+      // Race condition: another admin already marked balance paid — clean up
+      await supabaseAdmin.from('payment_proofs').delete().eq('id', balancePayment.id);
+      return NextResponse.json(
+        { error: 'Balance was already marked as paid by another admin' },
+        { status: 409 }
+      );
     }
     
     

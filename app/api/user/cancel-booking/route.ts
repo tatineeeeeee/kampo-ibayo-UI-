@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createUserCancellationConfirmationEmail, createUserCancellationAdminNotification, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
 import { supabaseAdmin as supabase } from '@/app/utils/supabaseAdmin';
 import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await validateAuth(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`user-cancel:${ip}`, 5, 60_000)) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
 
     const body = await request.json();
     const { bookingId, cancellationReason } = body;

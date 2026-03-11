@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createAdminCancellationGuestEmail, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
 import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await validateAdminAuth(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`cancel-booking:${ip}`, 10, 60_000)) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
 
     const body = await request.json();
     const { bookingId, refundProcessed = false, refundAmount = 0, cancellationReason = '' } = body;
@@ -63,15 +69,25 @@ export async function POST(request: NextRequest) {
       updateData.refund_processed_at = philippinesTime.toISOString();
     }
 
-    const { error: updateError } = await supabaseAdmin
+    // Atomic update: only cancel if not already cancelled (prevents race conditions)
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update(updateData)
-      .eq('id', bookingId);
+      .eq('id', bookingId)
+      .neq('status', 'cancelled')
+      .select('id');
 
     if (updateError) {
       return NextResponse.json(
         { success: false, error: 'Failed to update booking status' },
         { status: 500 }
+      );
+    }
+
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Booking was already cancelled by another admin' },
+        { status: 409 }
       );
     }
 

@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
-
-function escapeHtml(str: string): string {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-}
+import { escapeHtml } from '@/app/utils/escapeHtml';
 
 export async function POST(request: NextRequest) {
   try {

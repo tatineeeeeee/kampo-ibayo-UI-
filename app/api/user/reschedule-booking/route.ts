@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
 // Initialize Supabase admin client for database operations
 const supabaseAdmin = createClient(
@@ -12,6 +13,11 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await validateAuth(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`user-reschedule:${ip}`, 5, 60_000)) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
 
     const { bookingId, newCheckIn, newCheckOut } = await request.json();
     const userId = auth.user.authId;

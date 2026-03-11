@@ -216,6 +216,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // All auto-refresh logic removed to prevent navigation issues
   }, []); // Empty dependency array, no auto-refresh
 
+  // Sync auth state to cookies for server-side middleware (UX layer only)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (user && userRole) {
+      const maxAge = 7 * 24 * 60 * 60;
+      document.cookie = `kb_authenticated=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+      document.cookie = `kb_role=${userRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    } else if (!loading) {
+      document.cookie = 'kb_authenticated=; path=/; max-age=0';
+      document.cookie = 'kb_role=; path=/; max-age=0';
+    }
+  }, [user, userRole, loading]);
+
   // Don't render anything until hydrated to prevent button issues
   if (!isHydrated) {
     return (
