@@ -2360,27 +2360,21 @@ function Home() {
                     Contact Details
                   </h3>
                   <div className="space-y-1 sm:space-y-2">
-                    <a
-                      href="tel:+639662815123"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-green-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
-                    >
-                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg min-h-[44px] px-2 -mx-2">
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
                       +63 966 281 5123
-                    </a>
-                    <a
-                      href="mailto:kampoibayo@gmail.com"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
-                    >
-                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg min-h-[44px] px-2 -mx-2">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
                       kampoibayo@gmail.com
-                    </a>
+                    </div>
                     <a
                       href="https://www.facebook.com/profile.php?id=61562942638753"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
                     >
-                      <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                      <Facebook className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
                       Kampo Ibayo (Facebook)
                     </a>
                   </div>
@@ -2419,7 +2413,7 @@ function Home() {
                   rel="noopener noreferrer"
                   className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl touch-manipulation min-h-[48px]"
                 >
-                  <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
                   Message us on Facebook
                 </a>
               </div>
