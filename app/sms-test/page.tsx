@@ -9,6 +9,12 @@ export default function SMSTestPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [testType, setTestType] = useState("basic");
+  const [result, setResult] = useState<{
+    success: boolean;
+    error?: string;
+    message?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || userRole !== "admin")) {
@@ -23,12 +29,6 @@ export default function SMSTestPage() {
       </div>
     );
   }
-  const [result, setResult] = useState<{
-    success: boolean;
-    error?: string;
-    message?: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const testSMS = async () => {
     if (!phoneNumber) {

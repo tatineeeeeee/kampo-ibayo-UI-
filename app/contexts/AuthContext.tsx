@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import type { User, Session } from "@supabase/supabase-js";
 import { useToastHelpers } from "../components/Toast";
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const { verificationSuccess } = useToastHelpers();
-  const [welcomeShown, setWelcomeShown] = useState(false);
+  const welcomeShownRef = useRef(false);
 
   // Fix hydration mismatch
   useEffect(() => {
@@ -111,8 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
 
-      // ✅ THROTTLE: Ignore rapid auth changes that can block navigation
+      // ✅ TOKEN_REFRESHED: silently update user object but skip role re-fetch and welcome toast
       if (event === "TOKEN_REFRESHED") {
+        if (session?.user) {
+          setUser(session.user);
+        }
         return;
       }
 
@@ -155,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // 🔔 Guarded welcome toast for email verification sign-in
         try {
-          if (typeof window !== "undefined" && !welcomeShown) {
+          if (typeof window !== "undefined" && !welcomeShownRef.current) {
             const hash = window.location.hash || "";
             const params = new URLSearchParams(
               hash.startsWith("#") ? hash.substring(1) : hash
@@ -177,7 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const now = Date.now();
               if (!lastWelcome || now - parseInt(lastWelcome) > 5000) {
                 sessionStorage.setItem("email_verify_welcome", now.toString());
-                setWelcomeShown(true);
+                welcomeShownRef.current = true;
                 // Slight delay to ensure UI/providers ready
                 setTimeout(() => {
                   verificationSuccess();
