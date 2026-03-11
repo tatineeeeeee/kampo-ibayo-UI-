@@ -32,6 +32,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (booking.status === 'cancelled') {
+      return NextResponse.json(
+        { success: false, error: 'Booking is already cancelled' },
+        { status: 400 }
+      );
+    }
+
     // Update booking status to cancelled with additional details including refund info
     const now = new Date();
     const utcTime = now.getTime();

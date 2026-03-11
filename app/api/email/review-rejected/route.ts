@@ -2,12 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await validateInternalOrAdmin(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
     const { guestName, guestEmail, rejectionReason, resubmissionCount, reviewText, stayDates, reviewId } = await request.json();
+    const safeGuestName = escapeHtml(guestName);
+    const safeRejectionReason = escapeHtml(rejectionReason);
+    const safeReviewText = escapeHtml(reviewText);
+    const safeStayDates = escapeHtml(stayDates);
 
     // Create transporter (using same config as your existing email system)
     const transporter = nodemailer.createTransport({
@@ -44,7 +53,7 @@ export async function POST(request: NextRequest) {
 
             <!-- Greeting -->
             <p style="font-size: 18px; color: #374151; margin-bottom: 20px;">
-              Hi <strong>${guestName}</strong>,
+              Hi <strong>${safeGuestName}</strong>,
             </p>
 
             ${isBlocked ? `
@@ -56,7 +65,7 @@ export async function POST(request: NextRequest) {
               <!-- Reason -->
               <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626; margin: 25px 0;">
                 <h3 style="color: #b91c1c; margin: 0 0 15px 0; font-size: 18px;">Final Rejection Reason</h3>
-                <p style="color: #374151; margin: 0; line-height: 1.6;">${rejectionReason}</p>
+                <p style="color: #374151; margin: 0; line-height: 1.6;">${safeRejectionReason}</p>
               </div>
 
               <!-- Contact Info -->
@@ -79,7 +88,7 @@ export async function POST(request: NextRequest) {
               <!-- Reason -->
               <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 25px 0;">
                 <h3 style="color: #d97706; margin: 0 0 15px 0; font-size: 18px;">What Needs to be Updated</h3>
-                <p style="color: #374151; margin: 0; line-height: 1.6;">${rejectionReason}</p>
+                <p style="color: #374151; margin: 0; line-height: 1.6;">${safeRejectionReason}</p>
               </div>
 
               <!-- Attempts Remaining -->
@@ -105,9 +114,9 @@ export async function POST(request: NextRequest) {
             <!-- Original Review -->
             <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 25px 0;">
               <h3 style="color: #374151; margin: 0 0 15px 0; font-size: 18px;">Your Original Review</h3>
-              ${stayDates ? `<div style="margin-bottom: 10px;"><strong style="color: #374151;">Stay Dates:</strong> <span style="color: #6b7280;">${stayDates}</span></div>` : ''}
+              ${stayDates ? `<div style="margin-bottom: 10px;"><strong style="color: #374151;">Stay Dates:</strong> <span style="color: #6b7280;">${safeStayDates}</span></div>` : ''}
               <div style="margin-top: 15px;">
-                <p style="color: #6b7280; margin: 0; font-style: italic; line-height: 1.5;">"${reviewText}"</p>
+                <p style="color: #6b7280; margin: 0; font-style: italic; line-height: 1.5;">"${safeReviewText}"</p>
               </div>
             </div>
 

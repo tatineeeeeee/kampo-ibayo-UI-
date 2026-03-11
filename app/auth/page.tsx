@@ -500,13 +500,6 @@ export default function AuthPage() {
         if (userError) {
           // This happens when user exists in Supabase Auth but not in your users table
 
-          // Direct check for admin email as fallback
-          if (data.user.email === "admin@kampoibayow.com") {
-            loginSuccess("admin");
-            setTimeout(() => router.push("/admin"), 1500);
-            return;
-          }
-
           // If user doesn't exist in users table but auth exists, they might be deleted
           if (userError.code === "PGRST116") {
 
@@ -749,30 +742,7 @@ export default function AuthPage() {
     setIsSendingResetEmail(true);
 
     try {
-      // First, check if the email exists in the database
-      const { data: existingUser, error: lookupError } = await supabase
-        .from("users")
-        .select("id, email")
-        .eq("email", email.toLowerCase().trim())
-        .maybeSingle();
-
-      if (lookupError) {
-        console.error("Email lookup error:", lookupError);
-        showError("Error", "Failed to verify email. Please try again.");
-        setIsSendingResetEmail(false);
-        return;
-      }
-
-      if (!existingUser) {
-        showError(
-          "Email Not Found",
-          "No account found with this email address. Please check your email or create a new account."
-        );
-        setIsSendingResetEmail(false);
-        return;
-      }
-
-      // Email exists in database, proceed with password reset
+      // Proceed with password reset (don't reveal whether email exists)
       const { error } = await withAuthTimeout(
         () =>
           supabase.auth.resetPasswordForEmail(email, {
@@ -784,11 +754,10 @@ export default function AuthPage() {
 
       if (error) {
         console.error("Password reset error:", error);
-        showError("Reset Failed", error.message);
-      } else {
-        setResetEmailSent(true);
-        passwordResetSent();
       }
+      // Always show success to prevent email enumeration
+      setResetEmailSent(true);
+      passwordResetSent();
     } catch (error: unknown) {
       console.error("Password reset error:", error);
 
@@ -825,8 +794,9 @@ export default function AuthPage() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      showError("Weak Password", "Password must be at least 6 characters long");
+    const passwordValidation = validatePasswordStrength(newPassword);
+    if (!passwordValidation.isValid) {
+      showError("Weak Password", "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
       return;
     }
 

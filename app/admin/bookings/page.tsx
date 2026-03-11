@@ -192,18 +192,6 @@ function getSmartWorkflowStatus(
     }
   }
 
-  // Handle any remaining cancelled bookings (fallback case)
-  if (bookingStatus === "cancelled") {
-    return {
-      step: "cancelled",
-      priority: 0,
-      badge: "bg-gray-100 text-gray-800",
-      text: "Cancelled",
-      description: "Booking has been cancelled",
-      actionNeeded: "None - booking cancelled",
-    };
-  }
-
   // Standard states
   switch (bookingStatus) {
     case "completed":
@@ -1183,21 +1171,6 @@ export default function BookingsPage() {
                 );
                 setRefreshTrigger((prev) => prev + 1);
                 setTimeout(() => setRefreshTrigger((prev) => prev + 1), 500);
-              }
-            }
-
-            // Show alert for cancelled bookings
-            if (
-              payload.old?.status !== "cancelled" &&
-              payload.new.status === "cancelled"
-            ) {
-              if (!document.hidden && payload.new.cancelled_by === "user") {
-                setNewBookingAlert(
-                  `${
-                    payload.new.guest_name || "Guest"
-                  } cancelled their booking 💔`,
-                );
-                setTimeout(() => setNewBookingAlert(null), 5000);
               }
             }
 

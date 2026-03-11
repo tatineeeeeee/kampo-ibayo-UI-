@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendSMS, createBookingReminderSMS, createReminder12HourSMS, createReminder3HourSMS, createCheckInDaySMS } from '@/app/utils/smsService';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
 import { validateCronOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 // Reminder types: 24h, 12h, 3h, checkin (exact 3PM)
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
 
     // Get all confirmed bookings with check-in date matching target
-    const { data: bookings, error: fetchError } = await supabase
+    const { data: bookings, error: fetchError } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('status', 'confirmed')
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDateString = tomorrow.toISOString().split('T')[0];
 
-    const { data: bookings, error } = await supabase
+    const { data: bookings, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('status', 'confirmed')

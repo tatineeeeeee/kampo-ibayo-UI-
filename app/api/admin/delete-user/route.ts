@@ -85,6 +85,14 @@ export async function DELETE(request: NextRequest) {
         .eq('id', userId)
         .single()
       userDetails = userData
+    } else if (authId) {
+      // Also look up by auth_id so permission checks are not skipped
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('id, email, full_name, role, is_super_admin')
+        .eq('auth_id', authId)
+        .single()
+      userDetails = userData
     }
 
     // 🔐 PERMISSION CHECKS

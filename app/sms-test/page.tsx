@@ -1,10 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function SMSTestPage() {
+  const { user, userRole, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [testType, setTestType] = useState("basic");
+
+  useEffect(() => {
+    if (!authLoading && (!user || userRole !== "admin")) {
+      router.push("/auth");
+    }
+  }, [user, userRole, authLoading, router]);
+
+  if (authLoading || !user || userRole !== "admin") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
   const [result, setResult] = useState<{
     success: boolean;
     error?: string;

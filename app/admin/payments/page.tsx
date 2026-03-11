@@ -870,23 +870,6 @@ export default function PaymentsPage() {
                 PDF
               </button>
 
-              {/* Fix Payment Types Button */}
-              <button
-                onClick={fixMissingPaymentTypes}
-                className="inline-flex items-center px-3 py-1 border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md text-sm font-medium transition-colors"
-                title="Fix missing payment types"
-              >
-                🔧 Fix Types
-              </button>
-
-              {/* Test API Connectivity Button */}
-              <button
-                onClick={testApiConnectivity}
-                className="inline-flex items-center px-3 py-1 border border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md text-sm font-medium transition-colors"
-                title="Test API connectivity"
-              >
-                🧪 Test API
-              </button>
             </div>
           </div>
         </div>

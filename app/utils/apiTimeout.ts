@@ -19,13 +19,16 @@ export function withTimeout<T>(
   timeoutMs: number = 5000, 
   errorMessage?: string
 ): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       reject(new TimeoutError(errorMessage || `Operation timed out after ${timeoutMs}ms`));
     }, timeoutMs);
   });
 
-  return Promise.race([promise, timeoutPromise]);
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
 }
 
 /**

@@ -2,12 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await validateInternalOrAdmin(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
     const { guestName, guestEmail, rating, reviewText, stayDates, reviewId } = await request.json();
+    const safeGuestName = escapeHtml(guestName);
+    const safeReviewText = escapeHtml(reviewText);
+    const safeStayDates = escapeHtml(stayDates);
 
     // Create transporter (using same config as your existing email system)
     const transporter = nodemailer.createTransport({
@@ -37,7 +45,7 @@ export async function POST(request: NextRequest) {
 
             <!-- Greeting -->
             <p style="font-size: 18px; color: #374151; margin-bottom: 20px;">
-              Hi <strong>${guestName}</strong>,
+              Hi <strong>${safeGuestName}</strong>,
             </p>
 
             <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 25px;">
@@ -52,10 +60,10 @@ export async function POST(request: NextRequest) {
                 <span style="font-size: 18px; margin-left: 10px;">${stars}</span>
                 <span style="color: #6b7280; margin-left: 5px;">(${rating}/5)</span>
               </div>
-              ${stayDates ? `<div style="margin-bottom: 10px;"><strong style="color: #374151;">Stay Dates:</strong> <span style="color: #6b7280;">${stayDates}</span></div>` : ''}
+              ${stayDates ? `<div style="margin-bottom: 10px;"><strong style="color: #374151;">Stay Dates:</strong> <span style="color: #6b7280;">${safeStayDates}</span></div>` : ''}
               <div style="margin-top: 15px;">
                 <strong style="color: #374151;">Your Review:</strong>
-                <p style="color: #6b7280; margin: 8px 0 0 0; font-style: italic; line-height: 1.5;">"${reviewText}"</p>
+                <p style="color: #6b7280; margin: 8px 0 0 0; font-style: italic; line-height: 1.5;">"${safeReviewText}"</p>
               </div>
             </div>
 

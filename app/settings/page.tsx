@@ -367,6 +367,24 @@ export default function SettingsPage() {
       // Validate session with retry logic
       await validateAndRefreshSession();
 
+      // Verify current password before allowing change
+      if (!user?.email) {
+        showError("Unable to verify your identity. Please log in again.");
+        setSaving(false);
+        return;
+      }
+
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (verifyError) {
+        showError("Current password is incorrect.");
+        setSaving(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: passwordData.newPassword,
       });

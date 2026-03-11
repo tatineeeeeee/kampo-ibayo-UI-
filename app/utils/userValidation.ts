@@ -58,18 +58,3 @@ export function withUserValidation<T extends unknown[], R>(
     return fn(...args);
   };
 }
-
-/**
- * React hook for periodic user validation (useful for long-running sessions)
- */
-export function usePeriodicValidation(intervalMs: number = 30000) { // Check every 30 seconds
-  if (typeof window !== 'undefined') {
-    setInterval(async () => {
-      const validation = await validateUserAction();
-      if (!validation.isValid) {
-        // User will be redirected automatically by validateUserAction
-        return;
-      }
-    }, intervalMs);
-  }
-}

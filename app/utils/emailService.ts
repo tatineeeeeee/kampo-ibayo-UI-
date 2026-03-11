@@ -352,7 +352,7 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #4a5568; font-weight: 600;">Telephone:</td>
-                <td style="padding: 8px 0; color: #2d3748;">+63 123 456 7890</td>
+                <td style="padding: 8px 0; color: #2d3748;">+63 966 281 5123</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #4a5568; font-weight: 600;">Business Hours:</td>
@@ -379,7 +379,7 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
         <div style="background: #2d3748; color: white; padding: 25px; text-align: center; font-size: 12px;">
           <p style="margin: 0 0 10px 0; font-weight: 600;">Kampo Ibayo Resort</p>
           <p style="margin: 0 0 5px 0;">Professional Resort Services</p>
-          <p style="margin: 0;">&copy; 2025 Kampo Ibayo Resort. All rights reserved.</p>
+          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -403,7 +403,7 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
     
     CONTACT INFORMATION:
     Email: info@kampoibayo.com
-    Phone: +63 123 456 7890
+    Phone: +63 966 281 5123
     Business Hours: 8:00 AM - 8:00 PM (Philippine Time)
     
     Please retain this confirmation for your records.
@@ -723,7 +723,7 @@ export const createAdminNotificationEmail = (bookingDetails: BookingDetails): Em
         <div class="footer">
           <p><strong>Kampo Ibayo Resort Admin Panel</strong></p>
           <p>This notification was sent automatically from your booking management system.</p>
-          <p>&copy; 2025 Kampo Ibayo Resort. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -1035,7 +1035,7 @@ export const createBookingConfirmedEmail = (bookingDetails: BookingDetails): Ema
           </h4>
           <div class="contact-details">
             <p style="margin: 8px 0;"><strong>📧 Email:</strong> info@kampoibayo.com</p>
-            <p style="margin: 8px 0;"><strong>📞 Phone:</strong> +63 123 456 7890</p>
+            <p style="margin: 8px 0;"><strong>📞 Phone:</strong> +63 966 281 5123</p>
             <p style="margin: 8px 0;"><strong>🕒 Support Hours:</strong> 8:00 AM - 8:00 PM (Philippine Time)</p>
           </div>
           <p style="color: #1e40af; margin: 12px 0 0 0; font-size: 14px;">
@@ -1049,7 +1049,7 @@ export const createBookingConfirmedEmail = (bookingDetails: BookingDetails): Ema
         <div class="footer">
           <p><strong>Thank you for choosing Kampo Ibayo Resort</strong></p>
           <p>We can't wait to make your stay unforgettable!</p>
-          <p>&copy; 2025 Kampo Ibayo Resort. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -1364,7 +1364,7 @@ export const createBookingCancelledEmail = (bookingDetails: BookingDetails): Ema
           </h4>
           <div class="contact-details">
             <p style="margin: 8px 0;"><strong>📧 Email:</strong> info@kampoibayo.com</p>
-            <p style="margin: 8px 0;"><strong>📞 Phone:</strong> +63 123 456 7890</p>
+            <p style="margin: 8px 0;"><strong>📞 Phone:</strong> +63 966 281 5123</p>
             <p style="margin: 8px 0;"><strong>🕒 Support Hours:</strong> 8:00 AM - 8:00 PM (Philippine Time)</p>
           </div>
           <p style="color: #1e40af; margin: 12px 0 0 0; font-size: 14px;">
@@ -1378,7 +1378,7 @@ export const createBookingCancelledEmail = (bookingDetails: BookingDetails): Ema
         <div class="footer">
           <p><strong>Thank you for your understanding</strong></p>
           <p>We hope to serve you better in the future</p>
-          <p>&copy; 2025 Kampo Ibayo Resort. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -1714,7 +1714,7 @@ export const createUserCancellationEmail = (bookingDetails: BookingDetails): Ema
           </h4>
           <div class="contact-details">
             <p style="margin: 8px 0;"><strong>📧 Email:</strong> info@kampoibayo.com</p>
-            <p style="margin: 8px 0;"><strong>📞 Phone:</strong> +63 123 456 7890</p>
+            <p style="margin: 8px 0;"><strong>📞 Phone:</strong> +63 966 281 5123</p>
             <p style="margin: 8px 0;"><strong>🕒 Support Hours:</strong> 8:00 AM - 8:00 PM (Philippine Time)</p>
           </div>
           <p style="color: #1e40af; margin: 12px 0 0 0; font-size: 14px;">
@@ -1727,7 +1727,7 @@ export const createUserCancellationEmail = (bookingDetails: BookingDetails): Ema
             <span>📧</span>
             Email Us
           </a>
-          <a href="tel:+631234567890" class="btn btn-success">
+          <a href="tel:+639662815123" class="btn btn-success">
             <span>📞</span>
             Call Us
           </a>
@@ -1739,7 +1739,7 @@ export const createUserCancellationEmail = (bookingDetails: BookingDetails): Ema
         <div class="footer">
           <p><strong>Thank you for considering Kampo Ibayo Resort</strong></p>
           <p>We hope to welcome you in the future for an unforgettable experience!</p>
-          <p>&copy; 2025 Kampo Ibayo Resort. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.</p>
         </div>
       </div>
     </body>

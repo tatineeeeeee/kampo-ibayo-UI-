@@ -11,9 +11,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  turbopack: {
-    root: 'c:\\Users\\justi\\kampoibayow',
-  },
 };
 
 export default nextConfig;
