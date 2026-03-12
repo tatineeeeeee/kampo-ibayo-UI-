@@ -326,10 +326,10 @@ export default function AdminNotificationBell() {
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+        <div className="fixed inset-x-0 top-14 mx-2 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mx-0 sm:mt-2 w-auto sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
-            <h3 className="font-semibold text-gray-800">Notifications</h3>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-gray-50 border-b">
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">Notifications</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchNotifications(false)} // Manual refresh shows loading
@@ -359,7 +359,7 @@ export default function AdminNotificationBell() {
           </div>
 
           {/* Notification List */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
             {loading ? (
               <div className="p-4 text-center text-gray-500">
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
@@ -376,7 +376,7 @@ export default function AdminNotificationBell() {
                 <button
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                  className={`w-full text-left px-3 sm:px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                     !notification.read ? "bg-blue-50/50" : ""
                   }`}
                 >
@@ -414,8 +414,8 @@ export default function AdminNotificationBell() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-4 py-3 bg-gray-50 border-t">
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="px-3 sm:px-4 py-3 bg-gray-50 border-t">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xs">
                 <div className="p-2 bg-red-100 rounded-lg">
                   <div className="font-bold text-red-700">
                     {
