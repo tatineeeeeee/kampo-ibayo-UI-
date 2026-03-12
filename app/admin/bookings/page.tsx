@@ -43,7 +43,6 @@ interface PaymentProof {
   admin_notes: string | null;
   uploaded_at: string;
   verified_at: string | null;
-  verified_by: string | null;
 }
 
 interface PaymentHistoryEntry {
@@ -822,7 +821,6 @@ function PaymentProofButton({
             admin_notes: null,
             uploaded_at: "",
             verified_at: null,
-            verified_by: null,
           };
           onViewProof(dummyProof);
         }}
@@ -1160,9 +1158,8 @@ export default function BookingsPage() {
                     .from("payment_proofs")
                     .update({
                       status: "cancelled",
-                      admin_notes: adminNote,
+                      admin_notes: `${adminNote} (by ${cancelledBy})`,
                       verified_at: new Date().toISOString(),
-                      verified_by: `auto_${cancelledBy}`,
                     })
                     .eq("booking_id", payload.new.id)
                     .in("status", ["pending", "verified", "rejected"]); // Cancel ALL non-cancelled proofs

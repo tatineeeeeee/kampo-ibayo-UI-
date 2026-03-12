@@ -27,7 +27,6 @@ interface ConsolidatedPayment {
   balance_status: 'pending' | 'verified' | 'rejected' | null;
   check_in_date?: string;
   verified_at: string | null;
-  verified_by: string | null;
   admin_notes: string | null;
   has_payment_proof: boolean;
   is_walk_in: boolean;
@@ -194,7 +193,6 @@ export async function GET() {
 
         booking_id: booking.id,
         verified_at: originalProof?.verified_at || balanceProof?.verified_at || null,
-        verified_by: originalProof?.verified_by || balanceProof?.verified_by || null,
         admin_notes: originalProof?.admin_notes || balanceProof?.admin_notes || null,
         has_payment_proof: proofs.length > 0,
         is_walk_in: isWalkIn,

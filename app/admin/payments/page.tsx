@@ -45,7 +45,6 @@ interface Payment {
 
   booking_id: number;
   verified_at: string | null;
-  verified_by: string | null;
   admin_notes: string | null;
   has_payment_proof: boolean;
   is_walk_in?: boolean;
