@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ReactPdfReceiptService } from '../../../utils/reactPdfReceiptService';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
-  console.log('🚀 PDF Download API - Starting receipt generation with React-PDF...');
-  console.log('📊 Environment check:', {
-    NODE_ENV: process.env.NODE_ENV,
-    VERCEL: !!process.env.VERCEL,
-    REACT_PDF_MIGRATION: 'v2.0',
-    timestamp: new Date().toISOString()
-  });
 
   try {
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
     const { bookingId, userEmail, userName } = await request.json();
 
     // Validate required fields
@@ -41,6 +37,14 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Booking not found or access denied'
       }, { status: 404 });
+    }
+
+    // Ownership check: user can only download receipts for their own bookings
+    if (booking.user_id !== auth.user.authId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Access denied: you can only download receipts for your own bookings'
+      }, { status: 403 });
     }
 
     // Security: Verify booking belongs to requesting user or is confirmed
@@ -113,22 +117,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('📄 Starting PDF generation process...');
-    console.log('🔍 Receipt data validation passed');
-    console.log('🛠️ Calling ReactPdfReceiptService.generatePDFReceipt...');
 
     // Generate PDF with React-PDF (Vercel optimized)
     const pdfBuffer = await ReactPdfReceiptService.generatePDFReceipt(receiptData);
 
-    console.log('✅ PDF generation completed successfully!');
-    console.log('📊 PDF buffer size:', pdfBuffer.length, 'bytes');
-    console.log('🔍 PDF buffer type:', typeof pdfBuffer);
 
     // Check if we got the fallback PDF (jsPDF is typically smaller)
     if (pdfBuffer.length < 50000) {
-      console.log('⚠️ WARNING: Unusually small PDF size from React-PDF');
     } else {
-      console.log('🎉 SUCCESS: React-PDF generated successfully (high quality)');
     }
 
     // Return PDF as downloadable response  

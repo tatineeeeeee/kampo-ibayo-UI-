@@ -55,11 +55,6 @@ export async function DELETE(request: NextRequest) {
 
     // 🔐 Only admins can delete users
     if (currentUser.role !== 'admin') {
-      console.log('🔒 AUDIT: Non-admin attempted user deletion', {
-        timestamp: new Date().toISOString(),
-        currentUserRole: currentUser.role,
-        currentUserId: currentUser.id
-      })
       return NextResponse.json({ error: 'Permission denied - Admin access required' }, { status: 403 })
     }
 
@@ -80,15 +75,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID or Auth ID required' }, { status: 400 })
     }
 
-    console.log('Delete request received:', { userId: !!userId, authId: !!authId })
 
     // Get user details before deletion for audit logging and permission checks
     let userDetails = null
     if (userId) {
       const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, email, name, role, is_super_admin')
+        .select('id, email, full_name, role, is_super_admin')
         .eq('id', userId)
+        .single()
+      userDetails = userData
+    } else if (authId) {
+      // Also look up by auth_id so permission checks are not skipped
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('id, email, full_name, role, is_super_admin')
+        .eq('auth_id', authId)
         .single()
       userDetails = userData
     }
@@ -97,49 +99,23 @@ export async function DELETE(request: NextRequest) {
 
     // 1. Cannot delete yourself
     if (userDetails?.id === currentUser.id) {
-      console.log('🔒 AUDIT: Self-deletion attempt blocked', {
-        timestamp: new Date().toISOString(),
-        userId: currentUser.id
-      })
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 403 })
     }
 
     // 2. Super Admin cannot be deleted by anyone
     if (userDetails?.is_super_admin) {
-      console.log('🔒 AUDIT: Super Admin deletion blocked', {
-        timestamp: new Date().toISOString(),
-        attemptedBy: currentUser.id,
-        targetUser: userDetails.email
-      })
       return NextResponse.json({ error: 'Cannot delete Super Admin accounts' }, { status: 403 })
     }
 
     // 3. Only Super Admin can delete other admins
     if (userDetails?.role === 'admin' && !isCurrentUserSuperAdmin) {
-      console.log('🔒 AUDIT: Admin deletion blocked - requires Super Admin', {
-        timestamp: new Date().toISOString(),
-        attemptedBy: currentUser.id,
-        targetUser: userDetails.email
-      })
       return NextResponse.json({ error: 'Only Super Admin can delete administrator accounts' }, { status: 403 })
     }
 
     // 🔒 AUDIT LOG: Admin user deletion initiated
-    console.log('🔒 AUDIT: Admin user deletion initiated', {
-      timestamp: new Date().toISOString(),
-      targetUserId: userId,
-      targetAuthId: authId,
-      targetUserEmail: userDetails?.email,
-      targetUserName: userDetails?.name,
-      targetUserRole: userDetails?.role,
-      adminIpAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      adminUserAgent: request.headers.get('user-agent') || 'unknown',
-      action: 'ADMIN_DELETE_USER'
-    })
 
     // Delete from database first (using the database user ID)
     if (userId) {
-      console.log('Deleting from database...')
       const { error: dbError } = await supabaseAdmin
         .from('users')
         .delete()
@@ -148,44 +124,26 @@ export async function DELETE(request: NextRequest) {
       if (dbError) {
         console.error('Database deletion error:', dbError)
         return NextResponse.json({
-          error: 'Failed to delete user from database',
-          details: dbError.message
+          error: 'Failed to delete user from database'
         }, { status: 500 })
       }
-      console.log('Successfully deleted from database')
     }
 
     // Delete from auth (using the auth ID)
     if (authId) {
-      console.log('Deleting from auth...')
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(authId)
 
       if (authError) {
         console.error('Auth deletion error:', authError)
         return NextResponse.json({
           success: true,
-          message: 'User deleted from database, auth deletion failed',
-          authError: authError.message
+          message: 'User deleted from database, auth deletion may be incomplete'
         }, { status: 200 })
       }
-      console.log('Successfully deleted from auth')
     }
 
-    console.log('User deletion completed successfully')
 
     // 🔒 AUDIT LOG: Admin user deletion completed
-    console.log('🔒 AUDIT: Admin user deletion completed successfully', {
-      timestamp: new Date().toISOString(),
-      targetUserId: userId,
-      targetAuthId: authId,
-      targetUserEmail: userDetails?.email,
-      targetUserName: userDetails?.name,
-      targetUserRole: userDetails?.role,
-      adminIpAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      deletedFromDatabase: !!userId,
-      deletedFromAuth: !!authId,
-      action: 'ADMIN_DELETE_USER_SUCCESS'
-    })
 
     return NextResponse.json({
       success: true,
@@ -196,10 +154,8 @@ export async function DELETE(request: NextRequest) {
     console.error('Unexpected error in delete API:', error)
 
     // Ensure we always return valid JSON
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({
-      error: 'Internal server error',
-      message: errorMessage
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }

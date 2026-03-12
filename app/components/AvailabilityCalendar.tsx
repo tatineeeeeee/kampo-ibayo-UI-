@@ -56,17 +56,6 @@ export default function AvailabilityCalendar({
     return `${parseInt(month)}/${parseInt(day)}/${year}`;
   };
 
-  // Debug logging only when needed
-  if (process.env.NODE_ENV === "development" && excludeBookingId) {
-    console.log("📅 [AvailabilityCalendar] Reschedule mode:", {
-      selectedCheckIn,
-      selectedCheckOut,
-      excludeBookingId,
-      newCheckIn,
-      newCheckOut,
-    });
-  }
-
   // Load booked dates from database (SAME LOGIC AS HOMEPAGE)
   useEffect(() => {
     const loadBookedDates = async () => {
@@ -123,23 +112,10 @@ export default function AvailabilityCalendar({
           return;
         }
 
-        console.log("📅 AvailabilityCalendar fetched bookings:", data);
-        console.log("📅 Excluded booking ID:", excludeBookingId);
 
         // Debug: Log each booking's dates in a readable format
         if (data && data.length > 0) {
           data.forEach((booking, index) => {
-            console.log(`Booking ${index + 1}:`, {
-              checkIn: booking.check_in_date,
-              checkOut: booking.check_out_date,
-              status: booking.status,
-              checkInFormatted: new Date(
-                booking.check_in_date,
-              ).toLocaleDateString(),
-              checkOutFormatted: new Date(
-                booking.check_out_date,
-              ).toLocaleDateString(),
-            });
           });
         }
 
@@ -182,50 +158,26 @@ export default function AvailabilityCalendar({
     let isCheckOut = false;
     let isOccupied = false;
 
-    // Optional debug logging for development
-    const targetDateStr = targetDate.toLocaleDateString();
-    const isDebugDate =
-      process.env.NODE_ENV === "development" &&
-      (targetDateStr.includes("11/27") ||
-        targetDateStr.includes("11/28") ||
-        targetDateStr.includes("11/29") ||
-        targetDateStr.includes("11/30"));
-
-    activeBookings.forEach((booking, bookingIndex) => {
+    activeBookings.forEach((booking) => {
       const checkIn = new Date(booking.check_in_date);
       checkIn.setHours(0, 0, 0, 0);
 
       const checkOut = new Date(booking.check_out_date);
       checkOut.setHours(0, 0, 0, 0);
 
-      // Simplified debug logging
-      if (isDebugDate) {
-        console.log(
-          `    Booking ${
-            bookingIndex + 1
-          }: ${checkIn.toLocaleDateString()} to ${checkOut.toLocaleDateString()}`,
-        );
-      }
-
       // Check if this date is a check-in date
       if (targetDate.getTime() === checkIn.getTime()) {
         isCheckIn = true;
-        if (isDebugDate) console.log(`    ✅ ${targetDateStr} is CHECK-IN`);
       }
 
       // Check if this date is a check-out date
       if (targetDate.getTime() === checkOut.getTime()) {
         isCheckOut = true;
-        if (isDebugDate) console.log(`    ✅ ${targetDateStr} is CHECK-OUT`);
       }
 
       // Check if this date is between check-in and check-out (occupied)
       if (targetDate > checkIn && targetDate < checkOut) {
         isOccupied = true;
-        if (isDebugDate)
-          console.log(
-            `    ✅ ${targetDateStr} is OCCUPIED (between ${checkIn.toLocaleDateString()} and ${checkOut.toLocaleDateString()})`,
-          );
       }
     });
 
@@ -314,12 +266,6 @@ export default function AvailabilityCalendar({
     // For Nov 27-29 booking: block Nov 27 and Nov 28, allow Nov 29
     const isBlocked =
       targetDateStr >= selectedCheckIn && targetDateStr < selectedCheckOut;
-
-    if (isBlocked) {
-      console.log(
-        `🚫 [isDateBlocked] Blocking ${targetDateStr} (current booking: ${selectedCheckIn} to ${selectedCheckOut})`,
-      );
-    }
 
     return isBlocked;
   };

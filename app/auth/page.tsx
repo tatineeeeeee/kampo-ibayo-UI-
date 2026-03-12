@@ -60,9 +60,6 @@ export default function AuthPage() {
 
         if (!hasRecoveryTokens) {
           // Clear potentially stale flag immediately
-          console.log(
-            "🧹 Clearing potentially stale password reset flag on page load"
-          );
           localStorage.removeItem("in_password_reset");
           return false;
         }
@@ -88,7 +85,6 @@ export default function AuthPage() {
 
   // Utility function to completely clear all password reset related storage
   const clearPasswordResetState = () => {
-    console.log("🧹 Clearing all password reset state and storage");
     localStorage.removeItem("in_password_reset");
     sessionStorage.removeItem("recovery_access_token");
     sessionStorage.removeItem("recovery_refresh_token");
@@ -105,9 +101,6 @@ export default function AuthPage() {
       const hash = window.location.hash.slice(1);
       const search = window.location.search;
 
-      console.log("🔍 Checking for recovery tokens...");
-      console.log("Hash:", hash);
-      console.log("Search:", search);
 
       if (!hash && !search) return;
 
@@ -123,20 +116,12 @@ export default function AuthPage() {
       if (hashType === "recovery" || searchMode === "recovery") {
         recoveryHandled.current = true; // Prevent infinite loops
 
-        console.log(
-          "🔒 Password recovery detected - setting up password reset form"
-        );
-        console.log(
-          "Recovery method:",
-          hashType === "recovery" ? "hash" : "search"
-        );
 
         // Check if we have recovery tokens in the hash
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
 
         if (accessToken && refreshToken) {
-          console.log("✅ Recovery tokens found in URL hash");
 
           try {
             // Set recovery state immediately
@@ -170,7 +155,6 @@ export default function AuthPage() {
             }
 
             if (sessionData.session) {
-              console.log("✅ Recovery session established successfully");
               setIsLoading(false);
               info("Ready!", "Please set your new password below.");
             } else {
@@ -193,7 +177,6 @@ export default function AuthPage() {
             setIsLoading(false);
           }
         } else {
-          console.log("❌ No recovery tokens in URL - invalid reset link");
           showError(
             "Invalid Reset Link",
             "This password reset link is invalid or expired. Please request a new password reset."
@@ -234,24 +217,15 @@ export default function AuthPage() {
 
             // If no valid session and no recovery tokens, clear the stale password reset state
             if (!session) {
-              console.log(
-                "🧹 Clearing stale password reset state - no valid session or recovery tokens"
-              );
               clearPasswordResetState();
               // Continue with normal flow instead of returning
             } else {
-              console.log(
-                "🔒 Valid session found with password reset flag - continuing password reset"
-              );
               setIsPasswordReset(true);
               setForcePasswordReset(true);
               setIsLoading(false);
               return;
             }
           } else {
-            console.log(
-              "🔒 Valid recovery tokens found - continuing password reset"
-            );
             setIsPasswordReset(true);
             setForcePasswordReset(true);
             setIsLoading(false);
@@ -268,9 +242,6 @@ export default function AuthPage() {
           sessionStorage.getItem("recovery_refresh_token");
 
         if (mode === "recovery" && !hasStoredTokens) {
-          console.log(
-            "ℹ️ Recovery mode without tokens detected - showing one-time message"
-          );
           setIsPasswordReset(true);
           // Only show this message once, not repeatedly
           if (!sessionStorage.getItem("recovery-info-shown")) {
@@ -281,9 +252,6 @@ export default function AuthPage() {
             sessionStorage.setItem("recovery-info-shown", "true");
           }
         } else if (hasStoredTokens) {
-          console.log(
-            "✅ Recovery tokens found in storage - password reset flow ready"
-          );
           setIsPasswordReset(true);
         }
 
@@ -293,7 +261,6 @@ export default function AuthPage() {
         } = await supabase.auth.getSession();
 
         if (error) {
-          console.log("Session error:", error.message);
           await supabase.auth.signOut();
           localStorage.removeItem("supabase.auth.token");
         }
@@ -310,9 +277,6 @@ export default function AuthPage() {
 
           // If URL indicates recovery mode, don't auto-login
           if (inRecoveryMode) {
-            console.log(
-              "🔒 Recovery tokens in URL - staying in password reset mode"
-            );
             setIsPasswordReset(true);
             setForcePasswordReset(true);
             localStorage.setItem("in_password_reset", "true");
@@ -335,7 +299,6 @@ export default function AuthPage() {
           return;
         }
       } catch (error) {
-        console.log("Session recovery error:", error);
         await supabase.auth.signOut();
       }
 
@@ -353,7 +316,6 @@ export default function AuthPage() {
       }
 
       authStateChangeDebounce.current = setTimeout(async () => {
-        console.log("🔔 Auth state change (debounced):", event);
 
         try {
           // IMMEDIATE RECOVERY CHECK - Before processing any events
@@ -375,19 +337,6 @@ export default function AuthPage() {
               (hasRecoveryTokens || inPasswordResetStorage) &&
               (event === "SIGNED_IN" || event === "INITIAL_SESSION")
             ) {
-              console.log(
-                "🚫 IMMEDIATE BLOCK: Recovery detected - preventing auto-login"
-              );
-              console.log("Event:", event);
-              console.log("Hash:", hash);
-              console.log(
-                "Access token present:",
-                !!hashParams.get("access_token")
-              );
-              console.log(
-                "localStorage password reset:",
-                inPasswordResetStorage
-              );
 
               // Set state and persist to localStorage to prevent any auto-login
               setForcePasswordReset(true);
@@ -401,7 +350,6 @@ export default function AuthPage() {
                   document.title,
                   window.location.pathname
                 );
-                console.log("✅ URL cleaned to prevent token exposure");
               }
 
               return; // Exit immediately to prevent any redirect
@@ -411,9 +359,6 @@ export default function AuthPage() {
           if (event === "SIGNED_OUT") {
             localStorage.removeItem("supabase.auth.token");
           } else if (event === "PASSWORD_RECOVERY") {
-            console.log(
-              "🔒 Password recovery event - enforcing password reset"
-            );
             setForcePasswordReset(true);
             setIsPasswordReset(true);
             info("Password Reset", "Please set a new password to continue.");
@@ -433,11 +378,6 @@ export default function AuthPage() {
               hashParams.get("access_token") ||
               hashParams.get("refresh_token");
 
-            console.log("🔍 SIGNED_IN event - comprehensive recovery check");
-            console.log("Hash:", hash);
-            console.log("Search:", search);
-            console.log("Has access_token:", !!hashParams.get("access_token"));
-            console.log("Is recovery mode:", isRecoveryMode);
 
             // Check all possible password reset indicators
             const inPasswordReset =
@@ -449,19 +389,6 @@ export default function AuthPage() {
               inPasswordReset;
 
             if (shouldBlockLogin) {
-              console.log(
-                "🚫 BLOCKING AUTO-LOGIN - Password reset mode active"
-              );
-              console.log(
-                "Reasons - Recovery mode:",
-                isRecoveryMode,
-                "Force reset:",
-                forcePasswordReset,
-                "Is reset:",
-                isPasswordReset,
-                "localStorage:",
-                inPasswordReset
-              );
 
               // Ensure password reset state is set
               setForcePasswordReset(true);
@@ -475,14 +402,12 @@ export default function AuthPage() {
                   document.title,
                   window.location.pathname
                 );
-                console.log("✅ URL cleaned and password reset state enforced");
               }
 
               return; // CRITICAL: Exit here to prevent auto-login redirect
             }
 
             // Normal login flow - only proceed if no password reset indicators
-            console.log("✅ Proceeding with normal login flow");
             const { data: userData } = await supabase
               .from("users")
               .select("role")
@@ -504,7 +429,6 @@ export default function AuthPage() {
             errorMessage.includes("refresh") ||
             errorMessage.includes("token")
           ) {
-            console.log("Clearing corrupted session data...");
             await supabase.auth.signOut();
             localStorage.removeItem("supabase.auth.token");
             warning("Session Expired", "Please try logging in again.");
@@ -564,52 +488,20 @@ export default function AuthPage() {
       }
 
       if (data.user) {
-        console.log("✅ Login successful, checking user role...");
-        console.log("User ID:", data.user.id);
-        console.log("User Email:", data.user.email);
 
         // Check user role from database
         const { data: userData, error: userError } = await supabase
           .from("users")
-          .select("role, name, email")
+          .select("role, full_name, email")
           .eq("auth_id", data.user.id)
           .single();
 
-        console.log("🔍 Checking user in database for auth_id:", data.user.id);
-        console.log("User query result:", { userData, userError });
 
         if (userError) {
           // This happens when user exists in Supabase Auth but not in your users table
-          console.log(
-            "⚠️ User not found in users table - this is expected for deleted users"
-          );
-
-          // Only log detailed error info in development mode
-          if (process.env.NODE_ENV === "development") {
-            console.log("🔧 Development mode - showing detailed error info:");
-            console.log("- Error object:", userError);
-            console.log("- Error type:", typeof userError);
-            console.log("- Error keys:", Object.keys(userError));
-
-            if (userError.code) console.log("- Code:", userError.code);
-            if (userError.message) console.log("- Message:", userError.message);
-            if (userError.details) console.log("- Details:", userError.details);
-            if (userError.hint) console.log("- Hint:", userError.hint);
-          }
-
-          // Direct check for admin email as fallback
-          if (data.user.email === "admin@kampoibayow.com") {
-            console.log(
-              "🔑 Admin email detected, redirecting to admin dashboard"
-            );
-            loginSuccess("admin");
-            setTimeout(() => router.push("/admin"), 1500);
-            return;
-          }
 
           // If user doesn't exist in users table but auth exists, they might be deleted
           if (userError.code === "PGRST116") {
-            console.log("⚠️ User not found in users table");
 
             // Account has been permanently deleted
             showError(
@@ -625,7 +517,6 @@ export default function AuthPage() {
           setTimeout(() => router.push("/"), 1500);
         } else {
           const userRole = userData?.role || "user";
-          console.log("User role detected:", userRole);
 
           if (userRole === "admin" || userRole === "staff") {
             loginSuccess(userRole);
@@ -643,7 +534,6 @@ export default function AuthPage() {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("refresh") || errorMessage.includes("token")) {
-        console.log("Clearing corrupted session data...");
         await supabase.auth.signOut();
         localStorage.removeItem("supabase.auth.token");
         warning("Session Expired", "Please try logging in again.");
@@ -790,7 +680,7 @@ export default function AuthPage() {
           // Store extra user info in your "users" table
           const { error: insertError } = await supabase.from("users").insert({
             auth_id: data.user.id,
-            name: `${firstName} ${lastName}`,
+            full_name: `${firstName} ${lastName}`,
             email: email,
             phone: cleanedPhone, // Store in international format (+63XXXXXXXXXX)
             role: "user", // Regular users are always "user" role
@@ -827,7 +717,6 @@ export default function AuthPage() {
         error instanceof Error ? error.message : String(error);
 
       if (errorMessage.includes("refresh") || errorMessage.includes("token")) {
-        console.log("Clearing corrupted session data...");
         await supabase.auth.signOut();
         localStorage.removeItem("supabase.auth.token");
       }
@@ -853,30 +742,7 @@ export default function AuthPage() {
     setIsSendingResetEmail(true);
 
     try {
-      // First, check if the email exists in the database
-      const { data: existingUser, error: lookupError } = await supabase
-        .from("users")
-        .select("id, email")
-        .eq("email", email.toLowerCase().trim())
-        .maybeSingle();
-
-      if (lookupError) {
-        console.error("Email lookup error:", lookupError);
-        showError("Error", "Failed to verify email. Please try again.");
-        setIsSendingResetEmail(false);
-        return;
-      }
-
-      if (!existingUser) {
-        showError(
-          "Email Not Found",
-          "No account found with this email address. Please check your email or create a new account."
-        );
-        setIsSendingResetEmail(false);
-        return;
-      }
-
-      // Email exists in database, proceed with password reset
+      // Proceed with password reset (don't reveal whether email exists)
       const { error } = await withAuthTimeout(
         () =>
           supabase.auth.resetPasswordForEmail(email, {
@@ -888,12 +754,10 @@ export default function AuthPage() {
 
       if (error) {
         console.error("Password reset error:", error);
-        showError("Reset Failed", error.message);
-      } else {
-        setResetEmailSent(true);
-        passwordResetSent();
-        console.log("✅ Password reset email sent successfully");
       }
+      // Always show success to prevent email enumeration
+      setResetEmailSent(true);
+      passwordResetSent();
     } catch (error: unknown) {
       console.error("Password reset error:", error);
 
@@ -930,15 +794,15 @@ export default function AuthPage() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      showError("Weak Password", "Password must be at least 6 characters long");
+    const passwordValidation = validatePasswordStrength(newPassword);
+    if (!passwordValidation.isValid) {
+      showError("Weak Password", "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!");
       return;
     }
 
     setIsUpdatingPassword(true);
 
     try {
-      console.log("🔄 Attempting password update...");
 
       // Simple password update
       const { error } = await supabase.auth.updateUser({
@@ -955,9 +819,6 @@ export default function AuthPage() {
           error.message.includes("invalid") ||
           error.message.includes("expired")
         ) {
-          console.log(
-            "🧹 User account appears to be deleted - clearing password reset state"
-          );
 
           // Clear all password reset flags and storage
           clearPasswordResetState();
@@ -987,7 +848,6 @@ export default function AuthPage() {
         return;
       }
 
-      console.log("✅ Password updated successfully!");
 
       // Show success message
       info(
@@ -996,9 +856,6 @@ export default function AuthPage() {
       );
 
       // Clear all password reset states and storage
-      console.log(
-        "🧹 Clearing all password reset data after successful password update"
-      );
       clearPasswordResetState();
 
       // Sign out completely to clear session

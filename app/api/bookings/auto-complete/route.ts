@@ -1,16 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../app/utils/supabaseAdmin';
+import { validateCronOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 /**
  * POST /api/bookings/auto-complete
  * Auto-complete confirmed bookings that have passed their checkout date
  * This runs server-side with admin privileges to bypass RLS
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    // Get today's date in YYYY-MM-DD format for accurate comparison
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0]; // e.g., "2025-11-25"
+    const auth = await validateCronOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    // Get today's date in Philippine timezone (UTC+8) for accurate comparison
+    const now = new Date();
+    const philippinesOffset = 8 * 60 * 60 * 1000;
+    const philippinesTime = new Date(now.getTime() + philippinesOffset);
+    const todayString = philippinesTime.toISOString().split('T')[0]; // e.g., "2025-11-25" in PH time
 
     // Find confirmed bookings where checkout date has passed
     const { data: finishedBookings, error: fetchError } = await supabaseAdmin
@@ -31,7 +37,6 @@ export async function POST() {
       return NextResponse.json({ completedCount: 0 });
     }
 
-    console.log(`Found ${finishedBookings.length} confirmed booking(s) past checkout date`);
 
     const bookingIds = finishedBookings.map(booking => booking.id);
 
@@ -52,7 +57,6 @@ export async function POST() {
       );
     }
 
-    console.log(`✅ Auto-completed ${finishedBookings.length} booking(s)`);
     return NextResponse.json({ completedCount: finishedBookings.length });
 
   } catch (error) {

@@ -81,13 +81,13 @@ export default function SettingsPage() {
       // Get admin data from database
       const { data: userData, error } = await supabase
         .from("users")
-        .select("name, email, phone")
+        .select("full_name, email, phone")
         .eq("auth_id", session.user.id)
         .single();
 
       if (!error && userData) {
         setAdminData({
-          name: userData.name || "",
+          name: userData.full_name || "",
           email: userData.email || session.user.email || "",
           phone: userData.phone || "",
         });
@@ -131,7 +131,7 @@ export default function SettingsPage() {
       const { error: dbError } = await supabase
         .from("users")
         .update({
-          name: adminData.name,
+          full_name: adminData.name,
           email: adminData.email,
           phone: adminData.phone,
         })
@@ -159,10 +159,6 @@ export default function SettingsPage() {
   const handleSaveResortSettings = async () => {
     setSaving(true);
     try {
-      console.log("⚙️ Admin saving settings:", {
-        maintenance_mode: resortSettings.maintenance_mode,
-        emergency_contact: resortSettings.emergency_contact,
-      }); // Debug log
 
       // Save maintenance settings to database (cross-device)
       await saveMaintenanceSettings({
@@ -177,7 +173,6 @@ export default function SettingsPage() {
 
       // Dispatch a custom event to notify other components in same session
       if (typeof window !== "undefined") {
-        console.log("⚙️ Dispatching maintenanceSettingsChanged event"); // Debug log
         window.dispatchEvent(new CustomEvent("maintenanceSettingsChanged"));
       }
     } catch (error) {

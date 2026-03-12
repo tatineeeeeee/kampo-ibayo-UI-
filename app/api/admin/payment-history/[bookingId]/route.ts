@@ -1,11 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
     const { bookingId: bookingIdParam } = await params;
     const bookingId = parseInt(bookingIdParam);
     
@@ -91,9 +94,8 @@ export async function GET(
 
   } catch (error) {
     console.error('API error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error' 
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }

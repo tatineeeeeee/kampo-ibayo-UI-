@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 
 import { Tables } from "@/database.types";
+import { useToastHelpers } from "@/app/components/Toast";
 
 type Review = Tables<"guest_reviews">;
 type ReviewPhoto = Tables<"review_photos">;
@@ -36,6 +37,7 @@ export default function AdminReviewsPage() {
     "all" | "approved" | "pending" | "flagged"
   >("flagged");
   const [updating, setUpdating] = useState<string | null>(null);
+  const toast = useToastHelpers();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [rejectionModal, setRejectionModal] = useState<{
@@ -59,7 +61,6 @@ export default function AdminReviewsPage() {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
-      console.log("🔍 Fetching reviews...");
 
       const { data, error } = await supabase
         .from("guest_reviews")
@@ -80,7 +81,6 @@ export default function AdminReviewsPage() {
         .order("created_at", { ascending: false }); // Then by newest first
 
       if (error) throw error;
-      console.log("✅ Successfully fetched reviews:", data?.length || 0);
       setReviews(data || []);
     } catch (error) {
       console.error("❌ Error fetching reviews:", error);
@@ -136,10 +136,16 @@ export default function AdminReviewsPage() {
               rejectionReason || "Review does not meet our guidelines",
           };
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestBody),
       });
@@ -164,17 +170,13 @@ export default function AdminReviewsPage() {
 
       // Show success message
       if (approved) {
-        alert("Review approved and user notified via email!");
+        toast.success("Review Approved", "User notified via email.");
       } else {
-        alert("Review rejected and user notified via email with feedback!");
+        toast.success("Review Rejected", "User notified via email with feedback.");
       }
     } catch (error) {
       console.error("Error updating review status:", error);
-      alert(
-        `Failed to update review status: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      toast.error("Failed to update review status", "Please try again.");
     } finally {
       setUpdating(null);
     }
@@ -321,7 +323,7 @@ export default function AdminReviewsPage() {
                 <button
                   key={tab.key}
                   onClick={() =>
-                    setFilter(tab.key as "all" | "approved" | "pending")
+                    setFilter(tab.key as "all" | "approved" | "pending" | "flagged")
                   }
                   className={`${
                     filter === tab.key
@@ -832,7 +834,7 @@ export default function AdminReviewsPage() {
                     setRejectionModal(null);
                     setRejectionReason("");
                   } else {
-                    alert("Please provide a rejection reason");
+                    toast.warning("Rejection Reason Required", "Please provide a reason for rejection.");
                   }
                 }}
                 disabled={!rejectionReason.trim()}

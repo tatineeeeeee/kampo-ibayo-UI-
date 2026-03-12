@@ -71,13 +71,11 @@ const ReviewSystem = ({
         setLoading(true);
         setError(null);
 
-        console.log("🔍 Fetching reviews for page:", page);
 
         // Calculate offset for pagination
         const offset = (page - 1) * reviewsPerPage;
 
         // First, let's try a simple query to test basic functionality
-        console.log("📊 Testing basic reviews query...");
         const { data: testData, error: testError } = await supabase
           .from("guest_reviews")
           .select("id, guest_name, rating, review_text, approved, created_at")
@@ -87,18 +85,12 @@ const ReviewSystem = ({
         if (testError) {
           console.error("❌ Basic query failed:", testError);
         } else {
-          console.log(
-            "✅ Basic query successful, found",
-            testData?.length,
-            "approved reviews"
-          );
         }
 
         // First, try to fetch reviews with photos
         let reviewsData, reviewsError, count;
 
         try {
-          console.log("📸 Attempting to fetch reviews with photos...");
 
           // Show ALL approved reviews, sorted by rating (highest first) for authenticity
           // This follows industry standards (Airbnb, Booking.com, Google Reviews)
@@ -137,11 +129,6 @@ const ReviewSystem = ({
           if (error) {
             console.error("❌ Photos query failed:", error);
           } else {
-            console.log(
-              "✅ Photos query successful, found",
-              data?.length,
-              "reviews"
-            );
 
             // For homepage, prioritize reviews with photos within each rating tier
             if (!showPagination && data) {
@@ -171,18 +158,9 @@ const ReviewSystem = ({
               ].slice(0, limit);
 
               reviewsData = prioritized;
-              console.log(
-                "🎯 Homepage: Showing",
-                prioritized.length,
-                "reviews (all ratings, highest first, photos prioritized)"
-              );
             }
           }
         } catch (photoError) {
-          console.log(
-            "❌ Photos query crashed, falling back to basic query:",
-            photoError
-          );
 
           // Fallback to basic query without photos
           const {
@@ -200,10 +178,6 @@ const ReviewSystem = ({
           reviewsError = error;
           count = reviewCount;
 
-          console.log("📝 Fallback query result:", {
-            data: data?.length,
-            error,
-          });
         }
 
         if (reviewsError) {

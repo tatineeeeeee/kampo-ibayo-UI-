@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Download, Mail, Loader2 } from "lucide-react";
 import { useToast } from "./Toast";
+import { supabase } from "@/app/supabaseClient";
 import { Tables } from "../../database.types";
 
 type Booking = Tables<"bookings">;
@@ -32,12 +33,22 @@ export function ReceiptManager({
     setIsDownloading(true);
 
     try {
-      console.log(`📄 Downloading receipt for booking ${booking.id}...`);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast({
+          type: "error",
+          title: "Authentication Error",
+          message: "You must be logged in to download a receipt.",
+          duration: 5000,
+        });
+        return;
+      }
 
       const response = await fetch("/api/user/download-receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId: booking.id,
@@ -74,9 +85,6 @@ export function ReceiptManager({
         duration: 4000,
       });
 
-      console.log(
-        `✅ Receipt downloaded successfully for booking ${booking.id}`
-      );
     } catch (error) {
       console.error("Receipt download error:", error);
       showToast({
@@ -97,14 +105,22 @@ export function ReceiptManager({
     setIsEmailing(true);
 
     try {
-      console.log(
-        `📧 Emailing receipt for booking ${booking.id} to ${userEmail}...`
-      );
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast({
+          type: "error",
+          title: "Authentication Error",
+          message: "You must be logged in to email a receipt.",
+          duration: 5000,
+        });
+        return;
+      }
 
       const response = await fetch("/api/user/generate-receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId: booking.id,
@@ -131,9 +147,6 @@ export function ReceiptManager({
         duration: 5000,
       });
 
-      console.log(
-        `✅ Receipt emailed successfully for booking ${booking.id} to ${userEmail}`
-      );
     } catch (error) {
       console.error("Email receipt error:", error);
       showToast({

@@ -1,19 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createUserCancellationConfirmationEmail, createUserCancellationAdminNotification, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
 import { supabaseAdmin as supabase } from '@/app/utils/supabaseAdmin';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
-console.log('🔥 CANCEL BOOKING API ROUTE FILE LOADED 🔥');
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚨🚨🚨 CANCEL BOOKING API CALLED 🚨🚨🚨');
-    const body = await request.json();
-    const { bookingId, userId, cancellationReason } = body;
-    console.log('📝 Cancel request data:', { bookingId, userId, cancellationReason });
+    const auth = await validateAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
-    if (!bookingId || !userId) {
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`user-cancel:${ip}`, 5, 60_000)) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
+
+    const body = await request.json();
+    const { bookingId, cancellationReason } = body;
+    const userId = auth.user.authId;
+
+    if (!bookingId) {
       return NextResponse.json(
-        { success: false, error: 'Booking ID and User ID are required' },
+        { success: false, error: 'Booking ID is required' },
         { status: 400 }
       );
     }
@@ -61,13 +69,13 @@ export async function POST(request: NextRequest) {
     let refundResponse = null;
 
     if (booking.payment_status === 'paid' && booking.payment_intent_id) {
-      console.log('💰 Processing automatic refund for user cancellation');
 
       try {
         const refundApiResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/paymongo/process-refund`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
           },
           body: JSON.stringify({
             bookingId: booking.id,
@@ -79,7 +87,6 @@ export async function POST(request: NextRequest) {
 
         if (refundApiResponse.ok) {
           refundResponse = await refundApiResponse.json();
-          console.log('✅ Refund processed successfully:', refundResponse.refund_amount);
         } else {
           const refundError = await refundApiResponse.text();
           console.error('❌ Refund processing failed:', refundError);
@@ -116,8 +123,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ✨ NEW FEATURE: Auto-cancel any pending payment proofs for this booking
-    console.log(`PAYMENT PROOF AUTO-CANCEL STARTING FOR BOOKING ${bookingId}`);
-    console.log(`Auto-cancelling payment proofs for cancelled booking ${bookingId}`);
 
     try {
       // First, check what payment proofs exist for this booking
@@ -126,7 +131,6 @@ export async function POST(request: NextRequest) {
         .select('*')
         .eq('booking_id', bookingId);
 
-      console.log(`📋 Found ${existingProofs?.length || 0} payment proof(s) for booking ${bookingId}:`, existingProofs);
 
       if (fetchError) {
         console.error('❌ Error fetching existing payment proofs:', fetchError);
@@ -144,16 +148,12 @@ export async function POST(request: NextRequest) {
         .eq('status', 'pending') // Only cancel pending proofs - don't touch verified/rejected ones
         .select();
 
-      console.log(`🔄 Payment proof update result:`, { affectedProofs, proofUpdateError });
 
       if (proofUpdateError) {
         console.error('❌ Failed to update payment proof status:', proofUpdateError);
         // Don't fail the entire cancellation for this - it's not critical
       } else if (affectedProofs && affectedProofs.length > 0) {
-        console.log(`✅ Auto-cancelled ${affectedProofs.length} pending payment proof(s) for booking ${bookingId}`);
-        console.log(`📋 Updated payment proofs to rejected status:`, affectedProofs);
       } else {
-        console.log(`ℹ️ No pending payment proofs found for booking ${bookingId} - nothing to cancel`);
       }
     } catch (proofError) {
       console.error('❌ Payment proof update error:', proofError);
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       let refundDetails: RefundDetails | undefined = undefined;
 
       // Calculate what the refund would be based on timing policy
-      const downPayment = booking.total_amount * 0.5;
+      const downPayment = booking.payment_type === 'full' ? booking.total_amount : booking.total_amount * 0.5;
       const checkInDate = new Date(booking.check_in_date);
       const currentTime = new Date();
       const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
@@ -226,13 +226,10 @@ export async function POST(request: NextRequest) {
       };
 
       // Send enhanced confirmation email to guest
-      console.log('📧 Sending cancellation confirmation email to:', booking.guest_email);
       const guestEmail = createUserCancellationConfirmationEmail(cancellationData);
       guestEmailResult = await sendEmail(guestEmail);
-      console.log('📤 Guest email result:', guestEmailResult);
 
       // Send notification email to admin with cancellation reason  
-      console.log('🚨 Sending admin notification email');
       const adminBookingDetails = {
         bookingId: booking.id.toString(),
         guestName: booking.guest_name,
@@ -254,19 +251,16 @@ export async function POST(request: NextRequest) {
       };
       const adminEmail = createUserCancellationAdminNotification(adminBookingDetails, cancellationReason);
       adminEmailResult = await sendEmail(adminEmail);
-      console.log('📤 Admin email result:', adminEmailResult);
     } else {
-      console.log('⚠️ No email sent - guest_email is missing or empty:', booking.guest_email);
     }
 
     // Send SMS notification if phone number is available (non-blocking)
     let smsResult = null;
     if (booking.guest_phone) {
       try {
-        console.log('📱 Sending cancellation SMS to:', booking.guest_phone);
         const smsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sms/booking-cancelled`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
           body: JSON.stringify({
             phoneNumber: booking.guest_phone,
             bookingDetails: {
@@ -284,7 +278,6 @@ export async function POST(request: NextRequest) {
 
         if (smsResponse.ok) {
           smsResult = await smsResponse.json();
-          console.log('✅ Cancellation SMS sent successfully');
         }
       } catch (smsError) {
         console.error('❌ Failed to send cancellation SMS (non-blocking):', smsError);

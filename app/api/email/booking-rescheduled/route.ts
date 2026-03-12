@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/app/utils/emailService";
 import { sendSMS, createBookingRescheduleSMS } from "@/app/utils/smsService";
+import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from "@/app/utils/serverAuth";
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateInternalOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const {
       bookingId,
       guestName,

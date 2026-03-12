@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
-export async function GET() {
-  console.log('✅ Mark balance paid API - GET method working');
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   return NextResponse.json({
     message: 'Mark balance paid API is available',
     timestamp: new Date().toISOString(),
@@ -11,12 +19,18 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🚀 Mark balance paid API - POST method called');
-  
+
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`mark-balance:${ip}`, 10, 60_000)) {
+      return NextResponse.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
+
     const body = await request.json();
-    console.log('📥 Received data:', body);
-    
+
     const { bookingId, balanceAmount, totalAmount, paymentMethod } = body;
     
     // Convert to numbers
@@ -24,7 +38,6 @@ export async function POST(request: NextRequest) {
     const numBalanceAmount = parseFloat(String(balanceAmount));
     const numTotalAmount = parseFloat(String(totalAmount));
     
-    console.log('🔢 Converted values:', { numBookingId, numBalanceAmount, numTotalAmount });
     
     // Validate numbers
     if (isNaN(numBookingId) || isNaN(numBalanceAmount) || isNaN(numTotalAmount)) {
@@ -43,7 +56,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Get original payment proof by booking_id
-    console.log('🔍 Finding original payment proof for booking:', numBookingId);
     
     const { data: paymentProofs, error: paymentError } = await supabaseAdmin
       .from('payment_proofs')
@@ -78,7 +90,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('✅ Found original payment:', originalPayment.id);
     
     // Get booking
     const { data: booking, error: bookingError } = await supabaseAdmin
@@ -95,7 +106,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('✅ Found booking:', booking);
     
     // Validate booking
     if (booking.status === 'cancelled') {
@@ -123,7 +133,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Create balance payment
-    console.log('💾 Creating balance payment...');
     const { data: balancePayment, error: insertError } = await supabaseAdmin
       .from('payment_proofs')
       .insert({
@@ -148,23 +157,32 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('✅ Balance payment created:', balancePayment.id);
     
-    // Update booking
-    const { error: updateError } = await supabaseAdmin
+    // Atomic update: only mark paid if not already paid (prevents race conditions)
+    const { data: bookingUpdated, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update({
         payment_status: 'paid',
         payment_amount: numTotalAmount,
         updated_at: new Date().toISOString()
       })
-      .eq('id', numBookingId);
-      
+      .eq('id', numBookingId)
+      .neq('payment_status', 'paid')
+      .select('id');
+
     if (updateError) {
       console.warn('⚠️ Booking update warning:', updateError);
     }
+
+    if (!bookingUpdated || bookingUpdated.length === 0) {
+      // Race condition: another admin already marked balance paid — clean up
+      await supabaseAdmin.from('payment_proofs').delete().eq('id', balancePayment.id);
+      return NextResponse.json(
+        { error: 'Balance was already marked as paid by another admin' },
+        { status: 409 }
+      );
+    }
     
-    console.log('🎉 Balance payment completed successfully');
     
     return NextResponse.json({
       success: true,
@@ -180,10 +198,8 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : 'No stack trace'
     });
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        details: error instanceof Error ? error.stack : 'No additional details'
+      {
+        error: 'Internal server error'
       },
       { status: 500 }
     );

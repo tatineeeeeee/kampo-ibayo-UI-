@@ -249,7 +249,7 @@ function BookingPage() {
           try {
             const { data: profileData, error: profileError } = await supabase
               .from("users")
-              .select("name, email, phone")
+              .select("full_name, email, phone")
               .eq("auth_id", user.id)
               .single();
 
@@ -257,7 +257,7 @@ function BookingPage() {
               // Use database data (more reliable)
               setFormData((prevData) => ({
                 ...prevData,
-                name: profileData.name || prevData.name,
+                name: profileData.full_name || prevData.name,
                 email: profileData.email || user.email || prevData.email,
                 phone: profileData.phone || prevData.phone,
               }));
@@ -873,19 +873,12 @@ function BookingPage() {
         );
       } else {
         // Booking created successfully - redirect to manual payment upload
-        console.log("Booking created successfully:", data);
 
         // Show success message
         success("Booking Created!", "Redirecting to payment upload...");
 
         // Multiple redirect attempts to ensure reliability
         const uploadUrl = `/upload-payment-proof?bookingId=${data.id}`;
-        console.log(
-          "Redirecting to upload page with booking ID:",
-          data.id,
-          "URL:",
-          uploadUrl,
-        );
 
         try {
           // Primary redirect method
@@ -933,12 +926,14 @@ function BookingPage() {
               email: bookingData.guest_email,
             };
 
+            const { data: { session: emailSession } } = await supabase.auth.getSession();
             const emailResponse = await fetch(
               "/api/email/booking-confirmation",
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
+                  "Authorization": `Bearer ${emailSession?.access_token}`,
                 },
                 body: JSON.stringify({
                   bookingDetails: emailBookingDetails,
@@ -2120,7 +2115,6 @@ function BookingPage() {
                     key="half-payment"
                     type="button"
                     onClick={() => {
-                      console.log("Setting payment type to half"); // Debug log
                       setPaymentType("half");
                     }}
                     className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
@@ -2160,7 +2154,6 @@ function BookingPage() {
                     key="full-payment"
                     type="button"
                     onClick={() => {
-                      console.log("Setting payment type to full"); // Debug log
                       setPaymentType("full");
                     }}
                     className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${

@@ -138,7 +138,6 @@ export async function cleanupOldCompletedBookings(userId: string): Promise<numbe
       return 0;
     }
 
-    console.log(`Expired ${bookingsToExpire.length} old completed bookings for user ${userId}`);
     return bookingsToExpire.length;
 
   } catch (error) {
@@ -220,7 +219,6 @@ export async function checkAndExpirePendingBookings(): Promise<BookingExpiration
       return [];
     }
 
-    console.log('Found expired bookings:', expiredBookings.length, 'bookings to expire');
 
     // Update the expired bookings to "cancelled" status
     const bookingIds = expiredBookings.map(booking => booking.id);
@@ -256,7 +254,6 @@ export async function checkAndExpirePendingBookings(): Promise<BookingExpiration
       };
     });
 
-    console.log(`Auto-cancelled ${expiredBookingsInfo.length} booking(s) that were pending for 7+ days`);
     return expiredBookingsInfo;
 
   } catch (error) {
@@ -315,13 +312,10 @@ export async function manuallyExpireBookings() {
   const expiredBookings = await checkAndExpirePendingBookings();
 
   if (expiredBookings.length > 0) {
-    console.log('📋 Manual Expiration Summary:');
     expiredBookings.forEach(booking => {
-      console.log(`- Booking #${booking.id} (${booking.guest_name}) - Pending for ${booking.daysPending} days`);
     });
     return `Successfully expired ${expiredBookings.length} booking(s)`;
   } else {
-    console.log('✅ No bookings found that need to be expired');
     return 'No bookings found that need to be expired';
   }
 }
@@ -342,10 +336,7 @@ export async function checkBookingTableColumns() {
     }
 
     if (data && data.length > 0) {
-      console.log('📋 Bookings table columns:', Object.keys(data[0]));
-      console.log('📋 Sample booking data:', data[0]);
     } else {
-      console.log('📋 No bookings found in table');
     }
   } catch (error) {
     console.error('Error in checkBookingTableColumns:', error);

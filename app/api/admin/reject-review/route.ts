@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { reviewId, rejectionReason } = await request.json();
 
     if (!reviewId || !rejectionReason) {
@@ -10,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get review details with user email
-    const { data: review, error: reviewError } = await supabase
+    const { data: review, error: reviewError } = await supabaseAdmin
       .from('guest_reviews')
       .select(`
         id, 
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Update review status to rejected and increment resubmission count
     const newResubmissionCount = (review.resubmission_count || 0) + 1;
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('guest_reviews')
       .update({ 
         approved: false,
@@ -49,6 +53,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
       },
       body: JSON.stringify({
         guestName: review.guest_name,

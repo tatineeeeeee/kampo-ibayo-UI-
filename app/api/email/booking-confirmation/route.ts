@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createBookingConfirmationEmail, createAdminNotificationEmail, BookingDetails } from '@/app/utils/emailService';
 import { sendSMS, createBookingConfirmationSMS } from '@/app/utils/smsService';
+import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 interface BookingConfirmationRequest {
   bookingDetails: BookingDetails;
@@ -9,6 +10,15 @@ interface BookingConfirmationRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Accept internal secret (server-to-server) OR any authenticated user (regular user booking + admin walk-in)
+    const internalSecret = request.headers.get('x-internal-secret');
+    const isInternal = internalSecret && process.env.INTERNAL_API_SECRET && internalSecret === process.env.INTERNAL_API_SECRET;
+
+    if (!isInternal) {
+      const auth = await validateAuth(request);
+      if (!auth.success) return authErrorResponse(auth as AuthFailure);
+    }
+
     const body = await request.json();
     const { bookingDetails, phoneNumber } = body as BookingConfirmationRequest;
 
@@ -20,8 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📧 Sending booking confirmation for:', bookingDetails.bookingId);
-    console.log('📱 SMS Phone number provided:', phoneNumber ? 'Yes' : 'No');
 
     // Send confirmation email to guest
     const guestEmail = createBookingConfirmationEmail(bookingDetails);
@@ -35,14 +43,12 @@ export async function POST(request: NextRequest) {
     let smsResult = null;
     if (phoneNumber) {
       try {
-        console.log('📱 Sending SMS confirmation to:', phoneNumber);
         const smsMessage = createBookingConfirmationSMS(
           bookingDetails.bookingId,
           bookingDetails.guestName,
           bookingDetails.checkIn
         );
         smsResult = await sendSMS({ phone: phoneNumber, message: smsMessage });
-        console.log('📱 SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
       } catch (smsError) {
         console.error('📱 SMS Error (non-critical):', smsError);
         smsResult = { success: false, error: 'SMS service temporarily unavailable' };

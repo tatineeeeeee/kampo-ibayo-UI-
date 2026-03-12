@@ -349,17 +349,24 @@ export default function WalkInBookingPage() {
       // Optionally send confirmation email if guest email was provided
       if (guestEmail.trim() && data) {
         try {
+          const { data: { session: emailSession } } = await supabase.auth.getSession();
           await fetch("/api/email/booking-confirmation", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${emailSession?.access_token}`,
+            },
             body: JSON.stringify({
-              to: guestEmail.trim(),
-              guestName: guestName.trim(),
-              bookingId: data.id,
-              checkIn: selectedCheckIn,
-              checkOut: selectedCheckOut,
-              totalAmount: totalAmount,
-              numberOfGuests: guestCount,
+              bookingDetails: {
+                bookingId: data.id.toString(),
+                guestName: guestName.trim(),
+                checkIn: selectedCheckIn,
+                checkOut: selectedCheckOut,
+                guests: guestCount,
+                totalAmount: totalAmount,
+                email: guestEmail.trim(),
+              },
+              phoneNumber: guestPhone.trim() || undefined,
             }),
           });
         } catch (emailError) {

@@ -184,7 +184,6 @@ export default function SettingsPage() {
           .single();
 
         if (!userError && userRecord) {
-          console.log("📱 User database record loaded:", userRecord);
         } else {
           console.warn("⚠️ Could not load user database record:", userError);
         }
@@ -194,7 +193,6 @@ export default function SettingsPage() {
         const dbPhone = userRecord?.phone || "";
         const finalPhone = dbPhone || authPhone; // Database phone takes priority
 
-        console.log("📱 Phone loading:", { authPhone, dbPhone, finalPhone });
 
         setProfileData({
           name: data.session.user.user_metadata?.name || "",
@@ -318,7 +316,7 @@ export default function SettingsPage() {
         const { error: dbError } = await supabase
           .from("users")
           .update({
-            name: profileData.name,
+            full_name: profileData.name,
             phone: cleanedPhone,
           })
           .eq("auth_id", user.id);
@@ -368,6 +366,24 @@ export default function SettingsPage() {
     try {
       // Validate session with retry logic
       await validateAndRefreshSession();
+
+      // Verify current password before allowing change
+      if (!user?.email) {
+        showError("Unable to verify your identity. Please log in again.");
+        setSaving(false);
+        return;
+      }
+
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (verifyError) {
+        showError("Current password is incorrect.");
+        setSaving(false);
+        return;
+      }
 
       const { error } = await supabase.auth.updateUser({
         password: passwordData.newPassword,
@@ -507,11 +523,18 @@ export default function SettingsPage() {
 
       info("Processing account deletion...");
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        return;
+      }
+
       // Call the account deletion API
       const response = await fetch("/api/user/delete-account", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           userId: user.id,
@@ -552,7 +575,6 @@ export default function SettingsPage() {
 
         // Clear ALL localStorage and sessionStorage data
         if (result.clearStorage) {
-          console.log("🧹 Clearing all browser storage after account deletion");
           localStorage.clear();
           sessionStorage.clear();
 
@@ -698,10 +720,18 @@ export default function SettingsPage() {
         );
       } else if (format === "pdf") {
         // PDF Export - call API to generate PDF
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          showError("Authentication required. Please log in again.");
+          setExporting(false);
+          return;
+        }
+
         const response = await fetch("/api/user/export-pdf", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             userId: user.id,

@@ -7,22 +7,21 @@ import { supabase } from '../supabaseClient';
  */
 export async function validateUserAction(): Promise<{ isValid: boolean; userRole?: string | null }> {
   try {
-    // Get current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session?.user) {
+    // Verify user with Supabase server (not just local JWT)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return { isValid: false };
     }
 
     // Check if user still exists in database
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("role, name, email")
-      .eq("auth_id", session.user.id)
+      .select("role, full_name, email")
+      .eq("auth_id", user.id)
       .single();
 
     if (userError || !userData) {
-      console.log("🚫 Action blocked: User account has been deleted");
       
       // Force logout
       await supabase.auth.signOut();
@@ -58,19 +57,4 @@ export function withUserValidation<T extends unknown[], R>(
     
     return fn(...args);
   };
-}
-
-/**
- * React hook for periodic user validation (useful for long-running sessions)
- */
-export function usePeriodicValidation(intervalMs: number = 30000) { // Check every 30 seconds
-  if (typeof window !== 'undefined') {
-    setInterval(async () => {
-      const validation = await validateUserAction();
-      if (!validation.isValid) {
-        // User will be redirected automatically by validateUserAction
-        return;
-      }
-    }, intervalMs);
-  }
 }

@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 import { Tables } from '../../../../database.types';
 
 // Type definition for consolidated payment data
@@ -46,8 +47,10 @@ interface ConsolidatedPayment {
   }>;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
     // Step 1: Get all bookings (main data source)
     const { data: bookings, error: bookingsError } = await supabaseAdmin
       .from('bookings')
@@ -103,16 +106,6 @@ export async function GET() {
 
     bookings.forEach((booking) => {
       const proofs = allProofsByBookingId.get(booking.id) || [];
-
-      // Debug logging for payment type issues
-      if (!booking.payment_type) {
-        console.log(`⚠️ Missing payment_type for booking ${booking.id}:`, {
-          id: booking.id,
-          payment_type: booking.payment_type,
-          payment_amount: booking.payment_amount,
-          total_amount: booking.total_amount
-        });
-      }
 
       // Separate payment types
       const originalProof = proofs.find(p => p.payment_method !== 'cash_on_arrival') || null;
@@ -216,8 +209,7 @@ export async function GET() {
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }

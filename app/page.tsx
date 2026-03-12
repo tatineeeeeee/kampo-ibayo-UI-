@@ -189,7 +189,6 @@ const Navbar = () => {
                   <button
                     onClick={async () => {
                       try {
-                        console.log("🚪 Navbar: Logout initiated");
 
                         // Force complete signout
                         await supabase.auth.signOut();
@@ -328,7 +327,6 @@ const Navbar = () => {
                 <button
                   onClick={async () => {
                     try {
-                      console.log("🚪 Mobile: Logout initiated");
 
                       // Force complete signout
                       await supabase.auth.signOut();
@@ -392,10 +390,6 @@ function Home() {
   const [openAmenityIndex, setOpenAmenityIndex] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
-    console.log(
-      "🗓️ Initializing currentMonth to:",
-      now.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-    );
     return now;
   });
   const [loading, setLoading] = useState(false);
@@ -442,15 +436,6 @@ function Home() {
         return `${y}-${m}-${da}`;
       };
 
-      console.log(
-        `🔍 Fetching bookings for month: ${month.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })}`,
-      );
-      console.log(
-        `📅 Date range: ${toYMD(startOfMonth)} to ${toYMD(endOfMonth)}`,
-      );
 
       // HOMEPAGE: Show BOTH confirmed AND pending bookings for availability display
       const { data: bookings, error } = await supabase
@@ -478,7 +463,6 @@ function Home() {
         return;
       }
 
-      console.log("📅 Fetched bookings:", bookings);
 
       // Store the actual booking data for date type determination
       setExistingBookings(bookings || []);
@@ -494,11 +478,6 @@ function Home() {
         const checkInDate = toYMD(checkIn);
         const checkOutDate = toYMD(checkOut);
 
-        console.log(
-          `🔒 Processing booking ${
-            bookingIndex + 1
-          }: check-in ${checkInDate}, check-out ${checkOutDate}`,
-        );
 
         // Count check-ins for the displayed month
         if (
@@ -507,11 +486,6 @@ function Home() {
         ) {
           const prev = checkInCounts.get(checkInDate) || 0;
           checkInCounts.set(checkInDate, prev + 1);
-          console.log(
-            `� Check-in ${checkInDate}: ${prev + 1} arrivals (from booking ${
-              bookingIndex + 1
-            })`,
-          );
         }
 
         // Count check-outs for the displayed month (same-day turnover availability)
@@ -521,11 +495,6 @@ function Home() {
         ) {
           const prevCheckOuts = checkOutCounts.get(checkOutDate) || 0;
           checkOutCounts.set(checkOutDate, prevCheckOuts + 1);
-          console.log(
-            `📤 Check-out ${checkOutDate}: ${
-              prevCheckOuts + 1
-            } departures (from booking ${bookingIndex + 1})`,
-          );
         }
       });
 
@@ -543,11 +512,6 @@ function Home() {
         countsObj[k] = (countsObj[k] || 0) + v; // Add check-outs to show total daily activity
       }
 
-      console.log("📊 Check-in counts for month (for UI display):", countsObj);
-      console.log(
-        "� Check-out counts for month (for same-day turnover):",
-        Object.fromEntries(checkOutCounts),
-      );
       // setDayCounts(countsObj); // Removed since we're using React DatePicker
 
       // Only mark dates as unavailable when check-in capacity (2) is reached or exceeded
@@ -555,10 +519,6 @@ function Home() {
         .filter(([, count]) => count >= 2)
         .map(([date]) => date);
 
-      console.log(
-        "🚫 Fully booked (check-in capacity reached) dates:",
-        bookedArray,
-      );
 
       // Cache the result (we can keep for future optimization)
       setMonthCache((prev) => ({ ...prev, [monthKey]: bookedArray }));
@@ -574,10 +534,6 @@ function Home() {
   // Fetch booked dates when modal opens or month changes
   useEffect(() => {
     if (showAvailabilityModal) {
-      console.log(
-        "🚀 Modal opened or month changed, fetching data for:",
-        currentMonth,
-      );
       fetchBookedDates(currentMonth);
     }
   }, [showAvailabilityModal, currentMonth, fetchBookedDates]);
@@ -781,21 +737,9 @@ function Home() {
     const checkMaintenanceMode = async () => {
       try {
         const isActive = await isMaintenanceMode();
-        console.log(
-          "🏠 Homepage maintenance check:",
-          isActive,
-          "Previous:",
-          lastKnownState,
-        ); // Debug log
 
         // Only update if state actually changed
         if (isActive !== lastKnownState) {
-          console.log(
-            "🏠 Maintenance state changed from",
-            lastKnownState,
-            "to",
-            isActive,
-          );
           setMaintenanceActive(isActive);
           lastKnownState = isActive;
         }
@@ -810,7 +754,6 @@ function Home() {
 
     // Listen for settings changes from admin panel (same session only)
     const handleSettingsChange = () => {
-      console.log("🏠 Homepage received maintenance settings change event"); // Debug log
       checkMaintenanceMode();
     };
 
@@ -2417,27 +2360,21 @@ function Home() {
                     Contact Details
                   </h3>
                   <div className="space-y-1 sm:space-y-2">
-                    <a
-                      href="tel:+639662815123"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-green-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
-                    >
-                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg min-h-[44px] px-2 -mx-2">
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
                       +63 966 281 5123
-                    </a>
-                    <a
-                      href="mailto:kampoibayo@gmail.com"
-                      className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
-                    >
-                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg min-h-[44px] px-2 -mx-2">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
                       kampoibayo@gmail.com
-                    </a>
+                    </div>
                     <a
                       href="https://www.facebook.com/profile.php?id=61562942638753"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg hover:text-blue-400 transition-colors group min-h-[44px] touch-manipulation rounded-lg hover:bg-gray-700/50 px-2 -mx-2"
                     >
-                      <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                      <Facebook className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
                       Kampo Ibayo (Facebook)
                     </a>
                   </div>
@@ -2476,7 +2413,7 @@ function Home() {
                   rel="noopener noreferrer"
                   className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-lg shadow-lg hover:shadow-xl touch-manipulation min-h-[48px]"
                 >
-                  <MessageCircleHeart className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
                   Message us on Facebook
                 </a>
               </div>
@@ -2602,7 +2539,6 @@ function Home() {
                             <button
                               onClick={async () => {
                                 try {
-                                  console.log("🚪 Footer: Logout initiated");
 
                                   // Sign out from Supabase
                                   await supabase.auth.signOut();

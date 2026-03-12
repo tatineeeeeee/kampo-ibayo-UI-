@@ -1212,7 +1212,6 @@ export class ReactPdfReceiptService {
         return false;
       }
 
-      console.log("✅ Receipt data validation passed");
       return true;
     } catch (error) {
       console.error("❌ Receipt validation error:", error);
@@ -1238,7 +1237,6 @@ export class ReactPdfReceiptService {
         },
       });
 
-      console.log("✅ QR code generated successfully");
       return qrDataUrl;
     } catch (error) {
       console.error("❌ QR code generation failed:", error);
@@ -1251,12 +1249,6 @@ export class ReactPdfReceiptService {
    */
   static async generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
     try {
-      console.log("🚀 Starting professional PDF generation...");
-      console.log("📊 Environment:", {
-        NODE_ENV: process.env.NODE_ENV,
-        VERCEL: !!process.env.VERCEL,
-        timestamp: new Date().toISOString(),
-      });
 
       // Validate data before generation
       if (!this.validateReceiptData(data)) {
@@ -1279,8 +1271,6 @@ export class ReactPdfReceiptService {
       const arrayBuffer = await pdfBlob.arrayBuffer();
       const pdfBuffer = Buffer.from(arrayBuffer);
 
-      console.log("✅ Professional PDF generation successful!");
-      console.log("📊 PDF size:", pdfBuffer.length, "bytes");
 
       if (pdfBuffer.length < 10000) {
         console.warn(

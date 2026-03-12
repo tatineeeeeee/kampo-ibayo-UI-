@@ -19,13 +19,16 @@ export function withTimeout<T>(
   timeoutMs: number = 5000, 
   errorMessage?: string
 ): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       reject(new TimeoutError(errorMessage || `Operation timed out after ${timeoutMs}ms`));
     }, timeoutMs);
   });
 
-  return Promise.race([promise, timeoutPromise]);
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
 }
 
 /**
@@ -71,7 +74,6 @@ export async function safeLogout(supabase: { auth: { signOut: (options?: { scope
       timeoutMs,
       'Logout operation timed out'
     );
-    console.log('✅ Supabase logout successful');
   } catch (error) {
     if (error instanceof TimeoutError) {
       console.warn('⏰ Logout timed out, proceeding with local cleanup');
@@ -81,9 +83,15 @@ export async function safeLogout(supabase: { auth: { signOut: (options?: { scope
     // Continue with cleanup regardless of Supabase response
   }
 
-  // Always clear local storage
+  // Clear auth-related storage only (not all user preferences)
   if (typeof window !== 'undefined') {
-    localStorage.clear();
+    localStorage.removeItem('supabase.auth.token');
+    // Clear any Supabase-specific auth keys
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+      }
+    }
     sessionStorage.clear();
   }
 }

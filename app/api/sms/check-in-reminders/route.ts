@@ -1,17 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { sendSMS, createBookingReminderSMS, createReminder12HourSMS, createReminder3HourSMS, createCheckInDaySMS } from '@/app/utils/smsService';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateCronOrAdmin, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 // Reminder types: 24h, 12h, 3h, checkin (exact 3PM)
 type ReminderType = '24h' | '12h' | '3h' | 'checkin';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await validateCronOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     // Get reminder type from query params or body
     const url = new URL(request.url);
     const reminderType = (url.searchParams.get('type') as ReminderType) || '24h';
 
-    console.log(`🔄 Running ${reminderType} check-in reminder job...`);
 
     // Calculate the target date based on reminder type
     const now = new Date();
@@ -40,10 +43,9 @@ export async function POST(request: Request) {
       targetDateString = localNow.toISOString().split('T')[0];
     }
 
-    console.log(`📅 Checking for bookings with check-in date: ${targetDateString} (${reminderType} reminder)`);
 
     // Get all confirmed bookings with check-in date matching target
-    const { data: bookings, error: fetchError } = await supabase
+    const { data: bookings, error: fetchError } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('status', 'confirmed')
@@ -58,7 +60,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`📱 Found ${bookings?.length || 0} bookings for ${reminderType} reminder`);
 
     if (!bookings || bookings.length === 0) {
       return NextResponse.json({
@@ -96,7 +97,6 @@ export async function POST(request: Request) {
           reminderMessage = createBookingReminderSMS(booking.guest_name, checkInDate);
         }
 
-        console.log(`📱 Sending ${reminderType} reminder to ${booking.guest_name} at ${booking.guest_phone}`);
 
         const smsResult = await sendSMS({
           phone: booking.guest_phone as string,
@@ -105,7 +105,6 @@ export async function POST(request: Request) {
 
         if (smsResult.success) {
           successCount++;
-          console.log(`✅ ${reminderType} reminder sent to ${booking.guest_name}`);
         } else {
           errorCount++;
           console.error(`❌ Failed to send ${reminderType} reminder to ${booking.guest_name}:`, smsResult.error);
@@ -138,7 +137,6 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log(`✅ ${reminderType} reminder job complete: ${successCount} sent, ${errorCount} failed`);
 
     return NextResponse.json({
       success: true,
@@ -163,13 +161,16 @@ export async function POST(request: Request) {
 }
 
 // GET method to check what reminders would be sent (for testing)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await validateCronOrAdmin(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDateString = tomorrow.toISOString().split('T')[0];
 
-    const { data: bookings, error } = await supabase
+    const { data: bookings, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('status', 'confirmed')

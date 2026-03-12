@@ -234,7 +234,6 @@ export const useAdminBookingStats = () => {
     const debouncedRefresh = () => {
       if (refreshTimeout) clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(() => {
-        console.log('🔄 Booking change detected, refreshing admin stats...');
         fetchAdminBookingStats();
       }, 1000); // Debounce 1 second
     };

@@ -1,8 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { testEmailConnection } from '@/app/utils/emailService';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const result = await testEmailConnection();
     
     if (result.success) {

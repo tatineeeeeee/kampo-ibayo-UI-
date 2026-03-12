@@ -16,6 +16,7 @@ import {
 import { exportPaymentsCSV } from "../../utils/csvExport";
 import { exportPaymentsPDF } from "../../utils/pdfExport";
 import { useToastHelpers } from "../../components/Toast";
+import { supabase } from "@/app/supabaseClient";
 import { formatBookingNumber } from "../../utils/bookingNumber";
 
 interface Payment {
@@ -98,73 +99,39 @@ export default function PaymentsPage() {
   const [selectedPaymentHistory, setSelectedPaymentHistory] =
     useState<Payment | null>(null);
 
-  // Function to debug specific payment
-  const debugPayment = (payment: Payment) => {
-    console.group(`🔍 Payment Debug Analysis - ID: ${payment.id}`);
-    console.log("Basic Info:", {
-      id: payment.id,
-      bookingId: payment.booking_id,
-      user: payment.user,
-      status: payment.status,
-    });
-    console.log("Amount Analysis:", {
-      amount: payment.amount,
-      totalAmount: payment.total_amount,
-      paymentType: payment.payment_type,
-      difference: payment.total_amount
-        ? payment.total_amount - payment.amount
-        : "N/A",
-      isFullyPaid: payment.amount >= (payment.total_amount || 0),
-    });
-    console.log("Eligibility Check:", {
-      isHalfPayment: payment.payment_type === "half",
-      isVerified:
-        payment.status?.toLowerCase() === "paid" ||
-        payment.status?.toLowerCase() === "verified",
-      hasValidAmounts:
-        payment.total_amount &&
-        payment.amount &&
-        payment.total_amount > 0 &&
-        payment.amount > 0,
-      hasRemainingBalance:
-        payment.total_amount &&
-        payment.amount &&
-        payment.amount < payment.total_amount,
-      canMarkBalance: canMarkBalanceAsPaid(payment),
-    });
-    console.groupEnd();
-  };
 
   // Function to test API connectivity
   const testApiConnectivity = async () => {
     try {
-      console.log("🧪 Testing mark-balance-paid API connectivity...");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        return;
+      }
 
       // Test 1: GET on mark-balance-paid
-      console.log("1️⃣ Testing GET /api/admin/mark-balance-paid");
       const getResponse = await fetch("/api/admin/mark-balance-paid", {
         method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
       });
-      console.log("GET Response:", getResponse.status, getResponse.statusText);
 
-      if (getResponse.ok) {
-        const getData = await getResponse.json();
-        console.log("GET Data:", getData);
-      } else {
+      if (!getResponse.ok) {
         console.error("❌ GET test failed");
         showError("GET method test failed");
         return;
       }
 
       // Test 2: POST with real-world test data
-      console.log(
-        "2️⃣ Testing POST /api/admin/mark-balance-paid with realistic data",
-      );
       const testBookingId = 1; // Use a small number that should exist
       const testPaymentId = 1; // Use a small number that should exist
       const postResponse = await fetch("/api/admin/mark-balance-paid", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           bookingId: testBookingId,
           originalPaymentId: testPaymentId,
@@ -173,20 +140,12 @@ export default function PaymentsPage() {
           paymentMethod: "cash_on_arrival",
         }),
       });
-      console.log(
-        "POST Response:",
-        postResponse.status,
-        postResponse.statusText,
-      );
 
       if (postResponse.ok) {
-        const postData = await postResponse.json();
-        console.log("POST Data:", postData);
-        success("🎉 API endpoint is working! Test was successful.");
+        success("API endpoint is working! Test was successful.");
       } else {
         try {
           const errorText = await postResponse.text();
-          console.log("POST Error Response:", errorText);
 
           // Parse the error if it's JSON
           let errorData;
@@ -197,17 +156,10 @@ export default function PaymentsPage() {
           }
 
           if (postResponse.status === 404 && errorText.includes("not found")) {
-            console.log(
-              "✅ POST method reached API but returned expected validation error (test records not found)",
-            );
             success(
               "🎉 API endpoint is working correctly! Ready for real data.",
             );
           } else if (postResponse.status === 400) {
-            console.log(
-              "✅ POST method working - returned validation error as expected:",
-              errorData.error,
-            );
             success(
               "🎉 API endpoint is working correctly! Validation is functioning.",
             );
@@ -235,8 +187,17 @@ export default function PaymentsPage() {
   // Function to fix missing payment types
   const fixMissingPaymentTypes = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        return;
+      }
+
       const response = await fetch("/api/admin/fix-payment-types", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
       });
 
       if (response.ok) {
@@ -280,12 +241,12 @@ export default function PaymentsPage() {
     setProcessingBalance(true);
 
     try {
-      console.log("🔄 Marking balance as paid:", {
-        bookingId: payment.booking_id,
-        balanceAmount,
-        totalAmount: payment.total_amount,
-        originalAmount: payment.original_amount,
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        setProcessingBalance(false);
+        return;
+      }
 
       const requestBody = {
         bookingId: Number(payment.booking_id),
@@ -294,17 +255,16 @@ export default function PaymentsPage() {
         paymentMethod: "cash_on_arrival",
       };
 
-      console.log("📤 Sending request:", requestBody);
 
       const response = await fetch("/api/admin/mark-balance-paid", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestBody),
       });
 
-      console.log("📡 Response:", response.status, response.statusText);
 
       if (!response.ok) {
         let errorMessage = "Failed to mark balance as paid";
@@ -324,7 +284,6 @@ export default function PaymentsPage() {
 
       // Parse successful response
       const result = await response.json();
-      console.log("✅ Success:", result);
 
       success(
         `Balance of ₱${balanceAmount.toLocaleString()} marked as paid on arrival!`,
@@ -377,34 +336,6 @@ export default function PaymentsPage() {
       return false;
     }
 
-    // Only log debug info if conditions aren't met to reduce console spam
-    if (isHalfPayment && !hasRemainingBalance && payment.id) {
-      console.log(
-        `🔍 Payment ${payment.id} (Booking: ${payment.booking_id}) cannot be marked:`,
-        {
-          paymentType: payment.payment_type,
-          originalAmount: payment.original_amount,
-          totalAmount: payment.total_amount,
-          balanceAmount,
-          isOriginalVerified,
-          hasValidAmounts,
-          isOverpaid,
-          hasExistingBalancePayment,
-          isBookingCancelled,
-          reason: isBookingCancelled
-            ? "Booking is cancelled"
-            : hasExistingBalancePayment
-              ? "Balance payment already exists"
-              : isOverpaid
-                ? "OVERPAID - Customer paid more than total amount"
-                : (payment.original_amount || 0) === payment.total_amount
-                  ? "Already paid in full"
-                  : (payment.original_amount || 0) > (payment.total_amount || 0)
-                    ? "Overpaid"
-                    : "Invalid amounts or missing data",
-        },
-      );
-    }
 
     // Don't allow marking balance as paid for overpaid bookings, if balance already exists, or if booking is cancelled
     return (
@@ -526,7 +457,18 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     try {
-      const response = await fetch("/api/admin/payments");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError("Authentication required. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch("/api/admin/payments", {
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch payments");
       }
@@ -927,23 +869,6 @@ export default function PaymentsPage() {
                 PDF
               </button>
 
-              {/* Fix Payment Types Button */}
-              <button
-                onClick={fixMissingPaymentTypes}
-                className="inline-flex items-center px-3 py-1 border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md text-sm font-medium transition-colors"
-                title="Fix missing payment types"
-              >
-                🔧 Fix Types
-              </button>
-
-              {/* Test API Connectivity Button */}
-              <button
-                onClick={testApiConnectivity}
-                className="inline-flex items-center px-3 py-1 border border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md text-sm font-medium transition-colors"
-                title="Test API connectivity"
-              >
-                🧪 Test API
-              </button>
             </div>
           </div>
         </div>
@@ -1331,13 +1256,6 @@ export default function PaymentsPage() {
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                   OVERPAID
                                 </span>
-                                <button
-                                  onClick={() => debugPayment(payment)}
-                                  className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                                  title="Debug this payment"
-                                >
-                                  🔍
-                                </button>
                               </div>
                             );
                           }
@@ -1348,33 +1266,15 @@ export default function PaymentsPage() {
                               : 0;
                             if (balanceAmount <= 0) {
                               return (
-                                <div className="flex items-center gap-1">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    PAID IN FULL
-                                  </span>
-                                  <button
-                                    onClick={() => debugPayment(payment)}
-                                    className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                                    title="Debug this payment"
-                                  >
-                                    🔍
-                                  </button>
-                                </div>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  PAID IN FULL
+                                </span>
                               );
                             } else {
                               return (
-                                <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-400">
-                                    Balance: ₱{balanceAmount.toLocaleString()}
-                                  </span>
-                                  <button
-                                    onClick={() => debugPayment(payment)}
-                                    className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                                    title="Debug this payment"
-                                  >
-                                    🔍
-                                  </button>
-                                </div>
+                                <span className="text-xs text-gray-400">
+                                  Balance: ₱{balanceAmount.toLocaleString()}
+                                </span>
                               );
                             }
                           }

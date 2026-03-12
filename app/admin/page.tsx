@@ -67,75 +67,68 @@ export default function DashboardPage() {
     monthlyRevenue: [],
     statusDistribution: [],
   });
-  const [loading, setLoading] = useState(false); // Start false for instant UI
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ LIVE STATISTICS - Auto-refresh every 30 seconds
   useEffect(() => {
+    let isFirst = true;
+
     const fetchStats = async () => {
       try {
-        setLoading(true);
+        if (isFirst) setLoading(true);
         setError(null);
 
-        // Enhanced query for charts - get both created_at and check_in_date for monthly data
         const { data: bookings, error: bookingsError } = await supabase
           .from("bookings")
           .select(
             "status, total_amount, created_at, check_in_date, special_requests",
           )
           .order("created_at", { ascending: false })
-          .limit(500); // Limit for performance
+          .limit(500);
 
         if (bookingsError) throw bookingsError;
 
-        console.log(
-          "🔍 Debug - Raw bookings from database:",
-          bookings?.length || 0,
-          "bookings found",
-        );
-
         if (bookings && bookings.length > 0) {
+          // Single pass to count statuses and revenue
+          let confirmedBookings = 0,
+            pendingBookings = 0,
+            cancelledBookings = 0,
+            completedBookingsCount = 0,
+            walkInBookingsCount = 0,
+            confirmedRevenue = 0,
+            completedRevenue = 0,
+            totalRevenue = 0;
+
+          for (const b of bookings) {
+            const amount = b.total_amount || 0;
+            switch (b.status) {
+              case "confirmed":
+                confirmedBookings++;
+                confirmedRevenue += amount;
+                totalRevenue += amount;
+                break;
+              case "completed":
+                completedBookingsCount++;
+                completedRevenue += amount;
+                totalRevenue += amount;
+                break;
+              case "pending":
+                pendingBookings++;
+                totalRevenue += amount;
+                break;
+              case "cancelled":
+                cancelledBookings++;
+                break;
+            }
+            if (String(b.special_requests || "").startsWith("[WALK-IN]")) {
+              walkInBookingsCount++;
+            }
+          }
+
           const totalBookings = bookings.length;
-          const confirmedBookings = bookings.filter(
-            (b) => b.status === "confirmed",
-          ).length;
-          const pendingBookings = bookings.filter(
-            (b) => b.status === "pending",
-          ).length;
-          const cancelledBookings = bookings.filter(
-            (b) => b.status === "cancelled",
-          ).length;
-          const completedBookingsCount = bookings.filter(
-            (b) => b.status === "completed",
-          ).length;
-          const walkInBookingsCount = bookings.filter((b) =>
-            String(b.special_requests || "").startsWith("[WALK-IN]"),
-          ).length;
-
-          console.log("🔍 Debug - Booking counts:", {
-            totalBookings,
-            confirmedBookings,
-            pendingBookings,
-            cancelledBookings,
-            completedBookingsCount,
-          });
-
-          // Revenue from confirmed bookings
-          const confirmedRevenue = bookings
-            .filter((b) => b.status === "confirmed")
-            .reduce((sum, b) => sum + (b.total_amount || 0), 0);
-
-          // Revenue from completed bookings
-          const completedRevenue = bookings
-            .filter((b) => b.status === "completed")
-            .reduce((sum, b) => sum + (b.total_amount || 0), 0);
-
-          // Total revenue = confirmed + completed
-          const totalRevenue = confirmedRevenue + completedRevenue;
-
           const averageBookingValue =
             confirmedBookings + completedBookingsCount > 0
-              ? totalRevenue / (confirmedBookings + completedBookingsCount)
+              ? (confirmedRevenue + completedRevenue) / (confirmedBookings + completedBookingsCount)
               : 0;
 
           setStats({
@@ -151,7 +144,7 @@ export default function DashboardPage() {
             averageBookingValue,
           });
 
-          // 📊 Generate REAL chart data for the last 12 months (extended for more data)
+          // Generate chart data for the last 12 months
           const monthlyData = new Map<
             string,
             {
@@ -164,7 +157,6 @@ export default function DashboardPage() {
           >();
           const now = new Date();
 
-          // Initialize last 12 months to capture more data
           for (let i = 11; i >= 0; i--) {
             const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const monthKey = date.toLocaleDateString("en-US", {
@@ -180,52 +172,45 @@ export default function DashboardPage() {
             });
           }
 
-          // Aggregate ALL bookings by month and status
-          bookings.forEach((booking) => {
-            // Use created_at first, fallback to check_in_date if created_at is null
+          for (const booking of bookings) {
             const dateToUse = booking.created_at || booking.check_in_date;
+            if (!dateToUse) continue;
 
-            if (dateToUse) {
-              const bookingDate = new Date(dateToUse);
-              const monthKey = bookingDate.toLocaleDateString("en-US", {
-                month: "short",
-                year: "numeric",
+            const monthKey = new Date(dateToUse).toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
+
+            if (!monthlyData.has(monthKey)) {
+              monthlyData.set(monthKey, {
+                revenue: 0,
+                confirmed: 0,
+                cancelled: 0,
+                pending: 0,
+                completed: 0,
               });
-
-              // Allow any month, not just the initialized ones, in case data is older
-              if (!monthlyData.has(monthKey)) {
-                monthlyData.set(monthKey, {
-                  revenue: 0,
-                  confirmed: 0,
-                  cancelled: 0,
-                  pending: 0,
-                  completed: 0,
-                });
-              }
-
-              const current = monthlyData.get(monthKey)!;
-
-              if (booking.status === "confirmed") {
-                current.confirmed += 1;
-                current.revenue += booking.total_amount || 0;
-              } else if (booking.status === "cancelled") {
-                current.cancelled += 1;
-              } else if (booking.status === "pending") {
-                current.pending += 1;
-              } else if (booking.status === "completed") {
-                current.completed += 1;
-                current.revenue += booking.total_amount || 0;
-              }
             }
-          });
 
-          // Convert to chart format with REAL data
+            const current = monthlyData.get(monthKey)!;
+            if (booking.status === "confirmed") {
+              current.confirmed += 1;
+              current.revenue += booking.total_amount || 0;
+            } else if (booking.status === "cancelled") {
+              current.cancelled += 1;
+            } else if (booking.status === "pending") {
+              current.pending += 1;
+            } else if (booking.status === "completed") {
+              current.completed += 1;
+              current.revenue += booking.total_amount || 0;
+            }
+          }
+
           const monthlyRevenue = Array.from(monthlyData.entries()).map(
             ([name, data]) => ({
               name,
               revenue: data.revenue,
               bookings:
-                data.confirmed + data.cancelled + data.pending + data.completed, // Total bookings
+                data.confirmed + data.cancelled + data.pending + data.completed,
               confirmed: data.confirmed,
               cancelled: data.cancelled,
               pending: data.pending,
@@ -233,55 +218,19 @@ export default function DashboardPage() {
             }),
           );
 
-          // Count completed bookings
-          const completedBookings = bookings.filter(
-            (b) => b.status === "completed",
-          ).length;
-
-          // Status distribution for pie chart
           const statusDistribution = [
             { name: "Confirmed", value: confirmedBookings, color: "#10b981" },
             { name: "Pending", value: pendingBookings, color: "#f59e0b" },
             { name: "Cancelled", value: cancelledBookings, color: "#ef4444" },
-            { name: "Completed", value: completedBookings, color: "#3b82f6" },
+            {
+              name: "Completed",
+              value: completedBookingsCount,
+              color: "#3b82f6",
+            },
           ].filter((item) => item.value > 0);
 
-          setChartData({
-            monthlyRevenue,
-            statusDistribution,
-          });
-
-          console.log("📊 Dashboard stats updated:", {
-            totalBookings,
-            confirmedBookings,
-            totalRevenue,
-            averageBookingValue,
-            chartData: { monthlyRevenue, statusDistribution },
-          });
-
-          console.log(
-            "🔍 Debug - Raw bookings data:",
-            bookings.slice(0, 5).map((b) => ({
-              status: b.status,
-              total_amount: b.total_amount,
-              created_at: b.created_at,
-              monthKey: b.created_at
-                ? new Date(b.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "numeric",
-                  })
-                : "No created_at",
-            })),
-          );
-
-          console.log(
-            "🔍 Debug - Monthly data map:",
-            Array.from(monthlyData.entries()),
-          );
-          console.log("🔍 Debug - Final monthlyRevenue:", monthlyRevenue);
+          setChartData({ monthlyRevenue, statusDistribution });
         } else {
-          console.log("⚠️ No bookings found in database");
-          // Set empty state but still initialize chart structure
           setStats({
             totalBookings: 0,
             confirmedBookings: 0,
@@ -294,45 +243,30 @@ export default function DashboardPage() {
             completedRevenue: 0,
             averageBookingValue: 0,
           });
-          setChartData({
-            monthlyRevenue: [],
-            statusDistribution: [],
-          });
+          setChartData({ monthlyRevenue: [], statusDistribution: [] });
         }
       } catch (err) {
-        console.error("❌ Error fetching dashboard stats:", err);
         setError(
           err instanceof Error ? err.message : "Failed to load statistics",
         );
       } finally {
-        console.log("✅ Dashboard stats fetch completed");
-        setLoading(false);
+        if (isFirst) {
+          setLoading(false);
+          isFirst = false;
+        }
       }
     };
 
-    // ✅ LIVE UPDATES: Initial fetch + auto-refresh every 30 seconds
-    const timer = setTimeout(() => {
-      console.log("🔄 Fetching dashboard stats...");
-      fetchStats();
-    }, 500);
+    fetchStats();
 
-    // Set up live refresh interval
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refreshing dashboard stats...");
-      fetchStats();
-    }, 30000); // Refresh every 30 seconds
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -403,7 +337,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.confirmedRevenue
+                  formatCurrency(stats.confirmedRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -424,7 +358,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.completedRevenue
+                  formatCurrency(stats.completedRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -445,11 +379,11 @@ export default function DashboardPage() {
                 {loading ? (
                   <span className="w-20 h-8 bg-gray-200 animate-pulse rounded inline-block"></span>
                 ) : (
-                  stats.totalRevenue
+                  formatCurrency(stats.totalRevenue)
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Confirmed + Completed
+                Pending + Confirmed + Completed
               </p>
             </div>
           </div>
@@ -557,9 +491,10 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip
+                    labelStyle={{ color: "#000" }}
                     formatter={(value, name) => [
                       name === "revenue"
-                        ? formatCurrency(value as number)
+                        ? `₱${formatCurrency(value as number)}`
                         : value,
                       name === "revenue" ? "Revenue" : "Bookings",
                     ]}
@@ -597,7 +532,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
+                  <Tooltip labelStyle={{ color: "#000" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                   <Bar dataKey="confirmed" fill="#10b981" name="Confirmed" />
                   <Bar dataKey="pending" fill="#f59e0b" name="Pending" />

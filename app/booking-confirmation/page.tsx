@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Calendar, Users, CreditCard, ArrowRight, Phone, Mail } from 'lucide-react';
 import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/app/supabaseClient';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { displayPhoneNumber } from '@/app/utils/phoneUtils';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ interface BookingDetails {
 function BookingConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,16 +38,21 @@ function BookingConfirmationContent() {
   const bookingId = searchParams.get('booking_id');
   const paymentIntentId = searchParams.get('payment_intent_id'); // For future webhook validation
 
+  // Redirect to auth if not logged in
   useEffect(() => {
-    if (!bookingId) {
-      setError('No booking ID provided');
-      setLoading(false);
-      return;
+    if (!authLoading && !user) {
+      router.push('/auth');
     }
+  }, [user, authLoading, router]);
 
-    // Log payment intent ID for debugging
-    if (paymentIntentId) {
-      console.log('Payment Intent ID:', paymentIntentId);
+  useEffect(() => {
+    if (!bookingId || !user) {
+      if (!user && !authLoading) return; // Will redirect above
+      if (!bookingId) {
+        setError('No booking ID provided');
+        setLoading(false);
+      }
+      return;
     }
 
     const fetchBookingDetails = async () => {
@@ -54,6 +61,7 @@ function BookingConfirmationContent() {
           .from('bookings')
           .select('*')
           .eq('id', parseInt(bookingId))
+          .eq('user_id', user.id)
           .single();
 
         if (error) {
@@ -75,7 +83,6 @@ function BookingConfirmationContent() {
           if (data.payment_intent_id || paymentIntentId) {
             const checkPaymentIntentId = data.payment_intent_id || paymentIntentId;
             
-            console.log('🔍 Immediately checking PayMongo status for:', checkPaymentIntentId);
             
             try {
               const statusResponse = await fetch('/api/paymongo/check-payment-status', {
@@ -90,7 +97,6 @@ function BookingConfirmationContent() {
 
               if (statusResponse.ok) {
                 const statusData = await statusResponse.json();
-                console.log('✅ Initial PayMongo status check:', statusData);
                 
                 if (statusData.booking) {
                   setBooking(statusData.booking);
@@ -135,7 +141,6 @@ function BookingConfirmationContent() {
                 clearInterval(pollPaymentStatus);
               } else if (pollCount >= maxPolls) {
                 // After timeout, check PayMongo directly before giving up
-                console.log('⏰ Payment timeout - checking PayMongo directly');
                 
                 try {
                   const statusResponse = await fetch('/api/paymongo/check-payment-status', {
@@ -150,7 +155,6 @@ function BookingConfirmationContent() {
 
                   if (statusResponse.ok) {
                     const statusData = await statusResponse.json();
-                    console.log('✅ Got direct PayMongo status:', statusData);
                     
                     if (statusData.booking) {
                       setBooking(statusData.booking);

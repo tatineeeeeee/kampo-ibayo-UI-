@@ -9,12 +9,10 @@ import { displayPhoneNumber } from "../utils/phoneUtils";
 import { formatBookingNumber } from "../utils/bookingNumber";
 import {
   checkAndExpirePendingBookings,
-  autoCompleteFinishedBookings,
   getDaysPending,
   shouldShowExpirationWarning,
   getExpirationWarningMessage,
   getUserBookingStats,
-  cleanupOldCompletedBookings,
   BookingStats,
 } from "../utils/bookingUtils";
 import { useToast } from "../components/Toast";
@@ -148,10 +146,6 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload) => {
-          console.log(
-            `🚨 CRITICAL: Payment button real-time update for booking ${bookingId}:`,
-            payload
-          );
 
           const oldStatus =
             payload.old &&
@@ -165,32 +159,18 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
             "status" in payload.new
               ? payload.new.status
               : "unknown";
-          console.log(
-            `📝 Event: ${payload.eventType}, Old status: ${oldStatus}, New status: ${newStatus}`
-          );
 
           // Force immediate refresh with debugging
-          console.log(
-            `🔄 Triggering immediate button refresh for booking ${bookingId}...`
-          );
           checkPaymentProof();
 
           // Also force a small delay refresh as backup
           setTimeout(() => {
-            console.log(`🔄 Backup button refresh for booking ${bookingId}...`);
             checkPaymentProof();
           }, 500);
         }
       )
       .subscribe((status) => {
-        console.log(
-          `🔗 User payment button subscription for booking ${bookingId}:`,
-          status
-        );
         if (status === "SUBSCRIBED") {
-          console.log(
-            `✅ Real-time payment button updates ACTIVE for booking ${bookingId}`
-          );
         } else if (status === "CHANNEL_ERROR") {
           console.warn(
             `⚠️ Real-time button subscription connection issue for booking ${bookingId} - falling back to manual refresh`
@@ -203,9 +183,6 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
       });
 
     return () => {
-      console.log(
-        `🔌 Unsubscribing payment button real-time for booking ${bookingId}`
-      );
       // Clean up fallback interval if it exists
       if (fallbackIntervalRef.current) {
         clearInterval(fallbackIntervalRef.current);
@@ -419,40 +396,18 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload) => {
-          console.log(
-            `🚨 CRITICAL: Payment proof real-time update for booking ${bookingId}:`,
-            payload
-          );
-          console.log(
-            `📝 Event type: ${payload.eventType}, Old: ${JSON.stringify(
-              payload.old
-            )}, New: ${JSON.stringify(payload.new)}`
-          );
 
           // Force immediate refresh with debugging
-          console.log(
-            `🔄 Triggering immediate refresh for booking ${bookingId} payment status...`
-          );
           fetchPaymentProof();
 
           // Also force a small delay refresh as backup
           setTimeout(() => {
-            console.log(
-              `🔄 Backup refresh for booking ${bookingId} payment status...`
-            );
             fetchPaymentProof();
           }, 1000);
         }
       )
       .subscribe((status) => {
-        console.log(
-          `🔗 User payment status subscription for booking ${bookingId}:`,
-          status
-        );
         if (status === "SUBSCRIBED") {
-          console.log(
-            `✅ Real-time payment updates ACTIVE for booking ${bookingId}`
-          );
         } else if (status === "CHANNEL_ERROR") {
           console.warn(
             `⚠️ Real-time payment status connection issue for booking ${bookingId} - falling back to manual refresh`
@@ -465,9 +420,6 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
       });
 
     return () => {
-      console.log(
-        `🔌 Unsubscribing payment status real-time for booking ${bookingId}`
-      );
       // Clean up fallback interval if it exists
       if (fallbackIntervalRef.current) {
         clearInterval(fallbackIntervalRef.current);
@@ -756,10 +708,6 @@ function BookingsPageContent() {
   useEffect(() => {
     if (!user) return;
 
-    console.log("🚀 Setting up INSTANT real-time user bookings system...");
-    console.log(
-      "⚡ User will see instant updates when admin changes booking status"
-    );
 
     // Set up real-time subscription for user's bookings
     const userBookingsSubscription = supabase
@@ -778,12 +726,10 @@ function BookingsPageContent() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log("🔄 Real-time user booking update received:", payload);
 
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
           if (eventType === "UPDATE" && newRecord) {
-            console.log("⚡ INSTANT booking status update for user");
 
             // Update booking in state instantly
             setBookings((prevBookings) =>
@@ -859,9 +805,6 @@ function BookingsPageContent() {
 
                 updatedStats.canCreatePending = updatedStats.pendingCount < 3;
 
-                console.log(
-                  `📊 Stats updated instantly: pending ${prevStats.pendingCount} → ${updatedStats.pendingCount}`
-                );
                 return updatedStats;
               });
 
@@ -893,14 +836,7 @@ function BookingsPageContent() {
             }
           }
 
-          if (eventType === "INSERT" && newRecord) {
-            console.log(
-              "📝 New booking created - should not happen here for user view"
-            );
-          }
-
           if (eventType === "DELETE" && oldRecord) {
-            console.log("🗑️ Booking deleted by admin");
             setBookings((prevBookings) =>
               prevBookings.filter((booking) => booking.id !== oldRecord.id)
             );
@@ -935,9 +871,6 @@ function BookingsPageContent() {
 
               updatedStats.canCreatePending = updatedStats.pendingCount < 3;
 
-              console.log(
-                `📊 Stats updated after deletion: pending ${prevStats.pendingCount} → ${updatedStats.pendingCount}`
-              );
               return updatedStats;
             });
 
@@ -950,14 +883,7 @@ function BookingsPageContent() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log("🔗 User bookings real-time subscription status:", status);
-        if (status === "SUBSCRIBED") {
-          console.log(
-            "✅ User bookings real-time system active - instant updates enabled"
-          );
-        }
-      });
+      .subscribe();
 
     // ✨ NEW: Real-time subscription for user's payment proofs - INSTANT verification/rejection updates
     const userPaymentProofsSubscription = supabase
@@ -976,24 +902,14 @@ function BookingsPageContent() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log(
-            "� Real-time user payment proof update received:",
-            payload
-          );
 
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
           if (eventType === "UPDATE" && newRecord && oldRecord) {
             // Check if status changed (admin verified/rejected payment)
             if (oldRecord.status !== newRecord.status) {
-              console.log(
-                `⚡ Payment proof ${newRecord.id} status changed: ${oldRecord.status} → ${newRecord.status}`
-              );
 
               // ⚡ FORCE COMPONENT REFRESH - Critical for real-time UI updates
-              console.log(
-                `🚨 FORCING component refresh due to payment status change: ${oldRecord.status} → ${newRecord.status}`
-              );
               setRefreshTrigger((prev) => prev + 1);
 
               // Show instant status change notification
@@ -1032,20 +948,9 @@ function BookingsPageContent() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log(
-          "🔗 User payment proofs real-time subscription status:",
-          status
-        );
-        if (status === "SUBSCRIBED") {
-          console.log(
-            "✅ User payment proof real-time system active - instant verification/rejection updates"
-          );
-        }
-      });
+      .subscribe();
 
     return () => {
-      console.log("🔌 Cleaning up user real-time subscriptions");
       userBookingsSubscription.unsubscribe();
       userPaymentProofsSubscription.unsubscribe();
     };
@@ -1059,34 +964,12 @@ function BookingsPageContent() {
 
       // First, check and auto-cancel any pending bookings older than 7 days
       try {
-        const cancelledBookings = await checkAndExpirePendingBookings();
-        if (cancelledBookings.length > 0) {
-          console.log(
-            `Auto-cancelled ${cancelledBookings.length} booking(s) that were pending for 7+ days`
-          );
-        }
+        await checkAndExpirePendingBookings();
       } catch (error) {
         console.error("Error checking pending bookings:", error);
       }
 
-      // Auto-complete confirmed bookings that have passed their checkout date
-      try {
-        const completedCount = await autoCompleteFinishedBookings();
-        if (completedCount > 0) {
-          console.log(
-            `Auto-completed ${completedCount} booking(s) past checkout date`
-          );
-        }
-      } catch (error) {
-        console.error("Error auto-completing bookings:", error);
-      }
-
-      // Clean up old completed bookings (keep only 5 most recent)
-      try {
-        await cleanupOldCompletedBookings(user.id);
-      } catch (error) {
-        console.error("Error cleaning up old completed bookings:", error);
-      }
+      // Note: Auto-complete and cleanup are handled server-side via cron jobs
 
       // Load booking stats
       try {
@@ -1219,7 +1102,6 @@ function BookingsPageContent() {
     }
 
     // ⚡ ULTRA-FAST cancellation with proper data capture
-    console.log("🚀 INSTANT user cancellation started for booking:", bookingId);
 
     // Capture reason before clearing (prevent stale closure)
     const reasonForServer = cancellationReason.trim();
@@ -1240,9 +1122,6 @@ function BookingsPageContent() {
         : booking
     );
     setBookings(instantUpdatedBookings);
-    console.log(
-      "⚡ UI updated INSTANTLY - booking shows as cancelled immediately"
-    );
 
     // 2. INSTANT STATS UPDATE - Update booking stats immediately
     if (bookingStats && originalBooking?.status === "pending") {
@@ -1253,9 +1132,6 @@ function BookingsPageContent() {
         canCreatePending: bookingStats.pendingCount - 1 < 3,
       };
       setBookingStats(updatedStats);
-      console.log(
-        "⚡ STATS updated INSTANTLY - pending count decremented immediately"
-      );
     }
 
     // 3. INSTANT modal close and cleanup
@@ -1271,9 +1147,6 @@ function BookingsPageContent() {
     });
 
     // 5. Background server sync - User doesn't wait for this
-    console.log(
-      "🔄 Starting background server sync (user already sees success)..."
-    );
     processServerCancellation(bookingId, reasonForServer, originalBooking);
   };
 
@@ -1283,18 +1156,19 @@ function BookingsPageContent() {
     reason: string,
     originalBooking: Booking | undefined
   ) => {
-    console.log(
-      "🚀 Background server sync for booking:",
-      bookingId,
-      "with reason:",
-      reason
-    );
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error("Authentication required for cancellation");
+        return;
+      }
+
       const response = await fetch("/api/user/cancel-booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId,
@@ -1304,10 +1178,8 @@ function BookingsPageContent() {
       });
 
       const result = await response.json();
-      console.log("✅ Server sync response:", result);
 
       if (result.success) {
-        console.log("🎉 Server confirmed cancellation - all systems in sync");
 
         // Only show notifications for email issues, not for successful delivery
         if (result.warning) {
@@ -1356,7 +1228,6 @@ function BookingsPageContent() {
               canCreatePending: bookingStats.pendingCount + 1 < 3,
             };
             setBookingStats(revertedStats);
-            console.log("🔄 Stats reverted due to server sync failure");
           }
 
           showToast({
@@ -1386,7 +1257,6 @@ function BookingsPageContent() {
             canCreatePending: bookingStats.pendingCount + 1 < 3,
           };
           setBookingStats(revertedStats);
-          console.log("🔄 Stats reverted due to network error");
         }
 
         showToast({
@@ -1477,10 +1347,25 @@ function BookingsPageContent() {
     setRescheduleLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast({
+          type: "error",
+          title: "Authentication Error",
+          message: "You must be logged in to reschedule a booking.",
+          duration: 5000,
+        });
+        setRescheduleLoading(false);
+        return;
+      }
+
       // Call backend API to reschedule
       const response = await fetch("/api/user/reschedule-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           bookingId: selectedBooking.id,
           newCheckIn: newCheckInDate,
@@ -1525,10 +1410,6 @@ function BookingsPageContent() {
 
           // Redirect to payment upload using Next.js router
           setTimeout(() => {
-            console.log(
-              "🔄 Redirecting to payment upload for booking ID:",
-              selectedBooking.id
-            );
             router.push(
               `/upload-payment-proof?bookingId=${selectedBooking.id}`
             );
@@ -1579,12 +1460,10 @@ function BookingsPageContent() {
 
         if (!bookingsResult.error && bookingsResult.data) {
           setBookings(bookingsResult.data as Booking[]);
-          console.log("📊 Background bookings refresh completed");
         }
 
         if (statsResult) {
           setBookingStats(statsResult);
-          console.log("📊 Background stats refresh completed");
         }
       }
     } catch (error) {
@@ -1681,7 +1560,6 @@ function BookingsPageContent() {
                 onClick={() => {
                   if (!isRefreshing) {
                     // Extra safety: don't allow click while already refreshing
-                    console.log("🔄 Manual refresh triggered");
                     setRefreshTrigger((prev) => prev + 1);
                   }
                 }}

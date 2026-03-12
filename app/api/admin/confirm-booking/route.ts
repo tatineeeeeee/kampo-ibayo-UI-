@@ -24,10 +24,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createBookingConfirmedEmail, BookingDetails } from '@/app/utils/emailService';
 import { sendSMS, createBookingApprovalSMS } from '@/app/utils/smsService';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`confirm-booking:${ip}`, 10, 60_000)) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const { bookingId } = body;
 
@@ -46,7 +56,7 @@ export async function POST(request: NextRequest) {
      * 
      * Supabase automatically uses parameterized queries - user input is bound safely
      */
-    const { data: booking, error: fetchError } = await supabase
+    const { data: booking, error: fetchError } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('id', bookingId)  // Parameterized: prevents SQL injection
@@ -59,16 +69,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update booking status to confirmed
-    const { error: updateError } = await supabase
+    // Guard: prevent confirming cancelled or already confirmed bookings
+    if (booking.status === 'cancelled') {
+      return NextResponse.json(
+        { success: false, error: 'Cannot confirm a cancelled booking' },
+        { status: 400 }
+      );
+    }
+
+    if (booking.status === 'confirmed') {
+      return NextResponse.json(
+        { success: false, error: 'Booking is already confirmed' },
+        { status: 400 }
+      );
+    }
+
+    // Atomic update: only confirm if still pending (prevents race conditions)
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update({ status: 'confirmed' })
-      .eq('id', bookingId);
+      .eq('id', bookingId)
+      .eq('status', 'pending')
+      .select('id');
 
     if (updateError) {
       return NextResponse.json(
         { success: false, error: 'Failed to update booking status' },
         { status: 500 }
+      );
+    }
+
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Booking was already processed by another admin' },
+        { status: 409 }
       );
     }
 
@@ -101,7 +135,6 @@ export async function POST(request: NextRequest) {
       let smsResult = null;
       if (booking.guest_phone) {
         try {
-          console.log('📱 Sending confirmation SMS to:', booking.guest_phone);
           // Create approval SMS message
           const smsMessage = createBookingApprovalSMS(
             booking.id.toString(),
@@ -109,7 +142,6 @@ export async function POST(request: NextRequest) {
             emailBookingDetails.checkIn
           );
           smsResult = await sendSMS({ phone: booking.guest_phone, message: smsMessage });
-          console.log('📱 SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
         } catch (smsError) {
           console.error('📱 SMS Error (non-critical):', smsError);
           smsResult = { success: false, error: 'SMS service temporarily unavailable' };

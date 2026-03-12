@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, createAdminCancellationGuestEmail, CancellationEmailData, RefundDetails } from '@/app/utils/emailService';
-import { supabase } from '@/app/supabaseClient';
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`cancel-booking:${ip}`, 10, 60_000)) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const { bookingId, refundProcessed = false, refundAmount = 0, cancellationReason = '' } = body;
 
@@ -15,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get booking details from database
-    const { data: booking, error: fetchError } = await supabase
+    const { data: booking, error: fetchError } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('id', bookingId)
@@ -25,6 +35,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Booking not found' },
         { status: 404 }
+      );
+    }
+
+    if (booking.status === 'cancelled') {
+      return NextResponse.json(
+        { success: false, error: 'Booking is already cancelled' },
+        { status: 400 }
       );
     }
 
@@ -52,10 +69,13 @@ export async function POST(request: NextRequest) {
       updateData.refund_processed_at = philippinesTime.toISOString();
     }
 
-    const { error: updateError } = await supabase
+    // Atomic update: only cancel if not already cancelled (prevents race conditions)
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update(updateData)
-      .eq('id', bookingId);
+      .eq('id', bookingId)
+      .neq('status', 'cancelled')
+      .select('id');
 
     if (updateError) {
       return NextResponse.json(
@@ -64,14 +84,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Booking was already cancelled by another admin' },
+        { status: 409 }
+      );
+    }
+
     // IMPORTANT: Cancel any pending payment proofs for this booking
     // When admin cancels a booking, there's no point reviewing payments
-    const { error: paymentProofError } = await supabase
+    const { error: paymentProofError } = await supabaseAdmin
       .from('payment_proofs')
       .update({
-        status: 'cancelled',
-        admin_notes: 'Automatically cancelled due to admin booking cancellation',
-        verified_at: philippinesTime.toISOString()
+        status: 'rejected',
+        admin_notes: 'Automatically rejected due to admin booking cancellation'
       })
       .eq('booking_id', bookingId)
       .in('status', ['pending']); // Only update pending payment proofs
@@ -87,7 +113,7 @@ export async function POST(request: NextRequest) {
       let refundDetails: RefundDetails | undefined = undefined;
 
       if (refundProcessed && refundAmount > 0) {
-        const downPayment = booking.total_amount * 0.5;
+        const downPayment = booking.payment_type === 'full' ? booking.total_amount : booking.total_amount * 0.5;
         refundDetails = {
           refundAmount: refundAmount,
           downPayment: downPayment,
@@ -129,7 +155,10 @@ export async function POST(request: NextRequest) {
         try {
           const smsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sms/booking-cancelled`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
+            },
             body: JSON.stringify({
               phoneNumber: booking.guest_phone,
               bookingDetails: {
@@ -148,7 +177,6 @@ export async function POST(request: NextRequest) {
 
           if (smsResponse.ok) {
             smsResult = await smsResponse.json();
-            console.log('Cancellation SMS sent successfully');
           }
         } catch (smsError) {
           console.error('Failed to send cancellation SMS (non-blocking):', smsError);
@@ -188,7 +216,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: 'Internal server error'
       },
       { status: 500 }
     );

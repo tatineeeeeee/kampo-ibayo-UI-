@@ -119,21 +119,6 @@ function ProfilePageContent({ user }: { user: User }) {
   // Format phone number as user types
   const formatPhoneNumber = (value: string): string => {
     return formatPhoneForDisplay(value);
-    // Remove all non-digit characters
-    const digitsOnly = value.replace(/\D/g, "");
-
-    // Limit to 11 digits
-    const limited = digitsOnly.slice(0, 11);
-
-    // Format as 09XX-XXX-XXXX
-    if (limited.length >= 8) {
-      return `${limited.slice(0, 4)}-${limited.slice(4, 7)}-${limited.slice(
-        7
-      )}`;
-    } else if (limited.length >= 4) {
-      return `${limited.slice(0, 4)}-${limited.slice(4)}`;
-    }
-    return limited;
   };
 
   // Fetch user profile from database
@@ -144,13 +129,13 @@ function ProfilePageContent({ user }: { user: User }) {
       try {
         const { data, error } = await supabase
           .from("users")
-          .select("name, email, phone, role")
+          .select("full_name, email, phone, role")
           .eq("auth_id", user.id)
           .single();
 
         if (!error && data) {
           setUserProfile({
-            name: data.name || "",
+            name: data.full_name || "",
             email: data.email || "",
             phone: data.phone || "",
             role: data.role || "user",
@@ -224,7 +209,8 @@ function ProfilePageContent({ user }: { user: User }) {
 
       // Force cleanup and redirect
       if (typeof window !== "undefined") {
-        localStorage.clear();
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-pwgunyrvtpntsypqcwiq-auth-token');
         sessionStorage.clear();
       }
       setTimeout(() => {
@@ -261,7 +247,7 @@ function ProfilePageContent({ user }: { user: User }) {
       // Also update the users table so admin panel shows the change
       const { error: dbError } = await supabase
         .from("users")
-        .update({ name: newName.trim() })
+        .update({ full_name: newName.trim() })
         .eq("auth_id", user.id);
 
       if (dbError) {
@@ -358,7 +344,7 @@ function ProfilePageContent({ user }: { user: User }) {
       if (userProfile) {
         setUserProfile({
           ...userProfile,
-          phone: newPhone.trim(),
+          phone: cleanedPhone,
         });
       }
 

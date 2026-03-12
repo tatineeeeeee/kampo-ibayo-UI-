@@ -5,16 +5,16 @@ import { supabase } from '../supabaseClient';
 export function useManualValidation() {
   const validateCurrentUser = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
         return { isValid: false, reason: 'No session' };
       }
 
       const { data: userData, error } = await supabase
         .from("users")
-        .select("role, name, email")
-        .eq("auth_id", session.user.id)
+        .select("role, full_name, email")
+        .eq("auth_id", user.id)
         .single();
 
       if (error || !userData) {

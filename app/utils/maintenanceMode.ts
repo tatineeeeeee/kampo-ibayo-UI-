@@ -24,7 +24,6 @@ const DEFAULT_SETTINGS: MaintenanceSettings = {
 // Save maintenance settings (admin only) - now uses database
 export async function saveMaintenanceSettings(settings: MaintenanceSettings): Promise<void> {
   try {
-    console.log('🔧 Saving maintenance settings to database:', settings);
     
     // Bypass TypeScript type checking for custom RPC functions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,14 +37,12 @@ export async function saveMaintenanceSettings(settings: MaintenanceSettings): Pr
       return;
     }
 
-    console.log('🔧 Saved to database:', data);
     
     // Dispatch custom event for real-time updates in same session
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('maintenanceSettingsChanged', {
         detail: settings
       }));
-      console.log('🔧 Dispatched maintenanceSettingsChanged event');
     }
   } catch (error) {
     console.error('Failed to save maintenance settings:', error);
@@ -55,7 +52,6 @@ export async function saveMaintenanceSettings(settings: MaintenanceSettings): Pr
 // Get current maintenance settings from database
 export async function getMaintenanceSettings(): Promise<MaintenanceSettings> {
   try {
-    console.log('🔧 Loading maintenance settings from database');
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).rpc('get_maintenance_status');
@@ -72,21 +68,18 @@ export async function getMaintenanceSettings(): Promise<MaintenanceSettings> {
         message: dbResponse.message || DEFAULT_SETTINGS.message,
         enabledAt: dbResponse.enabled_at || undefined
       };
-      console.log('🔧 Loaded from database:', settings);
       return settings;
     }
   } catch (error) {
     console.error('Failed to load maintenance settings:', error);
   }
 
-  console.log('🔧 Using default settings');
   return DEFAULT_SETTINGS;
 }
 
 // Simple check if maintenance mode is active
 export async function isMaintenanceMode(): Promise<boolean> {
   const settings = await getMaintenanceSettings();
-  console.log('🔧 isMaintenanceMode check:', settings.isActive);
   return settings.isActive;
 }
 

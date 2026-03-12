@@ -1,23 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Server-side Supabase client with service role key for admin operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // This bypasses RLS
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
     const { proofId, action, adminId, adminNotes, rejectionReason } = await request.json();
 
-    console.log('🔧 Server: Verifying payment proof:', { proofId, action, adminId, rejectionReason });
 
     // Validate input
     if (!proofId || !action || !adminId) {
@@ -42,7 +33,6 @@ export async function POST(request: NextRequest) {
     };
 
     const newStatus = statusMap[action as keyof typeof statusMap];
-    console.log('📝 Server: Mapping action to status:', { action, newStatus });
 
     // Prepare admin notes with rejection reason if applicable
     let finalAdminNotes = adminNotes || null;
@@ -51,14 +41,15 @@ export async function POST(request: NextRequest) {
       finalAdminNotes = adminNotes ? `${rejectionNote}\n\nADMIN NOTES: ${adminNotes}` : rejectionNote;
     }
 
-    // Update payment proof with service role permissions (without verified_by field)
-    console.log('💾 Server: Attempting database update with status:', newStatus);
+    // Update payment proof with service role permissions
+    const adminAuthId = (auth as { success: true; user: { authId: string } }).user.authId;
 
-    const { data: paymentProof, error: updateError } = await supabase
+    const { data: paymentProof, error: updateError } = await supabaseAdmin
       .from('payment_proofs')
       .update({
         status: newStatus,
         verified_at: new Date().toISOString(),
+        verified_by: adminAuthId,
         admin_notes: finalAdminNotes,
         updated_at: new Date().toISOString()
       })
@@ -66,7 +57,6 @@ export async function POST(request: NextRequest) {
       .select('*, bookings(id, user_id, guest_email, check_in_date, check_out_date, number_of_guests, total_amount)')
       .single();
 
-    console.log('💾 Server: Database update result:', { paymentProof, updateError });
 
     if (updateError) {
       console.error('❌ Server: Payment proof update error:', updateError);
@@ -76,7 +66,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Server: Payment proof updated successfully');
 
     // Update booking status based on payment proof action
     try {
@@ -100,7 +89,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (bookingStatusUpdate) {
-        const { error: bookingUpdateError } = await supabase
+        const { error: bookingUpdateError } = await supabaseAdmin
           .from('bookings')
           .update(bookingStatusUpdate)
           .eq('id', paymentProof.booking_id);
@@ -109,7 +98,6 @@ export async function POST(request: NextRequest) {
           console.warn('⚠️ Server: Could not update booking status:', bookingUpdateError);
           // Don't fail the whole operation - payment proof update is more important
         } else {
-          console.log('✅ Server: Booking status updated successfully:', bookingStatusUpdate);
         }
       }
     } catch (bookingError) {
@@ -119,13 +107,12 @@ export async function POST(request: NextRequest) {
 
     // Send email notifications
     try {
-      console.log('📧 Server: Sending email notification...');
 
       if (action === 'approve') {
         // Email user about approved payment
         const approveEmailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/send`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
           body: JSON.stringify({
             to: paymentProof.bookings.guest_email,
             subject: '✅ Payment Verified - Kampo Ibayow Resort',
@@ -170,13 +157,11 @@ export async function POST(request: NextRequest) {
         if (!approveEmailResponse.ok) {
           console.warn('⚠️ Server: Failed to send approval email, but continuing...');
         } else {
-          console.log('✅ Server: Approval email sent successfully');
         }
 
         // Send SMS notification for payment approval (if phone number available)
         if (paymentProof.bookings && typeof paymentProof.bookings === 'object' && 'guest_phone' in paymentProof.bookings && paymentProof.bookings.guest_phone) {
           try {
-            console.log('📱 Server: Sending payment approval SMS...');
             const { sendSMS, createPaymentApprovedSMS } = await import('@/app/utils/smsService');
 
             const smsMessage = createPaymentApprovedSMS(
@@ -196,7 +181,6 @@ export async function POST(request: NextRequest) {
               message: smsMessage
             });
 
-            console.log('📱 Server: SMS Result:', smsResult.success ? '✅ Sent' : '❌ Failed');
           } catch (smsError) {
             console.error('📱 Server: SMS Error (non-critical):', smsError);
           }
@@ -206,7 +190,7 @@ export async function POST(request: NextRequest) {
         // Email user about rejected payment with resubmission instructions
         const rejectEmailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/send`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
           body: JSON.stringify({
             to: paymentProof.bookings.guest_email,
             subject: '⚠️ Payment Proof Needs Correction - Kampo Ibayow Resort',
@@ -262,7 +246,6 @@ export async function POST(request: NextRequest) {
         if (!rejectEmailResponse.ok) {
           console.warn('⚠️ Server: Failed to send rejection email, but continuing...');
         } else {
-          console.log('✅ Server: Rejection email sent successfully');
         }
       }
 

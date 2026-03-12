@@ -32,20 +32,3 @@ export function getBaseUrl(): string {
   // 4. Fallback to localhost for development
   return 'http://localhost:3000';
 }
-
-/**
- * Get the API base URL for internal API calls
- */
-export function getApiBaseUrl(): string {
-  return getBaseUrl();
-}
-
-/**
- * Build a full URL from a path
- */
-export function buildUrl(path: string): string {
-  const baseUrl = getBaseUrl();
-  // Remove leading slash if present to avoid double slashes
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${baseUrl}/${cleanPath}`;
-}

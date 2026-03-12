@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { Camera, X, Upload } from 'lucide-react';
 
 interface PhotoUploadProps {
@@ -13,6 +13,14 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
   const [photos, setPhotos] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Create blob URLs with proper cleanup to prevent memory leaks
+  const blobUrls = useMemo(() => photos.map(photo => URL.createObjectURL(photo)), [photos]);
+  useEffect(() => {
+    return () => {
+      blobUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [blobUrls]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -74,7 +82,7 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
             <div key={index} className="relative group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={URL.createObjectURL(photo)}
+                src={blobUrls[index]}
                 alt={`Preview ${index + 1}`}
                 className="w-full h-20 object-cover rounded-lg border border-gray-600"
               />

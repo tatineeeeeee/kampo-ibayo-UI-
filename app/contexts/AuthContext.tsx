@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import type { User, Session } from "@supabase/supabase-js";
 import { useToastHelpers } from "../components/Toast";
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const { verificationSuccess } = useToastHelpers();
-  const [welcomeShown, setWelcomeShown] = useState(false);
+  const welcomeShownRef = useRef(false);
 
   // Fix hydration mismatch
   useEffect(() => {
@@ -41,9 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.getItem("in_password_reset") === "true";
 
         if (inPasswordReset) {
-          console.log(
-            "🔒 AuthContext: In password reset mode, skipping auto-login"
-          );
           setUser(null);
           setUserRole(null);
           setLoading(false);
@@ -54,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let session = null;
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
-            console.log(`🔄 AuthContext: Session check attempt ${attempt}/3`);
 
             const sessionPromise = supabase.auth.getSession();
             const timeoutPromise = new Promise((_, reject) =>
@@ -68,10 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             session = result.data?.session;
             break; // Success - exit retry loop
           } catch (retryError) {
-            console.log(
-              `⚠️ AuthContext: Attempt ${attempt} failed:`,
-              retryError
-            );
             if (attempt === 3) {
               throw retryError; // Final attempt failed
             }
@@ -118,19 +110,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔔 AuthContext: Auth state change:", event);
 
-      // ✅ THROTTLE: Ignore rapid auth changes that can block navigation
+      // ✅ TOKEN_REFRESHED: silently update user object but skip role re-fetch and welcome toast
       if (event === "TOKEN_REFRESHED") {
-        console.log(
-          "🔄 AuthContext: Token refreshed (ignoring to prevent navigation hang)"
-        );
+        if (session?.user) {
+          setUser(session.user);
+        }
         return;
       }
 
       // Always handle SIGNED_OUT events
       if (event === "SIGNED_OUT") {
-        console.log("🚪 AuthContext: User signed out");
         setUser(null);
         setUserRole(null);
         return;
@@ -143,22 +133,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // During password reset, ignore all auth events except SIGNED_OUT
       if (inPasswordReset) {
-        console.log(
-          "🔒 AuthContext: Ignoring auth change during password reset:",
-          event
-        );
         return;
       }
 
       // Handle normal sign in events
       if (session?.user) {
-        console.log("👤 AuthContext: User signed in");
         setUser(session.user);
 
         // ✅ NON-BLOCKING: Fetch user role without blocking navigation
         setTimeout(async () => {
           try {
-            console.log("🔄 AuthContext: Fetching user role (non-blocking)...");
             const { data: userData } = await supabase
               .from("users")
               .select("role")
@@ -166,7 +150,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .single();
 
             setUserRole(userData?.role || "user");
-            console.log("✅ AuthContext: User role fetched (non-blocking)");
           } catch (error) {
             console.error("❌ AuthContext: Failed to fetch user role:", error);
             setUserRole("user");
@@ -175,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // 🔔 Guarded welcome toast for email verification sign-in
         try {
-          if (typeof window !== "undefined" && !welcomeShown) {
+          if (typeof window !== "undefined" && !welcomeShownRef.current) {
             const hash = window.location.hash || "";
             const params = new URLSearchParams(
               hash.startsWith("#") ? hash.substring(1) : hash
@@ -197,7 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const now = Date.now();
               if (!lastWelcome || now - parseInt(lastWelcome) > 5000) {
                 sessionStorage.setItem("email_verify_welcome", now.toString());
-                setWelcomeShown(true);
+                welcomeShownRef.current = true;
                 // Slight delay to ensure UI/providers ready
                 setTimeout(() => {
                   verificationSuccess();
@@ -230,11 +213,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 🛡️ COMPLETELY DISABLED: Auto-refresh was causing 30-second navigation hanging
   useEffect(() => {
-    console.log(
-      "🔕 AuthContext: Auto-refresh COMPLETELY DISABLED to fix navigation hanging"
-    );
     // All auto-refresh logic removed to prevent navigation issues
   }, []); // Empty dependency array, no auto-refresh
+
+  // Sync auth state to cookies for server-side middleware (UX layer only)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (user && userRole) {
+      const maxAge = 7 * 24 * 60 * 60;
+      document.cookie = `kb_authenticated=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+      document.cookie = `kb_role=${userRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    } else if (!loading) {
+      document.cookie = 'kb_authenticated=; path=/; max-age=0';
+      document.cookie = 'kb_role=; path=/; max-age=0';
+    }
+  }, [user, userRole, loading]);
 
   // Don't render anything until hydrated to prevent button issues
   if (!isHydrated) {

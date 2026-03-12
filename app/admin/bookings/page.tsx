@@ -191,18 +191,6 @@ function getSmartWorkflowStatus(
     }
   }
 
-  // Handle any remaining cancelled bookings (fallback case)
-  if (bookingStatus === "cancelled") {
-    return {
-      step: "cancelled",
-      priority: 0,
-      badge: "bg-gray-100 text-gray-800",
-      text: "Cancelled",
-      description: "Booking has been cancelled",
-      actionNeeded: "None - booking cancelled",
-    };
-  }
-
   // Standard states
   switch (bookingStatus) {
     case "completed":
@@ -304,10 +292,6 @@ function PaymentStatusCell({
           filter: `booking_id=eq.${booking.id}`,
         },
         (payload) => {
-          console.log(
-            `🔥 Real-time payment proof update for booking ${booking.id}:`,
-            payload,
-          );
           // Force immediate refresh on any payment proof change
           setTimeout(() => fetchPaymentProof(), 10); // Very short delay for database consistency
         },
@@ -1104,7 +1088,6 @@ export default function BookingsPage() {
   useEffect(() => {
     // Delayed fetch to not block navigation
     const timer = setTimeout(() => {
-      console.log("🚀 Starting initial fetchBookings...");
       fetchBookings();
     }, 100);
 
@@ -1167,9 +1150,6 @@ export default function BookingsPage() {
                   if (error) {
                     console.error("❌ Failed to cancel payment proofs:", error);
                   } else {
-                    console.log(
-                      `✅ Auto-cancelled ALL payment proofs for booking ${payload.new.id} (cancelled by ${cancelledBy})`,
-                    );
                   }
                 } catch (error) {
                   console.error("💥 Error cancelling payment proofs:", error);
@@ -1188,21 +1168,6 @@ export default function BookingsPage() {
                 );
                 setRefreshTrigger((prev) => prev + 1);
                 setTimeout(() => setRefreshTrigger((prev) => prev + 1), 500);
-              }
-            }
-
-            // Show alert for cancelled bookings
-            if (
-              payload.old?.status !== "cancelled" &&
-              payload.new.status === "cancelled"
-            ) {
-              if (!document.hidden && payload.new.cancelled_by === "user") {
-                setNewBookingAlert(
-                  `${
-                    payload.new.guest_name || "Guest"
-                  } cancelled their booking 💔`,
-                );
-                setTimeout(() => setNewBookingAlert(null), 5000);
               }
             }
 
@@ -1389,9 +1354,6 @@ export default function BookingsPage() {
               selectedBooking &&
               selectedBooking.id === newProof.booking_id
             ) {
-              console.log(
-                "🔄 Modal is open for updated proof - refreshing payment history",
-              );
               fetchPaymentHistory(newProof.booking_id);
 
               // Update the selected payment proof to reflect status change immediately
@@ -1400,7 +1362,6 @@ export default function BookingsPage() {
                 selectedPaymentProof.id === newProof.id
               ) {
                 setSelectedPaymentProof(newProof as PaymentProof);
-                console.log("✅ Modal updated with status change");
               }
 
               // Also fetch the latest payment proof to ensure we have the most current data
@@ -1418,7 +1379,6 @@ export default function BookingsPage() {
                     setSelectedPaymentProof(latestProof);
                   }
                 } catch (error) {
-                  console.log("Error fetching latest proof:", error);
                 }
               })();
             }
@@ -1475,9 +1435,6 @@ export default function BookingsPage() {
               selectedBooking &&
               selectedBooking.id === payload.new.booking_id
             ) {
-              console.log(
-                "🔄 Modal is open for this booking - refreshing payment history and proof data",
-              );
               fetchPaymentHistory(payload.new.booking_id);
 
               // Update the selected payment proof to the new one IMMEDIATELY
@@ -1493,7 +1450,6 @@ export default function BookingsPage() {
 
                   if (latestProof) {
                     setSelectedPaymentProof(latestProof);
-                    console.log("✅ Modal updated with latest payment proof");
                   }
                 } catch (error) {
                   console.error(
@@ -1680,7 +1636,20 @@ export default function BookingsPage() {
   const fetchPaymentHistory = async (bookingId: number) => {
     setPaymentHistoryLoading(true);
     try {
-      const response = await fetch(`/api/admin/payment-history/${bookingId}`);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error("Authentication required for payment history");
+        setPaymentHistory([]);
+        setPaymentSummary(null);
+        setPaymentHistoryLoading(false);
+        return;
+      }
+
+      const response = await fetch(`/api/admin/payment-history/${bookingId}`, {
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -1889,11 +1858,17 @@ export default function BookingsPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
       const response = await withTimeout(
         fetch("/api/admin/verify-payment-proof", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             proofId: proofId,
@@ -1923,11 +1898,8 @@ export default function BookingsPage() {
       }
 
       const result = await response.json();
-      console.log("🌐 API Response data:", result);
 
-      console.log("✅ Payment proof updated successfully via API");
 
-      console.log("🎉 Payment proof action completed successfully!");
 
       // Show success message first
       success(
@@ -2024,11 +1996,17 @@ export default function BookingsPage() {
 
     try {
       if (newStatus === "confirmed") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error("Authentication required. Please log in again.");
+        }
+
         // Use the new API route that sends email notifications
         const response = await fetch("/api/admin/confirm-booking", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ bookingId }),
         });
@@ -2130,7 +2108,6 @@ export default function BookingsPage() {
         booking?.payment_status === "paid" &&
         booking?.payment_intent_id
       ) {
-        console.log("💰 Processing admin-initiated refund");
 
         try {
           const refundApiResponse = await fetch(
@@ -2151,10 +2128,6 @@ export default function BookingsPage() {
 
           if (refundApiResponse.ok) {
             refundResponse = await refundApiResponse.json();
-            console.log(
-              "✅ Admin refund processed successfully:",
-              refundResponse.refund_amount,
-            );
           } else {
             const refundErrorText = await refundApiResponse.text();
             console.error("❌ Refund processing failed:", refundErrorText);
@@ -2168,9 +2141,6 @@ export default function BookingsPage() {
                 warning(
                   `PayMongo Test Mode Limit`,
                   `Booking amount: ₱${refund_amount.toLocaleString()} exceeds PayMongo TEST MODE limit of ₱${max_amount.toLocaleString()}. For ₱9K-₱12K bookings, switch to LIVE MODE or process refund manually. This limit only applies to test mode.`,
-                );
-                console.log(
-                  "ℹ️ Manual refund required due to PayMongo TEST MODE limits",
                 );
               } else if (
                 refundErrorData.error &&
@@ -2204,11 +2174,19 @@ export default function BookingsPage() {
       // Calculate refund amount based on actual amount paid
       const refundAmount = shouldRefund ? paymentSummary?.totalPaid || 0 : 0;
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        setIsProcessing(false);
+        return;
+      }
+
       // Cancel the booking
       const response = await fetch("/api/admin/cancel-booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           bookingId,
@@ -2291,16 +2269,25 @@ export default function BookingsPage() {
     setRescheduleLoading(true);
     try {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showError("Authentication required. Please log in again.");
+        setRescheduleLoading(false);
+        return;
+      }
+
       const response = await fetch("/api/admin/reschedule-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           bookingId: selectedBooking.id,
           newCheckIn: rescheduleCheckIn,
           newCheckOut: rescheduleCheckOut,
-          adminId: user?.id || "admin",
+          adminId: session.user?.id || "admin",
           reason: rescheduleReason || "Rescheduled by admin",
         }),
       });
@@ -2484,7 +2471,6 @@ export default function BookingsPage() {
               <span>Refresh Trigger: #{refreshTrigger}</span>
               <button
                 onClick={() => {
-                  console.log("🔄 MANUAL: Forcing refresh trigger increment");
                   setRefreshTrigger((prev) => prev + 1);
                 }}
                 className="text-blue-600 hover:text-blue-800 underline"
@@ -3134,10 +3120,6 @@ export default function BookingsPage() {
                                       setSelectedPaymentProof(prioritizedProof);
                                     }
                                   } catch (error) {
-                                    console.log(
-                                      "No payment proof found or error:",
-                                      error,
-                                    );
                                   }
                                 }
                               }}
@@ -3748,10 +3730,6 @@ export default function BookingsPage() {
                                 setSelectedPaymentProof(prioritizedProof);
                               }
                             } catch (error) {
-                              console.log(
-                                "No payment proof found or error:",
-                                error,
-                              );
                             }
                           }
                         }}

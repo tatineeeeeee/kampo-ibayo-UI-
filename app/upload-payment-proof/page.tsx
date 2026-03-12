@@ -177,13 +177,6 @@ function UploadPaymentProofContent() {
     searchParams.get("booking");
 
   // Debug logging
-  console.log("🔍 URL Parameter Check:");
-  console.log("  - bookingId parameter:", bookingId);
-  console.log("  - searchParams object:", searchParams);
-  console.log(
-    "  - All search params:",
-    Object.fromEntries(searchParams.entries())
-  );
 
   // Calculate remaining balance after verified payments and pending payments
   const verifiedPaidAmount = paymentSummary.totalPaid;
@@ -555,9 +548,14 @@ function UploadPaymentProofContent() {
       if (!user?.id) return;
 
       try {
-        console.log("🔍 Fetching payment history for booking:", bookingId);
+        const { data: { session } } = await supabase.auth.getSession();
         const response = await fetch(
-          `/api/user/payment-history/${bookingId}?userId=${user.id}`
+          `/api/user/payment-history/${bookingId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+          }
         );
 
         if (!response.ok) {
@@ -569,9 +567,6 @@ function UploadPaymentProofContent() {
 
           // If it's a 404, the API route might not exist - that's ok for basic functionality
           if (response.status === 404) {
-            console.log(
-              "💡 Payment history API not available - continuing without history"
-            );
             return;
           }
 
@@ -604,7 +599,6 @@ function UploadPaymentProofContent() {
         }
 
         const data = await response.json();
-        console.log("✅ Payment history data received:", data);
 
         if (data.success) {
           setPaymentHistory(data.paymentHistory || []);
@@ -615,7 +609,6 @@ function UploadPaymentProofContent() {
               totalSubmissions: 0,
             }
           );
-          console.log("📊 Payment summary updated:", data.paymentSummary);
         } else {
           console.warn(
             "⚠️ Payment history API returned success=false:",
@@ -687,7 +680,6 @@ function UploadPaymentProofContent() {
         // Try to fetch payment history for balance calculations (non-critical)
         try {
           await fetchPaymentHistory(bookingId);
-          console.log("✅ Payment history loaded successfully");
         } catch (historyError) {
           console.warn(
             "⚠️ Payment history failed to load (non-critical):",
@@ -709,7 +701,6 @@ function UploadPaymentProofContent() {
     }
 
     if (bookingId) {
-      console.log("Booking ID found:", bookingId, "- Fetching details...");
       fetchBookingDetails();
     } else {
       console.error("No booking ID found in URL parameters");
@@ -718,7 +709,6 @@ function UploadPaymentProofContent() {
 
       // Auto-redirect to bookings after 3 seconds if no booking ID
       setTimeout(() => {
-        console.log("No booking ID found, redirecting to bookings...");
         router.replace("/bookings");
       }, 3000);
     }
@@ -728,7 +718,6 @@ function UploadPaymentProofContent() {
   // This triggers after OCR processing completes
   useEffect(() => {
     if (ocrResult?.amount && !isManualAmountSet) {
-      console.log("🤖 OCR useEffect: Setting amount to", ocrResult.amount);
       setAmount(ocrResult.amount.toString());
     }
   }, [ocrResult?.amount, isManualAmountSet]); // More specific dependency
@@ -737,14 +726,6 @@ function UploadPaymentProofContent() {
   useEffect(() => {
     if (amount && parseFloat(amount) > 0 && booking) {
       const validation = validatePaymentAmount(parseFloat(amount));
-      console.log("💰 Payment Validation Result:", {
-        enteredAmount: parseFloat(amount),
-        expectedAmount: booking.payment_amount || booking.total_amount,
-        validationLevel: validation.level,
-        allowSubmission: validation.allowSubmission,
-        message: validation.message,
-        hasSuggestions: validation.suggestions?.length || 0,
-      });
       setPaymentValidation(validation);
       // Reset confirmation when amount changes
       setConfirmUnusualAmount(false);
@@ -866,7 +847,6 @@ function UploadPaymentProofContent() {
             ocrServiceResult.processingTime || Date.now() - startTime,
         };
 
-        console.log("🎯 Enhanced OCR Service Result:", ocrResult);
       } catch (ocrError) {
         console.error(
           "❌ Enhanced OCR service failed, falling back to basic processing:",
@@ -1004,12 +984,6 @@ function UploadPaymentProofContent() {
       // Store final result
       setOcrResult(ocrResult);
 
-      console.log("✅ Enhanced OCR completed:", {
-        fieldsUpdated,
-        confidence: ocrResult.confidence,
-        processingTime: ocrResult.processingTime,
-        warnings: ocrResult.warnings?.length || 0,
-      });
     } catch (error) {
       console.error("OCR processing failed:", error);
       setOcrProgress({
@@ -1061,7 +1035,6 @@ function UploadPaymentProofContent() {
     }, 30000); // 30 second timeout
 
     try {
-      console.log("📤 Starting upload process...");
 
       // Import timeout utility
       const { withTimeout } = await import("../utils/apiTimeout");
@@ -1070,7 +1043,6 @@ function UploadPaymentProofContent() {
       const fileExt = proofImage.name.split(".").pop();
       const fileName = `proof_${bookingId}_${Date.now()}.${fileExt}`;
 
-      console.log("📁 Uploading file to storage:", fileName);
 
       const { error: uploadError } = await withTimeout(
         supabase.storage.from("payment-proofs").upload(fileName, proofImage),
@@ -1082,7 +1054,6 @@ function UploadPaymentProofContent() {
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
-      console.log("✅ File uploaded to storage successfully");
 
       // Get public URL
       const {
@@ -1090,7 +1061,6 @@ function UploadPaymentProofContent() {
       } = supabase.storage.from("payment-proofs").getPublicUrl(fileName);
 
       // Save payment proof record with validation context - Use auth.uid() which matches our database structure
-      console.log("💾 Saving payment proof record...");
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
@@ -1135,21 +1105,9 @@ function UploadPaymentProofContent() {
         throw new Error(`Database error: ${insertError.message}`);
       }
 
-      console.log("✅ Payment proof record saved successfully");
 
       // CRITICAL: Update booking to trigger real-time admin updates
       try {
-        console.log(
-          "🔄 Now updating booking payment status to payment_review..."
-        );
-        console.log("🔍 Update parameters:", {
-          bookingId: parseInt(bookingId || "0"),
-          userId: authUser?.id,
-          updateData: {
-            payment_status: "payment_review", // This indicates payment proof needs review
-            updated_at: new Date().toISOString(),
-          },
-        });
 
         const { data: updateData, error: updateError } = await supabase
           .from("bookings")
@@ -1173,10 +1131,6 @@ function UploadPaymentProofContent() {
           );
           // This is not critical - admin can update status manually when reviewing proof
         } else {
-          console.log(
-            "✅ Booking payment status updated successfully - Admin should see real-time update now!"
-          );
-          console.log("📋 Updated booking data:", updateData);
         }
       } catch (updateErr) {
         console.warn(
@@ -1187,7 +1141,6 @@ function UploadPaymentProofContent() {
       }
 
       // Success - Show success state briefly, then redirect
-      console.log("✅ Payment proof uploaded successfully!");
       clearTimeout(timeoutId); // Clear timeout on success
       setUploadSuccess(true);
 
@@ -1245,7 +1198,6 @@ function UploadPaymentProofContent() {
           </p>
           <button
             onClick={() => {
-              console.log("Redirecting to bookings page...");
               // Use replace instead of push to prevent back button issues
               router.replace("/bookings");
             }}
@@ -1267,7 +1219,6 @@ function UploadPaymentProofContent() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  console.log("🔙 Navigating back to bookings...");
                   router.replace("/bookings");
                 }}
                 className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
