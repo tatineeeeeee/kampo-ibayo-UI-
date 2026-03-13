@@ -87,10 +87,53 @@ export async function getFreshSession(supabaseClient: {
     const { data: { session: refreshed }, error } = await supabaseClient.auth.refreshSession();
     if (!error && refreshed) return refreshed;
   } catch {
-    // Refresh failed — return cached token as fallback
+    // Refresh failed — token is unusable
   }
 
-  return cached;
+  // Token is expiring/expired and refresh failed — don't return stale token
+  return null;
+}
+
+/**
+ * Fetch with automatic auth token and 401 retry.
+ * If the server returns 401, attempts one token refresh and retries the request.
+ */
+export async function fetchWithAuth(
+  supabaseClient: Parameters<typeof getFreshSession>[0],
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const session = await getFreshSession(supabaseClient);
+  if (!session?.access_token) {
+    throw new Error("Authentication required. Please log in again.");
+  }
+
+  const makeRequest = (token: string) =>
+    fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+  const response = await makeRequest(session.access_token);
+
+  if (response.status === 401) {
+    // Token may have expired between getFreshSession check and server validation
+    try {
+      const { data: { session: refreshed }, error } =
+        await supabaseClient.auth.refreshSession();
+      if (!error && refreshed) {
+        return makeRequest(refreshed.access_token);
+      }
+    } catch {
+      // Refresh failed
+    }
+    throw new Error("Authentication required. Please log in again.");
+  }
+
+  return response;
 }
 
 /**

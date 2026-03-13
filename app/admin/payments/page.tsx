@@ -460,19 +460,8 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     try {
-      const { getFreshSession } = await import("../../utils/apiTimeout");
-      const session = await getFreshSession(supabase);
-      if (!session?.access_token) {
-        setError("Authentication required. Please log in again.");
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch("/api/admin/payments", {
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
+      const { fetchWithAuth } = await import("../../utils/apiTimeout");
+      const response = await fetchWithAuth(supabase, "/api/admin/payments");
       if (!response.ok) {
         throw new Error("Failed to fetch payments");
       }
