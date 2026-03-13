@@ -213,7 +213,7 @@ export default function AuthPage() {
           if (!hasValidRecoveryTokens) {
             const {
               data: { session },
-            } = await supabase.auth.getSession();
+            } = await supabase.auth.refreshSession();
 
             // If no valid session and no recovery tokens, clear the stale password reset state
             if (!session) {
@@ -258,7 +258,7 @@ export default function AuthPage() {
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession();
+        } = await supabase.auth.refreshSession();
 
         if (error) {
           await supabase.auth.signOut();

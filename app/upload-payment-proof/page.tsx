@@ -549,7 +549,7 @@ function UploadPaymentProofContent() {
       if (!user?.id) return;
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.refreshSession();
         const response = await fetch(
           `/api/user/payment-history/${bookingId}`,
           {

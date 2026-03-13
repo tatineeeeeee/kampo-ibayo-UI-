@@ -34,7 +34,7 @@ const validateAndRefreshSession = async (maxRetries = 3) => {
       const {
         data: { session },
         error,
-      } = await supabase.auth.getSession();
+      } = await supabase.auth.refreshSession();
 
       if (error) {
         console.error(`Session validation attempt ${attempt} failed:`, error);
@@ -171,7 +171,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     // Check authentication
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.refreshSession().then(async ({ data }) => {
       setUser(data.session?.user ?? null);
       if (!data.session?.user) {
         router.push("/auth");
@@ -523,7 +523,7 @@ export default function SettingsPage() {
 
       info("Processing account deletion...");
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         return;
@@ -720,7 +720,7 @@ export default function SettingsPage() {
         );
       } else if (format === "pdf") {
         // PDF Export - call API to generate PDF
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.refreshSession();
         if (!session?.access_token) {
           showError("Authentication required. Please log in again.");
           setExporting(false);

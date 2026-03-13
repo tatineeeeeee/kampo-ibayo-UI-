@@ -33,7 +33,7 @@ export function ReceiptManager({
     setIsDownloading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         showToast({
           type: "error",
@@ -105,7 +105,7 @@ export function ReceiptManager({
     setIsEmailing(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         showToast({
           type: "error",

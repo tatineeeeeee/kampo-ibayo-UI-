@@ -38,7 +38,7 @@ const validateAndRefreshSession = async (maxRetries = 3) => {
       const {
         data: { session },
         error,
-      } = await supabase.auth.getSession();
+      } = await supabase.auth.refreshSession();
 
       if (error) {
         console.error(`Session validation attempt ${attempt} failed:`, error);
@@ -269,7 +269,7 @@ function ProfilePageContent({ user }: { user: User }) {
       }
 
       // Refresh user data
-      const { data } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.refreshSession();
       if (data.session?.user) {
         // User data updated - could trigger a re-render through auth state
       }
@@ -349,7 +349,7 @@ function ProfilePageContent({ user }: { user: User }) {
       }
 
       // Refresh user data
-      const { data } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.refreshSession();
       if (data.session?.user) {
         // User data updated - could trigger a re-render through auth state
       }
