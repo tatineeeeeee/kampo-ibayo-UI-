@@ -632,7 +632,7 @@ export default function UsersPage() {
       // Get current user role first
       const {
         data: { session },
-      } = await supabase.auth.refreshSession();
+      } = await supabase.auth.getSession();
       if (session?.user) {
         const { data: currentUserData, error: userError } = await supabase
           .from("users")
@@ -837,9 +837,8 @@ export default function UsersPage() {
 
 
       // Get the current session for authorization
-      const {
-        data: { session },
-      } = await supabase.auth.refreshSession();
+      const { getFreshSession } = await import("../../utils/apiTimeout");
+      const session = await getFreshSession(supabase);
       if (!session?.access_token) {
         showError("You must be logged in to delete users");
         return;

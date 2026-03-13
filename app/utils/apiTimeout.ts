@@ -62,6 +62,38 @@ export async function withAuthTimeout<T>(
 }
 
 /**
+ * Gets a valid session token for API calls.
+ * Uses getSession() (fast, cached). Only calls refreshSession() if token
+ * is expired or about to expire within 60 seconds.
+ * This avoids 429 rate limits from calling refreshSession() on every request.
+ */
+export async function getFreshSession(supabaseClient: {
+  auth: {
+    getSession: () => Promise<{ data: { session: { access_token: string; expires_at?: number; user?: { id: string; email?: string } } | null } }>;
+    refreshSession: () => Promise<{ data: { session: { access_token: string; expires_at?: number; user?: { id: string; email?: string } } | null }; error: unknown }>;
+  };
+}) {
+  const { data: { session: cached } } = await supabaseClient.auth.getSession();
+  if (!cached) return null;
+
+  // Check if token is expired or about to expire (within 60 seconds)
+  const expiresAt = cached.expires_at ? cached.expires_at * 1000 : 0;
+  const isExpiringSoon = expiresAt > 0 && expiresAt - Date.now() < 60000;
+
+  if (!isExpiringSoon) return cached;
+
+  // Only refresh when truly needed
+  try {
+    const { data: { session: refreshed }, error } = await supabaseClient.auth.refreshSession();
+    if (!error && refreshed) return refreshed;
+  } catch {
+    // Refresh failed — return cached token as fallback
+  }
+
+  return cached;
+}
+
+/**
  * Safe logout function that always completes even if Supabase hangs
  * @param supabase Supabase client
  * @param timeoutMs Timeout for the signOut operation (default: 2000ms)

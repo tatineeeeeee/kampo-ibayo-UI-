@@ -115,6 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === "TOKEN_REFRESHED") {
         if (session?.user) {
           setUser(session.user);
+          // Re-stamp cookies so middleware doesn't redirect after idle
+          if (typeof document !== 'undefined' && userRole) {
+            const maxAge = 7 * 24 * 60 * 60;
+            document.cookie = `kb_authenticated=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+            document.cookie = `kb_role=${userRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          }
         }
         return;
       }
@@ -223,7 +229,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const maxAge = 7 * 24 * 60 * 60;
       document.cookie = `kb_authenticated=true; path=/; max-age=${maxAge}; SameSite=Lax`;
       document.cookie = `kb_role=${userRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (!loading) {
+    } else if (!loading && !user) {
+      // Only clear cookies when user is truly signed out
       document.cookie = 'kb_authenticated=; path=/; max-age=0';
       document.cookie = 'kb_role=; path=/; max-age=0';
     }

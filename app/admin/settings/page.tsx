@@ -72,7 +72,7 @@ export default function SettingsPage() {
     const loadData = async () => {
       const {
         data: { session },
-      } = await supabase.auth.refreshSession();
+      } = await supabase.auth.getSession();
 
       if (!session?.user) return;
 

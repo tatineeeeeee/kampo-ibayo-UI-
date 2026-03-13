@@ -165,8 +165,8 @@ export class OCRService {
         if (extracted.method !== 'unknown') confidenceBoost += 10;
         if (extracted.referenceNumber) {
           // Maya ID pattern gets higher boost (alphanumeric)
-          if (/[A-F]/i.test(extracted.referenceNumber) && extracted.referenceNumber.includes(' ')) {
-            confidenceBoost += 20; // Maya ID with proper format
+          if (/[A-F]/i.test(extracted.referenceNumber) && extracted.referenceNumber.replace(/\s/g, '').length >= 10) {
+            confidenceBoost += 20; // Maya ID with proper format (spaced or continuous)
           } else if (extracted.referenceNumber.length >= 8) {
             confidenceBoost += 15; // Any substantial reference
           } else {
@@ -332,7 +332,7 @@ export class OCRService {
       'paymaya transfer',
       'paymaya payment',
       'instapay',
-      'you sent ₱',      // USER REPORTED: Maya amounts not being detected properly
+      'you sent ₱',        // USER REPORTED: Maya amounts not being detected properly
       'you paid ₱',
       'sent ₱',
       'transfer amount ₱',
@@ -361,7 +361,7 @@ export class OCRService {
 
     // ENHANCED detection with specific patterns
     const mayaSpecificPatterns = [
-      /[A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4}/i,  // Maya ID pattern
+      /[A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4}/i,  // Maya ID pattern (with OCR misread chars)
       /reference[\s]*id/i,
       /trace[\s]*no/i,
       /instapay/i
@@ -462,14 +462,14 @@ export class OCRService {
       ],
       maya: [
         // MAYA-SPECIFIC patterns - HIGHEST PRIORITY for Reference ID with letters
-        // CRITICAL: Reference ID patterns (alphanumeric with letters A-F) - TOP PRIORITY
-        /reference[\s]*id[\s]*:?[\s]*([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi, // "Reference ID: 8F34 1A5F 27CE"
-        /reference[\s]*id[\s]+([A-F0-9]{4}[\s]+[A-F0-9]{4}[\s]+[A-F0-9]{4})/gi, // "Reference ID 8F34 1A5F 27CE" (spaces)
-        /id[\s]+([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?=[\s]*trace|[\s]*$)/gi, // "ID 8F34 1A5F 27CE" before trace
-        
+        // Uses expanded char class [A-F0-9IOSZl] for OCR misreads (I=1, O=0, S=5, l=1)
+        /reference[\s]*id[\s]*:?[\s]*([A-F0-9IOSZl]{10,12})/gi, // Continuous: "Reference ID E1FC5A986B15"
+        /reference[\s]*id[\s]*:?[\s]*([A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4})/gi, // Spaced: "Reference ID 8F34 1A5F 27CE"
+        /id[\s]+([A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4})(?=[\s]*trace|[\s]*$)/gi, // "ID 8F34 1A5F 27CE" before trace
+
         // ENHANCED: Flexible Maya ID patterns with letter validation
-        /([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?![\d]{4})/gi, // Maya ID but NOT followed by more digits (avoid account numbers)
-        /([8][A-F0-9]{3}[\s]*[1][A-F0-9]{3}[\s]*[2A-F0-9]{4})/gi, // Common Maya ID starting pattern
+        /([A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4}[\s]*[A-F0-9IOSZl]{4})(?![\d]{4})/gi, // Maya ID (avoid account numbers)
+        /([8][A-F0-9IOSZl]{3}[\s]*[1][A-F0-9IOSZl]{3}[\s]*[2A-F0-9IOSZl]{4})/gi, // Common Maya ID starting pattern
         
         // INSTAPAY patterns (Maya's interbank service) - LOWER PRIORITY
         /instapay[\s]*ref[\s]*no[\s]*:?[\s]*(\d{6,8})(?![\d])/gi, // "InstaPay Ref No: 476640" (not part of longer number)
@@ -502,19 +502,20 @@ export class OCRService {
     if (method === 'maya') {
       
       // STAGE 1: Try to extract Maya Reference ID pattern first (highest priority)
+      // NOTE: Use [A-F0-9IOSZl] to include common OCR misreads (I=1, O=0, S=5, Z=2, l=1)
+      const HEX_OCR = '[A-F0-9IOSZl]'; // Hex chars + common OCR misreads
       const mayaIdPatterns = [
-        // MOST SPECIFIC: "Reference ID" followed by alphanumeric pattern
-        /reference[\s]*id[\s]*:?[\s]*([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})/gi,
-        /reference[\s]*id[\s]+([A-F0-9]{4}[\s]+[A-F0-9]{4}[\s]+[A-F0-9]{4})/gi,
-        
+        // MOST SPECIFIC: "Reference ID" followed by alphanumeric pattern (with or without spaces)
+        new RegExp(`reference[\\s]*id[\\s]*:?[\\s]*(${HEX_OCR}{10,12})`, 'gi'), // Continuous: "Reference ID E1FC5A986B15"
+        new RegExp(`reference[\\s]*id[\\s]*:?[\\s]*(${HEX_OCR}{4}[\\s]+${HEX_OCR}{4}[\\s]+${HEX_OCR}{4})`, 'gi'), // Spaced format
+
         // SPECIFIC: "ID" followed by alphanumeric before "Trace"
-        /id[\s]+([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?=[\s]*trace)/gi,
-        
-        // ENHANCED: Common Maya ID starting patterns
-        /([8][A-F0-9]{3}[\s]*[1][A-F0-9]{3}[\s]*[2A-F0-9]{4})(?![\d])/gi, // Common format like "8F34 1A5F 27CE"
-        
-        // GENERAL: Any 12-char alphanumeric with letters (but NOT followed by more digits)
-        /([A-F0-9]{4}[\s]*[A-F0-9]{4}[\s]*[A-F0-9]{4})(?![\d])/gi,
+        new RegExp(`id[\\s]+(${HEX_OCR}{4}[\\s]*${HEX_OCR}{4}[\\s]*${HEX_OCR}{4})(?=[\\s]*trace)`, 'gi'),
+
+        // GENERAL: Any 10-12 char continuous alphanumeric with letters (but NOT adjacent to more hex)
+        new RegExp(`(?<![A-F0-9IOSZl])(${HEX_OCR}{10,12})(?![A-F0-9IOSZl])`, 'gi'),
+        // GENERAL: Any 12-char spaced alphanumeric with letters
+        new RegExp(`(${HEX_OCR}{4}[\\s]+${HEX_OCR}{4}[\\s]+${HEX_OCR}{4})(?![\\d])`, 'gi'),
       ];
       
       for (const pattern of mayaIdPatterns) {
@@ -629,11 +630,15 @@ export class OCRService {
         /₱[\s]*([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)(?!\d)/gi, // ₱100, ₱1, ₱4,500 etc
         /₱[\s]*([0-9]+(?:\.\d{1,2})?)(?!\d)/gi, // Fallback for any ₱ + numbers
         
-        // CRITICAL: Handle 'P' followed by numbers (common OCR misread of ₱ symbol) 
-        // Special case: P100 often means ₱1.00 when OCR misread the decimal
-        /\bP(100)(?!\d)\b/gi, // P100 (likely ₱1.00 misread) - HIGHEST PRIORITY  
-        /\bP([1-9]\d{0,2}(?:\.\d{1,2})?)(?!\d)\b/gi, // P100, P50, P1, P1.00 etc.
-        /\bP([1-9]\d{3,}(?:\.\d{1,2})?)(?!\d)\b/gi, // P1000, P5000 etc.
+        // CRITICAL: Maya "sent money" format with minus/dash prefix
+        /[-–—]\s*₱[\s]*([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)(?!\d)/gi, // "- ₱9,000.00"
+        /[-–—]\s*P([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)(?!\d)/gi, // "- P9,000.00" (OCR misread ₱)
+
+        // CRITICAL: Handle 'P' followed by numbers (common OCR misread of ₱ symbol)
+        // WITH comma support for amounts like P9,000.00
+        /\bP(100)(?!\d)\b/gi, // P100 (likely ₱1.00 misread) - HIGHEST PRIORITY
+        /(?<![A-Za-z])P([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)(?!\d)/gi, // P9,000.00, P100, P50 etc.
+        /(?<![A-Za-z])P([1-9]\d{3,}(?:\.\d{1,2})?)(?!\d)/gi, // P1000, P5000 etc (no commas).
         
         // NEW: Standalone decimal amounts in Maya context (for cases like "1.00")
         /(?:^|\s|\n)([1-9](?:\d{0,2})?\.00)(?=\s|\n|$|[^0-9])/gi, // 1.00, 2.00, etc. (standalone)
@@ -658,6 +663,11 @@ export class OCRService {
         /amount[\s]*:?[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Amount: ₱3,000" or "Amount 3,000"
         /total[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Total Amount ₱3,000"
         /payment[\s]*amount[\s]*₱?[\s]*([\d,]+(?:\.\d{1,2})?)/gi, // "Payment Amount ₱3,000"
+
+        // LOW PRIORITY: Bare comma-separated numbers (when OCR drops ₱ symbol entirely)
+        // e.g. "- 9,000.00" or just "9,000.00" on its own line
+        /[-–—]\s*([1-9]\d{0,2}(?:,\d{3})+(?:\.\d{1,2})?)/gi, // "- 9,000.00"
+        /([1-9]\d{0,2}(?:,\d{3})+(?:\.\d{1,2})?)/gi, // Bare "9,000.00" (requires commas to avoid matching random numbers)
       ];
     } else if (detectedMethod === 'gcash') {
       // GCASH-SPECIFIC amount patterns
@@ -915,25 +925,25 @@ export class OCRService {
   private static fixMayaIdOCRErrors(ref: string): string {
     // Common OCR misreads in Maya alphanumeric IDs
     let fixed = ref;
-    
-    // Only apply fixes to what looks like Maya ID format (alphanumeric with spaces)
-    if (/^[A-Z0-9\s]+$/.test(ref.toUpperCase()) && ref.includes(' ')) {
-      // S -> 5 (very common in Maya IDs like "1ASF" should be "1A5F")
-      // Apply this specifically to the middle positions of 4-character groups
-      fixed = fixed.replace(/([A-Z0-9])([A-Z])S([A-Z0-9])/g, '$1$25$3');
-      
-      // O -> 0 in alphanumeric contexts
-      fixed = fixed.replace(/([0-9])O([0-9A-F])/g, '$10$2');
-      fixed = fixed.replace(/([A-F])O([0-9])/g, '$10$2');
-      
-      // I -> 1 in numeric contexts
-      fixed = fixed.replace(/I([0-9A-F]{2,})/g, '1$1');
-      
+
+    // Apply fixes to any Maya ID format (with or without spaces)
+    if (/^[A-Z0-9IOSZl\s]+$/i.test(ref)) {
+      // l (lowercase L) -> 1
+      fixed = fixed.replace(/l/g, '1');
+
+      // I -> 1 in hex contexts (I is not a valid hex char)
+      fixed = fixed.replace(/I/g, '1');
+
+      // O -> 0 in alphanumeric contexts (O is not a valid hex char)
+      fixed = fixed.replace(/O/g, '0');
+
+      // S -> 5 (very common in Maya IDs)
+      fixed = fixed.replace(/([A-F0-9])S([A-F0-9])/gi, '$15$2');
+
       // Z -> 2 (less common but occurs)
-      fixed = fixed.replace(/([0-9])Z([0-9A-F])/g, '$12$2');
-      
+      fixed = fixed.replace(/([0-9])Z([0-9A-F])/gi, '$12$2');
     }
-    
+
     return fixed;
   }
 

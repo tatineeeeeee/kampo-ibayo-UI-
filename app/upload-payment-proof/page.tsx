@@ -246,7 +246,7 @@ function UploadPaymentProofContent() {
             /(?:reference|ref|transaction|trx)\s*(?:no|number|id)?\s*:?\s*([A-Z0-9]{8,})/gi,
         },
         maya: {
-          amount: /(?:you\s+paid|amount|total|sent)\s*₱?\s*([\d,]+\.?\d*)/gi,
+          amount: /(?:you\s+paid|amount|total|sent|[-–—]\s*₱|₱)\s*:?\s*₱?\s*([\d,]+\.?\d*)/gi,
           reference:
             /(?:reference|receipt|transaction)\s*(?:number|no|id)?\s*:?\s*([A-Z0-9]{6,})/gi,
         },
@@ -549,7 +549,8 @@ function UploadPaymentProofContent() {
       if (!user?.id) return;
 
       try {
-        const { data: { session } } = await supabase.auth.refreshSession();
+        const { getFreshSession } = await import("../utils/apiTimeout");
+        const session = await getFreshSession(supabase);
         const response = await fetch(
           `/api/user/payment-history/${bookingId}`,
           {
@@ -1823,7 +1824,6 @@ function UploadPaymentProofContent() {
                     onChange={handleImageChange}
                     className="hidden"
                     id="proof-upload"
-                    required
                   />
                   <label htmlFor="proof-upload" className="cursor-pointer">
                     {previewUrl ? (

@@ -927,7 +927,7 @@ function BookingPage() {
               paymentType: paymentType,
             };
 
-            const { data: { session: emailSession } } = await supabase.auth.refreshSession();
+            const { data: { session: emailSession } } = await supabase.auth.getSession();
             const emailResponse = await fetch(
               "/api/email/booking-confirmation",
               {

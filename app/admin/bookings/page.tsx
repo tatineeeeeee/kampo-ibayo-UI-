@@ -1636,8 +1636,8 @@ export default function BookingsPage() {
   const fetchPaymentHistory = async (bookingId: number) => {
     setPaymentHistoryLoading(true);
     try {
-      const { data: { session: refreshedPaymentSession } } = await supabase.auth.refreshSession();
-      const session = refreshedPaymentSession;
+      const { getFreshSession } = await import("../../utils/apiTimeout");
+      const session = await getFreshSession(supabase);
       if (!session?.access_token) {
         console.error("Authentication required for payment history");
         setPaymentHistory([]);
@@ -1859,10 +1859,10 @@ export default function BookingsPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-      // Refresh session to ensure token is valid before API call
-      const { data: { session: refreshedSession }, error: sessionError } = await supabase.auth.refreshSession();
-      const session = refreshedSession;
-      if (sessionError || !session?.access_token) {
+      // Get fresh session — only refreshes if token is expired/expiring
+      const { getFreshSession } = await import("../../utils/apiTimeout");
+      const session = await getFreshSession(supabase);
+      if (!session?.access_token) {
         throw new Error("Authentication required. Please log in again.");
       }
 
@@ -1999,8 +1999,8 @@ export default function BookingsPage() {
 
     try {
       if (newStatus === "confirmed") {
-        const { data: { session: refreshedConfirmSession } } = await supabase.auth.refreshSession();
-        const session = refreshedConfirmSession;
+        const { getFreshSession } = await import("../../utils/apiTimeout");
+        const session = await getFreshSession(supabase);
         if (!session?.access_token) {
           throw new Error("Authentication required. Please log in again.");
         }
@@ -2178,13 +2178,13 @@ export default function BookingsPage() {
       // Calculate refund amount based on actual amount paid
       const refundAmount = shouldRefund ? paymentSummary?.totalPaid || 0 : 0;
 
-      const { data: { session: refreshedCancelSession } } = await supabase.auth.refreshSession();
-      if (!refreshedCancelSession?.access_token) {
+      const { getFreshSession } = await import("../../utils/apiTimeout");
+      const session = await getFreshSession(supabase);
+      if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         setIsProcessing(false);
         return;
       }
-      const session = refreshedCancelSession;
 
       // Cancel the booking
       const response = await fetch("/api/admin/cancel-booking", {
@@ -2273,10 +2273,8 @@ export default function BookingsPage() {
 
     setRescheduleLoading(true);
     try {
-      const {
-        data: { session: refreshedReschedSession },
-      } = await supabase.auth.refreshSession();
-      const session = refreshedReschedSession;
+      const { getFreshSession } = await import("../../utils/apiTimeout");
+      const session = await getFreshSession(supabase);
       if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         setRescheduleLoading(false);
