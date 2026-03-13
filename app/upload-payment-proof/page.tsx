@@ -165,6 +165,7 @@ function UploadPaymentProofContent() {
     }
   );
   const [confirmUnusualAmount, setConfirmUnusualAmount] = useState(false);
+  const [confirmUnrecognizedImage, setConfirmUnrecognizedImage] = useState(false);
 
   const router = useRouter();
   const { user } = useAuth();
@@ -784,6 +785,7 @@ function UploadPaymentProofContent() {
       setAmount("");
       setIsManualAmountSet(false);
       setShowOCREditor(false);
+      setConfirmUnrecognizedImage(false);
 
       // Create preview URL
       const url = URL.createObjectURL(file);
@@ -1085,6 +1087,12 @@ function UploadPaymentProofContent() {
           1
         )}%. `;
         adminValidationNotes += `Expected: ₱${expectedAmount.toLocaleString()}, Submitted: ₱${submissionAmount.toLocaleString()}`;
+      }
+
+      // Flag if OCR couldn't detect payment details from the image
+      if (confirmUnrecognizedImage) {
+        adminValidationNotes += adminValidationNotes ? " | " : "";
+        adminValidationNotes += "OCR WARNING: Image not recognized as payment receipt. User confirmed manually.";
       }
 
       const { error: insertError } = await supabase
@@ -2295,6 +2303,59 @@ function UploadPaymentProofContent() {
               </div>
             )}
 
+            {/* OCR Unrecognized Image Warning */}
+            {ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && (
+              <div className="p-3 bg-amber-900/30 border border-amber-600/50 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-amber-200 text-sm font-medium">
+                      No payment details detected
+                    </p>
+                    <p className="text-amber-300/80 text-xs mt-1">
+                      The uploaded image doesn&apos;t appear to be a payment receipt. Please upload a clear screenshot of your GCash, Maya, or bank transfer confirmation.
+                    </p>
+                    <div className="pt-2 mt-2 border-t border-amber-700/50">
+                      <label
+                        htmlFor="confirm-unrecognized-image"
+                        className="flex items-center gap-3 cursor-pointer group py-1"
+                      >
+                        <div
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                            confirmUnrecognizedImage
+                              ? "bg-amber-500 border-amber-500"
+                              : "border-gray-500 group-hover:border-amber-400"
+                          }`}
+                        >
+                          {confirmUnrecognizedImage && (
+                            <Check className="w-3 h-3 text-white" />
+                          )}
+                        </div>
+                        <input
+                          type="checkbox"
+                          id="confirm-unrecognized-image"
+                          checked={confirmUnrecognizedImage}
+                          onChange={(e) =>
+                            setConfirmUnrecognizedImage(e.target.checked)
+                          }
+                          className="sr-only"
+                        />
+                        <span
+                          className={`text-sm transition-colors ${
+                            confirmUnrecognizedImage
+                              ? "text-amber-200"
+                              : "text-gray-400 group-hover:text-gray-300"
+                          }`}
+                        >
+                          I confirm this is a valid payment receipt
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Submit Button - Enhanced with Validation */}
             <button
               type="submit"
@@ -2303,11 +2364,13 @@ function UploadPaymentProofContent() {
                 !proofImage ||
                 uploadSuccess ||
                 !paymentValidation.allowSubmission ||
-                (paymentValidation.level === "warning" && !confirmUnusualAmount)
+                (paymentValidation.level === "warning" && !confirmUnusualAmount) ||
+                !!(ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && !confirmUnrecognizedImage)
               }
               className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg transform ${
                 !paymentValidation.allowSubmission ||
-                (paymentValidation.level === "warning" && !confirmUnusualAmount)
+                (paymentValidation.level === "warning" && !confirmUnusualAmount) ||
+                !!(ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && !confirmUnrecognizedImage)
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed scale-100"
                   : "bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600 hover:scale-105 active:scale-95"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
