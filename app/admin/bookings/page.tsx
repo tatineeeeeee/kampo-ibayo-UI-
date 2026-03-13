@@ -1636,7 +1636,8 @@ export default function BookingsPage() {
   const fetchPaymentHistory = async (bookingId: number) => {
     setPaymentHistoryLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session: refreshedPaymentSession } } = await supabase.auth.refreshSession();
+      const session = refreshedPaymentSession;
       if (!session?.access_token) {
         console.error("Authentication required for payment history");
         setPaymentHistory([]);
@@ -1858,8 +1859,10 @@ export default function BookingsPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      // Refresh session to ensure token is valid before API call
+      const { data: { session: refreshedSession }, error: sessionError } = await supabase.auth.refreshSession();
+      const session = refreshedSession;
+      if (sessionError || !session?.access_token) {
         throw new Error("Authentication required. Please log in again.");
       }
 
@@ -1996,7 +1999,8 @@ export default function BookingsPage() {
 
     try {
       if (newStatus === "confirmed") {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: refreshedConfirmSession } } = await supabase.auth.refreshSession();
+        const session = refreshedConfirmSession;
         if (!session?.access_token) {
           throw new Error("Authentication required. Please log in again.");
         }
@@ -2174,12 +2178,13 @@ export default function BookingsPage() {
       // Calculate refund amount based on actual amount paid
       const refundAmount = shouldRefund ? paymentSummary?.totalPaid || 0 : 0;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      const { data: { session: refreshedCancelSession } } = await supabase.auth.refreshSession();
+      if (!refreshedCancelSession?.access_token) {
         showError("Authentication required. Please log in again.");
         setIsProcessing(false);
         return;
       }
+      const session = refreshedCancelSession;
 
       // Cancel the booking
       const response = await fetch("/api/admin/cancel-booking", {
@@ -2269,8 +2274,9 @@ export default function BookingsPage() {
     setRescheduleLoading(true);
     try {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { session: refreshedReschedSession },
+      } = await supabase.auth.refreshSession();
+      const session = refreshedReschedSession;
       if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         setRescheduleLoading(false);
