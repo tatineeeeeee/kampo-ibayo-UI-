@@ -619,7 +619,19 @@ export class OCRService {
     for (const pattern of datePatterns) {
       cleanedText = cleanedText.replace(pattern, ' [DATE_REMOVED] ');
     }
-    
+
+    // PRE-FILTER: Remove ad/promotional text that contains numbers (e.g. "DATA99", "MAGIC DATA99")
+    cleanedText = cleanedText.replace(/\b(?:data|magic|load|promo|offer|smart|tnt)\s*\d+\b/gi, ' [AD_REMOVED] ');
+
+    // PRE-FILTER: Normalize common OCR character misreads near currency symbols
+    // OCR often reads 1 as I or l, and 0 as O in amounts like "₱12,000" → "₱l2,000" or "₱I2,000"
+    // Fix: ₱ or P followed by I/l then digits → replace I/l with 1
+    cleanedText = cleanedText.replace(/([₱P])([\s]*)([Il])(\d)/g, '$1$21$4');
+    // Fix: digit followed by I/l followed by digit (e.g. "1I,000" or "9l00")
+    cleanedText = cleanedText.replace(/(\d)([Il])(\d)/g, '$11$3');
+    // Fix: digit followed by O followed by digit (e.g. "1O,000" → "10,000")
+    cleanedText = cleanedText.replace(/(\d)O(\d)/g, '$10$2');
+
     // CRITICAL FIX: Method-specific patterns to avoid confusion
     let patterns: RegExp[] = [];
 
@@ -797,6 +809,13 @@ export class OCRService {
           }
           
           if (isTraceNumber) {
+            continue;
+          }
+
+          // CRITICAL: Exclude ad/promotional numbers (e.g. "DATA99", "MAGIC DATA99")
+          const isAdText = /\b(data|magic|load|promo|offer|smart|tnt|extended)\b/i.test(matchContext) ||
+                           matchContext.includes('[ad_removed]');
+          if (isAdText && !matchText.includes('₱') && !matchText.includes('php') && !matchText.includes('amount')) {
             continue;
           }
           
