@@ -103,7 +103,7 @@ export default function PaymentsPage() {
   // Function to test API connectivity
   const testApiConnectivity = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         return;
@@ -187,7 +187,7 @@ export default function PaymentsPage() {
   // Function to fix missing payment types
   const fixMissingPaymentTypes = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         return;
@@ -241,7 +241,7 @@ export default function PaymentsPage() {
     setProcessingBalance(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         showError("Authentication required. Please log in again.");
         setProcessingBalance(false);
@@ -457,7 +457,7 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         setError("Authentication required. Please log in again.");
         setLoading(false);

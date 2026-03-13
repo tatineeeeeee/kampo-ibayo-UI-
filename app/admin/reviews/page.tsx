@@ -136,7 +136,7 @@ export default function AdminReviewsPage() {
               rejectionReason || "Review does not meet our guidelines",
           };
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
       if (!session?.access_token) {
         throw new Error("Authentication required. Please log in again.");
       }

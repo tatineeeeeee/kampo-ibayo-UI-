@@ -349,7 +349,7 @@ export default function WalkInBookingPage() {
       // Optionally send confirmation email if guest email was provided
       if (guestEmail.trim() && data) {
         try {
-          const { data: { session: emailSession } } = await supabase.auth.getSession();
+          const { data: { session: emailSession } } = await supabase.auth.refreshSession();
           await fetch("/api/email/booking-confirmation", {
             method: "POST",
             headers: {
