@@ -23,6 +23,7 @@ interface AvailabilityCalendarProps {
   excludeBookingId?: number; // Exclude current booking from availability check
   minDate?: string; // Minimum selectable date
   isRescheduling?: boolean; // Allow more flexible date selection during reschedule
+  theme?: "dark" | "light"; // Calendar theme variant
 }
 
 interface BookedDate {
@@ -38,7 +39,9 @@ export default function AvailabilityCalendar({
   excludeBookingId,
   minDate,
   isRescheduling = false,
+  theme = "dark",
 }: AvailabilityCalendarProps) {
+  const isLight = theme === "light";
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookedDates, setBookedDates] = useState<BookedDate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -400,70 +403,62 @@ export default function AvailabilityCalendar({
       "w-full aspect-square flex items-center justify-center text-sm sm:text-base lg:text-lg font-bold rounded-lg transition-all duration-200 cursor-pointer relative border-2 ";
 
     if (!isCurrentMonth) {
-      classes +=
-        "text-gray-500 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-40 ";
+      classes += isLight
+        ? "text-slate-300 bg-slate-50 border-slate-100 opacity-30 "
+        : "text-gray-500 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-40 ";
     } else if (isBlocked) {
-      // Blocked dates (current booking) - distinctive blocked styling with no pointer cursor
-      // Note: In reschedule mode, isDateBlocked() returns false, so this won't trigger
       classes +=
         "bg-gradient-to-br from-gray-400 to-gray-500 text-white cursor-not-allowed border-gray-400 opacity-75 pointer-events-none ";
     } else if (!isSelectable) {
-      // Handle booking status display for non-selectable dates (but show proper colors)
       classes += "cursor-not-allowed ";
 
       switch (bookingStatus) {
         case "checkin":
-          // Check-in dates - sophisticated blue gradient (even if not selectable for rescheduling)
           classes +=
-            "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-blue-500 shadow-md ";
+            "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400 shadow-md ";
           break;
         case "checkout":
-          // Check-out dates - sophisticated red gradient (even if not selectable for rescheduling)
           classes +=
-            "bg-gradient-to-br from-red-600 to-red-700 text-white border-red-500 shadow-md ";
+            "bg-gradient-to-br from-red-500 to-red-600 text-white border-red-400 shadow-md ";
           break;
         case "busy":
-          // Occupied dates - sophisticated yellow gradient (resort is occupied)
           classes +=
-            "bg-gradient-to-br from-yellow-500 to-yellow-600 text-white border-yellow-500/50 ";
+            "bg-gradient-to-br from-amber-400 to-amber-500 text-white border-amber-400/50 ";
           break;
         case "full":
-          // Full day bookings - sophisticated purple gradient (same-day booking)
           classes +=
-            "bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg border-purple-400 ";
+            "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg border-purple-400 ";
           break;
         default:
-          // Other non-selectable dates
-          classes += "bg-gray-700 text-gray-400 opacity-60 border-gray-600/30 ";
+          classes += isLight
+            ? "bg-slate-100 text-slate-400 opacity-50 border-slate-200 "
+            : "bg-gray-700 text-gray-400 opacity-60 border-gray-600/30 ";
       }
     } else if (isPast) {
-      // Past dates - disabled styling
-      classes +=
-        "bg-gray-700 text-gray-500 opacity-50 cursor-not-allowed border-gray-600/30 ";
+      classes += isLight
+        ? "bg-slate-100 text-slate-300 opacity-50 cursor-not-allowed border-slate-200 "
+        : "bg-gray-700 text-gray-500 opacity-50 cursor-not-allowed border-gray-600/30 ";
     } else if (isSelected) {
-      // Selected dates - sophisticated orange gradient with glow
       classes +=
-        "bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-xl border-orange-400 ring-2 ring-orange-400/30 ";
+        "bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold shadow-xl border-orange-400 ring-2 ring-orange-400/30 ";
     } else if (bookingStatus === "checkin") {
-      // Check-in dates - sophisticated blue gradient
       classes +=
-        "bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600 border-blue-500 hover:border-blue-400 shadow-md hover:shadow-lg transform hover:scale-105 ";
+        "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500 border-blue-400 hover:border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
     } else if (bookingStatus === "checkout") {
-      // Check-out dates - sophisticated red gradient
       classes +=
-        "bg-gradient-to-br from-red-600 to-red-700 text-white hover:from-red-500 hover:to-red-600 border-red-500 hover:border-red-400 shadow-md hover:shadow-lg transform hover:scale-105 ";
+        "bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 border-red-400 hover:border-red-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
     } else if (isInRange) {
-      // Date range - sophisticated blue range styling
-      classes +=
-        "bg-gradient-to-br from-blue-200 to-blue-300 text-blue-800 border-blue-300 shadow-md ";
+      classes += isLight
+        ? "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-blue-200 shadow-md "
+        : "bg-gradient-to-br from-blue-200 to-blue-300 text-blue-800 border-blue-300 shadow-md ";
     } else if (isToday) {
-      // Today - sophisticated green gradient
-      classes +=
-        "bg-gradient-to-br from-emerald-600 to-emerald-700 text-white font-bold border-emerald-400 shadow-lg ";
+      classes += isLight
+        ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold border-indigo-400 shadow-lg ring-2 ring-indigo-300/40 "
+        : "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold border-emerald-400 shadow-lg ";
     } else {
-      // Open dates - sophisticated green gradient
-      classes +=
-        "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 border-emerald-500 hover:border-emerald-400 shadow-md hover:shadow-lg transform hover:scale-105 ";
+      classes += isLight
+        ? "bg-gradient-to-br from-emerald-400 to-emerald-500 text-white hover:from-emerald-300 hover:to-emerald-400 border-emerald-300 hover:border-emerald-200 shadow-sm hover:shadow-md transform hover:scale-105 "
+        : "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 border-emerald-500 hover:border-emerald-400 shadow-md hover:shadow-lg transform hover:scale-105 ";
     }
 
     return classes;
@@ -534,23 +529,28 @@ export default function AvailabilityCalendar({
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 shadow-2xl overflow-hidden">
+    <div className={`rounded-xl border shadow-2xl overflow-hidden ${isLight ? "bg-gradient-to-br from-slate-50 to-blue-50/50 border-blue-200/60" : "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700"}`}>
       {/* Calendar Header - Responsive */}
-      <div className="flex items-center justify-between p-2 sm:p-4 lg:p-5 bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600">
+      <div className={`flex items-center justify-between p-2 sm:p-4 lg:p-5 border-b ${isLight ? "bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-700" : "bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600"}`}>
         <button
           type="button"
           onClick={() => navigateMonth("prev")}
           disabled={!canGoPrev()}
-          className={`p-1.5 sm:p-2 lg:p-3 rounded-full transition-all duration-200 active:scale-95 border border-gray-500/50 ${
+          title="Previous month"
+          className={`p-1.5 sm:p-2 lg:p-3 rounded-full transition-all duration-200 active:scale-95 border ${
             canGoPrev()
-              ? "bg-gray-700/60 hover:bg-gray-600/80 cursor-pointer"
-              : "bg-gray-800/40 opacity-40 cursor-not-allowed"
+              ? isLight
+                ? "bg-white/20 hover:bg-white/30 cursor-pointer border-white/30"
+                : "bg-gray-700/60 hover:bg-gray-600/80 cursor-pointer border-gray-500/50"
+              : isLight
+                ? "bg-white/10 opacity-40 cursor-not-allowed border-white/20"
+                : "bg-gray-800/40 opacity-40 cursor-not-allowed border-gray-500/50"
           }`}
         >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
+          <ChevronLeft className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${isLight ? "text-white" : "text-white"}`} />
         </button>
 
-        <h3 className="text-sm sm:text-base lg:text-xl font-bold text-white text-center px-2 sm:px-4 py-1 sm:py-2 rounded-lg bg-gray-600/30">
+        <h3 className={`text-sm sm:text-base lg:text-xl font-bold text-center px-2 sm:px-4 py-1 sm:py-2 rounded-lg ${isLight ? "text-white bg-white/15" : "text-white bg-gray-600/30"}`}>
           <span className="hidden xs:inline">
             {monthNames[currentDate.getMonth()]}
           </span>
@@ -563,17 +563,18 @@ export default function AvailabilityCalendar({
         <button
           type="button"
           onClick={() => navigateMonth("next")}
-          className="p-1.5 sm:p-2 lg:p-3 rounded-full bg-gray-700/60 hover:bg-gray-600/80 transition-all duration-200 active:scale-95 border border-gray-500/50"
+          title="Next month"
+          className={`p-1.5 sm:p-2 lg:p-3 rounded-full transition-all duration-200 active:scale-95 border ${isLight ? "bg-white/20 hover:bg-white/30 border-white/30" : "bg-gray-700/60 hover:bg-gray-600/80 border-gray-500/50"}`}
         >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
+          <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${isLight ? "text-white" : "text-white"}`} />
         </button>
       </div>
 
       {/* Selection Mode Indicator */}
-      <div className="px-2 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-b border-gray-600">
+      <div className={`px-2 py-2 sm:px-4 sm:py-2.5 border-b ${isLight ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100" : "bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-gray-600"}`}>
         <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-          <MousePointerClick className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-300" />
-          <p className="text-[11px] sm:text-sm font-medium text-blue-200">
+          <MousePointerClick className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLight ? "text-blue-600" : "text-blue-300"}`} />
+          <p className={`text-[11px] sm:text-sm font-medium ${isLight ? "text-blue-700" : "text-blue-200"}`}>
             {selectionMode === "check-in"
               ? "Select check-in date"
               : "Select check-out date"}
@@ -588,7 +589,7 @@ export default function AvailabilityCalendar({
           {dayNames.map((day) => (
             <div
               key={day}
-              className="text-center text-[10px] sm:text-xs font-semibold text-gray-400 py-1 uppercase tracking-wide"
+              className={`text-center text-[10px] sm:text-xs font-semibold py-1 uppercase tracking-wide ${isLight ? "text-slate-500" : "text-gray-400"}`}
             >
               {day}
             </div>
@@ -616,7 +617,7 @@ export default function AvailabilityCalendar({
               >
                 <span className="relative z-10">{date.getDate()}</span>
                 {statusIndicator && (
-                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 px-0.5 text-[4px] sm:text-[6px] lg:text-[7px] font-black bg-black/90 text-white rounded shadow-sm whitespace-nowrap leading-tight">
+                  <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 px-0.5 text-[4px] sm:text-[6px] lg:text-[7px] font-black rounded shadow-sm whitespace-nowrap leading-tight ${isLight ? "bg-gray-800/80 text-white" : "bg-black/90 text-white"}`}>
                     {statusIndicator}
                   </span>
                 )}
@@ -627,36 +628,36 @@ export default function AvailabilityCalendar({
       </div>
 
       {/* Legend - Clean & Minimal */}
-      <div className="border-t border-gray-700 bg-gray-800/90 p-3 sm:p-4">
+      <div className={`border-t p-3 sm:p-4 ${isLight ? "border-blue-100 bg-gradient-to-b from-slate-50 to-blue-50/30" : "border-gray-700 bg-gray-800/90"}`}>
         {/* Status Legend - Compact Grid */}
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 sm:gap-x-6">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm"></div>
-            <span className="text-gray-300 text-[11px] sm:text-xs font-medium">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-sm"></div>
+            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Available
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm"></div>
-            <span className="text-gray-300 text-[11px] sm:text-xs font-medium">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm"></div>
+            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Check-in
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-red-600 to-red-700 shadow-sm"></div>
-            <span className="text-gray-300 text-[11px] sm:text-xs font-medium">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-red-500 to-red-600 shadow-sm"></div>
+            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Check-out
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-sm"></div>
-            <span className="text-gray-300 text-[11px] sm:text-xs font-medium">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-amber-400 to-amber-500 shadow-sm"></div>
+            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Occupied
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-orange-600 to-orange-700 shadow-sm ring-1 ring-orange-400"></div>
-            <span className="text-gray-300 text-[11px] sm:text-xs font-medium">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-orange-500 to-orange-600 shadow-sm ring-1 ring-orange-400"></div>
+            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Selected
             </span>
           </div>
@@ -664,33 +665,33 @@ export default function AvailabilityCalendar({
 
         {/* Selection Status - Only show when dates selected */}
         {(newCheckIn || newCheckOut) && (
-          <div className="mt-3 pt-3 border-t border-gray-700/50">
-            <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-700/50">
+          <div className={`mt-3 pt-3 border-t ${isLight ? "border-blue-100" : "border-gray-700/50"}`}>
+            <div className={`rounded-xl p-3 border ${isLight ? "bg-white border-blue-100 shadow-sm" : "bg-gray-900/50 border-gray-700/50"}`}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+                  <p className={`text-[10px] uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-gray-500"}`}>
                     Check-in
                   </p>
-                  <div className="bg-blue-600/20 border border-blue-600/40 rounded-lg px-3 py-2">
-                    <p className="text-sm font-semibold text-blue-300">
+                  <div className={`rounded-lg px-3 py-2 ${isLight ? "bg-blue-50 border border-blue-200" : "bg-blue-600/20 border border-blue-600/40"}`}>
+                    <p className={`text-sm font-semibold ${isLight ? "text-blue-700" : "text-blue-300"}`}>
                       {formatDateSafe(newCheckIn)}
                     </p>
                   </div>
                 </div>
-                <div className="text-gray-600 text-lg">→</div>
+                <div className={`text-lg ${isLight ? "text-slate-300" : "text-gray-600"}`}>→</div>
                 <div className="flex-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+                  <p className={`text-[10px] uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-gray-500"}`}>
                     Check-out
                   </p>
-                  <div className="bg-red-600/20 border border-red-600/40 rounded-lg px-3 py-2">
-                    <p className="text-sm font-semibold text-red-300">
+                  <div className={`rounded-lg px-3 py-2 ${isLight ? "bg-red-50 border border-red-200" : "bg-red-600/20 border border-red-600/40"}`}>
+                    <p className={`text-sm font-semibold ${isLight ? "text-red-700" : "text-red-300"}`}>
                       {formatDateSafe(newCheckOut)}
                     </p>
                   </div>
                 </div>
               </div>
               {newCheckIn && newCheckOut && (
-                <div className="mt-2 flex items-center justify-center gap-1.5 text-gray-400">
+                <div className={`mt-2 flex items-center justify-center gap-1.5 ${isLight ? "text-slate-500" : "text-gray-400"}`}>
                   <Moon className="w-3 h-3" />
                   <span className="text-xs">
                     {(() => {
@@ -711,46 +712,46 @@ export default function AvailabilityCalendar({
 
         {/* Quick Guide - Collapsible on Mobile */}
         <details className="mt-3 group">
-          <summary className="flex items-center gap-2 cursor-pointer text-gray-400 hover:text-gray-300 transition-colors">
+          <summary className={`flex items-center gap-2 cursor-pointer transition-colors ${isLight ? "text-slate-500 hover:text-slate-700" : "text-gray-400 hover:text-gray-300"}`}>
             <Info className="w-3.5 h-3.5" />
             <span className="text-xs font-medium">
               How to read the calendar
             </span>
             <ChevronRight className="w-3 h-3 ml-auto group-open:rotate-90 transition-transform" />
           </summary>
-          <div className="mt-2 bg-gray-900/40 rounded-lg p-3 text-xs text-gray-400 space-y-1.5">
+          <div className={`mt-2 rounded-lg p-3 text-xs space-y-1.5 ${isLight ? "bg-white border border-blue-100 text-slate-500" : "bg-gray-900/40 text-gray-400"}`}>
             <div className="flex items-start gap-2">
-              <LogIn className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <LogIn className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
               <span>
-                <strong className="text-blue-300">Check-in</strong> — Guest
+                <strong className={isLight ? "text-blue-600" : "text-blue-300"}>Check-in</strong> — Guest
                 arrives (3:00 PM)
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <LogOut className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+              <LogOut className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
               <span>
-                <strong className="text-red-300">Check-out</strong> — Guest
+                <strong className={isLight ? "text-red-600" : "text-red-300"}>Check-out</strong> — Guest
                 leaves (1:00 PM)
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <Users className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <Users className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
               <span>
-                <strong className="text-amber-300">Occupied</strong> — Resort is
+                <strong className={isLight ? "text-amber-600" : "text-amber-300"}>Occupied</strong> — Resort is
                 in use
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <Ban className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <Ban className="w-3.5 h-3.5 text-purple-500 flex-shrink-0 mt-0.5" />
               <span>
-                <strong className="text-purple-300">Full</strong> — Same-day
+                <strong className={isLight ? "text-purple-600" : "text-purple-300"}>Full</strong> — Same-day
                 check-in &amp; out
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+              <Lock className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${isLight ? "text-slate-400" : "text-gray-400"}`} />
               <span>
-                <strong className="text-gray-300">Blocked</strong> — Your
+                <strong className={isLight ? "text-slate-600" : "text-gray-300"}>Blocked</strong> — Your
                 current booking
               </span>
             </div>

@@ -583,19 +583,20 @@ export default function WalkInBookingPage() {
                 )}
 
                 {/* Cash Payment Info */}
-                <div className="rounded-lg p-4 border transition-colors bg-green-50 border-green-200">
+                <div className="rounded-lg p-4 border bg-green-50 border-green-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-green-800">
-                        ✓ Cash Payment
+                        Cash Payment
                       </p>
                       <p className="text-xs mt-0.5 text-green-600">
                         Walk-in bookings are confirmed immediately as cash paid
                       </p>
                     </div>
-                    <div className="w-11 h-6 bg-green-600 rounded-full relative">
-                      <div className="absolute top-[2px] right-[2px] bg-white border-gray-300 border rounded-full h-5 w-5"></div>
-                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">
+                      <Check className="w-3 h-3" />
+                      Enabled
+                    </span>
                   </div>
                 </div>
 
@@ -625,6 +626,7 @@ export default function WalkInBookingPage() {
                 onDateSelect={handleDateSelect}
                 minDate={todayString}
                 isRescheduling={true}
+                theme="light"
               />
             </div>
 

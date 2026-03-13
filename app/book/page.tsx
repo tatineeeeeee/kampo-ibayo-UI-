@@ -924,6 +924,7 @@ function BookingPage() {
               guests: bookingData.number_of_guests,
               totalAmount: bookingData.total_amount,
               email: bookingData.guest_email,
+              paymentType: paymentType,
             };
 
             const { data: { session: emailSession } } = await supabase.auth.getSession();

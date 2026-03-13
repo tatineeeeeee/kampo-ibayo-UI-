@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
         guests: booking.number_of_guests,
         totalAmount: booking.total_amount,
         email: booking.guest_email,
+        paymentType: (booking.payment_type as 'full' | 'half') || undefined,
       };
 
       const confirmationEmail = createBookingConfirmedEmail(emailBookingDetails);

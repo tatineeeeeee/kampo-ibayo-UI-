@@ -3821,7 +3821,7 @@ export default function BookingsPage() {
                   </div>
 
                   {/* Calendar */}
-                  <div className="max-h-[340px] overflow-y-auto">
+                  <div>
                     <AvailabilityCalendar
                       selectedCheckIn={rescheduleCheckIn}
                       selectedCheckOut={rescheduleCheckOut}
@@ -3832,6 +3832,7 @@ export default function BookingsPage() {
                       excludeBookingId={selectedBooking.id}
                       minDate={new Date().toISOString().split("T")[0]}
                       isRescheduling={true}
+                      theme="light"
                     />
                   </div>
 

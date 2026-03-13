@@ -59,6 +59,7 @@ export interface BookingDetails {
   guests: number;
   totalAmount: number;
   email: string;
+  paymentType?: 'full' | 'half';
 }
 
 export interface RefundDetails {
@@ -293,15 +294,15 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
       <div class="container">
         <div class="header">
           <div class="company-logo">KAMPO IBAYO RESORT</div>
-          <div class="confirmation-status">BOOKING CONFIRMED</div>
-          <h1 class="header-title">Reservation Confirmation</h1>
+          <div class="confirmation-status">BOOKING RECEIVED</div>
+          <h1 class="header-title">Reservation Received</h1>
           <p class="header-subtitle">Thank you for choosing our resort</p>
         </div>
         
         <div class="content-section">
           <p>Dear ${bookingDetails.guestName},</p>
           
-          <p>We are pleased to confirm your reservation at Kampo Ibayo Resort. This email serves as your official booking confirmation and receipt.</p>
+          <p>We have received your reservation request at Kampo Ibayo Resort. Please upload your proof of payment so we can process and confirm your booking.</p>
           
           <div class="booking-details">
             <h3 class="section-title">Reservation Summary</h3>
@@ -362,8 +363,8 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
           </div>
           
           <div style="margin: 20px 0; padding: 15px; background: #bee3f8; border-left: 4px solid #3182ce; color: #2c5282;">
-            <strong>Important Information:</strong><br>
-            Please retain this confirmation for your records. Check-in instructions and additional details will be provided closer to your arrival date. For any changes or inquiries regarding your reservation, please contact us using the information provided above.
+            <strong>Next Step:</strong><br>
+            Please upload your proof of payment to complete your booking. Once verified by our team, you will receive a confirmation email with your check-in details. For any questions, contact us using the information provided above.
           </div>
           
           <p style="margin-top: 30px;">Thank you for choosing Kampo Ibayo Resort. We look forward to welcoming you.</p>
@@ -387,11 +388,11 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
   `;
 
   const text = `
-    RESERVATION CONFIRMATION - KAMPO IBAYO RESORT
-    
+    RESERVATION RECEIVED - KAMPO IBAYO RESORT
+
     Dear ${bookingDetails.guestName},
-    
-    We are pleased to confirm your reservation at Kampo Ibayo Resort.
+
+    We have received your reservation request at Kampo Ibayo Resort.
     
     RESERVATION DETAILS:
     Booking ID: ${bookingDetails.bookingId}
@@ -406,15 +407,15 @@ export const createBookingConfirmationEmail = (bookingDetails: BookingDetails): 
     Phone: +63 966 281 5123
     Business Hours: 8:00 AM - 8:00 PM (Philippine Time)
     
-    Please retain this confirmation for your records.
-    
+    Please upload your proof of payment to complete your booking.
+
     Kampo Ibayo Resort
-    © 2025 All rights reserved.
+    © ${new Date().getFullYear()} All rights reserved.
   `;
 
   return {
     to: bookingDetails.email,
-    subject: `Reservation Confirmation - Booking ${bookingDetails.bookingId} | Kampo Ibayo Resort`,
+    subject: `Reservation Received - Booking ${bookingDetails.bookingId} | Kampo Ibayo Resort`,
     html,
     text,
   };
@@ -1023,7 +1024,7 @@ export const createBookingConfirmedEmail = (bookingDetails: BookingDetails): Ema
             <li><strong>Valid government-issued ID</strong> required for check-in</li>
             <li><strong>Check-in time:</strong> 3:00 PM onwards</li>
             <li><strong>Check-out time:</strong> 1:00 PM</li>
-            <li><strong>Payment:</strong> Full payment required upon arrival</li>
+            <li><strong>Payment:</strong> ${bookingDetails.paymentType === 'full' ? 'Full payment completed — no balance upon arrival' : bookingDetails.paymentType === 'half' ? 'Remaining 50% balance due upon arrival' : 'Full payment required upon arrival'}</li>
             <li><strong>Confirmation:</strong> Please bring this email (print or mobile)</li>
           </ul>
         </div>
@@ -1336,8 +1337,8 @@ export const createBookingCancelledEmail = (bookingDetails: BookingDetails): Ema
             Refund Information
           </h4>
           <div class="refund-text">
-            If you have made any payments for this booking, we will process your full refund within 3-5 business days. 
-            You will receive a separate confirmation email once the refund has been processed to your original payment method.
+            If you have made any payments for this booking, our team will review your refund based on our cancellation policy.
+            You will be contacted regarding the refund process and timeline.
           </div>
         </div>
         
@@ -1350,10 +1351,9 @@ export const createBookingCancelledEmail = (bookingDetails: BookingDetails): Ema
             While we understand this is disappointing, we'd like to offer you these alternatives:
           </p>
           <ul class="alternatives-list">
-            <li><strong>Reschedule for different dates</strong> with priority booking (subject to availability)</li>
-            <li><strong>Receive a booking credit</strong> worth 110% of your original payment for future use</li>
-            <li><strong>Get a full refund</strong> processed quickly to your original payment method</li>
-            <li><strong>VIP treatment</strong> on your next booking with complimentary upgrades</li>
+            <li><strong>Reschedule for different dates</strong> — subject to availability</li>
+            <li><strong>Rebook in the future</strong> — we'd love to welcome you another time</li>
+            <li><strong>Contact us</strong> — our team is happy to assist with any questions</li>
           </ul>
         </div>
         
@@ -1700,8 +1700,8 @@ export const createUserCancellationEmail = (bookingDetails: BookingDetails): Ema
             What Happens Next?
           </h4>
           <ul class="steps-list">
-            <li><strong>Refund Processing:</strong> If you made any payments, we'll process your refund within 3-5 business days</li>
-            <li><strong>Email Confirmation:</strong> You'll receive a separate email once the refund is processed</li>
+            <li><strong>Refund Review:</strong> If you made any payments, our team will review your refund based on our cancellation policy</li>
+            <li><strong>We'll Be in Touch:</strong> You will be contacted regarding refund details and timeline</li>
             <li><strong>No Penalties:</strong> Your cancellation won't affect future reservations with us</li>
             <li><strong>Availability Update:</strong> The dates are now available for other guests</li>
           </ul>
@@ -2170,7 +2170,7 @@ export const createUserCancellationAdminNotification = (
             <div style="font-weight: 600; margin-bottom: 5px;">Kampo Ibayo Resort</div>
             <div style="font-size: 12px; opacity: 0.9;">Administrative Management System</div>
             <div style="font-size: 11px; margin-top: 10px; opacity: 0.8;">
-              © 2025 Kampo Ibayo Resort. All rights reserved.
+              © ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.
             </div>
           </div>
         </div>
@@ -2425,7 +2425,7 @@ export const createAdminCancellationGuestEmail = (cancellationData: Cancellation
             <div style="font-weight: 600; margin-bottom: 5px;">Kampo Ibayo Resort</div>
             <div style="font-size: 12px; opacity: 0.9;">Professional Resort Management</div>
             <div style="font-size: 11px; margin-top: 10px; opacity: 0.8;">
-              © 2025 Kampo Ibayo Resort. All rights reserved.
+              © ${new Date().getFullYear()} Kampo Ibayo Resort. All rights reserved.
             </div>
           </div>
         </div>
