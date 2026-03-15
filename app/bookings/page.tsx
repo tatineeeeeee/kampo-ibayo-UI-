@@ -710,10 +710,10 @@ function BookingsPageContent() {
                   : booking
               );
               return updated.sort((a, b) => {
-                const aPriority = statusPriority[a.status] ?? 1;
-                const bPriority = statusPriority[b.status] ?? 1;
+                const aPriority = statusPriority[a.status ?? ""] ?? 1;
+                const bPriority = statusPriority[b.status ?? ""] ?? 1;
                 if (aPriority !== bPriority) return aPriority - bPriority;
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
               });
             });
 
@@ -986,10 +986,10 @@ function BookingsPageContent() {
             setBookings((prev) => {
               const updated = prev.map((b) => (b.id === data.id ? (data as Booking) : b));
               return updated.sort((a, b) => {
-                const ap = statusPri[a.status] ?? 1;
-                const bp = statusPri[b.status] ?? 1;
+                const ap = statusPri[a.status ?? ""] ?? 1;
+                const bp = statusPri[b.status ?? ""] ?? 1;
                 if (ap !== bp) return ap - bp;
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
               });
             });
             setRefreshTrigger((prev) => prev + 1);
@@ -1040,10 +1040,10 @@ function BookingsPageContent() {
         // Sort by status priority: confirmed first, then pending, then cancelled
         const statusPriority: Record<string, number> = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 };
         const sorted = ((data as Booking[]) || []).sort((a, b) => {
-          const aPriority = statusPriority[a.status] ?? 1;
-          const bPriority = statusPriority[b.status] ?? 1;
+          const aPriority = statusPriority[a.status ?? ""] ?? 1;
+          const bPriority = statusPriority[b.status ?? ""] ?? 1;
           if (aPriority !== bPriority) return aPriority - bPriority;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
         });
         setBookings(sorted);
 
