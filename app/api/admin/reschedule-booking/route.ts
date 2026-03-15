@@ -160,6 +160,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Broadcast reschedule to user's client for instant real-time update
+        try {
+            const channel = supabaseAdmin.channel(`booking-update-${bookingId}`);
+            await channel.send({
+                type: 'broadcast',
+                event: 'booking-changed',
+                payload: { bookingId, action: 'rescheduled' }
+            });
+            await supabaseAdmin.removeChannel(channel);
+        } catch (broadcastError) {
+            console.warn('⚠️ Server: Broadcast failed (non-critical):', broadcastError);
+        }
+
         // Send notification email (fire-and-forget)
         try {
             const emailData = {

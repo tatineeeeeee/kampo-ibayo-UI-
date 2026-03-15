@@ -105,6 +105,20 @@ export async function POST(request: NextRequest) {
       // Continue - don't fail the main operation
     }
 
+    // Broadcast payment status change to user's client for instant real-time update
+    // This bypasses postgres_changes (which depends on publication/RLS config)
+    try {
+      const channel = supabaseAdmin.channel(`payment-update-${paymentProof.booking_id}`);
+      await channel.send({
+        type: 'broadcast',
+        event: 'payment-status-changed',
+        payload: { status: newStatus, bookingId: paymentProof.booking_id }
+      });
+      await supabaseAdmin.removeChannel(channel);
+    } catch (broadcastError) {
+      console.warn('⚠️ Server: Broadcast failed (non-critical):', broadcastError);
+    }
+
     // Send email notifications
     try {
 

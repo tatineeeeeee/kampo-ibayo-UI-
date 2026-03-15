@@ -169,26 +169,26 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
           }, 500);
         }
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-        } else if (status === "CHANNEL_ERROR") {
-          console.warn(
-            `⚠️ Real-time button subscription connection issue for booking ${bookingId} - falling back to manual refresh`
-          );
-          // Fallback: Set up a simple polling mechanism if real-time fails
-          fallbackIntervalRef.current = setInterval(() => {
-            checkPaymentProof();
-          }, 10000); // Check every 10 seconds
-        }
-      });
+      .subscribe();
+
+    // Broadcast channel — instant updates from API (bypasses postgres_changes)
+    const broadcastChannel = supabase
+      .channel(`payment-update-btn-${bookingId}`)
+      .on("broadcast", { event: "payment-status-changed" }, () => {
+        checkPaymentProof();
+        setTimeout(() => checkPaymentProof(), 500);
+      })
+      .subscribe();
+
+    // Background polling as safety net (broadcast handles instant updates)
+    const pollingInterval = setInterval(() => {
+      checkPaymentProof();
+    }, 15000);
 
     return () => {
-      // Clean up fallback interval if it exists
-      if (fallbackIntervalRef.current) {
-        clearInterval(fallbackIntervalRef.current);
-        fallbackIntervalRef.current = null;
-      }
+      clearInterval(pollingInterval);
       subscription.unsubscribe();
+      broadcastChannel.unsubscribe();
     };
   }, [bookingId]);
 
@@ -406,26 +406,26 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
           }, 1000);
         }
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-        } else if (status === "CHANNEL_ERROR") {
-          console.warn(
-            `⚠️ Real-time payment status connection issue for booking ${bookingId} - falling back to manual refresh`
-          );
-          // Fallback: Set up a simple polling mechanism if real-time fails
-          fallbackIntervalRef.current = setInterval(() => {
-            fetchPaymentProof();
-          }, 15000); // Check every 15 seconds
-        }
-      });
+      .subscribe();
+
+    // Broadcast channel — instant updates from API (bypasses postgres_changes)
+    const broadcastChannel = supabase
+      .channel(`payment-update-${bookingId}`)
+      .on("broadcast", { event: "payment-status-changed" }, () => {
+        fetchPaymentProof();
+        setTimeout(() => fetchPaymentProof(), 500);
+      })
+      .subscribe();
+
+    // Background polling as safety net (broadcast handles instant updates)
+    const pollingInterval = setInterval(() => {
+      fetchPaymentProof();
+    }, 15000);
 
     return () => {
-      // Clean up fallback interval if it exists
-      if (fallbackIntervalRef.current) {
-        clearInterval(fallbackIntervalRef.current);
-        fallbackIntervalRef.current = null;
-      }
+      clearInterval(pollingInterval);
       subscription.unsubscribe();
+      broadcastChannel.unsubscribe();
     };
   }, [bookingId]);
 
@@ -740,6 +740,39 @@ function BookingsPageContent() {
               )
             );
 
+            // Handle payment_status changes (verified/rejected by admin)
+            // Check newRecord directly — oldRecord may not include payment_status depending on REPLICA IDENTITY
+            const paymentStatus = newRecord.payment_status as string;
+            if (paymentStatus === "verified" || paymentStatus === "rejected") {
+              // Staged refreshes to ensure payment proof components pick up the change
+              setRefreshTrigger((prev) => prev + 1);
+              setTimeout(() => setRefreshTrigger((prev) => prev + 1), 500);
+              setTimeout(() => setRefreshTrigger((prev) => prev + 1), 1500);
+
+              const paymentStatusMessages: Record<string, { title: string; message: string; type: "success" | "error" | "info" }> = {
+                verified: {
+                  title: "Payment Verified!",
+                  message: "Your payment proof has been approved by admin",
+                  type: "success",
+                },
+                rejected: {
+                  title: "Payment Rejected",
+                  message: "Your payment proof was rejected. Please check details and resubmit.",
+                  type: "error",
+                },
+              };
+
+              const statusInfo = paymentStatusMessages[paymentStatus];
+              if (statusInfo) {
+                showToast({
+                  type: statusInfo.type,
+                  title: statusInfo.title,
+                  message: statusInfo.message,
+                  duration: 5000,
+                });
+              }
+            }
+
             // Update stats instantly when status changes
             if (oldRecord && oldRecord.status !== newRecord.status) {
               setBookingStats((prevStats) => {
@@ -955,6 +988,37 @@ function BookingsPageContent() {
       userPaymentProofsSubscription.unsubscribe();
     };
   }, [user, showToast, setRefreshTrigger]);
+
+  // Broadcast listener for instant booking updates (reschedule, etc.)
+  const bookingIds = bookings.map((b) => b.id).join(",");
+  useEffect(() => {
+    if (!user || bookings.length === 0) return;
+
+    const channels = bookings.map((booking) =>
+      supabase
+        .channel(`booking-update-${booking.id}`)
+        .on("broadcast", { event: "booking-changed" }, async () => {
+          // Re-fetch this specific booking
+          const { data } = await supabase
+            .from("bookings")
+            .select("*")
+            .eq("id", booking.id)
+            .single();
+          if (data) {
+            setBookings((prev) =>
+              prev.map((b) => (b.id === data.id ? (data as Booking) : b))
+            );
+            setRefreshTrigger((prev) => prev + 1);
+          }
+        })
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach((ch) => ch.unsubscribe());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, bookingIds]);
 
   useEffect(() => {
     async function loadBookings() {
