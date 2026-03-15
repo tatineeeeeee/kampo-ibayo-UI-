@@ -73,18 +73,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For confirmed bookings, check if it's at least 24 hours before check-in
+    // Max 2 reschedules per booking (admin reschedules don't count)
+    const rescheduleCount = booking.reschedule_count || 0;
+    if (rescheduleCount >= 2) {
+      return NextResponse.json(
+        { success: false, error: "Maximum 2 reschedules reached. Please contact the resort directly for further changes." },
+        { status: 400 }
+      );
+    }
+
+    // For confirmed bookings, check if it's at least 3 days before check-in
     if (booking.status === 'confirmed') {
       const originalCheckIn = new Date(booking.check_in_date);
       const now = new Date();
-      const hoursUntilCheckIn = (originalCheckIn.getTime() - now.getTime()) / (1000 * 3600);
+      const daysUntilCheckIn = (originalCheckIn.getTime() - now.getTime()) / (1000 * 3600 * 24);
 
-      if (hoursUntilCheckIn < 24) {
+      if (daysUntilCheckIn < 3) {
         return NextResponse.json(
-          { success: false, error: "Cannot reschedule less than 24 hours before check-in" },
+          { success: false, error: "Cannot reschedule less than 3 days before check-in" },
           { status: 400 }
         );
       }
+    }
+
+    // Block reschedule if there are pending payment proofs (wait for admin to verify/reject first)
+    const { data: pendingProofs } = await supabaseAdmin
+      .from('payment_proofs')
+      .select('id')
+      .eq('booking_id', bookingId)
+      .eq('status', 'pending');
+
+    if (pendingProofs && pendingProofs.length > 0) {
+      return NextResponse.json(
+        { success: false, error: "Cannot reschedule while payment is under review. Please wait for payment verification." },
+        { status: 400 }
+      );
     }
 
     // Check if new dates are available (excluding the current booking)
@@ -170,15 +193,36 @@ export async function POST(request: NextRequest) {
     const newCheckInDateTime = `${newCheckIn}T15:00:00`; // 3 PM check-in
     const newCheckOutDateTime = `${newCheckOut}T13:00:00`; // 1 PM check-out
 
-    // Update the booking with new dates, new amount, and reset payment status
+    // Auto-cancel old pending proofs — admin shouldn't have to review outdated submissions
+    await supabaseAdmin
+      .from('payment_proofs')
+      .update({ status: 'rejected', admin_notes: 'Auto-rejected: booking was rescheduled', updated_at: new Date().toISOString() })
+      .eq('booking_id', bookingId)
+      .eq('status', 'pending');
+
+    // Check existing verified payments to determine if user still owes money
+    const newPaymentAmount = booking.payment_type === 'half' ? Math.round(newTotalAmount * 0.5) : newTotalAmount;
+
+    const { data: verifiedProofs } = await supabaseAdmin
+      .from('payment_proofs')
+      .select('amount')
+      .eq('booking_id', bookingId)
+      .eq('status', 'verified');
+
+    const totalVerified = (verifiedProofs || []).reduce((sum: number, p: { amount: number }) => sum + p.amount, 0);
+    // Only reset to pending if they still owe money; otherwise keep as verified
+    const newPaymentStatus = totalVerified >= newPaymentAmount ? 'verified' : 'pending';
+
+    // Update the booking with new dates, new amount, and smart payment status
     const { data: updatedBooking, error: updateError } = await supabaseAdmin
       .from('bookings')
       .update({
         check_in_date: newCheckInDateTime,
         check_out_date: newCheckOutDateTime,
         total_amount: newTotalAmount,
-        payment_amount: booking.payment_type === 'half' ? Math.round(newTotalAmount * 0.5) : newTotalAmount,
-        payment_status: 'pending', // Reset payment status since amount changed
+        payment_amount: newPaymentAmount,
+        payment_status: newPaymentStatus,
+        reschedule_count: rescheduleCount + 1,
         updated_at: new Date().toISOString()
       })
       .eq('id', bookingId)

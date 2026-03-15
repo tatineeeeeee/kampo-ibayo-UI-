@@ -49,16 +49,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if cancellation is allowed based on time (no cancellation within 24 hours)
+    // Check if cancellation is allowed based on time (no cancellation within 3 days)
     const checkInDate = new Date(booking.check_in_date);
     const currentTime = new Date();
     const hoursUntilCheckIn = (checkInDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+    const daysUntilCheckIn = hoursUntilCheckIn / 24;
 
-    if (hoursUntilCheckIn < 24) {
+    if (daysUntilCheckIn < 3) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Cancellation is not allowed within 24 hours of check-in. Please contact the resort directly for assistance.',
+          error: 'Cancellation is not allowed within 3 days of check-in. Please contact the resort directly for assistance.',
           canCancel: false
         },
         { status: 400 }

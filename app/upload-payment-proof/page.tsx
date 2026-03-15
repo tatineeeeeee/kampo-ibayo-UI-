@@ -179,14 +179,15 @@ function UploadPaymentProofContent() {
 
   // Debug logging
 
-  // Calculate remaining balance after verified payments and pending payments
+  // Calculate remaining balance after verified payments only
+  // Pending proofs are NOT subtracted — they're unverified and user should still be able to submit
   const verifiedPaidAmount = paymentSummary.totalPaid;
   const pendingAmount = paymentSummary.pendingAmount;
   // Use payment_amount (the amount they need to pay based on payment type) instead of total_amount
   const expectedPaymentAmount =
     booking?.payment_amount || booking?.total_amount || 0;
   const remainingAmount = booking
-    ? Math.max(0, expectedPaymentAmount - verifiedPaidAmount - pendingAmount)
+    ? Math.max(0, expectedPaymentAmount - verifiedPaidAmount)
     : 0;
 
   // Enhanced OCR preprocessing function
@@ -373,15 +374,16 @@ function UploadPaymentProofContent() {
       const expectedAmount = booking.payment_amount || booking.total_amount;
       const totalBookingAmount = booking.total_amount;
       const verifiedPaid = paymentSummary.totalPaid;
-      const pendingAmount = paymentSummary.pendingAmount;
       const actualRemaining = Math.max(
         0,
-        expectedAmount - verifiedPaid - pendingAmount
+        expectedAmount - verifiedPaid
       );
 
-      const difference = Math.abs(enteredAmount - expectedAmount);
+      // Compare against remaining balance when there are verified payments, otherwise full expected amount
+      const compareTarget = verifiedPaid > 0 ? actualRemaining : expectedAmount;
+      const difference = Math.abs(enteredAmount - compareTarget);
       const percentDiff =
-        expectedAmount > 0 ? (difference / expectedAmount) * 100 : 0;
+        compareTarget > 0 ? (difference / compareTarget) * 100 : 0;
 
       // Critical errors that block submission
       if (enteredAmount > totalBookingAmount * 3) {
@@ -1070,7 +1072,11 @@ function UploadPaymentProofContent() {
 
       // Prepare validation context for admin review
       const submissionAmount = parseFloat(amount);
-      const expectedAmount = booking.payment_amount || booking.total_amount;
+      const fullExpectedAmount = booking.payment_amount || booking.total_amount;
+      // Compare against remaining balance when there are verified payments
+      const expectedAmount = paymentSummary.totalPaid > 0
+        ? Math.max(0, fullExpectedAmount - paymentSummary.totalPaid)
+        : fullExpectedAmount;
       const amountDifference = Math.abs(submissionAmount - expectedAmount);
       const percentDifference =
         expectedAmount > 0 ? (amountDifference / expectedAmount) * 100 : 0;
@@ -1338,29 +1344,31 @@ function UploadPaymentProofContent() {
           <div className="bg-gradient-to-r from-red-900/40 to-orange-900/30 border border-red-500/50 rounded-xl p-4 sm:p-6">
             <div className="text-center">
               <p className="text-gray-300 text-sm mb-1">
-                {paymentSummary.totalPaid > 0
+                {remainingAmount <= 0
+                  ? "Fully Paid"
+                  : paymentSummary.totalPaid > 0
                   ? "Remaining Balance"
                   : booking.payment_type === "half"
                   ? "50% Down Payment Required"
                   : "Total Amount to Pay"}
               </p>
               <div className="text-4xl sm:text-5xl font-bold text-white mb-2">
-                ₱
-                {(paymentSummary.totalPaid > 0
-                  ? remainingAmount
-                  : booking.payment_amount || booking.total_amount
-                ).toLocaleString()}
+                ₱{remainingAmount.toLocaleString()}
               </div>
-              {booking.payment_type === "half" &&
-                paymentSummary.totalPaid === 0 && (
-                  <p className="text-gray-400 text-xs">
-                    Full booking: ₱{booking.total_amount.toLocaleString()}
-                  </p>
-                )}
               {paymentSummary.totalPaid > 0 && (
                 <p className="text-green-400 text-sm flex items-center justify-center gap-1">
                   <Check className="w-4 h-4" /> ₱
                   {paymentSummary.totalPaid.toLocaleString()} already paid
+                </p>
+              )}
+              {paymentSummary.totalPaid > 0 && remainingAmount > 0 && (
+                <p className="text-gray-400 text-xs">
+                  Total booking: ₱{(booking.payment_amount || booking.total_amount).toLocaleString()}
+                </p>
+              )}
+              {pendingAmount > 0 && remainingAmount > 0 && (
+                <p className="text-amber-400 text-xs mt-1">
+                  ₱{pendingAmount.toLocaleString()} under review — you can still submit a new proof
                 </p>
               )}
             </div>
@@ -1500,11 +1508,17 @@ function UploadPaymentProofContent() {
                 )}
 
                 {remainingAmount <= 0 && (
-                  <div className="mt-3 p-2 bg-green-900/20 border border-green-600/50 rounded">
-                    <p className="text-green-300 text-sm font-medium flex items-center gap-1">
+                  <div className="mt-3 p-3 bg-green-900/20 border border-green-600/50 rounded-lg">
+                    <p className="text-green-300 text-sm font-medium flex items-center gap-1 mb-3">
                       <CheckCircle className="w-4 h-4" /> Booking fully paid! No
                       additional payment required.
                     </p>
+                    <a
+                      href="/bookings"
+                      className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                    >
+                      ← Back to My Bookings
+                    </a>
                   </div>
                 )}
               </div>
@@ -2185,6 +2199,16 @@ function UploadPaymentProofContent() {
                       {/* Spacer for badge */}
                       <div className="h-1"></div>
 
+                      {/* Previous payment context */}
+                      {paymentSummary.totalPaid > 0 && (
+                        <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3 flex items-center gap-2">
+                          <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                          <p className="text-sm text-green-300">
+                            ₱{paymentSummary.totalPaid.toLocaleString()} already verified — only ₱{remainingAmount.toLocaleString()} remaining
+                          </p>
+                        </div>
+                      )}
+
                       {/* Quick fix button */}
                       <button
                         type="button"
@@ -2363,6 +2387,7 @@ function UploadPaymentProofContent() {
                 isUploading ||
                 !proofImage ||
                 uploadSuccess ||
+                remainingAmount <= 0 ||
                 !paymentValidation.allowSubmission ||
                 (paymentValidation.level === "warning" && !confirmUnusualAmount) ||
                 !!(ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && !confirmUnrecognizedImage)

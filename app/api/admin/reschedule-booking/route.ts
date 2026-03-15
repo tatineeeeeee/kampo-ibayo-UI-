@@ -121,14 +121,8 @@ export async function POST(request: NextRequest) {
 
         const pricing = calculatePrice(checkInDate, checkOutDate, booking.number_of_guests);
 
-        // Build special_requests note about admin reschedule
-        const rescheduleNote = `[ADMIN-RESCHEDULED] ${reason || "Rescheduled by admin"}`;
-        const existingNotes = booking.special_requests || "";
-        // Append note (replace previous reschedule note if any)
-        const updatedNotes = existingNotes.replace(/\[ADMIN-RESCHEDULED\][^\[]*/, "").trim();
-        const finalNotes = updatedNotes
-            ? `${updatedNotes}\n${rescheduleNote}`
-            : rescheduleNote;
+        // Track reschedule count
+        const currentRescheduleCount = booking.reschedule_count || 0;
 
         const newCheckInDateTime = `${newCheckIn}T15:00:00`;
         const newCheckOutDateTime = `${newCheckOut}T13:00:00`;
@@ -136,16 +130,41 @@ export async function POST(request: NextRequest) {
         // Determine if this is a walk-in (keep status confirmed for walk-ins)
         const isWalkIn = (booking.special_requests || "").startsWith("[WALK-IN]");
 
+        // Auto-cancel old pending proofs — admin shouldn't have to review outdated submissions
+        if (!isWalkIn) {
+            await supabaseAdmin
+                .from('payment_proofs')
+                .update({ status: 'rejected', admin_notes: 'Auto-rejected: booking was rescheduled by admin', updated_at: new Date().toISOString() })
+                .eq('booking_id', bookingId)
+                .eq('status', 'pending');
+        }
+
+        // Check existing verified payments to determine if user still owes money
+        const newPaymentAmount = booking.payment_type === 'half' ? Math.round(pricing.totalAmount * 0.5) : pricing.totalAmount;
+        let newPaymentStatus = "pending";
+
+        if (isWalkIn) {
+            newPaymentStatus = booking.payment_status || "pending";
+        } else {
+            const { data: verifiedProofs } = await supabaseAdmin
+                .from('payment_proofs')
+                .select('amount')
+                .eq('booking_id', bookingId)
+                .eq('status', 'verified');
+
+            const totalVerified = (verifiedProofs || []).reduce((sum: number, p: { amount: number }) => sum + p.amount, 0);
+            newPaymentStatus = totalVerified >= newPaymentAmount ? 'verified' : 'pending';
+        }
+
         const { data: updatedBooking, error: updateError } = await supabaseAdmin
             .from("bookings")
             .update({
                 check_in_date: newCheckInDateTime,
                 check_out_date: newCheckOutDateTime,
                 total_amount: pricing.totalAmount,
-                payment_amount: booking.payment_type === 'half' ? Math.round(pricing.totalAmount * 0.5) : pricing.totalAmount,
-                // Walk-ins stay confirmed; online bookings reset to pending since payment may need updating
-                payment_status: isWalkIn ? booking.payment_status : "pending",
-                special_requests: finalNotes,
+                payment_amount: newPaymentAmount,
+                reschedule_count: currentRescheduleCount + 1,
+                payment_status: newPaymentStatus,
                 updated_at: new Date().toISOString(),
             })
             .eq("id", bookingId)

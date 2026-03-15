@@ -62,7 +62,8 @@ export async function GET(
       .reduce((sum, proof) => sum + proof.amount, 0);
     
     const totalAmount = booking?.total_amount || 0;
-    const remainingBalance = totalAmount - totalPaid - pendingAmount;
+    // Only subtract verified payments — pending proofs are unverified and shouldn't count as "paid"
+    const remainingBalance = totalAmount - totalPaid;
 
     // Format the payment history data for display
     const formattedHistory = (paymentHistory || []).map((proof, index) => ({

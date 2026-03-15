@@ -96,26 +96,9 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
         let selectedStatus = null;
 
         if (data && data.length > 0) {
-          // Priority: pending > verified > rejected > cancelled
-          // This ensures new pending proofs take priority over old rejected ones
-          const pendingProof = data.find((proof) => proof.status === "pending");
-          const verifiedProof = data.find(
-            (proof) => proof.status === "verified"
-          );
-          const rejectedProof = data.find(
-            (proof) => proof.status === "rejected"
-          );
-          const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled"
-          );
-
-          const selectedProof =
-            pendingProof ||
-            verifiedProof ||
-            rejectedProof ||
-            cancelledProof ||
-            data[0];
-          selectedStatus = selectedProof?.status || null;
+          // Use most recent proof (sorted by uploaded_at DESC)
+          // This ensures the latest action is always shown to the user
+          selectedStatus = data[0]?.status || null;
         }
 
         setProofStatus(selectedStatus);
@@ -347,25 +330,9 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
         let selectedProof = null;
 
         if (data && data.length > 0) {
-          // Priority: pending > verified > rejected > cancelled
-          // This ensures new pending proofs take priority over old rejected ones
-          const pendingProof = data.find((proof) => proof.status === "pending");
-          const verifiedProof = data.find(
-            (proof) => proof.status === "verified"
-          );
-          const rejectedProof = data.find(
-            (proof) => proof.status === "rejected"
-          );
-          const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled"
-          );
-
-          selectedProof =
-            pendingProof ||
-            verifiedProof ||
-            rejectedProof ||
-            cancelledProof ||
-            data[0];
+          // Use most recent proof (sorted by uploaded_at DESC)
+          // This ensures the latest action is always shown to the user
+          selectedProof = data[0];
         }
 
         setPaymentProof(selectedProof);
@@ -631,6 +598,9 @@ function BookingsPageContent() {
   const [cancellationReason, setCancellationReason] = useState("");
   const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
   const [maintenanceActive, setMaintenanceActive] = useState(false);
+
+  // Track bookings with pending payment proofs (block reschedule)
+  const [bookingsWithPendingProofs, setBookingsWithPendingProofs] = useState<Set<number>>(new Set());
 
   // Reschedule state
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -1054,6 +1024,19 @@ function BookingsPageContent() {
         console.error("Error loading bookings:", error);
       } else {
         setBookings((data as Booking[]) || []);
+
+        // Check which bookings have pending payment proofs (to block reschedule)
+        const bookingIds = (data || []).map((b: Booking) => b.id);
+        if (bookingIds.length > 0) {
+          const { data: pendingProofs } = await supabase
+            .from('payment_proofs')
+            .select('booking_id')
+            .in('booking_id', bookingIds)
+            .eq('status', 'pending');
+
+          const pendingSet = new Set((pendingProofs || []).map((p: { booking_id: number }) => p.booking_id));
+          setBookingsWithPendingProofs(pendingSet);
+        }
       }
       setLoading(false);
       setIsRefreshing(false);
@@ -1115,20 +1098,28 @@ function BookingsPageContent() {
       return true;
     }
 
-    // For confirmed bookings, check if it's at least 24 hours before check-in
+    // For confirmed bookings, check if it's at least 3 days before check-in
     if (booking.status.toLowerCase() === "confirmed") {
       const checkInDate = new Date(booking.check_in_date);
       const now = new Date();
       const timeDifference = checkInDate.getTime() - now.getTime();
-      const hoursDifference = timeDifference / (1000 * 3600);
+      const daysDifference = timeDifference / (1000 * 3600 * 24);
 
-      return hoursDifference >= 24;
+      return daysDifference >= 3;
     }
 
     return false;
   };
 
   const canRescheduleBooking = (booking: Booking) => {
+    // Can't reschedule if has pending payment proofs (wait for admin to verify/reject first)
+    if (bookingsWithPendingProofs.has(booking.id)) {
+      return false;
+    }
+    // Max 2 reschedules per booking
+    if ((booking.reschedule_count || 0) >= 2) {
+      return false;
+    }
     // Same rules as cancellation - can reschedule if can cancel
     return canCancelBooking(booking);
   };
@@ -1141,17 +1132,17 @@ function BookingsPageContent() {
     const checkInDate = new Date(booking.check_in_date);
     const now = new Date();
     const timeDifference = checkInDate.getTime() - now.getTime();
-    const hoursDifference = timeDifference / (1000 * 3600);
+    const daysDifference = timeDifference / (1000 * 3600 * 24);
 
-    if (hoursDifference < 24) {
-      return `Cannot cancel: Less than 24 hours until check-in (${Math.floor(
-        hoursDifference
-      )} hours remaining)`;
+    if (daysDifference < 3) {
+      return `Cannot cancel: Less than 3 days until check-in (${Math.floor(
+        daysDifference
+      )} day${Math.floor(daysDifference) !== 1 ? "s" : ""} remaining)`;
     }
 
     return `Cancel booking (${Math.floor(
-      hoursDifference
-    )} hours until check-in)`;
+      daysDifference
+    )} days until check-in)`;
   };
 
   const handleCancelBooking = async (bookingId: number) => {
@@ -1443,7 +1434,7 @@ function BookingsPageContent() {
       const result = await response.json();
 
       if (result.success) {
-        // Update local state with new booking details including payment status
+        // Update local state with actual payment status from API
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
             booking.id === selectedBooking.id
@@ -1452,7 +1443,7 @@ function BookingsPageContent() {
                   check_in_date: newCheckInDate,
                   check_out_date: newCheckOutDate,
                   total_amount: result.booking.total_amount,
-                  payment_status: "pending", // Reset to pending since amount changed
+                  payment_status: result.booking.payment_status,
                 }
               : booking
           )
@@ -1463,28 +1454,30 @@ function BookingsPageContent() {
         setNewCheckInDate("");
         setNewCheckOutDate("");
 
-        // Show payment information if amount changed
-        if (result.requiresNewPayment && result.pricing) {
+        // Only redirect to upload page if user needs to pay more
+        const alreadyFullyPaid = result.booking.payment_status === "verified";
+
+        if (!alreadyFullyPaid && result.pricing) {
           const { newAmount, nightsCount } = result.pricing;
 
           showToast({
             type: "success",
             title: "Booking Rescheduled!",
-            message: `Dates updated successfully! New amount: ₱${newAmount.toLocaleString()} (${nightsCount} nights). Click "Upload Payment Proof" button or wait for redirect.`,
+            message: `Dates updated! New amount: ₱${newAmount.toLocaleString()} (${nightsCount} nights). Please upload payment for the remaining balance.`,
             duration: 5000,
           });
 
-          // Redirect to payment upload using Next.js router
+          // Redirect to payment upload only if they need to pay more
           setTimeout(() => {
             router.push(
               `/upload-payment-proof?bookingId=${selectedBooking.id}`
             );
-          }, 1000); // 1 second delay
+          }, 1000);
         } else {
           showToast({
             type: "success",
             title: "Booking Rescheduled!",
-            message: "Your booking dates have been updated successfully",
+            message: "Dates updated! Your previous payment already covers the new amount.",
             duration: 4000,
           });
         }
@@ -1997,17 +1990,24 @@ function BookingsPageContent() {
                       </div>
                     )}
 
-                    {/* Special Requests - Mobile Optimized */}
-                    {booking.special_requests && (
-                      <div className="bg-gray-600/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
-                        <p className="text-xs text-gray-400 mb-1">
-                          💬 Special Request:
-                        </p>
-                        <p className="text-gray-200 text-xs sm:text-sm">
-                          {booking.special_requests}
-                        </p>
-                      </div>
-                    )}
+                    {/* Special Requests - Mobile Optimized (hide internal tags) */}
+                    {booking.special_requests && (() => {
+                      const cleanedRequest = booking.special_requests
+                        .replace(/\[USER-RESCHEDULED\][^\n]*/g, '')
+                        .replace(/\[ADMIN-RESCHEDULED\][^\n]*/g, '')
+                        .replace(/\[WALK-IN\]/g, '')
+                        .trim();
+                      return cleanedRequest ? (
+                        <div className="bg-gray-600/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
+                          <p className="text-xs text-gray-400 mb-1">
+                            💬 Special Request:
+                          </p>
+                          <p className="text-gray-200 text-xs sm:text-sm">
+                            {cleanedRequest}
+                          </p>
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* Payment Proof Status - Show for pending bookings only */}
                     {booking.status === "pending" && (
@@ -2061,14 +2061,28 @@ function BookingsPageContent() {
                         )}
 
                         {/* Reschedule Button */}
-                        {canRescheduleBooking(booking) && (
+                        {canRescheduleBooking(booking) ? (
                           <button
                             onClick={() => handleOpenReschedule(booking)}
                             className="bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                           >
                             <Calendar className="w-3 h-3" />
-                            Resched
+                            Resched {(booking.reschedule_count || 0) > 0 && <span className="text-amber-200 text-[10px]">({booking.reschedule_count}/2)</span>}
                           </button>
+                        ) : (
+                          canCancelBooking(booking) && (
+                            <button
+                              disabled
+                              className="bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
+                            >
+                              <Calendar className="w-3 h-3" />
+                              {bookingsWithPendingProofs.has(booking.id)
+                                ? "Under Review"
+                                : (booking.reschedule_count || 0) >= 2
+                                ? "Resched (2/2)"
+                                : "Resched"}
+                            </button>
+                          )
                         )}
 
                         {canCancelBooking(booking) ? (
@@ -2904,17 +2918,24 @@ function BookingsPageContent() {
                 {/* Additional Information - Modern Design */}
                 <div className="space-y-3 sm:space-y-4">
                   {/* Special Requests */}
-                  {selectedBooking.special_requests && (
-                    <div className="bg-blue-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-200/50 dark:border-gray-600/50">
-                      <h4 className="text-gray-900 dark:text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
-                        Special Requests
-                      </h4>
-                      <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
-                        {selectedBooking.special_requests}
-                      </p>
-                    </div>
-                  )}
+                  {selectedBooking.special_requests && (() => {
+                    const cleanedRequest = selectedBooking.special_requests
+                      .replace(/\[USER-RESCHEDULED\][^\n]*/g, '')
+                      .replace(/\[ADMIN-RESCHEDULED\][^\n]*/g, '')
+                      .replace(/\[WALK-IN\]/g, '')
+                      .trim();
+                    return cleanedRequest ? (
+                      <div className="bg-blue-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-200/50 dark:border-gray-600/50">
+                        <h4 className="text-gray-900 dark:text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                          <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
+                          Special Requests
+                        </h4>
+                        <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
+                          {cleanedRequest}
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
 
                   {/* Pet Information */}
                   {selectedBooking.brings_pet !== null && (

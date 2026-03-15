@@ -3615,27 +3615,39 @@ export default function BookingsPage() {
                   </div>
                 </div>
 
-                {/* Special Requests */}
-                {selectedBooking.special_requests && (
-                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-3">
-                    <h4 className="text-sm font-semibold text-orange-700 mb-2 flex items-center gap-2">
-                      Special Requests
-                      {selectedBooking.special_requests.startsWith(
-                        "[WALK-IN]",
-                      ) && (
-                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full inline-flex items-center gap-0.5">
-                          <Footprints className="w-3 h-3" /> Walk-in Booking
-                        </span>
-                      )}
-                    </h4>
-                    <p className="text-gray-700 text-sm">
-                      {selectedBooking.special_requests.replace(
-                        /^\[WALK-IN\]\s*/,
-                        "",
-                      )}
-                    </p>
+                {/* Reschedule Count */}
+                {(selectedBooking.reschedule_count || 0) > 0 && (
+                  <div className="flex gap-2 mb-3">
+                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
+                      Rescheduled {selectedBooking.reschedule_count}x
+                    </span>
                   </div>
                 )}
+
+                {/* Special Requests */}
+                {selectedBooking.special_requests && (() => {
+                  const cleanedText = selectedBooking.special_requests
+                    .replace(/^\[WALK-IN\]\s*/, '')
+                    .replace(/\[USER-RESCHEDULED\][^\n]*/g, '')
+                    .replace(/\[ADMIN-RESCHEDULED\][^\n]*/g, '')
+                    .trim();
+                  const isWalkIn = selectedBooking.special_requests.startsWith("[WALK-IN]");
+                  return (cleanedText || isWalkIn) ? (
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-3">
+                      <h4 className="text-sm font-semibold text-orange-700 mb-2 flex items-center gap-2">
+                        Special Requests
+                        {isWalkIn && (
+                          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full inline-flex items-center gap-0.5">
+                            <Footprints className="w-3 h-3" /> Walk-in Booking
+                          </span>
+                        )}
+                      </h4>
+                      {cleanedText && (
+                        <p className="text-gray-700 text-sm">{cleanedText}</p>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
 
                 {/* Pet Information - Remove since field doesn't exist */}
 
@@ -3655,7 +3667,7 @@ export default function BookingsPage() {
                   {selectedBooking.status === "confirmed" && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-green-600">✅</span>
+                        <span className="text-green-600 text-lg">●</span>
                         <div>
                           <span className="text-green-800 font-semibold text-sm">
                             Booking Confirmed

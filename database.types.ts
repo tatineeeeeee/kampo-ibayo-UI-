@@ -70,6 +70,7 @@ export type Database = {
           refund_reason: string | null
           refund_processed_by: string | null
           refund_processed_at: string | null
+          reschedule_count: number | null
         }
         Insert: {
           id?: number
@@ -99,6 +100,7 @@ export type Database = {
           refund_reason?: string | null
           refund_processed_by?: string | null
           refund_processed_at?: string | null
+          reschedule_count?: number | null
         }
         Update: {
           id?: number
@@ -128,6 +130,7 @@ export type Database = {
           refund_reason?: string | null
           refund_processed_by?: string | null
           refund_processed_at?: string | null
+          reschedule_count?: number | null
         }
         Relationships: [
           {
