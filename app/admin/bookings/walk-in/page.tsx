@@ -246,8 +246,8 @@ export default function WalkInBookingPage() {
       }
 
       const guestCount = parseInt(numberOfGuests) || 15;
-      if (guestCount < 1 || guestCount > 100) {
-        showError("Invalid Guests", "Guest count must be between 1 and 100.");
+      if (guestCount < 1 || guestCount > 50) {
+        showError("Invalid Guests", "Guest count must be between 1 and 50.");
         setIsSubmitting(false);
         return;
       }
@@ -509,7 +509,7 @@ export default function WalkInBookingPage() {
                   <input
                     type="number"
                     min="1"
-                    max="100"
+                    max="50"
                     value={numberOfGuests}
                     onChange={(e) => setNumberOfGuests(e.target.value)}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
