@@ -2677,7 +2677,7 @@ function Home() {
         {showBackToTop && !chatbotOpen && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-red-500 hover:border-red-400 backdrop-blur-sm fixed-bottom-safe"
+            className="fixed bottom-[5rem] right-4 sm:bottom-[6.5rem] sm:right-6 z-40 bg-red-600 hover:bg-red-700 text-white h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-red-500 hover:border-red-400 backdrop-blur-sm"
             aria-label="Back to top"
           >
             <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />

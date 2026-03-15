@@ -2255,9 +2255,11 @@ function BookingsPageContent() {
                     let percentage: number;
                     let canCancel = true;
 
-                    if (hoursUntilCheckIn >= 48) {
+                    const daysUntilCheckIn = hoursUntilCheckIn / 24;
+
+                    if (daysUntilCheckIn >= 7) {
                       percentage = 100;
-                    } else if (hoursUntilCheckIn >= 24) {
+                    } else if (daysUntilCheckIn >= 3) {
                       percentage = 50;
                     } else {
                       percentage = 0;
@@ -2272,7 +2274,7 @@ function BookingsPageContent() {
                       return (
                         <div className="text-center">
                           <p className="text-red-600 dark:text-red-400 font-medium text-sm">
-                            Cancellation not allowed within 24 hours
+                            Cancellation not allowed within 3 days
                           </p>
                           <p className="text-red-500 dark:text-red-400 text-xs mt-1">
                             Please contact resort directly for assistance
@@ -2300,8 +2302,8 @@ function BookingsPageContent() {
                           </span>
                         </div>
                         <p className="text-xs text-blue-600 dark:text-blue-400">
-                          Time until check-in: {Math.floor(hoursUntilCheckIn)}{" "}
-                          hours
+                          Time until check-in: {Math.floor(daysUntilCheckIn)}{" "}
+                          days
                         </p>
                       </div>
                     );
@@ -2617,9 +2619,9 @@ function BookingsPageContent() {
                   <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-3">
                     <Lightbulb className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                      <p className="font-medium">Free reschedule policy</p>
+                      <p className="font-medium">Reschedule policy</p>
                       <p className="text-blue-600/80 dark:text-blue-400/80">
-                        Reschedule at least 24 hours before check-in. Original
+                        Maximum 2 reschedules per booking. Must be at least 3 days before check-in. Original
                         dates will be released for new bookings.
                       </p>
                     </div>

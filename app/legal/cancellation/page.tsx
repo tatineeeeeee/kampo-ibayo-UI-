@@ -14,23 +14,23 @@ import LegalNavigation from "../../components/LegalNavigation";
 export default function CancellationPage() {
   const refundTiers = [
     {
-      period: "48+ hours before check-in",
+      period: "7+ days before check-in",
       refundPercentage: "100%",
-      description: "Full down payment refunded automatically",
+      description: "Full down payment refunded after admin processing",
       color: "green",
       icon: <Calendar className="w-5 h-5" />,
     },
     {
-      period: "24-48 hours before check-in",
+      period: "3-7 days before check-in",
       refundPercentage: "50%",
       description: "Half of down payment refunded due to short notice",
       color: "yellow",
       icon: <AlertTriangle className="w-5 h-5" />,
     },
     {
-      period: "Less than 24 hours before check-in",
+      period: "Less than 3 days before check-in",
       refundPercentage: "0%",
-      description: "No refund - Cancellation not allowed via system",
+      description: "No refund - Cancellation and reschedule not allowed via system",
       color: "red",
       icon: <RefreshCw className="w-5 h-5" />,
     },
@@ -88,7 +88,7 @@ export default function CancellationPage() {
             designed to be fair to both guests and the resort. With our new down
             payment system, you only pay 50% upfront when booking, and refunds
             are calculated based on this down payment amount depending on when
-            you cancel.
+            you cancel. Refunds are processed manually by our admin team.
           </p>
 
           <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 mb-4">
@@ -112,9 +112,8 @@ export default function CancellationPage() {
           <div className="bg-orange-900/20 border border-orange-700/50 rounded-lg p-4">
             <p className="text-orange-300 text-sm">
               <strong>Important:</strong> Only the down payment (50% of total
-              booking cost) is refundable. Refunds are processed automatically
-              through your bookings page based on cancellation timing. The
-              remaining 50% is paid upon arrival at the resort.
+              booking cost) is refundable. Refunds are processed by the admin
+              after cancellation. The remaining 50% is paid upon arrival at the resort.
             </p>
           </div>
         </div>
@@ -152,24 +151,24 @@ export default function CancellationPage() {
 
           <div className="mt-6 p-4 bg-gray-700/50 rounded-lg">
             <h4 className="font-semibold text-white mb-2">
-              Automatic Refund Processing
+              Refund Processing
             </h4>
             <ul className="text-gray-300 text-sm space-y-1">
               <li>
-                • <strong>Instant cancellation:</strong> Process refunds
-                immediately through your bookings page
+                • <strong>Cancellation:</strong> Cancel through your bookings
+                page, refund will be processed by the admin
               </li>
               <li>
-                • <strong>Processing time:</strong> 5-10 business days to
-                original payment method
+                • <strong>Processing time:</strong> 5-10 business days after
+                admin approval
               </li>
               <li>
                 • <strong>Refund amount:</strong> Based only on down payment
                 (50% of total booking)
               </li>
               <li>
-                • <strong>24-hour rule:</strong> No cancellations allowed within
-                24 hours of check-in
+                • <strong>3-day rule:</strong> No cancellations or reschedules allowed within
+                3 days of check-in
               </li>
               <li>
                 • <strong>Emergency assistance:</strong> Contact resort directly
@@ -300,8 +299,8 @@ export default function CancellationPage() {
                 </div>
               </div>
               <p className="text-green-200 text-sm">
-                ✅ <strong>Instant processing</strong> - Refunds automatically
-                initiated
+                ✅ <strong>Easy process</strong> - Cancel from your bookings page,
+                admin will process the refund
               </p>
             </div>
 
@@ -379,11 +378,14 @@ export default function CancellationPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-3 text-blue-400">
-                Date Modifications
+                Date Modifications (Reschedule)
               </h3>
               <ul className="text-blue-200 text-sm space-y-2">
                 <li>
-                  • <strong>Within 30 days:</strong> No additional fees
+                  • <strong>Limit:</strong> Maximum 2 reschedules per booking
+                </li>
+                <li>
+                  • <strong>Timing:</strong> Must be at least 3 days before check-in
                 </li>
                 <li>
                   • <strong>Rate differences:</strong> Pay difference if new
@@ -392,9 +394,6 @@ export default function CancellationPage() {
                 <li>
                   • <strong>Availability:</strong> Subject to resort
                   availability
-                </li>
-                <li>
-                  • <strong>Limit:</strong> One free modification per booking
                 </li>
               </ul>
             </div>

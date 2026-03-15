@@ -19,16 +19,18 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
     let timeRemaining: string;
     let canCancel: boolean = true;
     
-    if (hoursUntilCheckIn >= 48) {
+    const daysUntilCheckIn = hoursUntilCheckIn / 24;
+
+    if (daysUntilCheckIn >= 7) {
       percentage = 100;
-      timeRemaining = `${Math.floor(hoursUntilCheckIn / 24)} days`;
-    } else if (hoursUntilCheckIn >= 24) {
+      timeRemaining = `${Math.floor(daysUntilCheckIn)} days`;
+    } else if (daysUntilCheckIn >= 3) {
       percentage = 50;
-      timeRemaining = `${Math.floor(hoursUntilCheckIn)} hours`;
+      timeRemaining = `${Math.floor(daysUntilCheckIn)} days`;
     } else {
       percentage = 0;
-      timeRemaining = `${Math.floor(hoursUntilCheckIn)} hours`;
-      canCancel = false; // No cancellation within 24 hours
+      timeRemaining = `${Math.floor(daysUntilCheckIn)} days`;
+      canCancel = false; // No cancellation within 3 days
     }
     
     // Calculate refund based on down payment (50% of total)
@@ -51,7 +53,7 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
             <span className="font-semibold">Cancellation Not Allowed</span>
           </div>
           <p className="text-red-800 text-sm mt-1">
-            Cancellation is not allowed within 24 hours of check-in. Please contact the resort directly for assistance.
+            Cancellation is not allowed within 3 days of check-in. Please contact the resort directly for assistance.
           </p>
         </div>
       )}
@@ -173,25 +175,25 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
                   <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-green-200">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">48+ hours before check-in</span>
+                      <span className="text-sm text-gray-700">7+ days before check-in</span>
                     </div>
                     <span className="text-sm font-semibold text-green-700">100% refund</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-yellow-200">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">24-48 hours before</span>
+                      <span className="text-sm text-gray-700">3-7 days before</span>
                     </div>
                     <span className="text-sm font-semibold text-yellow-700">50% refund</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-red-200">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">Less than 24 hours</span>
+                      <span className="text-sm text-gray-700">Less than 3 days</span>
                     </div>
-                    <span className="text-sm font-semibold text-red-700">No refund</span>
+                    <span className="text-sm font-semibold text-red-700">No refund (blocked)</span>
                   </div>
                 </div>
               </div>
@@ -207,7 +209,7 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
                     <p className="text-xs text-blue-800">
                       • Only the down payment (50% of total booking) is refundable<br/>
                       • Remaining 50% is paid upon arrival at the resort<br/>
-                      • Refunds processed within 5-10 business days to original payment method
+                      • Refunds processed by admin within 5-10 business days
                     </p>
                   </div>
                 </div>

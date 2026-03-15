@@ -178,10 +178,12 @@ export async function POST(request: NextRequest) {
       let refundPercentage = 0;
       let refundAmount = 0;
 
-      if (hoursUntilCheckIn >= 48) {
+      const daysUntilCheckIn = hoursUntilCheckIn / 24;
+
+      if (daysUntilCheckIn >= 7) {
         refundPercentage = 100;
         refundAmount = downPayment;
-      } else if (hoursUntilCheckIn >= 24) {
+      } else if (daysUntilCheckIn >= 3) {
         refundPercentage = 50;
         refundAmount = downPayment * 0.5;
       }

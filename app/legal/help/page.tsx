@@ -72,7 +72,7 @@ export default function HelpPage() {
         {
           question: "Can I modify my reservation?",
           answer:
-            "Yes, modifications are subject to availability. Contact us at least 7 days before arrival for best options.",
+            "Yes, you can reschedule up to 2 times per booking, at least 3 days before check-in. If the new dates cost more, you'll need to pay the difference. Subject to availability.",
         },
       ],
     },

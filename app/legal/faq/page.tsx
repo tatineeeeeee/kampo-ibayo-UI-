@@ -51,7 +51,7 @@ export default function FAQPage() {
         {
           question: "Can I modify or cancel my reservation?",
           answer:
-            "Modifications are subject to availability. Cancellation policy varies by timing: 60+ days (90% refund), 30-59 days (75% refund), 7-29 days (50% refund), under 7 days (25% refund).",
+            "Reschedules are allowed up to 2 times per booking, at least 3 days before check-in. Cancellation refund depends on timing: 7+ days before check-in (100% of down payment refunded), 3-7 days (50% refunded), less than 3 days (cancellation not allowed).",
         },
       ],
     },

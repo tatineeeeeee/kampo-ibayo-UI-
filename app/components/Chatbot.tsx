@@ -459,7 +459,7 @@ const FAQ_DATABASE: FAQItem[] = [
     keywords: ["refund", "cancel", "i-cancel", "cancellation", "policy"],
     question: "Can I get a refund? / Pwede po bang magpa-refund?",
     answer:
-      "**English:** Refunds depend on our resort's cancellation policy. Please contact the admin for more information.\n\n**Tagalog:** Ang refund ay depende po sa cancellation policy ng resort. Makipag-ugnayan po sa admin para sa detalye.",
+      "**English:** Refunds depend on cancellation timing: 7+ days before check-in = 100% of down payment refunded, 3-7 days = 50% refunded, less than 3 days = cancellation not allowed. Contact admin for special cases.\n\n**Tagalog:** Ang refund ay depende sa timing ng cancellation: 7+ araw bago check-in = 100% ng down payment, 3-7 araw = 50%, mas mababa sa 3 araw = hindi pwede mag-cancel. Makipag-ugnayan sa admin para sa espesyal na kaso.",
   },
 
   // CAPACITY & ADDITIONAL GUESTS (English & Tagalog)
@@ -523,13 +523,13 @@ const FAQ_DATABASE: FAQItem[] = [
     keywords: ["cancel", "cancellation", "refund", "cancel booking"],
     question: "What's your cancellation policy?",
     answer:
-      "No same-day cancellations allowed. Please provide 48-hour advance notice for changes or cancellations to receive a refund of your downpayment minus processing fee. Last-minute cancellations forfeit the deposit.",
+      "Cancellation is not allowed within 3 days of check-in. Refund tiers: 7+ days before check-in = 100% of down payment refunded, 3-7 days = 50% refunded. Contact the resort directly for emergencies or special circumstances.",
   },
   {
     keywords: ["reschedule", "change date", "move booking", "postpone"],
     question: "Can I reschedule my booking?",
     answer:
-      "Yes! Please notify us at least 48 hours before your original date. We'll help you find alternative dates subject to availability. One free reschedule allowed per booking.",
+      "Yes! You can reschedule up to 2 times per booking, at least 3 days before your check-in date. If the new dates cost more, you'll need to upload a new payment proof for the difference. Subject to availability.",
   },
   {
     keywords: ["weather", "rain", "typhoon", "bad weather"],
@@ -807,7 +807,7 @@ const FAQ_DATABASE: FAQItem[] = [
     keywords: ["booking", "cancellation", "refund", "policy"],
     question: "What's the booking and cancellation policy?",
     answer:
-      "BOOKING: 50% downpayment secures your reservation. CANCELLATION: 48-hour advance notice required for refunds (minus processing fee). Same-day cancellations forfeit the deposit. Weather-related cancellations are free to reschedule!",
+      "BOOKING: 50% downpayment secures your reservation. CANCELLATION: Not allowed within 3 days of check-in. 7+ days = 100% refund of down payment, 3-7 days = 50% refund. RESCHEDULE: Max 2 times per booking, at least 3 days before check-in. Weather-related cancellations may qualify for free rescheduling!",
   },
   {
     keywords: ["pool", "safety", "kids", "children", "supervision"],
