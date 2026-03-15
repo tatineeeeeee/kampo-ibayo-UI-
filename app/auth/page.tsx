@@ -1352,6 +1352,15 @@ export default function AuthPage() {
                       placeholder="09XX-XXX-XXXX (11 digits)"
                       className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
                       autoComplete="new-phone"
+                      onKeyDown={(e) => {
+                        if (e.key === "Backspace") {
+                          const val = e.currentTarget.value;
+                          if (val.endsWith("-")) {
+                            e.preventDefault();
+                            e.currentTarget.value = val.slice(0, -2);
+                          }
+                        }
+                      }}
                       onChange={(e) => {
                         const formatted = formatPhoneNumber(e.target.value);
                         e.target.value = formatted;
