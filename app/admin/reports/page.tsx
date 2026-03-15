@@ -93,9 +93,7 @@ export default function ReportsPage() {
     try {
       let query = supabase
         .from("bookings")
-        .select(
-          "id, user_id, guest_name, guest_email, guest_phone, check_in_date, check_out_date, number_of_guests, total_amount, special_requests, brings_pet, status, created_at, updated_at, cancelled_by, cancelled_at, cancellation_reason, payment_intent_id, payment_status, payment_type, payment_amount, refund_id, refund_amount, refund_status, refund_reason, refund_processed_by, refund_processed_at",
-        )
+        .select("*")
         .gte("check_in_date", startDate)
         .lte("check_in_date", endDate)
         .order("check_in_date", { ascending: false });
