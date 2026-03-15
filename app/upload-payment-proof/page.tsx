@@ -168,7 +168,7 @@ function UploadPaymentProofContent() {
   const [confirmUnrecognizedImage, setConfirmUnrecognizedImage] = useState(false);
 
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
 
   // Get booking ID directly from search params (support multiple parameter names)
@@ -699,6 +699,7 @@ function UploadPaymentProofContent() {
       }
     };
 
+    if (authLoading) return;
     if (!user) {
       router.push("/auth");
       return;
@@ -716,7 +717,7 @@ function UploadPaymentProofContent() {
         router.replace("/bookings");
       }, 3000);
     }
-  }, [bookingId, user, router, fetchPaymentHistory]); // Include fetchPaymentHistory dependency
+  }, [bookingId, user, authLoading, router, fetchPaymentHistory]);
 
   // Auto-populate amount from OCR detection when available
   // This triggers after OCR processing completes

@@ -701,14 +701,21 @@ function BookingsPageContent() {
 
           if (eventType === "UPDATE" && newRecord) {
 
-            // Update booking in state instantly
-            setBookings((prevBookings) =>
-              prevBookings.map((booking) =>
+            // Update booking in state instantly and re-sort by status priority
+            const statusPriority: Record<string, number> = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 };
+            setBookings((prevBookings) => {
+              const updated = prevBookings.map((booking) =>
                 booking.id === newRecord.id
                   ? { ...booking, ...newRecord }
                   : booking
-              )
-            );
+              );
+              return updated.sort((a, b) => {
+                const aPriority = statusPriority[a.status] ?? 1;
+                const bPriority = statusPriority[b.status] ?? 1;
+                if (aPriority !== bPriority) return aPriority - bPriority;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              });
+            });
 
             // Handle payment_status changes (verified/rejected by admin)
             // Check newRecord directly — oldRecord may not include payment_status depending on REPLICA IDENTITY
@@ -975,9 +982,16 @@ function BookingsPageContent() {
             .eq("id", booking.id)
             .single();
           if (data) {
-            setBookings((prev) =>
-              prev.map((b) => (b.id === data.id ? (data as Booking) : b))
-            );
+            const statusPri: Record<string, number> = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 };
+            setBookings((prev) => {
+              const updated = prev.map((b) => (b.id === data.id ? (data as Booking) : b));
+              return updated.sort((a, b) => {
+                const ap = statusPri[a.status] ?? 1;
+                const bp = statusPri[b.status] ?? 1;
+                if (ap !== bp) return ap - bp;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              });
+            });
             setRefreshTrigger((prev) => prev + 1);
           }
         })
@@ -1023,7 +1037,15 @@ function BookingsPageContent() {
       if (error) {
         console.error("Error loading bookings:", error);
       } else {
-        setBookings((data as Booking[]) || []);
+        // Sort by status priority: confirmed first, then pending, then cancelled
+        const statusPriority: Record<string, number> = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 };
+        const sorted = ((data as Booking[]) || []).sort((a, b) => {
+          const aPriority = statusPriority[a.status] ?? 1;
+          const bPriority = statusPriority[b.status] ?? 1;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        setBookings(sorted);
 
         // Check which bookings have pending payment proofs (to block reschedule)
         const bookingIds = (data || []).map((b: Booking) => b.id);
