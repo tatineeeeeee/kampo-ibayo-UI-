@@ -25,6 +25,7 @@ import {
 import Image from "next/image";
 import { exportBookingsCSV } from "../../utils/csvExport";
 import { exportBookingsPDF } from "../../utils/pdfExport";
+import { getFreshSession } from "../../utils/apiTimeout";
 
 interface Booking extends Tables<"bookings"> {
   // Add user info to track if user still exists
@@ -1543,6 +1544,37 @@ export default function BookingsPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]); // Include statusFilter to avoid stale closure in fetchBookings sort function
+
+  // Auto-complete confirmed bookings that have passed their checkout date
+  useEffect(() => {
+    const autoComplete = async () => {
+      try {
+        const session = await getFreshSession(supabase);
+        if (!session?.access_token) return;
+
+        const response = await fetch("/api/bookings/auto-complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.completedCount > 0) {
+            fetchBookings(false, true);
+          }
+        }
+      } catch {
+        // Silent fail — auto-complete is non-critical
+      }
+    };
+
+    const timer = setTimeout(autoComplete, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filter bookings based on user preference AND search term
   useEffect(() => {

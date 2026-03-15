@@ -160,43 +160,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method to check what reminders would be sent (for testing)
+// GET method - Vercel cron jobs use GET, so this handler sends SMS just like POST
 export async function GET(request: NextRequest) {
-  try {
-    const auth = await validateCronOrAdmin(request);
-    if (!auth.success) return authErrorResponse(auth as AuthFailure);
-
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDateString = tomorrow.toISOString().split('T')[0];
-
-    const { data: bookings, error } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('status', 'confirmed')
-      .eq('check_in_date', tomorrowDateString)
-      .not('guest_phone', 'is', null);
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      checkInDate: tomorrowDateString,
-      bookingsFound: bookings?.length || 0,
-      bookings: bookings?.map(b => ({
-        id: b.id,
-        guestName: b.guest_name,
-        phone: b.guest_phone as string,
-        checkInDate: b.check_in_date
-      })) || []
-    });
-
-  } catch {
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+  return POST(request);
 }

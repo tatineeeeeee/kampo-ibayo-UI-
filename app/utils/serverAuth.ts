@@ -115,13 +115,22 @@ export async function validateInternalOrAdmin(request: NextRequest): Promise<Int
 }
 
 /**
- * For cron/automated routes: checks x-cron-secret header OR accepts admin auth.
+ * For cron/automated routes: checks x-cron-secret header, Vercel cron Authorization header, OR accepts admin auth.
  */
 export async function validateCronOrAdmin(request: NextRequest): Promise<InternalAuthResult> {
-  // Check for cron secret first
+  // Check for cron secret via x-cron-secret header
   const cronSecret = request.headers.get('x-cron-secret');
   if (cronSecret && process.env.CRON_SECRET && safeCompare(cronSecret, process.env.CRON_SECRET)) {
     return { success: true, internal: true };
+  }
+
+  // Check for Vercel cron Authorization: Bearer <CRON_SECRET> header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ') && process.env.CRON_SECRET) {
+    const token = authHeader.replace('Bearer ', '');
+    if (safeCompare(token, process.env.CRON_SECRET)) {
+      return { success: true, internal: true };
+    }
   }
 
   // Fall back to admin auth
