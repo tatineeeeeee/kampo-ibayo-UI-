@@ -110,24 +110,24 @@ function BookingPage() {
   // Calculate price for multi-day bookings with per-day rates
   const calculateMultiDayPrice = useCallback(
     (checkInDate: Date, checkOutDate: Date, guestCount: number = 15) => {
-      // Philippine holidays 2024-2025 (add more as needed)
+      // Philippine holidays 2025-2026 (add more as needed)
       const holidays = [
-        "2024-12-25",
-        "2024-12-30",
-        "2024-12-31",
-        "2025-01-01", // New Year
-        "2025-02-14", // Valentine's Day
-        "2025-04-17",
-        "2025-04-18",
-        "2025-04-19", // Holy Week
-        "2025-06-12", // Independence Day
-        "2025-08-25", // National Heroes Day
-        "2025-11-01",
-        "2025-11-02", // All Saints/Souls Day
-        "2025-11-30", // Bonifacio Day
         "2025-12-25",
         "2025-12-30",
-        "2025-12-31", // Christmas season
+        "2025-12-31",
+        "2026-01-01", // New Year
+        "2026-02-14", // Valentine's Day
+        "2026-04-02",
+        "2026-04-03",
+        "2026-04-04", // Holy Week
+        "2026-06-12", // Independence Day
+        "2026-08-31", // National Heroes Day
+        "2026-11-01",
+        "2026-11-02", // All Saints/Souls Day
+        "2026-11-30", // Bonifacio Day
+        "2026-12-25",
+        "2026-12-30",
+        "2026-12-31", // Christmas season
       ];
 
       const nights = [];
@@ -137,7 +137,7 @@ function BookingPage() {
       // Calculate each night's rate
       while (current < end) {
         const day = current.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-        const dateString = current.toISOString().split("T")[0];
+        const dateString = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
         const isHoliday = holidays.includes(dateString);
 
         // Weekend: Friday (5), Saturday (6), Sunday (0)

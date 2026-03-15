@@ -2338,7 +2338,7 @@ function UploadPaymentProofContent() {
                       No payment details detected
                     </p>
                     <p className="text-amber-300/80 text-xs mt-1">
-                      The uploaded image doesn&apos;t appear to be a payment receipt. Please upload a clear screenshot of your GCash, Maya, or bank transfer confirmation.
+                      The uploaded image doesn&apos;t appear to be a payment receipt. Please upload a clear screenshot of your GCash or Maya confirmation.
                     </p>
                     <div className="pt-2 mt-2 border-t border-amber-700/50">
                       <label

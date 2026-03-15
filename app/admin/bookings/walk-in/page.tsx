@@ -129,7 +129,7 @@ export default function WalkInBookingPage() {
 
       while (current < checkOutDate) {
         const day = current.getDay();
-        const dateString = current.toISOString().split("T")[0];
+        const dateString = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
         const isHoliday = holidays.includes(dateString);
         const isWeekend = day === 0 || day === 5 || day === 6;
         const nightRate = isWeekend || isHoliday ? 12000 : 9000;
