@@ -47,6 +47,30 @@ html {
   animation: fadeInUp 1s ease-out;
 }
 
+/* Gallery grid staggered entrance */
+.gallery-item {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.gallery-item:nth-child(1) { animation-delay: 0s; }
+.gallery-item:nth-child(2) { animation-delay: 0.06s; }
+.gallery-item:nth-child(3) { animation-delay: 0.12s; }
+.gallery-item:nth-child(4) { animation-delay: 0.18s; }
+.gallery-item:nth-child(5) { animation-delay: 0.24s; }
+.gallery-item:nth-child(6) { animation-delay: 0.3s; }
+.gallery-item:nth-child(7) { animation-delay: 0.36s; }
+.gallery-item:nth-child(8) { animation-delay: 0.42s; }
+.gallery-item:nth-child(9) { animation-delay: 0.48s; }
+.gallery-item:nth-child(10) { animation-delay: 0.54s; }
+.gallery-item:nth-child(11) { animation-delay: 0.6s; }
+.gallery-item:nth-child(n+12) { animation-delay: 0.6s; }
+
+/* Bento grid dense packing */
+.grid-dense {
+  grid-auto-flow: dense;
+}
+
 /* Toast fade-in animation */
 @keyframes fadeIn {
   from {
