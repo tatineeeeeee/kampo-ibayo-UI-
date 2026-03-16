@@ -61,6 +61,11 @@ const ReviewSystem = ({
     1: 0,
   });
 
+  // Carousel state
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [cardsPerView, setCardsPerView] = useState(3);
+
   const reviewsPerPage = limit;
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
 
@@ -272,6 +277,49 @@ const ReviewSystem = ({
     fetchReviews(currentPage);
   }, [currentPage, fetchReviews]);
 
+  // Responsive cards per view for carousel
+  useEffect(() => {
+    const updateCardsPerView = () => {
+      if (window.innerWidth < 640) {
+        setCardsPerView(1);
+      } else if (window.innerWidth < 1024) {
+        setCardsPerView(2);
+      } else {
+        setCardsPerView(3);
+      }
+    };
+    updateCardsPerView();
+    window.addEventListener("resize", updateCardsPerView);
+    return () => window.removeEventListener("resize", updateCardsPerView);
+  }, []);
+
+  // Max index = last position where a full "window" of cards is visible
+  const maxIndex = Math.max(0, reviews.length - cardsPerView);
+
+  // Clamp currentSlide when cardsPerView or reviews change
+  useEffect(() => {
+    if (currentSlide > maxIndex) {
+      setCurrentSlide(maxIndex);
+    }
+  }, [maxIndex, currentSlide]);
+
+  // Auto-slide every 5 seconds, pause on hover — advances 1 card at a time
+  useEffect(() => {
+    if (isHovered || reviews.length <= cardsPerView) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev >= maxIndex ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isHovered, maxIndex, reviews.length, cardsPerView]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev >= maxIndex ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev <= 0 ? maxIndex : prev - 1));
+  };
+
   // Handle pagination
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -408,145 +456,148 @@ const ReviewSystem = ({
         </p>
       </div>
 
-      {/* Reviews Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        {reviews.map((review) => (
+      {/* Reviews Carousel — Embla/shadcn-style: per-card sliding */}
+      <div
+        className="relative group/carousel"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Carousel viewport */}
+        <div className="overflow-hidden -mx-2">
           <div
-            key={review.id}
-            className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+            className="flex transition-transform duration-300 ease-out"
+            style={{
+              transform: `translateX(-${currentSlide * (100 / cardsPerView)}%)`,
+            }}
           >
-            {/* Rating and Verification */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              {renderStars(review.rating)}
-              <div className="flex items-center gap-2">
-                {review.approved && (
-                  <div className="flex items-center gap-1 text-green-400 text-xs">
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Approved</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Review Text */}
-            <p className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed mb-4 sm:mb-6 line-clamp-4">
-              &ldquo;{review.review_text}&rdquo;
-            </p>
-
-            {/* Review Photos */}
-            {review.review_photos && review.review_photos.length > 0 && (
-              <div className="mb-4 sm:mb-6">
-                <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
-                  {review.review_photos
-                    .sort(
-                      (a, b) => (a.display_order || 0) - (b.display_order || 0)
-                    )
-                    .slice(0, 3)
-                    .map((photo) => (
-                      <div
-                        key={photo.id}
-                        className="relative aspect-square overflow-hidden rounded-lg"
-                      >
-                        <Image
-                          src={photo.photo_url}
-                          alt={photo.caption || "Review photo"}
-                          fill
-                          className="object-cover hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 768px) 100px, (max-width: 1200px) 120px, 150px"
-                        />
-                      </div>
-                    ))}
-                </div>
-                {review.review_photos.length > 3 && (
-                  <p className="text-gray-500 text-xs mt-2">
-                    +{review.review_photos.length - 3} more photo
-                    {review.review_photos.length - 3 > 1 ? "s" : ""}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Guest Info */}
-            <div className="border-t border-gray-600 pt-3 sm:pt-4">
-              <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0">
-                <div>
-                  <p className="font-bold text-blue-400 text-sm xs:text-base">
-                    - {review.guest_name}
-                  </p>
-                  {review.guest_location && (
-                    <div className="flex items-center gap-1 text-gray-500 text-xs xs:text-sm mt-1">
-                      <MapPin className="w-3 h-3" />
-                      <span>{review.guest_location}</span>
+            {reviews.map((review) => (
+              <div
+                key={review.id}
+                className="flex-shrink-0 px-2"
+                style={{ width: `${100 / cardsPerView}%` }}
+              >
+                <div className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
+                  {/* Rating and Verification */}
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    {renderStars(review.rating)}
+                    <div className="flex items-center gap-2">
+                      {review.approved && (
+                        <div className="flex items-center gap-1 text-green-400 text-xs">
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Approved</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="xs:text-right">
-                  <div className="flex items-center gap-1 text-gray-500 text-xs">
-                    <Calendar className="w-3 h-3" />
-                    <span>{formatDate(review.created_at)}</span>
+                  </div>
+
+                  {/* Review Text */}
+                  <p className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed mb-4 sm:mb-6 line-clamp-4">
+                    &ldquo;{review.review_text}&rdquo;
+                  </p>
+
+                  {/* Review Photos */}
+                  {review.review_photos &&
+                    review.review_photos.length > 0 && (
+                      <div className="mb-4 sm:mb-6">
+                        <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
+                          {review.review_photos
+                            .sort(
+                              (a, b) =>
+                                (a.display_order || 0) -
+                                (b.display_order || 0)
+                            )
+                            .slice(0, 3)
+                            .map((photo) => (
+                              <div
+                                key={photo.id}
+                                className="relative aspect-square overflow-hidden rounded-lg"
+                              >
+                                <Image
+                                  src={photo.photo_url}
+                                  alt={photo.caption || "Review photo"}
+                                  fill
+                                  className="object-cover hover:scale-105 transition-transform duration-300"
+                                  sizes="(max-width: 768px) 100px, (max-width: 1200px) 120px, 150px"
+                                />
+                              </div>
+                            ))}
+                        </div>
+                        {review.review_photos.length > 3 && (
+                          <p className="text-gray-500 text-xs mt-2">
+                            +{review.review_photos.length - 3} more photo
+                            {review.review_photos.length - 3 > 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                  {/* Guest Info */}
+                  <div className="border-t border-gray-600 pt-3 sm:pt-4 mt-auto">
+                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0">
+                      <div>
+                        <p className="font-bold text-blue-400 text-sm xs:text-base">
+                          - {review.guest_name}
+                        </p>
+                        {review.guest_location && (
+                          <div className="flex items-center gap-1 text-gray-500 text-xs xs:text-sm mt-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>{review.guest_location}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="xs:text-right">
+                        <div className="flex items-center gap-1 text-gray-500 text-xs">
+                          <Calendar className="w-3 h-3" />
+                          <span>{formatDate(review.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      {/* Pagination */}
-      {showPagination && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4 text-white" />
-          </button>
-
-          <div className="flex items-center gap-1">
-            {[...Array(totalPages)].map((_, i) => {
-              const page = i + 1;
-              const isCurrentPage = page === currentPage;
-
-              // Show first page, last page, current page, and adjacent pages
-              if (
-                page === 1 ||
-                page === totalPages ||
-                (page >= currentPage - 1 && page <= currentPage + 1)
-              ) {
-                return (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`px-3 py-1 rounded-lg transition-colors ${
-                      isCurrentPage
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              } else if (page === currentPage - 2 || page === currentPage + 2) {
-                return (
-                  <span key={page} className="text-gray-500 px-1">
-                    ...
-                  </span>
-                );
-              }
-              return null;
-            })}
-          </div>
-
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronRight className="w-4 h-4 text-white" />
-          </button>
         </div>
-      )}
+
+        {/* shadcn-style navigation: arrows + progress dots */}
+        {reviews.length > cardsPerView && (
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              type="button"
+              onClick={prevSlide}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-600 bg-gray-800 hover:bg-gray-700 hover:border-gray-500 text-white transition-colors"
+              aria-label="Previous review"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: maxIndex + 1 }).map((_, index) => (
+                <button
+                  type="button"
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`rounded-full transition-all duration-300 ${
+                    currentSlide === index
+                      ? "bg-blue-500 w-6 h-2"
+                      : "bg-gray-600 hover:bg-gray-500 w-2 h-2"
+                  }`}
+                  aria-label={`Go to position ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={nextSlide}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-600 bg-gray-800 hover:bg-gray-700 hover:border-gray-500 text-white transition-colors"
+              aria-label="Next review"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* View All Reviews Button - Clean secondary style */}
       {totalReviews > 0 && (

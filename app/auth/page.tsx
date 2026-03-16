@@ -40,6 +40,8 @@ export default function AuthPage() {
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
+  const [authLiveRating, setAuthLiveRating] = useState<number | null>(null);
+  const [authTestimonial, setAuthTestimonial] = useState<{ text: string; name: string } | null>(null);
   const [formKey, setFormKey] = useState(0); // Force form refresh
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -92,6 +94,36 @@ export default function AuthPage() {
     setForcePasswordReset(false);
     setIsPasswordReset(false);
   };
+
+  // Fetch live average rating and a top review for testimonial section
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("guest_reviews")
+          .select("rating, review_text, guest_name")
+          .eq("approved", true);
+        if (!error && data && data.length > 0) {
+          const avg = data.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / data.length;
+          setAuthLiveRating(Math.round(avg * 10) / 10);
+          // Pick a random top-rated review for the testimonial
+          const topReviews = data.filter((r) => r.rating >= 4);
+          const pick = topReviews.length > 0
+            ? topReviews[Math.floor(Math.random() * topReviews.length)]
+            : data[0];
+          if (pick.review_text && pick.guest_name) {
+            const snippet = pick.review_text.length > 100
+              ? pick.review_text.slice(0, 100).trimEnd() + "..."
+              : pick.review_text;
+            setAuthTestimonial({ text: snippet, name: pick.guest_name });
+          }
+        }
+      } catch {
+        // Keep null on error
+      }
+    };
+    fetchRating();
+  }, []);
 
   // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
@@ -929,14 +961,14 @@ export default function AuthPage() {
   // Show loading state while checking session
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-slate-950">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4b0f12] via-[#7c1f23] to-[#2c0a0c] p-2 sm:p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-slate-950 p-2 sm:p-4">
       <div className="w-full max-w-6xl flex flex-col lg:flex-row rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden bg-white/5 backdrop-blur-lg">
         {/* Left Side - Hidden on mobile, shown on desktop */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 xl:p-12 flex-col justify-between">
@@ -1040,12 +1072,12 @@ export default function AuthPage() {
                 />
               ))}
               <span className="text-gray-400 text-xs xl:text-sm ml-2">
-                4.9/5
+                {authLiveRating !== null ? `${authLiveRating}/5` : "5/5"}
               </span>
             </div>
             <p className="text-xs xl:text-sm opacity-80 italic">
-              &quot;The best camping experience I&apos;ve ever had!&quot; <br />
-              <span className="text-gray-400">Maria S., Frequent Camper</span>
+              &quot;{authTestimonial ? authTestimonial.text : "The best camping experience I've ever had!"}&quot; <br />
+              <span className="text-gray-400">{authTestimonial ? authTestimonial.name : "Happy Camper"}</span>
             </p>
           </div>
         </div>
