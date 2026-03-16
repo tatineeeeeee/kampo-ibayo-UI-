@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -384,7 +384,7 @@ function Home() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
-  const [availabilityGuideOpen, setAvailabilityGuideOpen] = useState(true); // Open by default on desktop
+
   const [maintenanceActive, setMaintenanceActive] = useState(false);
   // Amenities accordion state - null means all closed on mobile
   const [openAmenityIndex, setOpenAmenityIndex] = useState<number | null>(null);
@@ -393,6 +393,7 @@ function Home() {
     return now;
   });
   const [loading, setLoading] = useState(false);
+  const hasLoadedRef = useRef(false);
   // Store actual booking data for proper date type determination
   const [existingBookings, setExistingBookings] = useState<
     {
@@ -413,13 +414,8 @@ function Home() {
   const fetchBookedDates = useCallback(async (month: Date) => {
     const monthKey = `${month.getFullYear()}-${month.getMonth()}`;
 
-    // Always fetch fresh data - remove cache for now to debug
-    // if (monthCache[monthKey]) {
-    //   setBookedDates(monthCache[monthKey]);
-    //   return;
-    // }
-
-    setLoading(true);
+    // setLoading(true) is only called on initial modal open via useEffect
+    // Month navigation fetches silently without showing loading spinner
     try {
       // Extend range to include previous and next month dates that appear in calendar
       const startOfMonth = new Date(
@@ -539,7 +535,13 @@ function Home() {
   // Fetch booked dates when modal opens or month changes
   useEffect(() => {
     if (showAvailabilityModal) {
+      if (!hasLoadedRef.current) {
+        setLoading(true);
+        hasLoadedRef.current = true;
+      }
       fetchBookedDates(currentMonth);
+    } else {
+      hasLoadedRef.current = false;
     }
   }, [showAvailabilityModal, currentMonth, fetchBookedDates]);
 
@@ -694,6 +696,26 @@ function Home() {
 
     return "";
   };
+
+  // Count available dates in current month for footer display
+  const availableDatesCount = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let count = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      date.setHours(0, 0, 0, 0);
+      if (date >= today) {
+        const capacity = getDateCapacity(date);
+        if (capacity === "" || capacity === "checkout") count++;
+      }
+    }
+    return count;
+  }, [currentMonth, existingBookings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /*
   // Check if a date is in the past
@@ -2722,9 +2744,9 @@ function Home() {
         {showAvailabilityModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-0 sm:p-2 md:p-4 overflow-y-auto modal-scroll-lock">
             <div className="bg-gray-900 rounded-none sm:rounded-xl md:rounded-2xl shadow-2xl w-full sm:max-w-[95vw] md:max-w-2xl lg:max-w-5xl xl:max-w-6xl border-0 sm:border border-gray-700 min-h-screen sm:min-h-0 sm:max-h-[98vh] md:max-h-[95vh] lg:max-h-[92vh] xl:max-h-[90vh] overflow-hidden flex flex-col mt-0 sm:mt-2 md:mt-0">
-              {/* Modal Header - Mobile Safe */}
-              <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 lg:p-6 border-b border-gray-700 bg-gray-900 flex-shrink-0 sticky top-0 z-10">
-                <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 flex-shrink-0 sticky top-0 z-10">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
                   <CalendarDays className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-green-400 flex-shrink-0" />
                   <span className="truncate">Check Availability</span>
                 </h2>
@@ -2736,25 +2758,18 @@ function Home() {
                 </button>
               </div>
 
-              {/* Modal Content - Mobile Safe Scrollable Body */}
+              {/* Modal Content */}
               <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain">
-                <div className="p-3 sm:p-4 md:p-5 lg:p-6 space-y-4 sm:space-y-5 md:space-y-6">
+                <div className="p-3 sm:p-4 md:p-4 lg:p-5">
                   {/* Two-column layout: Calendar LEFT, Legend RIGHT on desktop */}
-                  <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                  <div className="flex flex-col lg:flex-row gap-4 lg:gap-5 items-stretch">
                   {/* Left Column: Calendar */}
-                  <div className="lg:w-1/2 xl:w-[55%] flex-shrink-0">
+                  <div className="lg:w-1/2 xl:w-[55%] flex-shrink-0 flex flex-col">
                   {/* Calendar View - React DatePicker (Read-only for availability display) */}
-                  <div className="bg-gray-800/50 rounded-lg md:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 border border-gray-600">
-                    <div
-                      style={{
-                        minHeight: "470px",
-                        height: "auto",
-                        maxHeight: "600px",
-                      }}
-                      className="sm:!min-h-[500px] sm:!max-h-[650px]"
-                    >
+                  <div className="bg-gray-800/50 rounded-lg md:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 border border-gray-600/50 flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-h-[470px] sm:min-h-[500px]">
                       {loading ? (
-                        <div className="flex items-center justify-center h-full">
+                        <div className="flex items-center justify-center flex-1">
                           <div className="text-white text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
                             <p>Loading availability...</p>
@@ -2847,270 +2862,113 @@ function Home() {
                             }}
                           />
 
-                          {/* Legend - Mobile Optimized */}
-                          <div className="mt-4 p-2 sm:p-3 bg-gray-800/30 rounded-lg border border-gray-600/50">
-                            <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:grid-cols-3 md:flex md:flex-wrap md:items-center md:justify-center md:gap-3">
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-emerald-900/20 rounded-md border border-emerald-600/30 min-w-0">
-                                <span
-                                  className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                                  }}
-                                ></span>
-                                <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  <span className="sm:hidden">Open</span>
-                                  <span className="hidden sm:inline">
-                                    Available
-                                  </span>
-                                </span>
-                              </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-blue-900/20 rounded-md border border-blue-600/30 min-w-0">
-                                <span
-                                  className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                                  }}
-                                ></span>
-                                <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  <span className="sm:hidden">In</span>
-                                  <span className="hidden sm:inline">
-                                    Check-in
-                                  </span>
-                                </span>
-                              </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-rose-900/20 rounded-md border border-rose-600/30 min-w-0">
-                                <span
-                                  className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)",
-                                  }}
-                                ></span>
-                                <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  <span className="sm:hidden">Out</span>
-                                  <span className="hidden sm:inline">
-                                    Check-out
-                                  </span>
-                                </span>
-                              </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-amber-900/20 rounded-md border border-amber-500/30 min-w-0">
-                                <span
-                                  className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                                  }}
-                                ></span>
-                                <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  Occupied
-                                </span>
-                              </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-violet-900/20 rounded-md border border-violet-600/30 min-w-0">
-                                <span
-                                  className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)",
-                                  }}
-                                ></span>
-                                <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  <span className="sm:hidden">Full</span>
-                                  <span className="hidden sm:inline">
-                                    Full Day
-                                  </span>
-                                </span>
-                              </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-gray-800/20 rounded-md border border-gray-600/30 min-w-0">
-                                <span className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded bg-gray-700 flex-shrink-0"></span>
-                                <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
-                                  <span className="sm:hidden">N/A</span>
-                                  <span className="hidden sm:inline">
-                                    Unavailable
-                                  </span>
-                                </span>
-                              </span>
-                            </div>
-                          </div>
                         </>
                       )}
                     </div>
                   </div>
                   </div>{/* End Left Column */}
 
-                  {/* Right Column: How to Read Guide */}
-                  <div className="lg:w-1/2 xl:w-[45%]">
-                  {/* Mobile-Responsive Availability Guide */}
-                  <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg md:rounded-xl overflow-hidden h-full">
-                    {/* Collapsible Header - Mobile First Design */}
-                    <button
-                      onClick={() =>
-                        setAvailabilityGuideOpen(!availabilityGuideOpen)
-                      }
-                      className="w-full p-4 sm:p-5 md:hidden flex items-center justify-between hover:bg-blue-800/10 active:bg-blue-800/20 transition-colors touch-manipulation min-h-[56px]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 text-blue-400 text-base">
-                          ℹ️
-                        </div>
-                        <h4 className="text-blue-200 text-sm sm:text-base font-semibold">
-                          How to Read Availability
-                        </h4>
-                      </div>
-                      <div
-                        className="w-5 h-5 text-blue-300 transition-transform duration-200 text-sm"
-                        style={{
-                          transform: availabilityGuideOpen
-                            ? "rotate(180deg)"
-                            : "rotate(0deg)",
-                        }}
-                      >
-                        ▼
-                      </div>
-                    </button>
-
-                    {/* Desktop Header - Always Visible */}
-                    <div className="hidden md:flex items-center gap-3 lg:gap-4 p-4 lg:p-5 border-b border-blue-600/20">
-                      <div className="w-6 h-6 lg:w-7 lg:h-7 text-blue-400 text-lg lg:text-xl">
-                        ℹ️
-                      </div>
-                      <h4 className="text-blue-200 text-lg lg:text-xl xl:text-2xl font-semibold">
-                        How to Read Availability
+                  {/* Right Column: Color Guide */}
+                  <div className="lg:w-1/2 xl:w-[45%] flex flex-col">
+                  <div className="bg-gray-800/30 border border-gray-600/50 rounded-lg md:rounded-xl p-3 sm:p-4 lg:p-5 flex-1 flex flex-col">
+                    {/* Panel Header */}
+                    <div className="flex flex-col gap-1 mb-3 lg:mb-4 flex-shrink-0">
+                      <h4 className="text-white text-sm sm:text-base lg:text-lg font-semibold">
+                        How to Read the Calendar
                       </h4>
+                      <p className="text-gray-400 text-[10px] sm:text-xs leading-relaxed">
+                        Each date is color-coded to show its booking status. Use the arrows to navigate months.
+                      </p>
                     </div>
 
-                    {/* Content - Mobile Safe Collapsible */}
-                    <div
-                      className={`${
-                        availabilityGuideOpen ? "block" : "hidden"
-                      } md:block transition-all duration-200`}
-                    >
-                      <div className="px-4 pb-4 sm:px-5 sm:pb-5 md:px-6 md:pb-6">
-                        {/* Mobile First Responsive Grid Layout */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mt-4 sm:mt-5">
-                          {/* Row 1: Available + Check-in */}
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-emerald-900/20 border border-emerald-600/30 rounded-lg hover:bg-emerald-900/30 transition-colors">
-                            <span
-                              className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                              }}
-                            ></span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-emerald-200 text-base sm:text-lg md:text-xl font-semibold">
-                                Available Dates
-                              </div>
-                              <div className="text-emerald-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
-                                Open for booking
-                              </div>
-                            </div>
-                          </div>
+                    {/* 6 Compact Legend Cards */}
+                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:gap-3 content-start">
+                      {/* Available */}
+                      <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-emerald-900/15 border border-emerald-600/20 rounded-lg hover:bg-emerald-900/25 hover:border-emerald-600/30 transition-all duration-200">
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded flex-shrink-0" style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)" }}></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-emerald-200 text-xs sm:text-sm font-semibold leading-tight">Available</div>
+                          <div className="text-emerald-100/70 text-[10px] sm:text-xs leading-tight mt-0.5">Open for booking</div>
+                        </div>
+                      </div>
 
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-blue-900/20 border border-blue-600/30 rounded-lg hover:bg-blue-900/30 transition-colors">
-                            <span
-                              className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                              }}
-                            ></span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-blue-200 text-base sm:text-lg md:text-xl font-semibold">
-                                Check-in Day
-                              </div>
-                              <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
-                                Guests arrive 3 PM
-                              </div>
-                            </div>
-                          </div>
+                      {/* Check-in */}
+                      <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-blue-900/15 border border-blue-600/20 rounded-lg hover:bg-blue-900/25 hover:border-blue-600/30 transition-all duration-200">
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded flex-shrink-0" style={{ background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" }}></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-blue-200 text-xs sm:text-sm font-semibold leading-tight">Check-in</div>
+                          <div className="text-blue-100/70 text-[10px] sm:text-xs leading-tight mt-0.5">Guests arrive 3 PM</div>
+                        </div>
+                      </div>
 
-                          {/* Row 2: Check-out + Occupied */}
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-rose-900/20 border border-rose-600/30 rounded-lg hover:bg-rose-900/30 transition-colors">
-                            <span
-                              className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)",
-                              }}
-                            ></span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-rose-200 text-base sm:text-lg md:text-xl font-semibold">
-                                Check-out Day
-                              </div>
-                              <div className="text-rose-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
-                                Available for check-in (guests leave 1 PM)
-                              </div>
-                            </div>
-                          </div>
+                      {/* Check-out */}
+                      <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-rose-900/15 border border-rose-600/20 rounded-lg hover:bg-rose-900/25 hover:border-rose-600/30 transition-all duration-200">
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded flex-shrink-0" style={{ background: "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)" }}></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-rose-200 text-xs sm:text-sm font-semibold leading-tight">Check-out</div>
+                          <div className="text-rose-100/70 text-[10px] sm:text-xs leading-tight mt-0.5">Leave 1 PM, new arrive 3 PM</div>
+                        </div>
+                      </div>
 
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-yellow-900/20 border border-yellow-500/30 rounded-lg hover:bg-yellow-900/30 transition-colors">
-                            <span
-                              className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)",
-                              }}
-                            ></span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-yellow-200 text-base sm:text-lg md:text-xl font-semibold">
-                                Occupied
-                              </div>
-                              <div className="text-yellow-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
-                                Resort fully occupied
-                              </div>
-                            </div>
-                          </div>
+                      {/* Occupied */}
+                      <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-yellow-900/15 border border-yellow-500/20 rounded-lg hover:bg-yellow-900/25 hover:border-yellow-500/30 transition-all duration-200">
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded flex-shrink-0" style={{ background: "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)" }}></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-yellow-200 text-xs sm:text-sm font-semibold leading-tight">Occupied</div>
+                          <div className="text-yellow-100/70 text-[10px] sm:text-xs leading-tight mt-0.5">Resort fully occupied</div>
+                        </div>
+                      </div>
 
-                          {/* Row 3: Full Day + Unavailable */}
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-violet-900/20 border border-violet-600/30 rounded-lg hover:bg-violet-900/30 transition-colors">
-                            <span
-                              className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)",
-                              }}
-                            ></span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-violet-200 text-base sm:text-lg md:text-xl font-semibold">
-                                Full Day
-                              </div>
-                              <div className="text-violet-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
-                                Same-day check-in & check-out
-                              </div>
-                            </div>
-                          </div>
+                      {/* Full Day */}
+                      <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-violet-900/15 border border-violet-600/20 rounded-lg hover:bg-violet-900/25 hover:border-violet-600/30 transition-all duration-200">
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded flex-shrink-0" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)" }}></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-violet-200 text-xs sm:text-sm font-semibold leading-tight">Full Day</div>
+                          <div className="text-violet-100/70 text-[10px] sm:text-xs leading-tight mt-0.5">Same-day check-in & out</div>
+                        </div>
+                      </div>
 
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-gray-800/20 border border-gray-600/30 rounded-lg hover:bg-gray-800/30 transition-colors">
-                            <span className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-gray-700 flex-shrink-0 mt-1"></span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-gray-200 text-base sm:text-lg md:text-xl font-semibold">
-                                Unavailable
-                              </div>
-                              <div className="text-gray-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
-                                Cannot be booked
-                              </div>
-                            </div>
+                      {/* Unavailable */}
+                      <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-gray-800/15 border border-gray-600/20 rounded-lg hover:bg-gray-800/25 hover:border-gray-600/30 transition-all duration-200">
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-gray-700 flex-shrink-0"></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-gray-200 text-xs sm:text-sm font-semibold leading-tight">Unavailable</div>
+                          <div className="text-gray-100/70 text-[10px] sm:text-xs leading-tight mt-0.5">Cannot be booked</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Resort Info — fills remaining space */}
+                    <div className="mt-auto pt-3 lg:pt-4 space-y-2.5 lg:space-y-3">
+                      {/* Rates */}
+                      <div className="bg-gray-900/40 rounded-lg p-3 sm:p-3.5 border border-gray-700/30">
+                        <h5 className="text-white text-xs sm:text-sm font-semibold mb-2">Resort Rates</h5>
+                        <div className="space-y-1.5 text-[11px] sm:text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Weekdays (Mon-Thu)</span>
+                            <span className="text-green-400 font-semibold">&#8369;9,000</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Weekends (Fri-Sun)</span>
+                            <span className="text-yellow-400 font-semibold">&#8369;12,000</span>
                           </div>
                         </div>
+                      </div>
 
-                        {/* Pro Tip - Enhanced Responsiveness */}
-                        <div className="mt-4 p-4 bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-600/30 rounded-lg">
-                          <div className="flex items-start gap-2">
-                            <div className="text-green-400 text-lg flex-shrink-0">
-                              💡
-                            </div>
-                            <div>
-                              <div className="text-green-200 text-sm sm:text-base md:text-lg font-medium mb-1">
-                                Same-Day Turnover Available!
-                              </div>
-                              <div className="text-green-100/90 text-xs sm:text-sm md:text-base leading-relaxed">
-                                You can check-in on blue (check-out) days since
-                                guests leave at 1 PM and new arrivals start at 3
-                                PM.
-                              </div>
-                            </div>
+                      {/* Quick Info */}
+                      <div className="bg-gray-900/40 rounded-lg p-3 sm:p-3.5 border border-gray-700/30">
+                        <div className="space-y-1.5 text-[11px] sm:text-xs text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-400">&#9679;</span>
+                            <span>22-hour stay per booking</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-400">&#9679;</span>
+                            <span>Up to 15 guests included</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-400">&#9679;</span>
+                            <span>All amenities included</span>
                           </div>
                         </div>
                       </div>
@@ -3119,81 +2977,36 @@ function Home() {
                   </div>{/* End Right Column */}
                   </div>{/* End Two-column flex row */}
 
-                  {/* Booking Policy Notice */}
-                  <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-2 sm:p-3">
-                    <div className="flex items-start gap-2">
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 mt-0.5 text-sm sm:text-base">
-                        ℹ️
-                      </div>
-                      <div>
-                        <p className="text-amber-200 text-xs sm:text-sm font-medium mb-1">
-                          Booking Policy
-                        </p>
-                        <p className="text-amber-100/80 text-xs leading-relaxed">
-                          {getBookingPolicyMessage()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Real-time Status */}
-                  <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-2 sm:p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          loading
-                            ? "bg-yellow-400 animate-pulse"
-                            : "bg-green-400"
-                        }`}
-                      ></div>
-                      <span className="text-blue-400 font-semibold text-xs sm:text-sm">
-                        {loading
-                          ? "Loading availability..."
-                          : "Live Availability Data"}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-xs leading-relaxed">
-                      {loading
-                        ? "Fetching real-time booking information from database..."
-                        : "Showing current availability based on active bookings (pending + confirmed). Navigate months to see more dates."}
-                    </p>
-                  </div>
-
-                  {/* Pricing Info */}
-                  <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 lg:p-4 border border-gray-600">
-                    <h3 className="text-white font-semibold mb-2 sm:mb-3 text-sm sm:text-base">
-                      Resort Rates
-                    </h3>
-                    <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">
-                          Weekdays (Mon-Thu)
-                        </span>
-                        <span className="text-green-400 font-semibold">
-                          ₱9,000
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">
-                          Weekends (Fri-Sun)
-                        </span>
-                        <span className="text-yellow-400 font-semibold">
-                          ₱12,000
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1 sm:mt-2">
-                        22-hour stay • Up to 15 guests • All amenities included
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Modal Footer - Mobile Safe Bottom */}
-              <div className="border-t border-gray-700 bg-gray-900 p-4 sm:p-5 md:p-6 flex-shrink-0 sticky bottom-0 z-10 modal-footer-safe">
+              {/* Modal Footer */}
+              <div className="border-t border-gray-700/50 bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 flex-shrink-0 sticky bottom-0 z-10 modal-footer-safe flex items-center justify-between gap-3">
+                {/* Left: Available count + live status */}
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${loading ? "bg-yellow-400 animate-pulse" : "bg-green-400"}`}></div>
+                    <span className="text-gray-500 text-[10px] sm:text-xs">
+                      {loading ? "Syncing..." : "Live"}
+                    </span>
+                  </div>
+                  {!loading && (
+                    <>
+                      <div className="w-px h-3.5 bg-gray-700/50"></div>
+                      <span className="text-gray-400 text-[10px] sm:text-xs">
+                        <span className={`font-semibold ${availableDatesCount > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {availableDatesCount}
+                        </span>
+                        {" "}available in{" "}
+                        {currentMonth.toLocaleDateString("en-US", { month: "long" })}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {/* Right: Close */}
                 <button
                   onClick={() => setShowAvailabilityModal(false)}
-                  className="w-full bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-4 sm:py-3.5 md:py-4 rounded-lg md:rounded-xl font-semibold text-base sm:text-lg transition-all duration-200 min-h-[52px] touch-manipulation shadow-lg hover:shadow-xl"
+                  className="px-5 sm:px-6 py-2 sm:py-2.5 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-gray-300 hover:text-white rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 border border-gray-600/50 hover:border-gray-500/50 min-h-[36px] sm:min-h-[40px] touch-manipulation flex-shrink-0"
                 >
                   Close
                 </button>

@@ -41,7 +41,9 @@ export default function AuthPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const [authLiveRating, setAuthLiveRating] = useState<number | null>(null);
-  const [authTestimonial, setAuthTestimonial] = useState<{ text: string; name: string } | null>(null);
+  const [authTestimonials, setAuthTestimonials] = useState<{ text: string; name: string }[]>([]);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [testimonialVisible, setTestimonialVisible] = useState(true);
   const [formKey, setFormKey] = useState(0); // Force form refresh
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -95,7 +97,7 @@ export default function AuthPage() {
     setIsPasswordReset(false);
   };
 
-  // Fetch live average rating and a top review for testimonial section
+  // Fetch live average rating and top reviews for rotating testimonials
   useEffect(() => {
     const fetchRating = async () => {
       try {
@@ -106,24 +108,43 @@ export default function AuthPage() {
         if (!error && data && data.length > 0) {
           const avg = data.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / data.length;
           setAuthLiveRating(Math.round(avg * 10) / 10);
-          // Pick a random top-rated review for the testimonial
-          const topReviews = data.filter((r) => r.rating >= 4);
-          const pick = topReviews.length > 0
-            ? topReviews[Math.floor(Math.random() * topReviews.length)]
-            : data[0];
-          if (pick.review_text && pick.guest_name) {
-            const snippet = pick.review_text.length > 100
-              ? pick.review_text.slice(0, 100).trimEnd() + "..."
-              : pick.review_text;
-            setAuthTestimonial({ text: snippet, name: pick.guest_name });
+          // Collect top-rated reviews for rotation
+          const topReviews = data
+            .filter((r) => r.rating >= 4 && r.review_text && r.guest_name)
+            .map((r) => ({
+              text: r.review_text!.length > 120
+                ? r.review_text!.slice(0, 120).trimEnd() + "..."
+                : r.review_text!,
+              name: r.guest_name!,
+            }));
+          if (topReviews.length > 0) {
+            // Shuffle so it starts differently each visit
+            for (let i = topReviews.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [topReviews[i], topReviews[j]] = [topReviews[j], topReviews[i]];
+            }
+            setAuthTestimonials(topReviews);
           }
         }
       } catch {
-        // Keep null on error
+        // Keep empty on error
       }
     };
     fetchRating();
   }, []);
+
+  // Auto-rotate testimonials every 6 seconds: fade out → swap → fade in
+  useEffect(() => {
+    if (authTestimonials.length <= 1) return;
+    const interval = setInterval(() => {
+      setTestimonialVisible(false); // fade out
+      setTimeout(() => {
+        setTestimonialIndex((prev) => (prev + 1) % authTestimonials.length);
+        setTestimonialVisible(true); // fade in with new content
+      }, 200);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [authTestimonials.length]);
 
   // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
@@ -1062,7 +1083,7 @@ export default function AuthPage() {
             </ul>
           </div>
 
-          {/* Bottom testimonial */}
+          {/* Bottom testimonial — rotating with fade */}
           <div className="mt-6 xl:mt-8">
             <div className="flex items-center gap-1 mb-2 xl:mb-3">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -1075,9 +1096,9 @@ export default function AuthPage() {
                 {authLiveRating !== null ? `${authLiveRating}/5` : "5/5"}
               </span>
             </div>
-            <p className="text-xs xl:text-sm opacity-80 italic">
-              &quot;{authTestimonial ? authTestimonial.text : "The best camping experience I've ever had!"}&quot; <br />
-              <span className="text-gray-400">{authTestimonial ? authTestimonial.name : "Happy Camper"}</span>
+            <p className={`text-xs xl:text-sm italic transition-opacity duration-200 ${testimonialVisible && authTestimonials.length > 0 ? "opacity-80" : authTestimonials.length === 0 ? "opacity-80" : "opacity-0"}`}>
+              &quot;{authTestimonials.length > 0 ? authTestimonials[testimonialIndex].text : "Experience nature like never before"}&quot; <br />
+              <span className="text-gray-400">{authTestimonials.length > 0 ? authTestimonials[testimonialIndex].name : "Kampo Ibayo"}</span>
             </p>
           </div>
         </div>
