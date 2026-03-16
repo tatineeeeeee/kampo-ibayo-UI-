@@ -39,6 +39,7 @@ import { TrustBadges } from "./components/EnhancedComponents";
 import DynamicGallery from "./components/DynamicGallery";
 import Chatbot from "./components/Chatbot";
 import ReviewSystem from "./components/ReviewSystem";
+import BookingAuthModal from "./components/BookingAuthModal";
 
 // ----------------- Navbar -----------------
 const Navbar = () => {
@@ -384,6 +385,7 @@ function Home() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [showBookingAuthModal, setShowBookingAuthModal] = useState(false);
 
   const [maintenanceActive, setMaintenanceActive] = useState(false);
   // Amenities accordion state - null means all closed on mobile
@@ -531,6 +533,15 @@ function Home() {
       setLoading(false);
     }
   }, []); // Remove monthCache dependency for now
+
+  const handleBookCTA = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    if (!isLoadingAuth && !user) {
+      setShowBookingAuthModal(true);
+    } else if (!isLoadingAuth && user) {
+      router.push('/book');
+    }
+  };
 
   // Fetch booked dates when modal opens or month changes
   useEffect(() => {
@@ -1707,14 +1718,15 @@ function Home() {
                     <span className="whitespace-nowrap">Booking Disabled</span>
                   </div>
                 ) : (
-                  <Link
-                    href="/book"
+                  <button
+                    type="button"
+                    onClick={handleBookCTA}
                     className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-blue-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
                   >
                     <Calendar className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                     <span className="whitespace-nowrap">Book Your Stay</span>
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  </button>
                 )}
               </div>
             </div>
@@ -1973,13 +1985,14 @@ function Home() {
                           Temporarily Unavailable
                         </div>
                       ) : (
-                        <Link
-                          href="/book"
+                        <button
+                          type="button"
+                          onClick={handleBookCTA}
                           className="group bg-white/80 backdrop-blur-sm hover:bg-white/90 text-blue-800 hover:text-blue-900 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 w-full text-center touch-manipulation min-h-[48px] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                           <span>Book This Deal</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -2013,13 +2026,14 @@ function Home() {
                           Temporarily Unavailable
                         </div>
                       ) : (
-                        <Link
-                          href="/book"
+                        <button
+                          type="button"
+                          onClick={handleBookCTA}
                           className="group bg-yellow-400/95 hover:bg-yellow-400 text-gray-900 hover:text-black px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 w-full text-center touch-manipulation min-h-[48px] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] border-2 border-yellow-400/20 hover:border-yellow-400/40"
                         >
                           <span>Reserve Weekend</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -3015,6 +3029,11 @@ function Home() {
           </div>
         )}
       </div>
+
+      <BookingAuthModal
+        isOpen={showBookingAuthModal}
+        onClose={() => setShowBookingAuthModal(false)}
+      />
     </>
   );
 }

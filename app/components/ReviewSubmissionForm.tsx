@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { Star, Send, MapPin, Calendar, User, MessageSquare, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import PhotoUpload from './PhotoUpload';
+import { useToastHelpers } from './Toast';
 
 interface ReviewSubmissionFormProps {
   bookingId?: number;
@@ -45,6 +46,7 @@ const ReviewSubmissionForm = ({
   isModal = false
 }: ReviewSubmissionFormProps) => {
   const { user } = useAuth();
+  const toast = useToastHelpers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ const ReviewSubmissionForm = ({
   // Handle form input changes
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'reviewText') setError(null);
   };
 
   // Validate form
@@ -82,7 +85,7 @@ const ReviewSubmissionForm = ({
       return false;
     }
     if (formData.reviewText.trim().length < 10) {
-      setError('Please write at least 10 characters in your review');
+      toast.warning('Review Too Short', `Please write at least 10 characters. You need ${10 - formData.reviewText.trim().length} more.`);
       return false;
     }
     if (!formData.guestName.trim()) {
@@ -185,14 +188,12 @@ const ReviewSubmissionForm = ({
         
         // Auto-reject only for clear policy violations
         const hasProfanity = /\b(fuck|shit|damn|hell|bitch|asshole|crap)\b/i.test(text);
-        const isSpam = text.length < 10 || /(.)\1{5,}/.test(text); // Too short or repeated chars  
+        const isSpam = text.length < 10 || /(.)\1{5,}/.test(text); // Too short or repeated chars
         const hasPersonalAttack = /\b(stupid|idiot|moron|hate|worst|terrible staff|horrible management)\b/i.test(text);
-        const isOffTopic = !/(stay|room|pool|food|service|clean|staff|location|resort|hotel|vacation|trip)/i.test(text);
-        // REMOVED: Don't auto-flag low ratings - they may be legitimate feedback
         const hasExcessiveCaps = (text.match(/[A-Z]/g) || []).length > text.length * 0.3; // Flag ALL CAPS
-        
-        // Only flag these specific violations - everything else auto-approves (including 1-star reviews)
-        return !hasProfanity && !isSpam && !hasPersonalAttack && !isOffTopic && !hasExcessiveCaps;
+
+        // Only flag these specific violations - everything else auto-approves (including 1-star reviews and Filipino language reviews)
+        return !hasProfanity && !isSpam && !hasPersonalAttack && !hasExcessiveCaps;
       };
 
       const isAutoApproved = shouldAutoApprove(formData.reviewText);
@@ -395,7 +396,7 @@ const ReviewSubmissionForm = ({
         {/* Review Guidelines */}
         <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4 mb-6">
           <h4 className="text-yellow-200 font-medium mb-3 flex items-center gap-2">
-            📝 Review Guidelines
+            Review Guidelines
           </h4>
           <ul className="text-yellow-100 text-sm space-y-2">
             <li className="flex items-start gap-2">
@@ -439,6 +440,7 @@ const ReviewSubmissionForm = ({
                     key={star}
                     type="button"
                     onClick={() => handleRatingClick(star)}
+                    aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
                     className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded"
                   >
                     <Star
@@ -477,7 +479,7 @@ const ReviewSubmissionForm = ({
                 onClick={() => setShowTemplates(!showTemplates)}
                 className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
               >
-                📝 {showTemplates ? 'Hide' : 'Show'} Templates
+                {showTemplates ? 'Hide' : 'Show'} Templates
               </button>
             </div>
             
@@ -529,12 +531,43 @@ const ReviewSubmissionForm = ({
                 onChange={(e) => handleInputChange('reviewText', e.target.value)}
                 placeholder="Tell us about your experience at Kampo Ibayo..."
                 rows={5}
-                className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                className={`w-full pl-12 pr-4 py-3 bg-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-1 resize-none transition-colors duration-200 ${
+                  formData.reviewText.length > 0 && formData.reviewText.length < 10
+                    ? 'border-2 border-red-500 focus:border-red-400 focus:ring-red-500'
+                    : formData.reviewText.length >= 10
+                    ? 'border border-green-500 focus:border-green-400 focus:ring-green-500'
+                    : 'border border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+                }`}
                 maxLength={1000}
               />
-              <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+              <div className={`absolute bottom-3 right-3 text-xs font-medium transition-colors duration-200 ${
+                formData.reviewText.length > 0 && formData.reviewText.length < 10
+                  ? 'text-red-400'
+                  : formData.reviewText.length >= 10
+                  ? 'text-green-400'
+                  : 'text-gray-400'
+              }`}>
                 {formData.reviewText.length}/1000
               </div>
+            </div>
+            {/* Minimum character hint */}
+            <div className={`flex items-center gap-1.5 text-xs transition-colors duration-200 ${
+              formData.reviewText.length === 0
+                ? 'text-gray-500'
+                : formData.reviewText.length < 10
+                ? 'text-red-400'
+                : 'text-green-400'
+            }`}>
+              {formData.reviewText.length >= 10 ? (
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              )}
+              <span>
+                {formData.reviewText.length >= 10
+                  ? 'Minimum length met'
+                  : `${10 - formData.reviewText.length} more character${10 - formData.reviewText.length === 1 ? '' : 's'} required`}
+              </span>
             </div>
           </div>
 

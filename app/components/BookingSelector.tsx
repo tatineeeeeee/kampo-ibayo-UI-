@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { Calendar, Users, CheckCircle, Clock, Star, XCircle } from 'lucide-react';
+import BookingAuthModal from './BookingAuthModal';
 
 interface Booking {
   id: number;
@@ -32,6 +34,8 @@ interface BookingSelectorProps {
 
 const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: BookingSelectorProps) => {
   const { user } = useAuth();
+  const router = useRouter();
+  const [showBookingAuthModal, setShowBookingAuthModal] = useState(false);
   const [bookings, setBookings] = useState<BookingWithReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -276,21 +280,36 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
   }
 
   if (bookings.length === 0) {
+    const handleBookClick = () => {
+      if (!user) {
+        setShowBookingAuthModal(true);
+      } else {
+        router.push('/book');
+      }
+    };
+
     return (
-      <div className={`${className} text-center py-12`}>
-        <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-white mb-2">No Past Stays Found</h3>
-        <p className="text-gray-400 mb-6">
-          You need to have completed a stay at Kampo Ibayo to leave a review.
-        </p>
-        <a
-          href="/book"
-          className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Calendar className="w-4 h-4 mr-2" />
-          Book Your Stay
-        </a>
-      </div>
+      <>
+        <div className={`${className} text-center py-12`}>
+          <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">No Past Stays Found</h3>
+          <p className="text-gray-400 mb-6">
+            You need to have completed a stay at Kampo Ibayo to leave a review.
+          </p>
+          <button
+            type="button"
+            onClick={handleBookClick}
+            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Book Your Stay
+          </button>
+        </div>
+        <BookingAuthModal
+          isOpen={showBookingAuthModal}
+          onClose={() => setShowBookingAuthModal(false)}
+        />
+      </>
     );
   }
 

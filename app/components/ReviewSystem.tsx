@@ -65,6 +65,20 @@ const ReviewSystem = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [cardsPerView, setCardsPerView] = useState(3);
+  const [selectedReview, setSelectedReview] = useState<ReviewWithPhotos | null>(null);
+  const [truncatedReviews, setTruncatedReviews] = useState<Set<string>>(new Set());
+
+  const checkTruncation = useCallback((el: HTMLParagraphElement | null, reviewId: string) => {
+    if (!el) return;
+    const isTruncated = el.scrollHeight > el.clientHeight;
+    setTruncatedReviews(prev => {
+      const has = prev.has(reviewId);
+      if (isTruncated === has) return prev; // no change, skip re-render
+      const next = new Set(prev);
+      isTruncated ? next.add(reviewId) : next.delete(reviewId);
+      return next;
+    });
+  }, []);
 
   const reviewsPerPage = limit;
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
@@ -476,7 +490,7 @@ const ReviewSystem = ({
                 className="flex-shrink-0 px-2"
                 style={{ width: `${100 / cardsPerView}%` }}
               >
-                <div className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
+                <div className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
                   {/* Rating and Verification */}
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     {renderStars(review.rating)}
@@ -491,9 +505,26 @@ const ReviewSystem = ({
                   </div>
 
                   {/* Review Text */}
-                  <p className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed mb-4 sm:mb-6 line-clamp-4">
-                    &ldquo;{review.review_text}&rdquo;
-                  </p>
+                  <div className="mb-4 sm:mb-6">
+                    <p
+                      ref={(el) => checkTruncation(el, review.id)}
+                      className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed line-clamp-4"
+                    >
+                      &ldquo;{review.review_text}&rdquo;
+                    </p>
+                    {truncatedReviews.has(review.id) && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReview(review)}
+                        className="text-blue-400 hover:text-blue-300 text-xs mt-1.5 transition-colors"
+                      >
+                        See more
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Spacer — pushes photos + guest info to bottom on short reviews */}
+                  <div className="flex-1" />
 
                   {/* Review Photos */}
                   {review.review_photos &&
@@ -603,6 +634,7 @@ const ReviewSystem = ({
       {totalReviews > 0 && (
         <div className="text-center mt-8">
           <button
+            type="button"
             onClick={openAllReviewsModal}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-medium rounded-lg transition-all duration-300"
           >
@@ -616,6 +648,80 @@ const ReviewSystem = ({
       <div className="text-center mt-6 text-sm text-gray-400">
         Showing {reviews.length} of {totalReviews} verified guest reviews
       </div>
+
+      {/* Single Review Modal */}
+      {selectedReview && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedReview(null)}
+        >
+          <div
+            className="bg-gray-900 border border-gray-700 rounded-2xl max-w-lg w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-700">
+              <div className="flex items-center gap-2">
+                {renderStars(selectedReview.rating)}
+                {selectedReview.approved && (
+                  <span className="flex items-center gap-1 text-green-400 text-xs">
+                    <CheckCircle className="w-3 h-3" /> Approved
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                aria-label="Close review"
+                onClick={() => setSelectedReview(null)}
+                className="p-1.5 hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400 hover:text-white" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 max-h-[60vh] overflow-y-auto">
+              <p className="text-gray-300 italic text-sm leading-relaxed">
+                &ldquo;{selectedReview.review_text}&rdquo;
+              </p>
+
+              {/* Photos */}
+              {selectedReview.review_photos && selectedReview.review_photos.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {selectedReview.review_photos.slice(0, 3).map((photo) => (
+                    <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg">
+                      <Image
+                        src={photo.photo_url}
+                        alt={photo.caption || "Review photo"}
+                        fill
+                        className="object-cover"
+                        sizes="150px"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-4 border-t border-gray-700">
+              <p className="font-bold text-blue-400 text-sm">- {selectedReview.guest_name}</p>
+              {selectedReview.guest_location && (
+                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
+                  <MapPin className="w-3 h-3" />
+                  <span>{selectedReview.guest_location}</span>
+                </div>
+              )}
+              {selectedReview.created_at && (
+                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>{new Date(selectedReview.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* All Reviews Modal */}
       {showAllReviewsModal && (
@@ -642,6 +748,8 @@ const ReviewSystem = ({
                   </div>
                 </div>
                 <button
+                  type="button"
+                  aria-label="Close reviews"
                   onClick={() => setShowAllReviewsModal(false)}
                   className="p-2 hover:bg-gray-800 rounded-full transition-colors"
                 >
@@ -654,6 +762,7 @@ const ReviewSystem = ({
                 <Filter className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-400 text-sm mr-2">Filter:</span>
                 <button
+                  type="button"
                   onClick={() => setModalFilter("all")}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     modalFilter === "all"
@@ -666,6 +775,7 @@ const ReviewSystem = ({
                 {[5, 4, 3, 2, 1].map((rating) => (
                   <button
                     key={rating}
+                    type="button"
                     onClick={() => setModalFilter(rating)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
                       modalFilter === rating
