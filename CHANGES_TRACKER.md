@@ -1,4 +1,4 @@
-# Changes Tracker — The Kampo Way
+# Minor Revisions After Capstone — Kampo Ibayo
 
 Panel/Advisor feedback items and their implementation status.
 Audited against actual codebase — March 17, 2026.
@@ -37,18 +37,18 @@ Audited against actual codebase — March 17, 2026.
 ### 4. GCash Reference — Auto-clear on Refresh
 > Nire-reset ang reference field pag nag-refresh para iwas duplicate/stale data.
 
-- **Status:** NOT YET DONE ❌
+- **Status:** DONE ✅
 - **Files:** `app/upload-payment-proof/page.tsx`
-- **Note:** Reference fields retain state on mount. No auto-clear on refresh found.
+- **Note:** Added `setReferenceNumber("")` to the image reset block so reference clears when a new image is uploaded. Also added `autoComplete="off"` on reference and amount inputs to prevent browser autofill from retaining stale values.
 
 ---
 
-### 5. PDF Validation — Error Message Position
-> Validation message for PDF upload nilipat sa taas ng analysis section.
+### 5. File Validation — Error Message Position
+> Validation message for file upload nilipat sa taas ng analysis section.
 
-- **Status:** NOT YET DONE ❌
+- **Status:** DONE ✅
 - **Files:** `app/upload-payment-proof/page.tsx`
-- **Note:** No specific validation positioning for PDF errors found above analysis section.
+- **Note:** Moved error display block from below the form fields to immediately after the file upload area (above OCR analysis section). Users now see validation errors (wrong file type, too large) right away instead of buried below.
 
 ---
 
@@ -224,8 +224,8 @@ Audited against actual codebase — March 17, 2026.
 | 1 | Calendar Landscape | ✅ DONE |
 | 2 | Dialog Box (Create Account) | ✅ DONE |
 | 3 | Login Redirect After Verify | ❌ NOT YET |
-| 4 | GCash Reference Auto-clear | ❌ NOT YET |
-| 5 | PDF Validation Position | ❌ NOT YET |
+| 4 | GCash Reference Auto-clear | ✅ DONE |
+| 5 | File Validation Position | ✅ DONE |
 | 6 | Booking Details Red → Blue | ✅ DONE |
 | 7 | Site-wide Red Removal | ✅ DONE |
 | 8 | Review Photos Optional | ✅ DONE |
@@ -243,4 +243,4 @@ Audited against actual codebase — March 17, 2026.
 | 20 | Reschedule Price Preview Before Confirm | ❌ NOT YET |
 | 21 | Reschedule Upload Proof Blocked After Back | ❌ NOT YET |
 
-**DONE: 9/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 12/21**
+**DONE: 11/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 10/21**

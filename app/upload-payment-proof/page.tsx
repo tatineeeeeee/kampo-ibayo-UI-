@@ -29,6 +29,7 @@ import {
   Info,
   AlertTriangle,
 } from "lucide-react";
+import { useToastHelpers } from "../components/Toast";
 
 interface Booking {
   id: number;
@@ -116,6 +117,7 @@ interface PaymentValidation {
 }
 
 function UploadPaymentProofContent() {
+  const toast = useToastHelpers();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -765,7 +767,7 @@ function UploadPaymentProofContent() {
     try {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setError("File size must be less than 5MB");
+        toast.error("File Too Large", "File size must be less than 5MB.");
         return;
       }
 
@@ -777,7 +779,7 @@ function UploadPaymentProofContent() {
         "image/gif",
       ];
       if (!allowedTypes.includes(file.type)) {
-        setError("Only JPG, PNG, and GIF files are allowed");
+        toast.error("Invalid File Type", "Only JPG, PNG, and GIF files are allowed.");
         return;
       }
 
@@ -787,6 +789,8 @@ function UploadPaymentProofContent() {
       // Reset OCR state for new image
       setOcrResult(null);
       setAmount("");
+      setReferenceNumber("");
+      setPaymentMethod("");
       setIsManualAmountSet(false);
       setShowOCREditor(false);
       setConfirmUnrecognizedImage(false);
@@ -1014,7 +1018,7 @@ function UploadPaymentProofContent() {
     e.preventDefault();
 
     if (!proofImage || !paymentMethod || !amount || !booking) {
-      setError("Please fill all required fields and upload an image");
+      toast.warning("Missing Fields", "Please fill all required fields and upload an image.");
       return;
     }
 
@@ -1022,12 +1026,12 @@ function UploadPaymentProofContent() {
     const requiresReference = ["gcash", "maya"].includes(paymentMethod);
     if (requiresReference && !referenceNumber.trim()) {
       const methodName = paymentMethod === "gcash" ? "GCash" : "Maya";
-      setError(`Reference number is required for ${methodName} payments`);
+      toast.warning("Reference Required", `Reference number is required for ${methodName} payments.`);
       return;
     }
 
     if (parseFloat(amount) <= 0) {
-      setError("Amount must be greater than 0");
+      toast.warning("Invalid Amount", "Amount must be greater than 0.");
       return;
     }
 
@@ -1883,6 +1887,16 @@ function UploadPaymentProofContent() {
                 )}
               </div>
             }
+            {/* Error Message - Dark Theme (positioned right after upload for visibility) */}
+            {error && (
+              <div className="p-3 bg-red-900/30 border border-red-600/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <p className="text-red-300 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Enhanced OCR Progress and Results */}
             {ocrProgress.stage !== "idle" && proofImage && (
               <div className="mt-3 p-3 bg-gray-800/40 rounded-lg">
@@ -2085,6 +2099,7 @@ function UploadPaymentProofContent() {
                 type="text"
                 value={referenceNumber}
                 onChange={(e) => setReferenceNumber(e.target.value)}
+                autoComplete="off"
                 placeholder={
                   paymentMethod === "gcash"
                     ? "Enter GCash reference number (e.g., 1234567890)"
@@ -2114,6 +2129,7 @@ function UploadPaymentProofContent() {
                     setIsManualAmountSet(true);
                   }
                 }}
+                autoComplete="off"
                 min="0"
                 step="0.01"
                 placeholder="Upload receipt to auto-detect amount"
@@ -2317,16 +2333,6 @@ function UploadPaymentProofContent() {
                   return null;
                 })()}
             </div>
-
-            {/* Error Message - Dark Theme */}
-            {error && (
-              <div className="p-3 bg-red-900/30 border border-red-600/50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400" />
-                  <p className="text-red-300 text-sm">{error}</p>
-                </div>
-              </div>
-            )}
 
             {/* OCR Unrecognized Image Warning */}
             {ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && (
