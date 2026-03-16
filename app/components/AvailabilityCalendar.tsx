@@ -419,7 +419,7 @@ export default function AvailabilityCalendar({
           break;
         case "checkout":
           classes +=
-            "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400 shadow-md ";
+            "bg-gradient-to-br from-rose-400 to-rose-500 text-white border-rose-300 shadow-md ";
           break;
         case "busy":
           classes +=
@@ -446,7 +446,7 @@ export default function AvailabilityCalendar({
         "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500 border-blue-400 hover:border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
     } else if (bookingStatus === "checkout") {
       classes +=
-        "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500 border-blue-400 hover:border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
+        "bg-gradient-to-br from-rose-400 to-rose-500 text-white hover:from-rose-300 hover:to-rose-400 border-rose-300 hover:border-rose-200 shadow-md hover:shadow-lg transform hover:scale-105 ";
     } else if (isInRange) {
       classes += isLight
         ? "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-blue-200 shadow-md "
@@ -644,7 +644,7 @@ export default function AvailabilityCalendar({
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm"></div>
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-rose-400 to-rose-500 shadow-sm"></div>
             <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Check-out
             </span>

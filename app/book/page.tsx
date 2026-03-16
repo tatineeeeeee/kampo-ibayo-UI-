@@ -1359,8 +1359,8 @@ function BookingPage() {
         .react-datepicker__day--checkout {
           background: linear-gradient(
             135deg,
-            #2563eb 0%,
-            #1e3a8a 100%
+            #fb7185 0%,
+            #f43f5e 100%
           ) !important;
           color: white !important;
           font-weight: 600 !important;
@@ -1369,8 +1369,8 @@ function BookingPage() {
         .react-datepicker__day--checkout:hover {
           background: linear-gradient(
             135deg,
-            #3b82f6 0%,
-            #2563eb 100%
+            #fda4af 0%,
+            #fb7185 100%
           ) !important;
           transform: scale(1.05) !important;
         }

@@ -1113,8 +1113,8 @@ function Home() {
         .react-datepicker__day--checkout.react-datepicker__day--selected {
           background: linear-gradient(
             135deg,
-            #2563eb 0%,
-            #1e3a8a 100%
+            #fb7185 0%,
+            #f43f5e 100%
           ) !important;
           color: white !important;
           font-weight: 600 !important;
@@ -1125,8 +1125,8 @@ function Home() {
         .react-datepicker__day--checkout.react-datepicker__day--selected:hover {
           background: linear-gradient(
             135deg,
-            #3b82f6 0%,
-            #2563eb 100%
+            #fda4af 0%,
+            #fb7185 100%
           ) !important;
           transform: scale(1.05) !important;
         }
@@ -2842,12 +2842,12 @@ function Home() {
                                   </span>
                                 </span>
                               </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-blue-900/20 rounded-md border border-blue-600/30 min-w-0">
+                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-rose-900/20 rounded-md border border-rose-600/30 min-w-0">
                                 <span
                                   className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
                                   style={{
                                     background:
-                                      "linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)",
+                                      "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)",
                                   }}
                                 ></span>
                                 <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
@@ -2986,19 +2986,19 @@ function Home() {
                           </div>
 
                           {/* Row 2: Check-out + Occupied */}
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-blue-900/20 border border-blue-600/30 rounded-lg hover:bg-blue-900/30 transition-colors">
+                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-rose-900/20 border border-rose-600/30 rounded-lg hover:bg-rose-900/30 transition-colors">
                             <span
                               className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
                               style={{
                                 background:
-                                  "linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)",
+                                  "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)",
                               }}
                             ></span>
                             <div className="min-w-0 flex-1">
-                              <div className="text-blue-200 text-base sm:text-lg md:text-xl font-semibold">
+                              <div className="text-rose-200 text-base sm:text-lg md:text-xl font-semibold">
                                 Check-out Day
                               </div>
-                              <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
+                              <div className="text-rose-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
                                 Available for check-in (guests leave 1 PM)
                               </div>
                             </div>
