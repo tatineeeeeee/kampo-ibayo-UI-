@@ -529,7 +529,7 @@ const ReviewSubmissionForm = ({
                 onChange={(e) => handleInputChange('reviewText', e.target.value)}
                 placeholder="Tell us about your experience at Kampo Ibayo..."
                 rows={5}
-                className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-none"
+                className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
                 maxLength={1000}
               />
               <div className="absolute bottom-3 right-3 text-xs text-gray-400">
@@ -561,7 +561,7 @@ const ReviewSubmissionForm = ({
                   value={formData.guestName}
                   onChange={(e) => handleInputChange('guestName', e.target.value)}
                   placeholder="How should we display your name?"
-                  className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   maxLength={100}
                 />
               </div>
@@ -583,7 +583,7 @@ const ReviewSubmissionForm = ({
                 value={formData.guestLocation}
                 onChange={(e) => handleInputChange('guestLocation', e.target.value)}
                 placeholder="e.g., Manila, Philippines"
-                className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 maxLength={100}
               />
             </div>
@@ -614,7 +614,7 @@ const ReviewSubmissionForm = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>

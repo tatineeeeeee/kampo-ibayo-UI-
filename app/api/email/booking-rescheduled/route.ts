@@ -92,12 +92,12 @@ export async function POST(request: NextRequest) {
     const adminEmailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #dc2626; margin: 0; font-size: 28px;">Booking Rescheduled</h1>
+          <h1 style="color: #2563eb; margin: 0; font-size: 28px;">Booking Rescheduled</h1>
           <p style="color: #666; margin: 5px 0;">Admin Notification</p>
         </div>
         
-        <div style="background-color: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-          <h2 style="color: #dc2626; margin-top: 0;">Booking Rescheduled Alert</h2>
+        <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <h2 style="color: #2563eb; margin-top: 0;">Booking Rescheduled Alert</h2>
           <p>A guest has rescheduled their booking. Please review the changes:</p>
         </div>
 

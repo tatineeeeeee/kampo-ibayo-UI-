@@ -25,7 +25,7 @@ export function NotificationDropdown() {
       >
         <Bell className="w-6 h-6 text-gray-500 group-hover:text-blue-600 transition" />
         {hasNotifications && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full ring-2 ring-white bg-red-500 text-white text-xs flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full ring-2 ring-white bg-blue-600 text-white text-xs flex items-center justify-center font-bold">
             {notifications.totalNotifications > 9 ? '9+' : notifications.totalNotifications}
           </span>
         )}

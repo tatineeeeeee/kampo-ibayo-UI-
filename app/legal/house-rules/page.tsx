@@ -100,7 +100,7 @@ export default function HouseRulesPage() {
     {
       title: "Safety & Security",
       icon: <Shield className="w-6 h-6" />,
-      color: "red",
+      color: "blue",
       rules: [
         {
           rule: "Swimming Pool Safety",
@@ -185,7 +185,6 @@ export default function HouseRulesPage() {
       blue: "bg-blue-900/20 border-blue-700/50",
       green: "bg-green-900/20 border-green-700/50",
       purple: "bg-purple-900/20 border-purple-700/50",
-      red: "bg-red-900/20 border-red-700/50",
       orange: "bg-orange-900/20 border-orange-700/50",
       yellow: "bg-yellow-900/20 border-yellow-700/50",
     };
@@ -197,7 +196,6 @@ export default function HouseRulesPage() {
       blue: "text-blue-400",
       green: "text-green-400",
       purple: "text-purple-400",
-      red: "text-red-400",
       orange: "text-orange-400",
       yellow: "text-yellow-400",
     };
@@ -225,7 +223,7 @@ export default function HouseRulesPage() {
               </div>
             </div>
             <div className="text-xs sm:text-sm text-gray-400 text-right">
-              <span className="inline-block bg-red-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+              <span className="inline-block bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
                 Rules
               </span>
             </div>
@@ -292,7 +290,7 @@ export default function HouseRulesPage() {
 
         {/* Pet Policy */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <Heart className="w-6 h-6" />
             Pet-Friendly Policy
           </h2>
@@ -320,7 +318,7 @@ export default function HouseRulesPage() {
 
         {/* Environmental Responsibility */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <Trash2 className="w-6 h-6" />
             Environmental Responsibility
           </h2>
@@ -353,8 +351,8 @@ export default function HouseRulesPage() {
         </div>
 
         {/* Enforcement & Violations */}
-        <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 sm:p-6">
-          <h3 className="text-xl font-semibold mb-3 text-red-400">
+        <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4 sm:p-6">
+          <h3 className="text-xl font-semibold mb-3 text-blue-400">
             Rule Enforcement
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -362,7 +360,7 @@ export default function HouseRulesPage() {
               <h4 className="font-semibold text-white mb-2">
                 Violation Consequences
               </h4>
-              <ul className="text-red-200 text-sm space-y-2">
+              <ul className="text-blue-200 text-sm space-y-2">
                 <li>
                   • <strong>First Warning:</strong> Verbal reminder of policies
                 </li>
@@ -383,7 +381,7 @@ export default function HouseRulesPage() {
               <h4 className="font-semibold text-white mb-2">
                 Contact Management
               </h4>
-              <ul className="text-red-200 text-sm space-y-2">
+              <ul className="text-blue-200 text-sm space-y-2">
                 <li>
                   • <strong>Questions:</strong> Ask staff for clarification
                 </li>
@@ -403,7 +401,7 @@ export default function HouseRulesPage() {
 
         {/* Agreement & Contact */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50 text-center">
-          <h3 className="text-xl font-semibold mb-3 text-red-400">
+          <h3 className="text-xl font-semibold mb-3 text-blue-400">
             Agreement to House Rules
           </h3>
           <p className="text-gray-300 mb-4">

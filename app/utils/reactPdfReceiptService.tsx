@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     transform: "rotate(-35deg)",
     fontSize: 120,
     fontFamily: "Times-Bold",
-    color: "#C5A572",
+    color: "#60a5fa",
     opacity: 0.12,
     letterSpacing: 15,
     zIndex: 0,
@@ -93,8 +93,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
     paddingHorizontal: 16,
-    backgroundColor: "#FDF6F0",
-    borderBottom: "2 solid #C5A572",
+    backgroundColor: "#f0f4ff",
+    borderBottom: "2 solid #60a5fa",
     marginHorizontal: -12,
     marginTop: -12,
   },
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 4,
-    backgroundColor: "#d4af37",
+    backgroundColor: "#2563eb",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     fontFamily: "Times-Bold",
     fontSize: 22,
     fontWeight: "bold",
-    color: "#9B2226", // Warmer burgundy
+    color: "#1e3a8a", // Warmer burgundy
     marginBottom: 8,
     letterSpacing: 0.5,
   },
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   companyTagline: {
     fontFamily: "Times-Roman",
     fontSize: 11,
-    color: "#C5A572", // Richer gold
+    color: "#60a5fa", // Richer gold
     marginBottom: 8,
     fontStyle: "italic",
   },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     fontFamily: "Times-Bold",
     fontSize: 18,
     fontWeight: "bold",
-    color: "#9B2226",
+    color: "#1e3a8a",
     marginBottom: 2,
     letterSpacing: 1,
   },
@@ -209,13 +209,13 @@ const styles = StyleSheet.create({
   receiptSubtitle: {
     fontFamily: "Times-Roman",
     fontSize: 10,
-    color: "#C5A572",
+    color: "#60a5fa",
     marginBottom: 4,
     fontStyle: "italic",
   },
 
   receiptNumberBadge: {
-    backgroundColor: "#9B2226",
+    backgroundColor: "#1e3a8a",
     borderRadius: 4,
     paddingVertical: 4,
     paddingHorizontal: 12, // Reduced padding
@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
   // Kampo Ibayo branded information cards with fixed borders - LANDSCAPE: 3 columns
   leftColumn: {
     width: "32%",
-    backgroundColor: "#FDF6F0",
-    border: "2 solid #C5A572",
+    backgroundColor: "#f0f4ff",
+    border: "2 solid #60a5fa",
     borderRadius: 10,
     padding: 0,
     marginRight: 10,
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
 
   rightColumn: {
     width: "32%",
-    backgroundColor: "#FDF6F0",
-    border: "2 solid #C5A572",
+    backgroundColor: "#f0f4ff",
+    border: "2 solid #60a5fa",
     borderRadius: 10,
     padding: 0,
     marginRight: 10,
@@ -261,8 +261,8 @@ const styles = StyleSheet.create({
   // Third column for Payment Summary in landscape
   thirdColumn: {
     width: "32%",
-    backgroundColor: "#FDF6F0",
-    border: "2 solid #C5A572",
+    backgroundColor: "#f0f4ff",
+    border: "2 solid #60a5fa",
     borderRadius: 10,
     padding: 0,
     overflow: "hidden",
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "bold",
     color: "#ffffff",
-    backgroundColor: "#9B2226",
+    backgroundColor: "#1e3a8a",
     marginBottom: 6,
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingVertical: 2,
     alignItems: "flex-start",
-    borderBottom: "0.5 solid #F4E4BC",
+    borderBottom: "0.5 solid #bfdbfe",
     minHeight: 14,
   },
 
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     fontFamily: "Times-Bold",
     width: "60%",
     fontSize: 11,
-    color: "#9B2226", // Warmer burgundy
+    color: "#1e3a8a", // Warmer burgundy
     fontWeight: "bold",
     lineHeight: 1.3,
   },
@@ -323,9 +323,9 @@ const styles = StyleSheet.create({
   },
 
   statusBadge: {
-    backgroundColor: "#F4E4BC", // Warm gold background
-    border: "1 solid #C5A572", // Richer gold border
-    color: "#9B2226", // Burgundy text
+    backgroundColor: "#bfdbfe", // Warm gold background
+    border: "1 solid #60a5fa", // Richer gold border
+    color: "#1e3a8a", // Burgundy text
     paddingVertical: 4, // Better spacing
     paddingHorizontal: 8, // Better spacing
     borderRadius: 4,
@@ -336,8 +336,8 @@ const styles = StyleSheet.create({
 
   // Kampo Ibayo payment summary with earth tone branding
   summarySection: {
-    backgroundColor: "#FDF6F0",
-    border: "3 solid #C5A572", // Richer gold
+    backgroundColor: "#f0f4ff",
+    border: "3 solid #60a5fa", // Richer gold
     borderTopLeftRadius: 12, // Only top corners rounded
     borderTopRightRadius: 12, // Only top corners rounded
     padding: 0, // No padding to let totalSection touch edges
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     fontFamily: "Times-Bold",
     fontSize: 16,
     fontWeight: "bold",
-    color: "#9B2226", // Warmer burgundy
+    color: "#1e3a8a", // Warmer burgundy
     textAlign: "center",
     marginBottom: 6, // Further reduced to save space
     letterSpacing: 0.5,
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontFamily: "Times-Bold",
     fontSize: 12,
-    color: "#9B2226", // Warmer burgundy
+    color: "#1e3a8a", // Warmer burgundy
     fontWeight: "bold",
     textAlign: "right",
     width: "45%",
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8, // Further reduced to save space
     paddingHorizontal: 14, // Match summary section padding
-    backgroundColor: "#9B2226", // Warmer burgundy
+    backgroundColor: "#1e3a8a", // Warmer burgundy
     marginTop: 6, // Reduced to save space
     // No border radius for sharp bottom corners that match container
   },
@@ -423,9 +423,9 @@ const styles = StyleSheet.create({
   footerSection: {
     marginTop: 6, // Significantly reduced to prevent overflow
     paddingTop: 8, // Further reduced
-    borderTop: "3 solid #C5A572", // Richer gold
+    borderTop: "3 solid #60a5fa", // Richer gold
     textAlign: "center",
-    backgroundColor: "#FDF6F0",
+    backgroundColor: "#f0f4ff",
     marginHorizontal: -12,
     marginBottom: -12,
     paddingHorizontal: 16, // Better spacing
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#9B2226",
+    backgroundColor: "#1e3a8a",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
@@ -455,8 +455,8 @@ const styles = StyleSheet.create({
 
   // Cancellation policy reminder box
   cancellationReminder: {
-    backgroundColor: "#FDF6F0",
-    border: "1 solid #C5A572",
+    backgroundColor: "#f0f4ff",
+    border: "1 solid #60a5fa",
     borderRadius: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   cancellationTitle: {
     fontFamily: "Times-Bold",
     fontSize: 9,
-    color: "#9B2226",
+    color: "#1e3a8a",
     marginBottom: 2,
     textAlign: "center",
   },
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
     fontFamily: "Times-Bold",
     fontSize: 13, // Further reduced to save space
     fontWeight: "bold",
-    color: "#9B2226", // Warmer burgundy
+    color: "#1e3a8a", // Warmer burgundy
     marginBottom: 4, // Further reduced to save space
     letterSpacing: 0.5,
   },
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#ffffff",
     borderRadius: 6,
-    border: "1 solid #C5A572",
+    border: "1 solid #60a5fa",
   },
 
   qrImage: {
@@ -618,7 +618,7 @@ const ProfessionalReceiptDocument = ({
                 <Text
                   style={{
                     fontSize: 10,
-                    color: "#9B2226",
+                    color: "#1e3a8a",
                     fontWeight: "bold",
                     marginBottom: 4,
                   }}
@@ -670,7 +670,7 @@ const ProfessionalReceiptDocument = ({
                 style={{
                   fontFamily: "Times-Roman",
                   fontSize: 10,
-                  color: "#C5A572",
+                  color: "#60a5fa",
                   fontStyle: "italic",
                   marginTop: 2,
                   marginBottom: 6,
@@ -767,22 +767,22 @@ const ProfessionalReceiptDocument = ({
                           {
                             backgroundColor:
                               data.booking.booking_status === "confirmed"
-                                ? "#F4E4BC" // Brand gold
+                                ? "#bfdbfe" // Brand gold
                                 : data.booking.booking_status === "pending"
-                                ? "#FDF6F0" // Light cream
-                                : "#F4E4BC", // Default gold
+                                ? "#f0f4ff" // Light cream
+                                : "#bfdbfe", // Default gold
                             color:
                               data.booking.booking_status === "confirmed"
-                                ? "#9B2226" // Burgundy text
+                                ? "#1e3a8a" // Burgundy text
                                 : data.booking.booking_status === "pending"
-                                ? "#C5A572" // Gold text
-                                : "#9B2226", // Default burgundy
+                                ? "#60a5fa" // Gold text
+                                : "#1e3a8a", // Default burgundy
                             border:
                               data.booking.booking_status === "confirmed"
-                                ? "1 solid #C5A572" // Gold border
+                                ? "1 solid #60a5fa" // Gold border
                                 : data.booking.booking_status === "pending"
-                                ? "1 solid #C5A572" // Gold border
-                                : "1 solid #C5A572", // Default gold border
+                                ? "1 solid #60a5fa" // Gold border
+                                : "1 solid #60a5fa", // Default gold border
                           },
                         ]}
                       >
@@ -858,27 +858,27 @@ const ProfessionalReceiptDocument = ({
                               backgroundColor:
                                 data.paymentProof.verification_status ===
                                 "verified"
-                                  ? "#F4E4BC" // Brand gold for verified
+                                  ? "#bfdbfe" // Brand gold for verified
                                   : data.paymentProof.verification_status ===
                                     "pending"
-                                  ? "#FDF6F0" // Light cream for pending
-                                  : "#F4E4BC", // Default gold
+                                  ? "#f0f4ff" // Light cream for pending
+                                  : "#bfdbfe", // Default gold
                               color:
                                 data.paymentProof.verification_status ===
                                 "verified"
-                                  ? "#9B2226" // Burgundy text for verified
+                                  ? "#1e3a8a" // Burgundy text for verified
                                   : data.paymentProof.verification_status ===
                                     "pending"
-                                  ? "#C5A572" // Gold text for pending
-                                  : "#9B2226", // Default burgundy
+                                  ? "#60a5fa" // Gold text for pending
+                                  : "#1e3a8a", // Default burgundy
                               border:
                                 data.paymentProof.verification_status ===
                                 "verified"
-                                  ? "1 solid #C5A572" // Gold border
+                                  ? "1 solid #60a5fa" // Gold border
                                   : data.paymentProof.verification_status ===
                                     "pending"
-                                  ? "1 solid #C5A572" // Gold border
-                                  : "1 solid #C5A572", // Default gold border
+                                  ? "1 solid #60a5fa" // Gold border
+                                  : "1 solid #60a5fa", // Default gold border
                               fontSize: 8, // Slightly larger for readability
                             },
                           ]}
@@ -960,7 +960,7 @@ const ProfessionalReceiptDocument = ({
                     style={{
                       marginTop: 8,
                       paddingTop: 8,
-                      borderTop: "2 solid #9B2226",
+                      borderTop: "2 solid #1e3a8a",
                     }}
                   >
                     <View
@@ -974,7 +974,7 @@ const ProfessionalReceiptDocument = ({
                         style={{
                           fontFamily: "Times-Bold",
                           fontSize: 11,
-                          color: "#9B2226",
+                          color: "#1e3a8a",
                         }}
                       >
                         Amount Paid:
@@ -983,7 +983,7 @@ const ProfessionalReceiptDocument = ({
                         style={{
                           fontFamily: "Times-Bold",
                           fontSize: 14,
-                          color: "#9B2226",
+                          color: "#1e3a8a",
                         }}
                       >
                         {formatCurrency(
@@ -1006,8 +1006,8 @@ const ProfessionalReceiptDocument = ({
               flexDirection: "row",
               marginTop: 8,
               paddingTop: 8,
-              borderTop: "2 solid #C5A572",
-              backgroundColor: "#FDF6F0",
+              borderTop: "2 solid #60a5fa",
+              backgroundColor: "#f0f4ff",
               marginHorizontal: -12,
               marginBottom: -12,
               paddingHorizontal: 16,
@@ -1026,7 +1026,7 @@ const ProfessionalReceiptDocument = ({
               >
                 <View
                   style={{
-                    backgroundColor: "#9B2226",
+                    backgroundColor: "#1e3a8a",
                     paddingVertical: 5,
                     paddingHorizontal: 10,
                     borderRadius: 4,
@@ -1047,7 +1047,7 @@ const ProfessionalReceiptDocument = ({
                   style={{
                     fontFamily: "Times-Bold",
                     fontSize: 11,
-                    color: "#9B2226",
+                    color: "#1e3a8a",
                   }}
                 >
                   Thank You for Your Payment!
@@ -1073,7 +1073,7 @@ const ProfessionalReceiptDocument = ({
                   style={{
                     fontFamily: "Times-Bold",
                     fontSize: 9,
-                    color: "#9B2226",
+                    color: "#1e3a8a",
                     marginRight: 6,
                   }}
                 >
@@ -1113,7 +1113,7 @@ const ProfessionalReceiptDocument = ({
                     backgroundColor: "#ffffff",
                     padding: 6,
                     borderRadius: 6,
-                    border: "1 solid #C5A572",
+                    border: "1 solid #60a5fa",
                   }}
                 >
                   {/* eslint-disable-next-line jsx-a11y/alt-text */}
@@ -1150,6 +1150,13 @@ export class ReactPdfReceiptService {
     bookingId: string,
     receiptType: "payment" | "refund" = "payment"
   ): string {
+    // Format: KIR-YYMMDD-TTTTBBB
+    // KIR    = Kampo Ibayo Resort prefix
+    // YYMMDD = Date generated (e.g., 260316 = March 16, 2026)
+    // TTTT   = Last 4 digits of Date.now() timestamp for uniqueness
+    // BBB    = Last 3 digits of booking ID
+    // Example: KIR-260316-807081 (booking #81, generated Mar 16 2026)
+    // Example: KIR-REF-260316-807081 (refund receipt)
     const prefix = receiptType === "refund" ? "KIR-REF" : "KIR";
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
@@ -1232,7 +1239,7 @@ export class ReactPdfReceiptService {
         width: 150,
         margin: 1,
         color: {
-          dark: "#9B2226", // Burgundy color to match brand
+          dark: "#1e3a8a", // Burgundy color to match brand
           light: "#FFFFFF",
         },
       });

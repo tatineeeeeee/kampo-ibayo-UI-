@@ -384,7 +384,7 @@ function ProfilePageContent({ user }: { user: User }) {
           </p>
           <div className="space-y-3">
             <Link href="/auth">
-              <button className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition">
+              <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
                 Login
               </button>
             </Link>
@@ -444,7 +444,7 @@ function ProfilePageContent({ user }: { user: User }) {
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
           {/* Profile Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="bg-red-600 p-3 sm:p-4 rounded-full shadow-lg ring-4 ring-red-600/20 flex-shrink-0">
+            <div className="bg-blue-600 p-3 sm:p-4 rounded-full shadow-lg ring-4 ring-blue-600/20 flex-shrink-0">
               <FaUser className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -465,7 +465,7 @@ function ProfilePageContent({ user }: { user: User }) {
           <div className="space-y-4">
             {/* Name */}
             <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-700/70 rounded-lg border border-gray-600/30">
-              <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+              <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Full Name
@@ -476,7 +476,7 @@ function ProfilePageContent({ user }: { user: User }) {
                       type="text"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      className="bg-gray-600 text-white px-3 py-1 rounded border border-gray-500 focus:border-red-500 focus:outline-none flex-1 text-sm sm:text-base"
+                      className="bg-gray-600 text-white px-3 py-1 rounded border border-gray-500 focus:border-blue-500 focus:outline-none flex-1 text-sm sm:text-base"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleUpdateName();
@@ -513,7 +513,7 @@ function ProfilePageContent({ user }: { user: User }) {
                     <button
                       onClick={handleStartEdit}
                       disabled={loadingProfile}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-gray-400 hover:text-blue-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FaEdit className="w-4 h-4" />
                     </button>
@@ -524,7 +524,7 @@ function ProfilePageContent({ user }: { user: User }) {
 
             {/* Phone Number */}
             <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-700/70 rounded-lg border border-gray-600/30">
-              <FaPhone className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+              <FaPhone className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Phone Number
@@ -539,7 +539,7 @@ function ProfilePageContent({ user }: { user: User }) {
                         setNewPhone(formatted);
                       }}
                       placeholder="09XX-XXX-XXXX (11 digits)"
-                      className="bg-gray-600 text-white px-3 py-1 rounded border border-gray-500 focus:border-red-500 focus:outline-none flex-1 text-sm sm:text-base"
+                      className="bg-gray-600 text-white px-3 py-1 rounded border border-gray-500 focus:border-blue-500 focus:outline-none flex-1 text-sm sm:text-base"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleUpdatePhone();
@@ -574,7 +574,7 @@ function ProfilePageContent({ user }: { user: User }) {
                     <button
                       onClick={handleStartPhoneEdit}
                       disabled={loadingProfile}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-gray-400 hover:text-blue-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FaEdit className="w-4 h-4" />
                     </button>
@@ -585,7 +585,7 @@ function ProfilePageContent({ user }: { user: User }) {
 
             {/* Email */}
             <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-700/70 rounded-lg border border-gray-600/30">
-              <FaEnvelope className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+              <FaEnvelope className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Email Address
@@ -598,12 +598,12 @@ function ProfilePageContent({ user }: { user: User }) {
 
             {/* Role */}
             <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-700/70 rounded-lg border border-gray-600/30">
-              <FaUserTag className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+              <FaUserTag className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
               <div className="flex-1">
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Account Type
                 </label>
-                <span className="inline-block bg-red-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shadow-md">
+                <span className="inline-block bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shadow-md">
                   {loadingProfile
                     ? "Loading..."
                     : userProfile?.role || user.user_metadata?.role || "Guest"}
@@ -621,7 +621,7 @@ function ProfilePageContent({ user }: { user: User }) {
               Account Overview
             </h3>
             {statsLoading && (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
             )}
           </div>
 
@@ -752,7 +752,7 @@ function ProfilePageContent({ user }: { user: User }) {
         {/* Quick Actions */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
           <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
             Quick Actions
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -771,9 +771,9 @@ function ProfilePageContent({ user }: { user: User }) {
             ) : (
               <Link
                 href="/book"
-                className="flex items-center gap-3 p-3 sm:p-4 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-all duration-200 border border-red-600/30 group"
+                className="flex items-center gap-3 p-3 sm:p-4 bg-blue-600/20 hover:bg-blue-600/30 rounded-lg transition-all duration-200 border border-blue-600/30 group"
               >
-                <FaCalendarPlus className="w-5 h-5 text-red-400 group-hover:text-red-300 flex-shrink-0" />
+                <FaCalendarPlus className="w-5 h-5 text-blue-400 group-hover:text-blue-300 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-white font-semibold text-sm sm:text-base">
                     New Booking
@@ -849,7 +849,7 @@ function ProfilePageContent({ user }: { user: User }) {
               </div>
               <Link
                 href="/bookings"
-                className="bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 border border-red-600/30"
+                className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 border border-blue-600/30"
               >
                 View All →
               </Link>
@@ -1019,7 +1019,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <div className="text-lg text-gray-300">Loading...</div>
         </div>
       </div>

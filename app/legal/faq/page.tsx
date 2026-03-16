@@ -149,7 +149,7 @@ export default function FAQPage() {
     {
       category: "Support & Assistance",
       icon: <Phone className="w-5 h-5" />,
-      color: "red",
+      color: "blue",
       faqs: [
         {
           question: "How can I contact the resort during my stay?",
@@ -228,7 +228,7 @@ export default function FAQPage() {
               placeholder="Search FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-700 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-600 focus:border-red-500 focus:outline-none transition-colors text-base min-h-[48px]"
+              className="w-full bg-gray-700 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition-colors text-base min-h-[48px]"
             />
           </div>
         </div>
@@ -265,7 +265,7 @@ export default function FAQPage() {
                           {faq.question}
                         </span>
                         {isOpen ? (
-                          <ChevronDown className="w-5 h-5 text-red-400 flex-shrink-0" />
+                          <ChevronDown className="w-5 h-5 text-blue-400 flex-shrink-0" />
                         ) : (
                           <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
                         )}

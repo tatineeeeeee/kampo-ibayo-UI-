@@ -419,7 +419,7 @@ export default function AvailabilityCalendar({
           break;
         case "checkout":
           classes +=
-            "bg-gradient-to-br from-red-500 to-red-600 text-white border-red-400 shadow-md ";
+            "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400 shadow-md ";
           break;
         case "busy":
           classes +=
@@ -446,7 +446,7 @@ export default function AvailabilityCalendar({
         "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500 border-blue-400 hover:border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
     } else if (bookingStatus === "checkout") {
       classes +=
-        "bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 border-red-400 hover:border-red-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
+        "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500 border-blue-400 hover:border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105 ";
     } else if (isInRange) {
       classes += isLight
         ? "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-blue-200 shadow-md "
@@ -644,7 +644,7 @@ export default function AvailabilityCalendar({
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-red-500 to-red-600 shadow-sm"></div>
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm"></div>
             <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-gray-300"}`}>
               Check-out
             </span>
@@ -683,8 +683,8 @@ export default function AvailabilityCalendar({
                   <p className={`text-[10px] uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-gray-500"}`}>
                     Check-out
                   </p>
-                  <div className={`rounded-lg px-3 py-2 ${isLight ? "bg-red-50 border border-red-200" : "bg-red-600/20 border border-red-600/40"}`}>
-                    <p className={`text-sm font-semibold ${isLight ? "text-red-700" : "text-red-300"}`}>
+                  <div className={`rounded-lg px-3 py-2 ${isLight ? "bg-blue-50 border border-blue-200" : "bg-blue-600/20 border border-blue-600/40"}`}>
+                    <p className={`text-sm font-semibold ${isLight ? "text-blue-700" : "text-blue-300"}`}>
                       {formatDateSafe(newCheckOut)}
                     </p>
                   </div>
@@ -728,9 +728,9 @@ export default function AvailabilityCalendar({
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <LogOut className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+              <LogOut className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
               <span>
-                <strong className={isLight ? "text-red-600" : "text-red-300"}>Check-out</strong> — Guest
+                <strong className={isLight ? "text-blue-600" : "text-blue-300"}>Check-out</strong> — Guest
                 leaves (1:00 PM)
               </span>
             </div>

@@ -64,16 +64,16 @@ export default function MaintenanceToast() {
       
       {/* Toast container */}
       <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[101] max-w-md w-full mx-4 animate-fadeInDown">
-        <div className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-2xl shadow-2xl border border-red-400/30 overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 rounded-2xl shadow-2xl border border-blue-400/30 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-red-400/20">
+          <div className="flex items-center justify-between p-4 border-b border-blue-400/20">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <AlertTriangle className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-bold text-lg">Maintenance Mode</h3>
-                <p className="text-red-100 text-sm flex items-center gap-1">
+                <p className="text-blue-100 text-sm flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Temporarily unavailable
                 </p>
@@ -96,11 +96,11 @@ export default function MaintenanceToast() {
             
             {/* Status indicators */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-red-100 text-xs">
-                <div className="w-2 h-2 bg-red-300 rounded-full animate-pulse"></div>
+              <div className="flex items-center gap-2 text-blue-100 text-xs">
+                <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse"></div>
                 <span>Bookings disabled</span>
               </div>
-              <div className="flex items-center gap-1 text-red-100 text-xs">
+              <div className="flex items-center gap-1 text-blue-100 text-xs">
                 <Settings className="w-3 h-3" />
                 <span>Admin controlled</span>
               </div>
@@ -108,8 +108,8 @@ export default function MaintenanceToast() {
           </div>
 
           {/* Animated progress bar */}
-          <div className="h-1 bg-red-800/50">
-            <div className="h-full bg-gradient-to-r from-red-300 to-white animate-pulse"></div>
+          <div className="h-1 bg-blue-800/50">
+            <div className="h-full bg-gradient-to-r from-blue-300 to-white animate-pulse"></div>
           </div>
         </div>
       </div>

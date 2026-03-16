@@ -40,7 +40,7 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex bg-gray-100">
       <aside className="w-64 bg-white shadow-md flex flex-col">
         <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-red-600">Admin Panel (TEST)</h1>
+          <h1 className="text-xl font-bold text-blue-600">Admin Panel (TEST)</h1>
           <p className="text-xs text-gray-500">
             Simple Mode - No Auth Blocking
           </p>
@@ -132,7 +132,7 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-gray-200">
           <button
             onClick={() => (window.location.href = "/")}
-            className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
             title="Logout"
           >
             <LogOut className="w-5 h-5" />
@@ -331,7 +331,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
                 />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-lg sm:text-xl font-bold text-red-600 leading-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-blue-600 leading-tight">
                   Kampo Ibayo
                 </h1>
                 <p className="text-xs text-gray-500">Admin Panel</p>
@@ -374,7 +374,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
             title="Logout"
           >
             <LogOut className="w-5 h-5" />
@@ -428,7 +428,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
                     isSuperAdmin
                       ? "bg-gradient-to-r from-yellow-200 to-amber-200 text-amber-900 border border-amber-400"
                       : userRole === "admin"
-                        ? "bg-red-100 text-red-700"
+                        ? "bg-blue-100 text-blue-700"
                         : userRole === "staff"
                           ? "bg-green-100 text-green-700"
                           : "bg-blue-100 text-blue-700"

@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
             subject: '⚠️ Payment Proof Needs Correction - Kampo Ibayow Resort',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
-                <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
                   <h1 style="margin: 0; font-size: 24px;">⚠️ Payment Proof Needs Correction</h1>
                   <p style="margin: 10px 0 0 0; opacity: 0.9;">Please review and resubmit your payment proof</p>
                 </div>
@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
                   
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/upload-payment-proof?booking_id=${paymentProof.bookings.id}" 
-                       style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+                       style="background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%); color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
                       Upload New Payment Proof
                     </a>
                   </div>

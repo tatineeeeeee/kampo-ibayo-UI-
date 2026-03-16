@@ -64,7 +64,7 @@ export default function TermsPage() {
               onClick={() => scrollToSection("terms")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "terms"
-                  ? "bg-red-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
@@ -75,7 +75,7 @@ export default function TermsPage() {
               onClick={() => scrollToSection("privacy")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "privacy"
-                  ? "bg-red-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
@@ -86,7 +86,7 @@ export default function TermsPage() {
               onClick={() => scrollToSection("liability")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "liability"
-                  ? "bg-red-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
@@ -97,7 +97,7 @@ export default function TermsPage() {
               onClick={() => scrollToSection("contact")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "contact"
-                  ? "bg-red-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
@@ -120,7 +120,7 @@ export default function TermsPage() {
           id="terms"
           className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <FileText className="w-6 h-6" />
             Terms of Service
           </h2>
@@ -226,7 +226,7 @@ export default function TermsPage() {
           id="privacy"
           className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <Shield className="w-6 h-6" />
             Privacy Policy
           </h2>
@@ -333,7 +333,7 @@ export default function TermsPage() {
           id="liability"
           className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <AlertTriangle className="w-6 h-6" />
             Liability and Disclaimers
           </h2>
@@ -404,7 +404,7 @@ export default function TermsPage() {
           id="contact"
           className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <Phone className="w-6 h-6" />
             Legal Contact Information
           </h2>
@@ -444,7 +444,7 @@ export default function TermsPage() {
         {/* Agreement Acknowledgment */}
         {/* Agreement Section */}
         <div className="bg-green-900/20 border border-green-700/50 rounded-xl p-4 sm:p-6 text-center">
-          <h3 className="text-xl font-semibold mb-3 text-red-400">
+          <h3 className="text-xl font-semibold mb-3 text-blue-400">
             Agreement Acknowledgment
           </h3>
           <p className="text-gray-300 mb-4">

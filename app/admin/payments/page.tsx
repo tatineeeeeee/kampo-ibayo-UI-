@@ -854,7 +854,7 @@ export default function PaymentsPage() {
                 className={`inline-flex items-center px-2 sm:px-3 py-1 border rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   filteredPayments.length === 0
                     ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
-                    : "border-red-300 text-red-700 bg-red-50 hover:bg-red-100"
+                    : "border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100"
                 }`}
                 title="Export payments to PDF"
               >

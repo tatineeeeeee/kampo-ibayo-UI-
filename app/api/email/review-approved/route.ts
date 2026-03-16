@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
             
             <!-- Header -->
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #dc2626; margin: 0; font-size: 28px;">🎉 Review Published!</h1>
+              <h1 style="color: #2563eb; margin: 0; font-size: 28px;">🎉 Review Published!</h1>
               <p style="color: #6b7280; margin: 10px 0 0 0; font-size: 16px;">Your review is now live on our website</p>
             </div>
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
             <!-- Call to Action -->
             <div style="text-align: center; margin: 30px 0;">
               <a href="${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://kampoibayo.com'}" 
-                 style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                 style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
                 Visit Our Website
               </a>
             </div>

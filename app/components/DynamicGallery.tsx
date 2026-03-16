@@ -325,7 +325,7 @@ const DynamicGallery = () => {
               <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
                 {/* Top section - Featured badge */}
                 <div className="flex justify-start">
-                  <div className="bg-gradient-to-r from-red-900/80 to-red-800/80 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm border border-red-700/50 flex items-center gap-2">
+                  <div className="bg-gradient-to-r from-blue-900/80 to-blue-800/80 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm border border-blue-700/50 flex items-center gap-2">
                     <Star className="w-4 h-4 fill-current" />
                     Featured
                   </div>
@@ -362,7 +362,7 @@ const DynamicGallery = () => {
                 <button
                   key={image.id}
                   type="button"
-                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-105"
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-105"
                   onClick={() => {
                     setIsImageLoading(true);
                     setSelectedImage(index);
@@ -388,14 +388,14 @@ const DynamicGallery = () => {
 
                   {/* Image number - always visible for clarity */}
                   <div className="absolute bottom-1 right-1">
-                    <span className="bg-gradient-to-r from-red-900/80 to-red-800/80 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg border border-red-700/50">
+                    <span className="bg-gradient-to-r from-blue-900/80 to-blue-800/80 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg border border-blue-700/50">
                       {index + 1}
                     </span>
                   </div>
 
                   {/* Active state indicator */}
                   {selectedImage === index && (
-                    <div className="absolute inset-0 ring-2 ring-red-500 ring-inset rounded-lg"></div>
+                    <div className="absolute inset-0 ring-2 ring-blue-500 ring-inset rounded-lg"></div>
                   )}
                 </button>
               ))}
@@ -422,7 +422,7 @@ const DynamicGallery = () => {
             <span className="text-white/80 text-sm group-hover:text-white">
               View all
             </span>
-            <span className="bg-gradient-to-r from-red-900/80 to-red-800/80 group-hover:from-red-800/90 group-hover:to-red-700/90 text-white text-sm font-semibold px-3 py-1 rounded-full transition-all duration-300 shadow-lg border border-red-700/50">
+            <span className="bg-gradient-to-r from-blue-900/80 to-blue-800/80 group-hover:from-blue-800/90 group-hover:to-blue-700/90 text-white text-sm font-semibold px-3 py-1 rounded-full transition-all duration-300 shadow-lg border border-blue-700/50">
               {displayImages.length} Photos
             </span>
           </button>

@@ -395,7 +395,7 @@ function BookingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <div className="text-lg text-gray-300">
             {loading ? "Loading..." : "Preparing booking form..."}
           </div>
@@ -1051,8 +1051,8 @@ function BookingPage() {
         .react-datepicker__header {
           background: linear-gradient(
             135deg,
-            #dc2626 0%,
-            #991b1b 100%
+            #2563eb 0%,
+            #1e3a8a 100%
           ) !important;
           border-bottom: none !important;
           border-radius: 1rem 1rem 0 0 !important;
@@ -1359,8 +1359,8 @@ function BookingPage() {
         .react-datepicker__day--checkout {
           background: linear-gradient(
             135deg,
-            #dc2626 0%,
-            #991b1b 100%
+            #2563eb 0%,
+            #1e3a8a 100%
           ) !important;
           color: white !important;
           font-weight: 600 !important;
@@ -1369,8 +1369,8 @@ function BookingPage() {
         .react-datepicker__day--checkout:hover {
           background: linear-gradient(
             135deg,
-            #ef4444 0%,
-            #dc2626 100%
+            #3b82f6 0%,
+            #2563eb 100%
           ) !important;
           transform: scale(1.05) !important;
         }
@@ -1478,8 +1478,8 @@ function BookingPage() {
         .react-datepicker__day--booked {
           background: linear-gradient(
             135deg,
-            #dc2626 0%,
-            #991b1b 100%
+            #2563eb 0%,
+            #1e3a8a 100%
           ) !important;
           color: white !important;
           font-weight: 600 !important;
@@ -1488,8 +1488,8 @@ function BookingPage() {
         .react-datepicker__day--booked:hover {
           background: linear-gradient(
             135deg,
-            #ef4444 0%,
-            #dc2626 100%
+            #3b82f6 0%,
+            #2563eb 100%
           ) !important;
           cursor: not-allowed !important;
           transform: none !important;
@@ -1755,7 +1755,7 @@ function BookingPage() {
           {/* Modern header with gradient accent */}
           <div className="text-center mb-6">
             <div className="inline-block mb-3">
-              <div className="w-16 h-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 rounded-full mx-auto"></div>
+              <div className="w-16 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-full mx-auto"></div>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent mb-2">
               Book Your Escape
@@ -1785,7 +1785,7 @@ function BookingPage() {
             {/* Left Column - Personal Info & Preferences */}
             <div className="space-y-6 flex flex-col">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
                   <FaUser className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-white">Guest Details</h2>
@@ -2100,7 +2100,7 @@ function BookingPage() {
                   className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 resize-none ${
                     formData.request
                       ? "bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white"
-                      : "bg-gray-800/50 border-gray-600 focus:border-red-500 focus:ring-red-500/30 text-white"
+                      : "bg-gray-800/50 border-gray-600 focus:border-blue-500 focus:ring-blue-500/30 text-white"
                   } placeholder-gray-500`}
                 />
               </div>
@@ -2206,7 +2206,7 @@ function BookingPage() {
             {/* Right Column - Dates & Calendar */}
             <div className="space-y-6 flex flex-col">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
                   <FaCalendarAlt className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-white">
@@ -2362,7 +2362,7 @@ function BookingPage() {
                       className="w-3 h-3 rounded"
                       style={{
                         background:
-                          "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                          "linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)",
                       }}
                     ></span>
                     <span className="text-gray-400">Check-out</span>
@@ -2686,7 +2686,7 @@ function BookingPage() {
                 }
                 className={`w-full font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-lg relative overflow-hidden ${
                   canCreateBooking && !isSubmitting && estimatedPrice !== 0
-                    ? "bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white hover:from-red-700 hover:via-red-800 hover:to-red-900 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+                    ? "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
                     : "bg-gray-600 text-gray-300 cursor-not-allowed"
                 }`}
               >

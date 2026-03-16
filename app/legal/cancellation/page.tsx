@@ -31,7 +31,7 @@ export default function CancellationPage() {
       period: "Less than 3 days before check-in",
       refundPercentage: "0%",
       description: "No refund - Cancellation and reschedule not allowed via system",
-      color: "red",
+      color: "blue",
       icon: <RefreshCw className="w-5 h-5" />,
     },
   ];
@@ -41,9 +41,8 @@ export default function CancellationPage() {
       green: "bg-green-900/20 border-green-700/50 text-green-400",
       blue: "bg-blue-900/20 border-blue-700/50 text-blue-400",
       yellow: "bg-yellow-900/20 border-yellow-700/50 text-yellow-400",
-      red: "bg-red-900/20 border-red-700/50 text-red-400",
     };
-    return colorMap[color as keyof typeof colorMap] || colorMap.red;
+    return colorMap[color as keyof typeof colorMap] || colorMap.blue;
   };
 
   return (
@@ -80,7 +79,7 @@ export default function CancellationPage() {
       <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
         {/* Policy Overview */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-4 text-red-400">
+          <h2 className="text-2xl font-bold mb-4 text-blue-400">
             Cancellation Policy Overview
           </h2>
           <p className="text-gray-300 mb-6 leading-relaxed">
@@ -120,7 +119,7 @@ export default function CancellationPage() {
 
         {/* Refund Timeline */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
             Refund Schedule
           </h2>
 
@@ -180,7 +179,7 @@ export default function CancellationPage() {
 
         {/* Special Circumstances */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
             Special Circumstances
           </h2>
 
@@ -211,8 +210,8 @@ export default function CancellationPage() {
               <h3 className="text-lg font-semibold mb-3 text-white">
                 Medical Emergencies
               </h3>
-              <div className="bg-red-900/20 border border-red-700/50 rounded-lg p-4">
-                <ul className="text-red-200 text-sm space-y-2">
+              <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+                <ul className="text-blue-200 text-sm space-y-2">
                   <li>
                     • <strong>Guest Medical Emergency:</strong> Full refund with
                     medical certificate
@@ -255,7 +254,7 @@ export default function CancellationPage() {
 
         {/* How to Cancel */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
             How to Cancel Your Reservation
           </h2>
 
@@ -371,7 +370,7 @@ export default function CancellationPage() {
 
         {/* Modification vs Cancellation */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
             Modification vs Cancellation
           </h2>
 
@@ -422,8 +421,8 @@ export default function CancellationPage() {
         </div>
 
         {/* Need to Cancel Section */}
-        <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 sm:p-6 text-center">
-          <h3 className="text-xl font-semibold mb-3 text-red-400">
+        <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4 sm:p-6 text-center">
+          <h3 className="text-xl font-semibold mb-3 text-blue-400">
             Need to Cancel?
           </h3>
           <p className="text-gray-300 mb-4">

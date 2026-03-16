@@ -265,7 +265,7 @@ function BookingConfirmationContent() {
         <div className="absolute inset-0 bg-black/70" />
         
         <div className="relative text-center">
-          <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-blue-400 animate-spin mx-auto mb-4" />
           <p className="text-white text-base sm:text-lg">Loading booking details...</p>
         </div>
       </div>
@@ -288,7 +288,7 @@ function BookingConfirmationContent() {
           <p className="text-gray-300 mb-8">{error || 'The booking could not be located'}</p>
           <button
             onClick={() => router.push('/book')}
-            className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg"
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg"
           >
             Back to Booking
           </button>
@@ -370,8 +370,8 @@ function BookingConfirmationContent() {
               <div className="space-y-4 sm:space-y-6">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
                   <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/30 rounded-lg flex items-center justify-center">
-                      <Users className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/30 rounded-lg flex items-center justify-center">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-300" />
                     </div>
                     Guest Information
                   </h3>
@@ -393,8 +393,8 @@ function BookingConfirmationContent() {
 
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
                   <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/30 rounded-lg flex items-center justify-center">
-                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/30 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-300" />
                     </div>
                     Stay Details
                   </h3>
@@ -409,8 +409,8 @@ function BookingConfirmationContent() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-black/20 rounded-lg border border-white/10">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-red-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
                       </div>
                       <div>
                         <p className="text-gray-300 text-xs sm:text-sm">Check-out</p>
@@ -434,8 +434,8 @@ function BookingConfirmationContent() {
               <div className="space-y-6">
                 <div className="bg-gray-700/30 backdrop-blur-sm rounded-xl p-6 border border-gray-600/30">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-red-600/20 rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-4 h-4 text-red-400" />
+                    <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-blue-400" />
                     </div>
                     Payment Information
                   </h3>
@@ -461,9 +461,9 @@ function BookingConfirmationContent() {
                       </span>
                     </div>
                     <div className="border-t border-gray-600/30 pt-4 mt-4">
-                      <div className="flex items-center justify-between text-xl font-bold p-4 bg-gradient-to-r from-red-600/10 to-red-700/10 rounded-lg border border-red-500/20">
+                      <div className="flex items-center justify-between text-xl font-bold p-4 bg-gradient-to-r from-blue-600/10 to-blue-700/10 rounded-lg border border-blue-500/20">
                         <span className="text-white">Total Amount:</span>
-                        <span className="text-red-400">₱{booking.total_amount.toLocaleString()}</span>
+                        <span className="text-blue-400">₱{booking.total_amount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -503,8 +503,8 @@ function BookingConfirmationContent() {
                 <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/20">
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/10">
                     <h3 className="text-lg sm:text-xl font-semibold text-white mb-4 flex items-center gap-3">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/30 rounded-lg flex items-center justify-center">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/30 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-300" />
                       </div>
                       Cancellation Policy
                     </h3>
@@ -530,7 +530,7 @@ function BookingConfirmationContent() {
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                   <button
                     onClick={() => router.push('/bookings')}
-                    className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg text-sm sm:text-base"
+                    className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg text-sm sm:text-base"
                   >
                     View My Bookings
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
@@ -579,7 +579,7 @@ export default function BookingConfirmationPage() {
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <Loader2 className="w-16 h-16 animate-spin text-red-500 mx-auto mb-4 drop-shadow-lg" />
+            <Loader2 className="w-16 h-16 animate-spin text-blue-500 mx-auto mb-4 drop-shadow-lg" />
             <p className="text-white text-xl font-semibold drop-shadow">Loading booking details...</p>
           </div>
         </div>

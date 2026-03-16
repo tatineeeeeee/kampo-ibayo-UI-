@@ -1465,7 +1465,7 @@ export default function ReportsPage() {
                   }
                 }}
                 disabled={isLoading || bookings.length === 0 || isExporting}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Export to PDF"
               >
                 <FileText className="w-4 h-4" />
@@ -2029,7 +2029,7 @@ export default function ReportsPage() {
                             name,
                             value,
                             fill: name.includes("First")
-                              ? "#ef4444"
+                              ? "#3b82f6"
                               : name.includes("Returning")
                                 ? "#f59e0b"
                                 : name.includes("Frequent")

@@ -149,7 +149,7 @@ export default function ReviewPage() {
               amenities: 0
             });
           }}
-          className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium text-sm sm:text-base"
+          className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm sm:text-base"
         >
           Submit Another Review
         </button>
@@ -226,7 +226,7 @@ export default function ReviewPage() {
           {/* Header with Steps */}
           <div className="text-center mb-6 sm:mb-8">
             <div className="inline-block mb-3">
-              <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 rounded-full mx-auto"></div>
+              <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-full mx-auto"></div>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent mb-2">
               {getStepTitle()}
@@ -243,8 +243,8 @@ export default function ReviewPage() {
               {[1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                    step === currentStep 
-                      ? 'bg-red-600 text-white' 
+                    step === currentStep
+                      ? 'bg-blue-600 text-white'
                       : step < currentStep 
                         ? 'bg-green-600 text-white' 
                         : 'bg-gray-600 text-gray-300'
@@ -261,13 +261,13 @@ export default function ReviewPage() {
             </div>
 
             <div className="flex justify-center gap-2 sm:gap-4 md:gap-8 mt-4 text-xs sm:text-sm px-2">
-              <span className={`text-center flex-1 sm:flex-none ${currentStep === 1 ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-center flex-1 sm:flex-none ${currentStep === 1 ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
                 Select Stay
               </span>
-              <span className={`text-center flex-1 sm:flex-none ${currentStep === 2 ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-center flex-1 sm:flex-none ${currentStep === 2 ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
                 Rate Experience
               </span>
-              <span className={`text-center flex-1 sm:flex-none ${currentStep === 3 ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-center flex-1 sm:flex-none ${currentStep === 3 ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
                 Write Review
               </span>
             </div>
@@ -369,7 +369,7 @@ export default function ReviewPage() {
               <button
                 onClick={handleNext}
                 disabled={!canProceedToStep3}
-                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-1 sm:order-2"
+                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-1 sm:order-2"
               >
                 Continue to Review
                 <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4" />

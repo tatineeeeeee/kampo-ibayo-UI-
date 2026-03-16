@@ -940,7 +940,7 @@ export default function UsersPage() {
     }
     switch (role) {
       case "admin":
-        return "bg-red-100 text-red-800 border border-red-200";
+        return "bg-blue-100 text-blue-800 border border-blue-200";
       case "staff":
         return "bg-blue-100 text-blue-800 border border-blue-200";
       case "user":
@@ -1143,7 +1143,7 @@ export default function UsersPage() {
               className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm ${
                 filteredUsers.length === 0
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
               }`}
               title="Export filtered users to PDF"
             >

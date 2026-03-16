@@ -200,8 +200,8 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
       return {
         icon: Star,
         text: 'Leave Review',
-        color: 'text-red-400 group-hover:text-red-300',
-        bgColor: 'bg-red-900/20 border-red-500/30',
+        color: 'text-blue-400 group-hover:text-blue-300',
+        bgColor: 'bg-blue-900/20 border-blue-500/30',
         clickable: true
       };
     }
@@ -243,8 +243,8 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
         return {
           icon: Star,
           text: 'Leave Review',
-          color: 'text-red-400 group-hover:text-red-300',
-          bgColor: 'bg-red-900/20 border-red-500/30',
+          color: 'text-blue-400 group-hover:text-blue-300',
+          bgColor: 'bg-blue-900/20 border-blue-500/30',
           clickable: true
         };
     }
@@ -266,7 +266,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
           <p className="text-red-400">{error}</p>
           <button
             onClick={fetchUserBookings}
-            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Try Again
           </button>
@@ -285,7 +285,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
         </p>
         <a
           href="/book"
-          className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
           <Calendar className="w-4 h-4 mr-2" />
           Book Your Stay
@@ -316,14 +316,14 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
               key={booking.id}
               className={`${status.bgColor} border rounded-lg p-6 transition-all ${
                 reviewStatus.clickable 
-                  ? 'hover:border-red-500/50 cursor-pointer group' 
+                  ? 'hover:border-blue-500/50 cursor-pointer group'
                   : 'cursor-default opacity-75'
               }`}
               onClick={() => reviewStatus.clickable && onBookingSelect(booking)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -455,7 +455,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
         </p>
         <div className="flex items-center justify-center gap-6 text-xs">
           <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 text-red-400" />
+            <Star className="w-3 h-3 text-blue-400" />
             <span className="text-gray-400">Can review</span>
           </div>
           <div className="flex items-center gap-1">

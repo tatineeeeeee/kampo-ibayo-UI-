@@ -125,7 +125,7 @@ export const EnhancedGallery = () => {
               <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
                 {/* Top section - Featured badge */}
                 <div className="flex justify-start">
-                  <div className="bg-gradient-to-r from-red-900/80 to-red-800/80 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm border border-red-700/50 flex items-center gap-2">
+                  <div className="bg-gradient-to-r from-blue-900/80 to-blue-800/80 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm border border-blue-700/50 flex items-center gap-2">
                     <Star className="w-4 h-4 fill-current" />
                     Featured
                   </div>
@@ -175,7 +175,7 @@ export const EnhancedGallery = () => {
                 <button
                   key={index}
                   type="button"
-                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-105"
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-105"
                   onClick={() => setSelectedImage(index)}
                   aria-label={`View photo ${index + 1}: ${image.alt}`}
                 >
@@ -192,14 +192,14 @@ export const EnhancedGallery = () => {
 
                   {/* Image number - always visible for clarity */}
                   <div className="absolute bottom-1 right-1">
-                    <span className="bg-gradient-to-r from-red-900/80 to-red-800/80 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg border border-red-700/50">
+                    <span className="bg-gradient-to-r from-blue-900/80 to-blue-800/80 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg border border-blue-700/50">
                       {index + 1}
                     </span>
                   </div>
 
                   {/* Active state indicator */}
                   {selectedImage === index && (
-                    <div className="absolute inset-0 ring-2 ring-red-500 ring-inset rounded-lg"></div>
+                    <div className="absolute inset-0 ring-2 ring-blue-500 ring-inset rounded-lg"></div>
                   )}
                 </button>
               ))}
@@ -223,7 +223,7 @@ export const EnhancedGallery = () => {
             <span className="text-white/80 text-sm group-hover:text-white">
               View all
             </span>
-            <span className="bg-gradient-to-r from-red-900/80 to-red-800/80 group-hover:from-red-800/90 group-hover:to-red-700/90 text-white text-sm font-semibold px-3 py-1 rounded-full transition-all duration-300 shadow-lg border border-red-700/50">
+            <span className="bg-gradient-to-r from-blue-900/80 to-blue-800/80 group-hover:from-blue-800/90 group-hover:to-blue-700/90 text-white text-sm font-semibold px-3 py-1 rounded-full transition-all duration-300 shadow-lg border border-blue-700/50">
               {galleryImages.length} Photos
             </span>
           </button>
@@ -336,7 +336,7 @@ export const ContactForm = () => {
             placeholder="Your Name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />
           <input
@@ -346,7 +346,7 @@ export const ContactForm = () => {
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />
         </div>
@@ -358,7 +358,7 @@ export const ContactForm = () => {
             onChange={(e) =>
               setFormData({ ...formData, phone: e.target.value })
             }
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <input
             type="date"
@@ -366,14 +366,14 @@ export const ContactForm = () => {
             onChange={(e) =>
               setFormData({ ...formData, checkIn: e.target.value })
             }
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <select
             value={formData.guests}
             onChange={(e) =>
               setFormData({ ...formData, guests: e.target.value })
             }
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
               <option key={num} value={num}>
@@ -389,11 +389,11 @@ export const ContactForm = () => {
             setFormData({ ...formData, message: e.target.value })
           }
           rows={4}
-          className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <button
           type="submit"
-          className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
         >
           Send Inquiry
         </button>
@@ -437,7 +437,7 @@ export const TrustBadges = () => {
       <div className="flex sm:hidden justify-center gap-6">
         {badges.map((badge, index) => (
           <div key={index} className="text-center text-white">
-            <div className="bg-red-600 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1.5">
+            <div className="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1.5">
               {badge.icon}
             </div>
             <span className="text-[11px] font-medium block">{badge.title}</span>
@@ -452,7 +452,7 @@ export const TrustBadges = () => {
             key={index}
             className="text-center text-white group hover:scale-105 transition-transform duration-300"
           >
-            <div className="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-red-500 transition-colors">
+            <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-500 transition-colors">
               {badge.icon}
             </div>
             <h3 className="font-semibold mb-1 text-base">{badge.fullTitle}</h3>

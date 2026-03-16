@@ -1181,7 +1181,7 @@ function UploadPaymentProofContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-300">Please log in to continue</p>
         </div>
       </div>
@@ -1192,7 +1192,7 @@ function UploadPaymentProofContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-300">Loading booking details...</p>
         </div>
       </div>
@@ -1217,7 +1217,7 @@ function UploadPaymentProofContent() {
               // Use replace instead of push to prevent back button issues
               router.replace("/bookings");
             }}
-            className="bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-2 rounded-lg hover:from-red-700 hover:to-red-600 transition-colors flex items-center gap-2 mx-auto"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-600 transition-colors flex items-center gap-2 mx-auto"
           >
             <CreditCard className="w-4 h-4" /> Go to My Bookings
           </button>
@@ -1252,7 +1252,7 @@ function UploadPaymentProofContent() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
               <span className="hidden sm:inline text-sm text-gray-300">
                 Secure Upload
               </span>
@@ -1277,10 +1277,10 @@ function UploadPaymentProofContent() {
         <div className="flex items-center justify-center gap-2 py-2">
           {/* Step 1: Pay */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-red-600/30">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-600/30">
               <Check className="w-4 h-4" />
             </div>
-            <span className="text-xs text-red-400 font-medium hidden sm:inline">
+            <span className="text-xs text-blue-400 font-medium hidden sm:inline">
               Pay
             </span>
           </div>
@@ -1288,7 +1288,7 @@ function UploadPaymentProofContent() {
           {/* Line 1-2 */}
           <div
             className={`w-8 sm:w-16 h-1 rounded-full transition-all duration-500 ${
-              proofImage ? "bg-red-500" : "bg-gray-600"
+              proofImage ? "bg-blue-500" : "bg-gray-600"
             }`}
           ></div>
 
@@ -1297,7 +1297,7 @@ function UploadPaymentProofContent() {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
                 proofImage
-                  ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                   : "bg-gray-700 text-gray-400"
               }`}
             >
@@ -1305,7 +1305,7 @@ function UploadPaymentProofContent() {
             </div>
             <span
               className={`text-xs font-medium hidden sm:inline ${
-                proofImage ? "text-red-400" : "text-gray-500"
+                proofImage ? "text-blue-400" : "text-gray-500"
               }`}
             >
               Upload
@@ -1342,7 +1342,7 @@ function UploadPaymentProofContent() {
 
         {/* STEP 1: Amount to Pay - Hero Section */}
         {booking && (
-          <div className="bg-gradient-to-r from-red-900/40 to-orange-900/30 border border-red-500/50 rounded-xl p-4 sm:p-6">
+          <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/30 border border-blue-500/50 rounded-xl p-4 sm:p-6">
             <div className="text-center">
               <p className="text-gray-300 text-sm mb-1">
                 {remainingAmount <= 0
@@ -1807,7 +1807,7 @@ function UploadPaymentProofContent() {
               </div>
               {isResubmission ? "Resubmit Payment Proof" : "Upload Screenshot"}
             </h2>
-            <span className="bg-red-600/30 text-red-300 text-xs px-2 py-1 rounded-full">
+            <span className="bg-blue-600/30 text-blue-300 text-xs px-2 py-1 rounded-full">
               Step 2
             </span>
           </div>
@@ -1832,7 +1832,7 @@ function UploadPaymentProofContent() {
                   Payment Screenshot/Receipt{" "}
                   <span className="text-red-400">*</span>
                 </label>
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-red-500 transition-colors bg-gray-700/50">
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors bg-gray-700/50">
                   <input
                     type="file"
                     accept="image/*"
@@ -1859,7 +1859,7 @@ function UploadPaymentProofContent() {
                       <div className="space-y-2">
                         <FileImage className="w-12 h-12 text-gray-400 mx-auto" />
                         <div>
-                          <Upload className="w-6 h-6 text-red-400 mx-auto mb-2" />
+                          <Upload className="w-6 h-6 text-blue-400 mx-auto mb-2" />
                           <p className="text-gray-300 flex items-center justify-center gap-1">
                             <Camera className="w-4 h-4" /> Click to upload
                             payment screenshot
@@ -2058,7 +2058,7 @@ function UploadPaymentProofContent() {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
                 <option value="" className="bg-gray-700">
@@ -2092,7 +2092,7 @@ function UploadPaymentProofContent() {
                     ? "Enter Maya reference number"
                     : "Enter transaction reference (if available)"
                 }
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required={paymentMethod === "gcash" || paymentMethod === "maya"}
               />
             </div>
@@ -2122,7 +2122,7 @@ function UploadPaymentProofContent() {
                     ? "border-red-500 focus:ring-red-500"
                     : paymentValidation.level === "warning"
                     ? "border-yellow-500 focus:ring-yellow-500"
-                    : "border-gray-600 focus:ring-red-500 focus:border-red-500"
+                    : "border-gray-600 focus:ring-blue-500 focus:border-blue-500"
                 }`}
                 required
               />
@@ -2398,7 +2398,7 @@ function UploadPaymentProofContent() {
                 (paymentValidation.level === "warning" && !confirmUnusualAmount) ||
                 !!(ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && !confirmUnrecognizedImage)
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed scale-100"
-                  : "bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600 hover:scale-105 active:scale-95"
+                  : "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 hover:scale-105 active:scale-95"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isUploading ? (
@@ -2468,7 +2468,7 @@ export default function UploadPaymentProof() {
       fallback={
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <div className="text-white text-xl font-semibold">
               Loading payment page...
             </div>

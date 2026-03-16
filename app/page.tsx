@@ -109,7 +109,7 @@ const Navbar = () => {
             />
           </div>
           <div>
-            <span className="text-lg sm:text-xl font-bold text-red-500">
+            <span className="text-lg sm:text-xl font-bold text-blue-500">
               Kampo
             </span>
             <span className="text-lg sm:text-xl font-bold text-white">
@@ -124,8 +124,8 @@ const Navbar = () => {
             <a
               key={item.name}
               href={item.href}
-              className={`hover:text-red-500 transition-colors text-sm lg:text-base ${
-                activeSection === item.href.substring(1) ? "text-red-500" : ""
+              className={`hover:text-blue-500 transition-colors text-sm lg:text-base ${
+                activeSection === item.href.substring(1) ? "text-blue-500" : ""
               }`}
             >
               {item.name}
@@ -224,7 +224,7 @@ const Navbar = () => {
             </div>
           ) : (
             <Link href="/auth">
-              <button className="px-3 lg:px-4 py-1 bg-red-500 rounded hover:bg-red-600 text-sm lg:text-base transition-colors">
+              <button className="px-3 lg:px-4 py-1 bg-blue-500 rounded hover:bg-blue-600 text-sm lg:text-base transition-colors">
                 Login
               </button>
             </Link>
@@ -254,9 +254,9 @@ const Navbar = () => {
               <a
                 key={item.name}
                 href={item.href}
-                className={`block py-2 px-2 hover:text-red-500 transition-colors text-sm rounded ${
+                className={`block py-2 px-2 hover:text-blue-500 transition-colors text-sm rounded ${
                   activeSection === item.href.substring(1)
-                    ? "text-red-500 bg-gray-800"
+                    ? "text-blue-500 bg-gray-800"
                     : ""
                 }`}
                 onClick={() => setIsOpen(false)}
@@ -285,7 +285,7 @@ const Navbar = () => {
                 {(userRole === "admin" || userRole === "staff") && (
                   <Link
                     href="/admin"
-                    className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm font-semibold transition-colors border-b border-gray-700 mb-1"
+                    className="flex items-center px-2 py-2 hover:text-blue-500 hover:bg-gray-800 rounded text-sm font-semibold transition-colors border-b border-gray-700 mb-1"
                     onClick={() => setIsOpen(false)}
                   >
                     <span className="mr-2">
@@ -298,28 +298,28 @@ const Navbar = () => {
                 )}
                 <Link
                   href="/profile"
-                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  className="flex items-center px-2 py-2 hover:text-blue-500 hover:bg-gray-800 rounded text-sm transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <UserIcon className="w-4 h-4 mr-2" /> My Profile
                 </Link>
                 <Link
                   href="/bookings"
-                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  className="flex items-center px-2 py-2 hover:text-blue-500 hover:bg-gray-800 rounded text-sm transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <BookOpen className="w-4 h-4 mr-2" /> My Bookings
                 </Link>
                 <Link
                   href="/book"
-                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  className="flex items-center px-2 py-2 hover:text-blue-500 hover:bg-gray-800 rounded text-sm transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <Calendar className="w-4 h-4 mr-2" /> Book Now
                 </Link>
                 <Link
                   href="/review"
-                  className="flex items-center px-2 py-2 hover:text-red-500 hover:bg-gray-800 rounded text-sm transition-colors"
+                  className="flex items-center px-2 py-2 hover:text-blue-500 hover:bg-gray-800 rounded text-sm transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <MessageCircleHeart className="w-4 h-4 mr-2" /> Leave Review
@@ -365,7 +365,7 @@ const Navbar = () => {
                 Account
               </p>
               <Link href="/auth" onClick={() => setIsOpen(false)}>
-                <button className="w-full text-left px-2 py-2 bg-red-500 rounded hover:bg-red-600 text-sm transition-colors">
+                <button className="w-full text-left px-2 py-2 bg-blue-500 rounded hover:bg-blue-600 text-sm transition-colors">
                   Sign In / Register
                 </button>
               </Link>
@@ -797,8 +797,8 @@ function Home() {
         .react-datepicker__header {
           background: linear-gradient(
             135deg,
-            #dc2626 0%,
-            #991b1b 100%
+            #2563eb 0%,
+            #1e3a8a 100%
           ) !important;
           border-bottom: none !important;
           border-radius: 0.5rem 0.5rem 0 0 !important;
@@ -1012,8 +1012,8 @@ function Home() {
         .react-datepicker__day--range-end {
           background: linear-gradient(
             135deg,
-            #dc2626 0%,
-            #991b1b 100%
+            #2563eb 0%,
+            #1e3a8a 100%
           ) !important;
           color: white !important;
           font-weight: 700 !important;
@@ -1113,8 +1113,8 @@ function Home() {
         .react-datepicker__day--checkout.react-datepicker__day--selected {
           background: linear-gradient(
             135deg,
-            #dc2626 0%,
-            #991b1b 100%
+            #2563eb 0%,
+            #1e3a8a 100%
           ) !important;
           color: white !important;
           font-weight: 600 !important;
@@ -1125,8 +1125,8 @@ function Home() {
         .react-datepicker__day--checkout.react-datepicker__day--selected:hover {
           background: linear-gradient(
             135deg,
-            #ef4444 0%,
-            #dc2626 100%
+            #3b82f6 0%,
+            #2563eb 100%
           ) !important;
           transform: scale(1.05) !important;
         }
@@ -1614,13 +1614,13 @@ function Home() {
             <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-fadeInUp">
               <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight">
                 Welcome to{" "}
-                <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent block sm:inline">
+                <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent block sm:inline">
                   Kampo Ibayo
                 </span>
               </h1>
               <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-200 max-w-3xl mx-auto">
                 Your Peaceful Escape in{" "}
-                <span className="text-red-400 block xs:inline">
+                <span className="text-blue-400 block xs:inline">
                   General Trias, Cavite
                 </span>
               </p>
@@ -1660,7 +1660,7 @@ function Home() {
                 ) : (
                   <Link
                     href="/book"
-                    className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-red-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
+                    className="group w-full sm:w-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-blue-600 rounded-full font-bold text-xs sm:text-sm lg:text-base hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] touch-manipulation"
                   >
                     <Calendar className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                     <span className="whitespace-nowrap">Book Your Stay</span>
@@ -1681,7 +1681,7 @@ function Home() {
             {/* Simple Section Header */}
             <div className="text-center mb-6 sm:mb-8 lg:mb-10">
               <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
-                About <span className="text-red-400">Kampo Ibayo</span>
+                About <span className="text-blue-400">Kampo Ibayo</span>
               </h2>
               <p className="text-gray-400 text-lg max-w-2xl mx-auto">
                 Where comfort meets adventure in the heart of Cavite&apos;s
@@ -1733,7 +1733,7 @@ function Home() {
                     refreshing swimming pool, and complete amenities including a
                     fully-equipped kitchen, videoke, and adventure hanging
                     bridge, we offer the perfect blend of{" "}
-                    <span className="text-red-400 font-medium">
+                    <span className="text-blue-400 font-medium">
                       relaxation and adventure
                     </span>
                     .
@@ -1823,7 +1823,7 @@ function Home() {
             {/* Mobile: Side-by-side compact comparison */}
             <div className="grid grid-cols-2 gap-3 mb-6 sm:hidden">
               {/* Summer Promo - Mobile */}
-              <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-3 rounded-xl overflow-hidden shadow-lg border border-red-600/30">
+              <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 p-3 rounded-xl overflow-hidden shadow-lg border border-blue-600/30">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-bold text-white">Summer Deal</h3>
                   <span className="bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow whitespace-nowrap">
@@ -1833,10 +1833,10 @@ function Home() {
                 <p className="text-xl font-extrabold text-white mb-0.5">
                   ₱9,000
                 </p>
-                <p className="text-red-200 text-[10px] line-through opacity-75 mb-1">
+                <p className="text-blue-200 text-[10px] line-through opacity-75 mb-1">
                   ₱12,000
                 </p>
-                <p className="text-red-100 text-[10px] opacity-90 mb-3">
+                <p className="text-blue-100 text-[10px] opacity-90 mb-3">
                   Mon - Thu
                 </p>
                 {maintenanceActive ? (
@@ -1846,7 +1846,7 @@ function Home() {
                 ) : (
                   <Link
                     href="/book"
-                    className="bg-white/90 hover:bg-white text-red-800 px-2 py-2 rounded-lg font-semibold text-xs w-full text-center touch-manipulation min-h-[40px] flex items-center justify-center gap-1 shadow"
+                    className="bg-white/90 hover:bg-white text-blue-800 px-2 py-2 rounded-lg font-semibold text-xs w-full text-center touch-manipulation min-h-[40px] flex items-center justify-center gap-1 shadow"
                   >
                     <span>Book</span>
                     <ArrowRight className="w-3 h-3" />
@@ -1888,8 +1888,8 @@ function Home() {
             {/* Desktop: Full pricing cards */}
             <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
               {/* Summer Promo */}
-              <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-900 p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-red-600/30 hover:border-red-500/50">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group border border-blue-600/30 hover:border-blue-500/50">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse">
                   SAVE ₱3K
                 </div>
@@ -1903,11 +1903,11 @@ function Home() {
                         <p className="text-2xl sm:text-3xl font-extrabold text-white">
                           ₱9,000
                         </p>
-                        <span className="text-red-200 text-sm line-through opacity-75">
+                        <span className="text-blue-200 text-sm line-through opacity-75">
                           ₱12,000
                         </span>
                       </div>
-                      <p className="text-red-100 text-sm opacity-90">
+                      <p className="text-blue-100 text-sm opacity-90">
                         22 hours stay • Up to 15 guests • Monday to Thursday
                       </p>
                     </div>
@@ -1919,7 +1919,7 @@ function Home() {
                       ) : (
                         <Link
                           href="/book"
-                          className="group bg-white/80 backdrop-blur-sm hover:bg-white/90 text-red-800 hover:text-red-900 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 w-full text-center touch-manipulation min-h-[48px] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                          className="group bg-white/80 backdrop-blur-sm hover:bg-white/90 text-blue-800 hover:text-blue-900 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 w-full text-center touch-manipulation min-h-[48px] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                           <span>Book This Deal</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
@@ -1976,7 +1976,7 @@ function Home() {
             <div className="sm:hidden space-y-2 mb-6">
               {[
                 {
-                  icon: <FaHome className="text-red-400" />,
+                  icon: <FaHome className="text-blue-400" />,
                   title: "Accommodation",
                   items: [
                     "2 poolside AC family rooms (8 pax each)",
@@ -1987,7 +1987,7 @@ function Home() {
                   ],
                 },
                 {
-                  icon: <FaGamepad className="text-red-400" />,
+                  icon: <FaGamepad className="text-blue-400" />,
                   title: "Entertainment & Fun",
                   items: [
                     "Swimming pool & poolside lounge",
@@ -1998,7 +1998,7 @@ function Home() {
                   ],
                 },
                 {
-                  icon: <FaUtensils className="text-red-400" />,
+                  icon: <FaUtensils className="text-blue-400" />,
                   title: "Kitchen & More",
                   items: [
                     "Fully-equipped kitchen with appliances",
@@ -2009,7 +2009,7 @@ function Home() {
                   ],
                 },
                 {
-                  icon: <FaMapMarkedAlt className="text-red-400" />,
+                  icon: <FaMapMarkedAlt className="text-blue-400" />,
                   title: "Special Features",
                   items: [
                     "Adventure hanging bridge (safe & secure)",
@@ -2033,10 +2033,10 @@ function Home() {
                     className="w-full flex items-center justify-between p-3 touch-manipulation min-h-[52px]"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-red-500/20 rounded-lg flex items-center justify-center text-lg">
+                      <div className="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center text-lg">
                         {amenity.icon}
                       </div>
-                      <h4 className="text-sm font-bold text-red-400">
+                      <h4 className="text-sm font-bold text-blue-400">
                         {amenity.title}
                       </h4>
                     </div>
@@ -2058,7 +2058,7 @@ function Home() {
                     <ul className="text-gray-300 text-xs space-y-1.5 px-3 pb-3">
                       {amenity.items.map((item, itemIndex) => (
                         <li key={itemIndex} className="flex items-start gap-2">
-                          <span className="text-red-400 mt-0.5">•</span>
+                          <span className="text-blue-400 mt-0.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -2071,136 +2071,136 @@ function Home() {
             {/* Desktop/Tablet Grid View */}
             <div className="hidden sm:grid gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:mb-8">
               {/* Accommodation */}
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
                 <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
-                    <FaHome className="text-red-400" />
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                    <FaHome className="text-blue-400" />
                   </div>
-                  <h4 className="text-base font-bold text-red-400 sm:text-lg">
+                  <h4 className="text-base font-bold text-blue-400 sm:text-lg">
                     Accommodation
                   </h4>
                 </div>
                 <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>2 poolside AC family
+                    <span className="text-blue-400">•</span>2 poolside AC family
                     rooms (8 pax each)
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Private bathrooms with bidet & hot/cold shower
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Camping area with full-sized campfire
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Treehouse with electricity & extra space
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Open shower area near pool with comfort room
                   </li>
                 </ul>
               </div>
 
               {/* Entertainment & Facilities */}
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
                 <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
-                    <FaGamepad className="text-red-400" />
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                    <FaGamepad className="text-blue-400" />
                   </div>
-                  <h4 className="text-base font-bold text-red-400 sm:text-lg">
+                  <h4 className="text-base font-bold text-blue-400 sm:text-lg">
                     Entertainment & Fun
                   </h4>
                 </div>
                 <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Swimming pool & poolside lounge
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Videoke & arcade machine
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Board games & gazebo dining area
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Function hall/stage for events
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Adventure hanging bridge access
                   </li>
                 </ul>
               </div>
 
               {/* Kitchen & Amenities */}
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
                 <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
-                    <FaUtensils className="text-red-400" />
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                    <FaUtensils className="text-blue-400" />
                   </div>
-                  <h4 className="text-base font-bold text-red-400 sm:text-lg">
+                  <h4 className="text-base font-bold text-blue-400 sm:text-lg">
                     Kitchen & More
                   </h4>
                 </div>
                 <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Fully-equipped kitchen with appliances
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Grill area & complete cooking utensils
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Hot/cold water dispenser (1st gallon FREE)
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     8-vehicle parking & WiFi access
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Pet-friendly facility - all furbabies welcome
                   </li>
                 </ul>
               </div>
 
               {/* Special Location Features */}
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-red-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:shadow-xl sm:p-6 sm:rounded-2xl">
                 <div className="flex items-center gap-2 mb-3 sm:gap-3 sm:mb-4">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
-                    <FaMapMarkedAlt className="text-red-400" />
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform sm:w-12 sm:h-12 sm:rounded-xl sm:text-2xl">
+                    <FaMapMarkedAlt className="text-blue-400" />
                   </div>
-                  <h4 className="text-base font-bold text-red-400 sm:text-lg">
+                  <h4 className="text-base font-bold text-blue-400 sm:text-lg">
                     Special Features
                   </h4>
                 </div>
                 <ul className="text-gray-300 text-xs space-y-1.5 sm:text-sm sm:space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Adventure hanging bridge (safe & secure)
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Nestled in peaceful farmlands
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Caretaker assistance & guided walk
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Easy landmark access (Dali Grocery)
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-red-400">•</span>
+                    <span className="text-blue-400">•</span>
                     Exclusive countryside experience
                   </li>
                 </ul>
@@ -2208,13 +2208,13 @@ function Home() {
             </div>
 
             {/* Quick Note */}
-            <div className="bg-gradient-to-r from-red-900/30 to-red-800/30 border border-red-700/50 p-3 rounded-xl mb-6 sm:p-4 sm:mb-8">
-              <p className="text-red-100 text-xs text-center sm:text-sm">
-                <span className="text-red-400 font-semibold">
+            <div className="bg-gradient-to-r from-blue-900/30 to-blue-800/30 border border-blue-700/50 p-3 rounded-xl mb-6 sm:p-4 sm:mb-8">
+              <p className="text-blue-100 text-xs text-center sm:text-sm">
+                <span className="text-blue-400 font-semibold">
                   All-inclusive experience
                 </span>{" "}
                 • No hidden fees • Pet-friendly •
-                <span className="text-red-400 font-semibold">Bring:</span> Food,
+                <span className="text-blue-400 font-semibold">Bring:</span> Food,
                 drinks & personal items
               </p>
             </div>
@@ -2244,7 +2244,7 @@ function Home() {
             <div className="text-center mt-10">
               <Link
                 href="/review"
-                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold rounded-full hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl touch-manipulation"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl touch-manipulation"
               >
                 <MessageCircleHeart className="w-5 h-5 mr-2" />
                 Share Your Experience
@@ -2286,21 +2286,21 @@ function Home() {
                 </div>
 
                 {/* Enhanced Important Booking Terms */}
-                <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-600/30 rounded-xl overflow-hidden mt-6">
-                  <div className="px-3 sm:px-4 py-2 border-b border-red-600/20">
-                    <h4 className="text-red-400 font-semibold text-xs xs:text-sm flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-600/30 rounded-xl overflow-hidden mt-6">
+                  <div className="px-3 sm:px-4 py-2 border-b border-blue-600/20">
+                    <h4 className="text-blue-400 font-semibold text-xs xs:text-sm flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-blue-400 flex-shrink-0" />
                       <span className="truncate">Important Booking Terms</span>
-                      <span className="ml-auto bg-red-500/20 text-red-400 text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                      <span className="ml-auto bg-blue-500/20 text-blue-400 text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
                         Required
                       </span>
                     </h4>
                   </div>
                   <div className="p-3">
                     <div className="space-y-2 text-xs xs:text-sm">
-                      <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
-                        <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
-                          <span className="text-red-400 text-xs font-bold">
+                      <div className="flex items-center gap-2 hover:bg-blue-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                        <div className="w-4 h-4 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/30 transition-colors">
+                          <span className="text-blue-400 text-xs font-bold">
                             1
                           </span>
                         </div>
@@ -2308,9 +2308,9 @@ function Home() {
                           50% downpayment required to secure booking
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
-                        <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
-                          <span className="text-red-400 text-xs font-bold">
+                      <div className="flex items-center gap-2 hover:bg-blue-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                        <div className="w-4 h-4 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/30 transition-colors">
+                          <span className="text-blue-400 text-xs font-bold">
                             2
                           </span>
                         </div>
@@ -2318,9 +2318,9 @@ function Home() {
                           No same-day cancellations allowed
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
-                        <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
-                          <span className="text-red-400 text-xs font-bold">
+                      <div className="flex items-center gap-2 hover:bg-blue-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                        <div className="w-4 h-4 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/30 transition-colors">
+                          <span className="text-blue-400 text-xs font-bold">
                             3
                           </span>
                         </div>
@@ -2328,9 +2328,9 @@ function Home() {
                           Remaining balance due at check-in
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 hover:bg-red-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
-                        <div className="w-4 h-4 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/30 transition-colors">
-                          <span className="text-red-400 text-xs font-bold">
+                      <div className="flex items-center gap-2 hover:bg-blue-500/5 px-2 py-1 rounded-md transition-colors duration-150 group">
+                        <div className="w-4 h-4 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/30 transition-colors">
+                          <span className="text-blue-400 text-xs font-bold">
                             4
                           </span>
                         </div>
@@ -2346,7 +2346,7 @@ function Home() {
               <div className="order-1 lg:order-2 space-y-6 sm:space-y-8">
                 <div className="bg-gray-800 p-4 sm:p-6 rounded-xl">
                   <h3 className="text-lg xs:text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                    <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                    <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
                     Location
                   </h3>
                   <p className="text-gray-300 text-sm xs:text-base sm:text-lg leading-relaxed">
@@ -2356,7 +2356,7 @@ function Home() {
 
                 <div className="bg-gray-800 p-4 sm:p-6 rounded-xl">
                   <h3 className="text-lg xs:text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                    <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                    <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
                     Contact Details
                   </h3>
                   <div className="space-y-1 sm:space-y-2">
@@ -2382,7 +2382,7 @@ function Home() {
 
                 <div className="bg-gray-800 p-4 sm:p-6 rounded-xl">
                   <h3 className="text-lg xs:text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
                     Operating Hours
                   </h3>
                   <div className="space-y-2 sm:space-y-3 text-gray-300">
@@ -2427,11 +2427,11 @@ function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
               <div className="lg:col-span-4">
                 <div className="flex items-center justify-center lg:justify-start space-x-3 mb-3 sm:mb-4">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-red-500" />
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-blue-500" />
                   </div>
                   <div className="flex items-center space-x-1">
-                    <span className="text-xl lg:text-2xl font-bold text-red-500">
+                    <span className="text-xl lg:text-2xl font-bold text-blue-500">
                       Kampo
                     </span>
                     <span className="text-xl lg:text-2xl font-bold text-white">
@@ -2677,7 +2677,7 @@ function Home() {
         {showBackToTop && !chatbotOpen && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-[5rem] right-4 sm:bottom-[6.5rem] sm:right-6 z-40 bg-red-600 hover:bg-red-700 text-white h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-red-500 hover:border-red-400 backdrop-blur-sm"
+            className="fixed bottom-[5rem] right-4 sm:bottom-[6.5rem] sm:right-6 z-40 bg-blue-600 hover:bg-blue-700 text-white h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-150 transform hover:scale-110 border border-blue-500 hover:border-blue-400 backdrop-blur-sm"
             aria-label="Back to top"
           >
             <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -2842,12 +2842,12 @@ function Home() {
                                   </span>
                                 </span>
                               </span>
-                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-red-900/20 rounded-md border border-red-600/30 min-w-0">
+                              <span className="flex items-center gap-1 sm:gap-1.5 md:gap-2 p-1.5 sm:p-2 bg-blue-900/20 rounded-md border border-blue-600/30 min-w-0">
                                 <span
                                   className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded flex-shrink-0"
                                   style={{
                                     background:
-                                      "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                                      "linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)",
                                   }}
                                 ></span>
                                 <span className="text-gray-300 text-xs sm:text-sm md:text-base font-medium truncate">
@@ -2986,19 +2986,19 @@ function Home() {
                           </div>
 
                           {/* Row 2: Check-out + Occupied */}
-                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-red-900/20 border border-red-600/30 rounded-lg hover:bg-red-900/30 transition-colors">
+                          <div className="flex items-start gap-2 sm:gap-3 p-4 sm:p-4 md:p-5 bg-blue-900/20 border border-blue-600/30 rounded-lg hover:bg-blue-900/30 transition-colors">
                             <span
                               className="w-5 h-5 sm:w-6 sm:h-6 rounded flex-shrink-0 mt-1"
                               style={{
                                 background:
-                                  "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                                  "linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)",
                               }}
                             ></span>
                             <div className="min-w-0 flex-1">
-                              <div className="text-red-200 text-base sm:text-lg md:text-xl font-semibold">
+                              <div className="text-blue-200 text-base sm:text-lg md:text-xl font-semibold">
                                 Check-out Day
                               </div>
-                              <div className="text-red-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
+                              <div className="text-blue-100/80 text-sm sm:text-base md:text-lg leading-relaxed">
                                 Available for check-in (guests leave 1 PM)
                               </div>
                             </div>
@@ -3065,7 +3065,7 @@ function Home() {
                                 Same-Day Turnover Available!
                               </div>
                               <div className="text-green-100/90 text-xs sm:text-sm md:text-base leading-relaxed">
-                                You can check-in on red (check-out) days since
+                                You can check-in on blue (check-out) days since
                                 guests leave at 1 PM and new arrivals start at 3
                                 PM.
                               </div>

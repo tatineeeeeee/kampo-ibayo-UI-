@@ -1470,7 +1470,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                   style={{
                     fontSize: 11,
                     fontWeight: "bold",
-                    color: "#dc2626",
+                    color: "#2563eb",
                     marginBottom: 8,
                   }}
                 >

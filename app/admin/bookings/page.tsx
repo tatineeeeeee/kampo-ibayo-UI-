@@ -4714,7 +4714,7 @@ export default function BookingsPage() {
                             setCustomRejectionReason("");
                           }
                         }}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 bg-white/80 backdrop-blur-sm transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white/80 backdrop-blur-sm transition-all duration-200"
                       >
                         {rejectionReasons.map((reason) => (
                           <option key={reason.value} value={reason.value}>
@@ -4732,7 +4732,7 @@ export default function BookingsPage() {
                           }
                           placeholder="Please specify the reason for rejection..."
                           rows={3}
-                          className="w-full px-4 py-3 border-2 border-red-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500 resize-none transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                          className="w-full px-4 py-3 border-2 border-red-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 resize-none transition-all duration-200 bg-white/80 backdrop-blur-sm"
                         />
                       )}
 

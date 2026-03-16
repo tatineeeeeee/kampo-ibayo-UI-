@@ -57,8 +57,8 @@ export default function LegalHub() {
       description:
         "Contact support, emergency assistance, and comprehensive help resources",
       icon: <Phone className="w-8 h-8" />,
-      color: "border-red-500/50 bg-red-500/10 hover:bg-red-500/20",
-      iconColor: "text-red-400",
+      color: "border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/20",
+      iconColor: "text-blue-400",
     },
   ];
 
@@ -195,7 +195,7 @@ export default function LegalHub() {
               href="tel:+639662815123"
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700/50 transition-colors min-h-[56px] touch-manipulation"
             >
-              <Phone className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <Phone className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <div>
                 <p className="text-white font-medium text-sm sm:text-base">
                   Emergency Hotline

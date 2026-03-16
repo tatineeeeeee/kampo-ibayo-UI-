@@ -1782,7 +1782,7 @@ export const createUserCancellationAdminNotification = (
           border: 1px solid #e2e8f0;
         }
         .header {
-          background: linear-gradient(135deg, #dc2626, #b91c1c);
+          background: linear-gradient(135deg, #2563eb, #1e3a8a);
           color: white;
           padding: 30px;
           text-align: center;
@@ -1812,7 +1812,7 @@ export const createUserCancellationAdminNotification = (
           margin: 10px 0;
         }
         .header-subtitle {
-          color: #fecaca;
+          color: #93c5fd;
           font-size: 14px;
           margin: 0;
         }
@@ -2470,7 +2470,7 @@ export const createUserCancellationConfirmationEmail = (cancellationData: Cancel
           border: 1px solid #e2e8f0;
         }
         .header {
-          background: linear-gradient(135deg, #dc2626, #b91c1c);
+          background: linear-gradient(135deg, #2563eb, #1e3a8a);
           color: white;
           padding: 30px;
           text-align: center;
@@ -2559,7 +2559,7 @@ export const createUserCancellationConfirmationEmail = (cancellationData: Cancel
           <div class="company-logo">KAMPO IBAYO RESORT</div>
           <div class="cancellation-status">RESERVATION CANCELLED</div>
           <h1 style="margin: 10px 0; font-size: 20px;">Cancellation Confirmation</h1>
-          <p style="margin: 0; color: #fecaca; font-size: 14px;">Reference Number: ${cancellationData.bookingId}</p>
+          <p style="margin: 0; color: #93c5fd; font-size: 14px;">Reference Number: ${cancellationData.bookingId}</p>
         </div>
         
         <div class="content-section">

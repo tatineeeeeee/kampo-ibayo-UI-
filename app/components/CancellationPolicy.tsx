@@ -226,7 +226,7 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
           className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
             percentage >= 75 ? 'bg-green-600 hover:bg-green-700' :
             percentage >= 50 ? 'bg-yellow-600 hover:bg-yellow-700' :
-            'bg-red-600 hover:bg-red-700'
+            'bg-blue-600 hover:bg-blue-700'
           }`}
         >
           Cancel Booking & Request ₱{amount.toLocaleString()} Refund

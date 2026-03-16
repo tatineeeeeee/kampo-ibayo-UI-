@@ -26,7 +26,7 @@ export default function HelpPage() {
       contact: "0966-281-5123",
       link: "tel:+639662815123",
       description: "24/7 emergency assistance for current guests",
-      color: "red",
+      color: "blue",
     },
     {
       type: "Booking",
@@ -133,7 +133,7 @@ export default function HelpPage() {
     {
       title: "Emergency Procedures",
       icon: <Shield className="w-6 h-6" />,
-      color: "red",
+      color: "blue",
       items: [
         {
           question: "Medical emergency?",
@@ -161,7 +161,6 @@ export default function HelpPage() {
 
   const getColorClasses = (color: string) => {
     const colorMap = {
-      red: "bg-red-900/20 border-red-700/50",
       blue: "bg-blue-900/20 border-blue-700/50",
       green: "bg-green-900/20 border-green-700/50",
       purple: "bg-purple-900/20 border-purple-700/50",
@@ -171,7 +170,6 @@ export default function HelpPage() {
 
   const getIconColor = (color: string) => {
     const colorMap = {
-      red: "text-red-400",
       blue: "text-blue-400",
       green: "text-green-400",
       purple: "text-purple-400",
@@ -220,11 +218,11 @@ export default function HelpPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
         {/* Emergency Contact Banner */}
-        <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 sm:p-6">
+        <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4 sm:p-6">
           <div className="flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
+            <AlertTriangle className="w-6 h-6 text-blue-400 mt-1 flex-shrink-0" />
             <div>
-              <h2 className="text-xl font-semibold mb-2 text-red-400">
+              <h2 className="text-xl font-semibold mb-2 text-blue-400">
                 Emergency Contact
               </h2>
               <p className="text-gray-300 mb-3">
@@ -233,7 +231,7 @@ export default function HelpPage() {
               </p>
               <a
                 href="tel:+639662815123"
-                className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg font-medium transition-colors min-h-[48px] touch-manipulation"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-medium transition-colors min-h-[48px] touch-manipulation"
               >
                 <Phone className="w-4 h-4" />
                 Emergency: 0966-281-5123
@@ -244,7 +242,7 @@ export default function HelpPage() {
 
         {/* Contact Methods */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
             How to Reach Us
           </h2>
 
@@ -272,7 +270,7 @@ export default function HelpPage() {
 
         {/* Business Hours */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
             Support Hours
           </h2>
 
@@ -299,8 +297,8 @@ export default function HelpPage() {
               </p>
             </div>
 
-            <div className="bg-red-900/20 border border-red-700/50 rounded-lg p-4">
-              <h3 className="font-semibold text-red-400 mb-2">
+            <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-400 mb-2">
                 Emergency Line
               </h3>
               <p className="text-gray-300 text-sm">24/7 Available</p>
@@ -346,7 +344,7 @@ export default function HelpPage() {
 
         {/* Local Information */}
         <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold mb-6 text-red-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <MapPin className="w-6 h-6" />
             Local Information
           </h2>

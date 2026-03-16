@@ -1901,7 +1901,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
     return (
       <button
         onClick={() => setChatbotOpen(true)}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-red-600 hover:bg-red-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 group border border-red-500 hover:border-red-400"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 group border border-blue-500 hover:border-blue-400"
         aria-label="Open chat"
       >
         <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -1941,7 +1941,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="relative flex-shrink-0">
               <div
-                className={`bg-red-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform 
+                className={`bg-blue-500/20 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform 
                 ${
                   isMinimized
                     ? "w-6 h-6 sm:w-8 sm:h-8"
@@ -1949,7 +1949,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                 }`}
               >
                 <MessageCircle
-                  className={`text-red-400 ${
+                  className={`text-blue-400 ${
                     isMinimized
                       ? "w-3 h-3 sm:w-4 sm:h-4"
                       : "w-4 h-4 sm:w-5 sm:h-5"
@@ -1970,7 +1970,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                 <h3 className="font-bold text-white text-sm sm:text-base truncate">
                   Kampo Ibayo Assistant
                 </h3>
-                <p className="text-xs text-red-100 truncate">
+                <p className="text-xs text-blue-100 truncate">
                   Ready • {FAQ_DATABASE.length}+ answers available
                 </p>
               </div>
@@ -1987,14 +1987,14 @@ Is there anything else about Kampo Ibayo I can help you with?`;
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className="text-white hover:bg-red-800 p-1 sm:p-1.5 rounded-lg transition-colors"
+              className="text-white hover:bg-blue-800 p-1 sm:p-1.5 rounded-lg transition-colors"
               aria-label={isMinimized ? "Maximize" : "Minimize"}
             >
               <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={() => setChatbotOpen(false)}
-              className="text-white hover:bg-red-800 p-1 sm:p-1.5 rounded-lg transition-colors"
+              className="text-white hover:bg-blue-800 p-1 sm:p-1.5 rounded-lg transition-colors"
               aria-label="Close chat"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -2016,7 +2016,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                   <div
                     className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-2.5 sm:p-3 ${
                       message.sender === "user"
-                        ? "bg-red-600 text-white rounded-br-none shadow-lg"
+                        ? "bg-blue-600 text-white rounded-br-none shadow-lg"
                         : "bg-gray-700 text-gray-100 rounded-bl-none shadow-md border border-gray-600"
                     }`}
                   >
@@ -2026,7 +2026,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                     <p
                       className={`text-xs mt-1 ${
                         message.sender === "user"
-                          ? "text-red-100 text-right"
+                          ? "text-blue-100 text-right"
                           : "text-gray-400 text-left"
                       }`}
                     >
@@ -2069,7 +2069,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                   </p>
                   <button
                     onClick={() => setShowQuickQuestions(false)}
-                    className="text-xs text-gray-400 hover:text-red-400 transition-colors"
+                    className="text-xs text-gray-400 hover:text-blue-400 transition-colors"
                   >
                     Hide
                   </button>
@@ -2079,7 +2079,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                     <button
                       key={index}
                       onClick={() => handleQuickQuestion(question)}
-                      className="text-xs bg-gray-700 hover:bg-red-600 text-gray-200 hover:text-white px-2.5 sm:px-3 py-2 rounded-lg transition-all duration-200 text-left hover:scale-105 border border-gray-600 hover:border-red-600"
+                      className="text-xs bg-gray-700 hover:bg-blue-600 text-gray-200 hover:text-white px-2.5 sm:px-3 py-2 rounded-lg transition-all duration-200 text-left hover:scale-105 border border-gray-600 hover:border-blue-600"
                     >
                       {question}
                     </button>
@@ -2093,7 +2093,7 @@ Is there anything else about Kampo Ibayo I can help you with?`;
               <div className="px-3 sm:px-4 py-2 bg-gray-800 border-t border-gray-700">
                 <button
                   onClick={() => setShowQuickQuestions(true)}
-                  className="w-full text-xs text-red-400 hover:text-red-300 transition-colors font-medium text-center py-1"
+                  className="w-full text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium text-center py-1"
                 >
                   Show Quick Topics
                 </button>
@@ -2109,12 +2109,12 @@ Is there anything else about Kampo Ibayo I can help you with?`;
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="flex-1 bg-gray-800 text-white border border-gray-600 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 focus:outline-none focus:border-red-500 focus:bg-gray-700 transition-all text-xs sm:text-sm placeholder-gray-400"
+                  className="flex-1 bg-gray-800 text-white border border-gray-600 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-gray-700 transition-all text-xs sm:text-sm placeholder-gray-400"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputText.trim()}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 sm:p-2.5 rounded-xl transition-colors shadow-lg hover:shadow-xl flex-shrink-0"
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 sm:p-2.5 rounded-xl transition-colors shadow-lg hover:shadow-xl flex-shrink-0"
                   aria-label="Send message"
                 >
                   <Send className="w-4 h-4 sm:w-5 sm:h-5" />

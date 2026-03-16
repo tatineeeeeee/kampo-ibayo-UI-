@@ -841,8 +841,8 @@ export default function SettingsPage() {
                 onClick={() => scrollToSection("profile")}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "profile"
-                    ? "bg-red-600 text-white"
-                    : "text-gray-300 hover:bg-red-600 hover:text-white"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-blue-600 hover:text-white"
                 }`}
               >
                 <FaUser className="w-4 h-4" />
@@ -852,8 +852,8 @@ export default function SettingsPage() {
                 onClick={() => scrollToSection("security")}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "security"
-                    ? "bg-red-600 text-white"
-                    : "text-gray-300 hover:bg-red-600 hover:text-white"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-blue-600 hover:text-white"
                 }`}
               >
                 <FaLock className="w-4 h-4" />
@@ -863,8 +863,8 @@ export default function SettingsPage() {
                 onClick={() => scrollToSection("privacy")}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg font-semibold transition-colors ${
                   activeSection === "privacy"
-                    ? "bg-red-600 text-white"
-                    : "text-gray-300 hover:bg-red-600 hover:text-white"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-blue-600 hover:text-white"
                 }`}
               >
                 <FaShieldAlt className="w-4 h-4" />
@@ -882,7 +882,7 @@ export default function SettingsPage() {
             className="bg-gray-800 rounded-xl shadow-2xl p-8"
           >
             <div className="flex items-center gap-3 mb-6">
-              <FaUser className="w-6 h-6 text-red-500" />
+              <FaUser className="w-6 h-6 text-blue-500" />
               <h2 className="text-2xl font-bold text-white">
                 Profile Information
               </h2>
@@ -950,7 +950,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50"
+                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
               >
                 <FaSave className="w-4 h-4" />
                 {saving ? "Saving..." : "Save Changes"}
@@ -964,7 +964,7 @@ export default function SettingsPage() {
             className="bg-gray-800 rounded-xl shadow-2xl p-8"
           >
             <div className="flex items-center gap-3 mb-6">
-              <FaLock className="w-6 h-6 text-red-500" />
+              <FaLock className="w-6 h-6 text-blue-500" />
               <h2 className="text-2xl font-bold text-white">
                 Security & Password
               </h2>
@@ -1108,7 +1108,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50"
+                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
               >
                 <FaLock className="w-4 h-4" />
                 {saving ? "Updating..." : "Update Password"}
@@ -1122,7 +1122,7 @@ export default function SettingsPage() {
             className="bg-gray-800 rounded-xl shadow-2xl p-8"
           >
             <div className="flex items-center gap-3 mb-6">
-              <FaShieldAlt className="w-6 h-6 text-red-500" />
+              <FaShieldAlt className="w-6 h-6 text-blue-500" />
               <h2 className="text-2xl font-bold text-white">Privacy & Data</h2>
             </div>
 
@@ -1198,7 +1198,7 @@ export default function SettingsPage() {
                         }}
                         className="flex items-center gap-3 w-full px-4 py-3 text-left text-white hover:bg-gray-500 transition rounded-b-lg"
                       >
-                        <FaFilePdf className="w-4 h-4 text-red-400" />
+                        <FaFilePdf className="w-4 h-4 text-blue-400" />
                         <div>
                           <div className="font-semibold">PDF Format</div>
                           <div className="text-xs text-gray-300">
@@ -1372,7 +1372,7 @@ export default function SettingsPage() {
                   <div className="text-gray-400 text-xs sm:ml-4 sm:max-w-xs">
                     <p>
                       Need help?{" "}
-                      <span className="text-red-400 hover:text-red-300 cursor-pointer underline">
+                      <span className="text-blue-400 hover:text-blue-300 cursor-pointer underline">
                         Contact our support team
                       </span>{" "}
                       for assistance with account management.

@@ -46,7 +46,7 @@ export default function LegalNavigation() {
       href: "/legal/help",
       label: "Help Center",
       icon: <Phone className="w-4 h-4" />,
-      color: "text-red-400",
+      color: "text-blue-400",
     },
   ];
 

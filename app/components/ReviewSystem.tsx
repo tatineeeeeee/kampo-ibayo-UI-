@@ -358,7 +358,7 @@ const ReviewSystem = ({
             <p className="text-gray-400 mb-4">{error}</p>
             <button
               onClick={() => fetchReviews(currentPage)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               Try Again
             </button>
@@ -470,7 +470,7 @@ const ReviewSystem = ({
             <div className="border-t border-gray-600 pt-3 sm:pt-4">
               <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0">
                 <div>
-                  <p className="font-bold text-red-400 text-sm xs:text-base">
+                  <p className="font-bold text-blue-400 text-sm xs:text-base">
                     - {review.guest_name}
                   </p>
                   {review.guest_location && (
@@ -520,7 +520,7 @@ const ReviewSystem = ({
                     onClick={() => goToPage(page)}
                     className={`px-3 py-1 rounded-lg transition-colors ${
                       isCurrentPage
-                        ? "bg-red-600 text-white"
+                        ? "bg-blue-600 text-white"
                         : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                     }`}
                   >
@@ -553,7 +553,7 @@ const ReviewSystem = ({
         <div className="text-center mt-8">
           <button
             onClick={openAllReviewsModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-gray-600 hover:border-red-500 text-gray-300 hover:text-white font-medium rounded-lg transition-all duration-300"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-medium rounded-lg transition-all duration-300"
           >
             <Eye className="w-4 h-4" />
             View All {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
@@ -606,7 +606,7 @@ const ReviewSystem = ({
                   onClick={() => setModalFilter("all")}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     modalFilter === "all"
-                      ? "bg-red-600 text-white"
+                      ? "bg-blue-600 text-white"
                       : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
                 >
@@ -618,7 +618,7 @@ const ReviewSystem = ({
                     onClick={() => setModalFilter(rating)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
                       modalFilter === rating
-                        ? "bg-red-600 text-white"
+                        ? "bg-blue-600 text-white"
                         : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                     } ${ratingCounts[rating] === 0 ? "opacity-50" : ""}`}
                     disabled={ratingCounts[rating] === 0}
@@ -634,7 +634,7 @@ const ReviewSystem = ({
             <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-4 sm:p-6">
               {modalLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 </div>
               ) : getFilteredModalReviews().length === 0 ? (
                 <div className="text-center py-12">
@@ -701,7 +701,7 @@ const ReviewSystem = ({
                       {/* Guest Info */}
                       <div className="flex items-center justify-between pt-3 border-t border-gray-700">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-red-400">
+                          <span className="font-semibold text-blue-400">
                             {review.guest_name}
                           </span>
                           {review.approved && (

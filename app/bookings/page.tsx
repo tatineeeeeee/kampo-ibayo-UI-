@@ -1598,7 +1598,7 @@ function BookingsPageContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <div className="text-white text-xl font-semibold mb-2">
             Loading your bookings...
           </div>
@@ -1667,7 +1667,7 @@ function BookingsPageContent() {
               </div>
             ) : (
               <Link href="/book" className="flex-shrink-0" prefetch={true}>
-                <button className="flex items-center gap-1 sm:gap-2 bg-red-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-700 transition">
+                <button className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-blue-700 transition">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">New </span>Book
                 </button>
@@ -1782,7 +1782,7 @@ function BookingsPageContent() {
                 </div>
               ) : (
                 <Link href="/book">
-                  <button className="bg-red-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-red-700 transition w-full sm:w-auto">
+                  <button className="bg-blue-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-blue-700 transition w-full sm:w-auto">
                     Make Your First Booking
                   </button>
                 </Link>
@@ -1875,7 +1875,7 @@ function BookingsPageContent() {
                     <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                          <div className="bg-red-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                          <div className="bg-blue-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1928,7 +1928,7 @@ function BookingsPageContent() {
                     {/* Details Grid - 2x2 on Mobile */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <Calendar className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-gray-400">
                             Check-in
@@ -1946,7 +1946,7 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <Calendar className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-gray-400">
                             Check-out
@@ -1964,7 +1964,7 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <Users className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <Users className="w-3 h-3 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-gray-400">
                             Guests
@@ -1975,7 +1975,7 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <PhilippinePeso className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        <PhilippinePeso className="w-3 h-3 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-gray-400">
                             {booking.payment_type === "full"
@@ -2175,7 +2175,7 @@ function BookingsPageContent() {
                               onClick={() => goToPage(pageNumber)}
                               className={`px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg transition min-w-[28px] sm:min-w-[32px] ${
                                 currentPage === pageNumber
-                                  ? "bg-red-600 text-white"
+                                  ? "bg-blue-600 text-white"
                                   : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
                               }`}
                             >
@@ -2552,7 +2552,7 @@ function BookingsPageContent() {
                       </div>
                       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                         <label className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                           New Check-out
                         </label>
                         <input
@@ -2690,7 +2690,7 @@ function BookingsPageContent() {
           <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
               {/* Modal Header */}
-              <div className="bg-red-600/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-gray-200/20 dark:border-gray-700/20">
+              <div className="bg-blue-600/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-gray-200/20 dark:border-gray-700/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     <div className="bg-white/20 p-1.5 sm:p-2 rounded-full flex-shrink-0">
@@ -2720,7 +2720,7 @@ function BookingsPageContent() {
                 <div className="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-200/50 dark:border-gray-600/50">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <div className="bg-red-600/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                      <div className="bg-blue-600/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -2751,7 +2751,7 @@ function BookingsPageContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                     <div className="space-y-3 sm:space-y-4">
                       <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">Check-in Date</p>
                           <p className="font-semibold text-sm sm:text-base truncate">
@@ -2764,7 +2764,7 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <Users className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                        <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">
                             Number of Guests
@@ -2777,7 +2777,7 @@ function BookingsPageContent() {
                     </div>
                     <div className="space-y-3 sm:space-y-4">
                       <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">
                             Check-out Date
@@ -2792,7 +2792,7 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                        <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs text-gray-400">
                             {selectedBooking.payment_type === "full"
@@ -2987,7 +2987,7 @@ function BookingsPageContent() {
                   {/* Booking Date */}
                   <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
                     <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
                       Booking Timeline
                     </h4>
                     <div className="space-y-1 sm:space-y-2">
@@ -3162,7 +3162,7 @@ export default function BookingsPage() {
       fallback={
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <div className="text-white text-xl font-semibold">Loading...</div>
           </div>
         </div>

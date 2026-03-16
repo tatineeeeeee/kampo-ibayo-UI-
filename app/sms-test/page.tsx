@@ -181,7 +181,7 @@ export default function SMSTestPage() {
               }
             }}
             disabled={loading || !phoneNumber}
-            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 mb-2"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 mb-2"
           >
             {loading ? "📱 Sending..." : "🚫 Test Cancellation SMS"}
           </button>

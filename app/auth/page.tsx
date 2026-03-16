@@ -954,7 +954,7 @@ export default function AuthPage() {
                   />
                 </div>
                 <h1 className="text-xl xl:text-3xl font-extrabold tracking-tight">
-                  <span className="text-red-500">Kampo</span> Ibayo
+                  <span className="text-blue-600">Kampo</span> Ibayo
                 </h1>
               </div>
 
@@ -992,8 +992,8 @@ export default function AuthPage() {
             {/* Features List */}
             <ul className="space-y-3 xl:space-y-5 text-xs xl:text-base">
               <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Shield className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Shield className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
                 </div>
                 <span>
                   <strong>24/7 Security</strong> <br />
@@ -1001,8 +1001,8 @@ export default function AuthPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Mountain className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Mountain className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
                 </div>
                 <span>
                   <strong>Breathtaking Views</strong> <br />
@@ -1010,8 +1010,8 @@ export default function AuthPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Users className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Users className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
                 </div>
                 <span>
                   <strong>Family-Friendly</strong> <br />
@@ -1019,8 +1019,8 @@ export default function AuthPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Check className="w-3 h-3 xl:w-4 xl:h-4 text-red-400" />
+                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
                 </div>
                 <span>
                   <strong>Easy Booking</strong> <br />
@@ -1090,7 +1090,7 @@ export default function AuthPage() {
                     />
                   </div>
                   <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                    <span className="text-red-500">Kampo</span>{" "}
+                    <span className="text-blue-600">Kampo</span>{" "}
                     <span className="text-gray-700">Ibayo</span>
                   </h1>
                 </div>
@@ -1207,7 +1207,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-blue-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdatingPassword
                     ? "Updating Password..."
@@ -1265,7 +1265,7 @@ export default function AuthPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-red-600 transition text-xs sm:text-sm lg:text-base"
+                  className="w-full bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-blue-600 transition text-xs sm:text-sm lg:text-base"
                 >
                   Sign In
                 </button>
@@ -1274,7 +1274,7 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-red-500 hover:text-red-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
+                    className="text-blue-500 hover:text-blue-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
                   >
                     Forgot your password?
                   </button>
@@ -1513,7 +1513,7 @@ export default function AuthPage() {
                           setTermsError(false);
                         }
                       }}
-                      className="mt-0.5 sm:mt-1 w-3 h-3 sm:w-4 sm:h-4 text-red-600 accent-red-600 flex-shrink-0"
+                      className="mt-0.5 sm:mt-1 w-3 h-3 sm:w-4 sm:h-4 text-blue-600 accent-blue-600 flex-shrink-0"
                       required
                     />
                     <label
@@ -1525,7 +1525,7 @@ export default function AuthPage() {
                         href="/legal/terms"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-red-500 hover:text-red-600 underline font-medium transition-colors"
+                        className="text-blue-500 hover:text-blue-600 underline font-medium transition-colors"
                       >
                         Terms of Service
                       </a>{" "}
@@ -1534,7 +1534,7 @@ export default function AuthPage() {
                         href="/legal/terms"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-red-500 hover:text-red-600 underline font-medium transition-colors"
+                        className="text-blue-500 hover:text-blue-600 underline font-medium transition-colors"
                       >
                         Privacy Policy
                       </a>
@@ -1554,7 +1554,7 @@ export default function AuthPage() {
                 {/* Create Account Button */}
                 <button
                   type="submit"
-                  className="w-full bg-red-500 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold shadow-lg hover:bg-red-600 hover:shadow-xl transition-all duration-200 text-xs sm:text-sm lg:text-base flex items-center justify-center space-x-1.5 sm:space-x-2 mt-4 sm:mt-6"
+                  className="w-full bg-blue-500 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all duration-200 text-xs sm:text-sm lg:text-base flex items-center justify-center space-x-1.5 sm:space-x-2 mt-4 sm:mt-6"
                 >
                   <FaUserPlus className="text-xs sm:text-sm lg:text-base" />
                   <span>Create Account</span>
@@ -1629,7 +1629,7 @@ export default function AuthPage() {
                         <button
                           type="submit"
                           disabled={isSendingResetEmail}
-                          className="w-full sm:w-1/2 bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-red-600 transition text-xs sm:text-sm order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          className="w-full sm:w-1/2 bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-blue-600 transition text-xs sm:text-sm order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                           {isSendingResetEmail ? (
                             <>
