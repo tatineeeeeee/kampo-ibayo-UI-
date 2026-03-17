@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
 
     const paymentProof = paymentProofs[0];
 
-    // Generate receipt data
-    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, 'payment');
+    // Generate receipt number using check-in date (deterministic — same number every download)
+    const receiptNumber = ReactPdfReceiptService.generateReceiptNumber(bookingId, 'payment', booking.check_in_date);
     const receiptData = {
       booking: {
         ...booking,

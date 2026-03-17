@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     // Get booking
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from('bookings')
-      .select('status, payment_type, total_amount')
+      .select('status, payment_type, total_amount, check_in_date')
       .eq('id', numBookingId)
       .single();
       
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         user_id: originalPayment.user_id,
         amount: numBalanceAmount,
         payment_method: paymentMethod || 'cash_on_arrival',
-        reference_number: `ARRIVAL-${numBookingId}-${Date.now()}`,
+        reference_number: `BAL-${booking.check_in_date?.replace(/-/g, '') || new Date().toISOString().split('T')[0].replace(/-/g, '')}-${String(numBookingId).padStart(3, '0')}`,
         status: 'verified',
         admin_notes: `Balance payment marked as paid on arrival. Original payment ID: ${originalPayment.id}`,
         verified_at: new Date().toISOString(),

@@ -393,6 +393,8 @@ export default function PaymentsPage() {
             balanceStatus === "cancelled" ||
             balanceStatus === "rejected"
           );
+        } else if (statusFilter === "walk_in") {
+          return payment.is_walk_in === true;
         } else if (statusFilter === "half") {
           return payment.payment_type === "half";
         } else if (statusFilter === "full") {
@@ -658,6 +660,20 @@ export default function PaymentsPage() {
             <span className="hidden sm:inline">Full Payments</span>
             <span className="ml-1">
               ({payments.filter((p) => p.payment_type === "full").length})
+            </span>
+          </button>
+          <button
+            onClick={() => setStatusFilter("walk_in")}
+            className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
+              statusFilter === "walk_in"
+                ? "bg-amber-100 text-amber-700 border border-amber-200"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+            }`}
+          >
+            <span className="sm:hidden">Walk-in</span>
+            <span className="hidden sm:inline">Walk-in</span>
+            <span className="ml-1">
+              ({payments.filter((p) => p.is_walk_in).length})
             </span>
           </button>
         </div>
@@ -1115,7 +1131,7 @@ export default function PaymentsPage() {
                         <div className="text-sm">
                           {payment.original_reference ? (
                             <div className="font-mono text-gray-700 bg-blue-50 px-2 py-1 rounded text-xs">
-                              💳 {payment.original_reference}
+                              {payment.original_reference}
                             </div>
                           ) : (
                             <span className="text-gray-400 italic text-xs">
@@ -1128,7 +1144,7 @@ export default function PaymentsPage() {
                         <div className="text-sm">
                           {payment.balance_reference ? (
                             <div className="font-mono text-amber-700 bg-amber-50 px-2 py-1 rounded text-xs">
-                              🏨 {payment.balance_reference}
+                              {payment.balance_reference}
                             </div>
                           ) : (
                             <span className="text-gray-400 italic text-xs">
@@ -1140,34 +1156,37 @@ export default function PaymentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            payment.booking_status?.toLowerCase() ===
-                            "cancelled"
+                            payment.booking_status?.toLowerCase() === "cancelled"
                               ? "bg-red-100 text-red-800"
-                              : payment.original_status === "verified" &&
-                                  (payment.payment_type === "full" ||
-                                    payment.balance_status === "verified")
+                              : payment.is_walk_in && (payment.booking_status === "confirmed" || payment.booking_status === "completed")
                                 ? "bg-green-100 text-green-800"
                                 : payment.original_status === "verified" &&
-                                    payment.payment_type === "half"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : payment.original_status === "rejected"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-gray-100 text-gray-800"
+                                    (payment.payment_type === "full" ||
+                                      payment.balance_status === "verified")
+                                  ? "bg-green-100 text-green-800"
+                                  : payment.original_status === "verified" &&
+                                      payment.payment_type === "half"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : payment.original_status === "rejected"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {payment.booking_status?.toLowerCase() === "cancelled"
                             ? "cancelled"
-                            : payment.payment_type === "full" &&
-                                payment.original_status === "verified"
-                              ? "paid"
-                              : payment.payment_type === "half" &&
-                                  payment.original_status === "verified" &&
-                                  payment.balance_status === "verified"
+                            : payment.is_walk_in && (payment.booking_status === "confirmed" || payment.booking_status === "completed")
+                              ? "paid (cash)"
+                              : payment.payment_type === "full" &&
+                                  payment.original_status === "verified"
                                 ? "paid"
                                 : payment.payment_type === "half" &&
-                                    payment.original_status === "verified"
-                                  ? "partially_paid"
-                                  : payment.original_status || "pending"}
+                                    payment.original_status === "verified" &&
+                                    payment.balance_status === "verified"
+                                  ? "paid"
+                                  : payment.payment_type === "half" &&
+                                      payment.original_status === "verified"
+                                    ? "partially_paid"
+                                    : payment.original_status || "pending"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1685,11 +1704,6 @@ export default function PaymentsPage() {
                                         : "text-blue-700 bg-blue-50"
                                     }`}
                                   >
-                                    {proof.reference_number.startsWith(
-                                      "ARRIVAL-",
-                                    )
-                                      ? "🏨"
-                                      : "💳"}{" "}
                                     {proof.reference_number}
                                   </div>
                                 ) : (

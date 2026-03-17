@@ -132,8 +132,8 @@ export async function GET(request: NextRequest) {
       // Determine overall booking status
       const isWalkIn = String(booking.special_requests || '').startsWith('[WALK-IN]');
       let consolidatedStatus = 'pending';
-      if (isWalkIn && booking.status === 'confirmed') {
-        // Walk-in confirmed bookings are always considered paid (cash on spot)
+      if (isWalkIn && (booking.status === 'confirmed' || booking.status === 'completed')) {
+        // Walk-in bookings are always considered paid (cash on spot)
         consolidatedStatus = 'paid';
       } else if (totalPaidAmount >= (booking.total_amount || 0) && totalPaidAmount > 0) {
         consolidatedStatus = 'paid';
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Create single consolidated entry per booking
-      const walkInPaidAmount = isWalkIn && booking.status === 'confirmed'
+      const walkInPaidAmount = isWalkIn && (booking.status === 'confirmed' || booking.status === 'completed')
         ? (booking.total_amount || 0)
         : 0;
 

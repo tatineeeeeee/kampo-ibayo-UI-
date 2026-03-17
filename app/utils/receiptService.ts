@@ -55,13 +55,21 @@ export class ReceiptService {
   }
 
   /**
-   * Generate receipt number based on booking ID and timestamp
-   * Updates for rescheduled bookings to reflect current dates
+   * Generate receipt number using check-in date
+   * Format: YYYYMMDD### (e.g., 20260317001)
    */
-  static generateReceiptNumber(bookingId: number, isRescheduled: boolean = false): string {
-    const timestamp = Date.now().toString().slice(-6);
-    const prefix = isRescheduled ? 'KIR-R' : 'KIR';
-    return `${prefix}-${bookingId.toString().padStart(4, '0')}-${timestamp}`;
+  static generateReceiptNumber(bookingId: number, isRescheduled: boolean = false, checkInDate?: string): string {
+    const prefix = isRescheduled ? 'REF-' : '';
+    const bid = bookingId.toString().padStart(3, '0');
+    if (checkInDate) {
+      const cleaned = checkInDate.replace(/-/g, '');
+      return `${prefix}${cleaned}-${bid}`;
+    }
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${prefix}${y}${m}${d}-${bid}`;
   }
 
   /**

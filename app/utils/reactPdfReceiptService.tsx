@@ -1148,23 +1148,28 @@ export class ReactPdfReceiptService {
    */
   static generateReceiptNumber(
     bookingId: string,
-    receiptType: "payment" | "refund" = "payment"
+    receiptType: "payment" | "refund" = "payment",
+    checkInDate?: string
   ): string {
-    // Format: KIR-YYMMDD-TTTTBBB
-    // KIR    = Kampo Ibayo Resort prefix
-    // YYMMDD = Date generated (e.g., 260316 = March 16, 2026)
-    // TTTT   = Last 4 digits of Date.now() timestamp for uniqueness
-    // BBB    = Last 3 digits of booking ID
-    // Example: KIR-260316-807081 (booking #81, generated Mar 16 2026)
-    // Example: KIR-REF-260316-807081 (refund receipt)
-    const prefix = receiptType === "refund" ? "KIR-REF" : "KIR";
+    // Format: YYYYMMDD-BBB (check-in date + booking ID)
+    // YYYYMMDD = Check-in date
+    // BBB      = Booking ID zero-padded
+    // Example: 20260317-060 = March 17, 2026, booking #60
+    // For refunds: REF-20260317-060
+    const prefix = receiptType === "refund" ? "REF-" : "";
+    const bid = bookingId.toString().padStart(3, "0");
+
+    if (checkInDate) {
+      const cleaned = checkInDate.replace(/-/g, "");
+      return `${prefix}${cleaned}-${bid}`;
+    }
+
+    // Fallback: use current date if no check-in date provided
     const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
+    const year = date.getFullYear().toString();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
-    const time = Date.now().toString().slice(-4); // Last 4 digits for uniqueness
-    const bookingShort = bookingId.toString().slice(-3); // Last 3 digits of booking ID
-    return `${prefix}-${year}${month}${day}-${time}${bookingShort}`;
+    return `${prefix}${year}${month}${day}-${bid}`;
   }
 
   /**

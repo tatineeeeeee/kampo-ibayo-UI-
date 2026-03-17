@@ -119,9 +119,9 @@ Audited against actual codebase — March 17, 2026.
 ### 12. Edit Role — Auto Staff Assignment
 > Pag nag-add ng bagong user, automatic na naka-set as "Staff".
 
-- **Status:** NOT YET DONE ❌
-- **Files:** `app/admin/users/page.tsx`
-- **Note:** No "add user" functionality found — only role filtering for viewing staff users.
+- **Status:** DONE ✅
+- **Files:** `app/admin/users/page.tsx`, `app/api/admin/create-user/route.ts` (new)
+- **Note:** Added "Add User" button + modal for admin/super admin. Creates user via `supabaseAdmin.auth.admin.createUser()` with temp password shown once. Default role is "Staff". Only super admin can create admin accounts. Includes AddUserModal, PasswordRevealModal, phone validation, duplicate email detection, and auth rollback on DB failure.
 
 ---
 
@@ -192,9 +192,9 @@ Audited against actual codebase — March 17, 2026.
 ### 19. Add User & Role Designation (Ma'am Bucog)
 > Add User function with proper role designation.
 
-- **Status:** NOT YET DONE ❌
-- **Files:** `app/admin/users/page.tsx`
-- **Note:** Only user deletion and viewing found. No "add user" dialog with role selection.
+- **Status:** DONE ✅
+- **Files:** `app/admin/users/page.tsx`, `app/api/admin/create-user/route.ts` (new)
+- **Note:** Same implementation as #12. Full Add User feature with role selection, temp password generation, permission matrix (super admin creates admin/staff, admin creates staff only, staff cannot create).
 
 ---
 
@@ -218,6 +218,53 @@ Audited against actual codebase — March 17, 2026.
 
 ---
 
+## Session Fixes — March 17, 2026
+
+### 22. Admin Reports — Daily Operations Redesign
+> Redesigned Daily Operations Analytics section for clarity and accuracy.
+
+- **Status:** DONE ✅
+- **Files:** `app/admin/reports/page.tsx`
+- **Note:** Removed redundant bar chart. Replaced with full-width summary: stat cards (Departing → Arriving → Total Guests) + guest detail cards showing name, email, guests, dates, amount. Added special_requests and brings_pet indicators. All metrics now filter for confirmed/completed only (was counting cancelled bookings). Labels changed from Check-ins/Check-outs/Staying to Departing/Arriving/Total Guests to match real-world resort flow (checkout 1:00 PM → checkin 3:00 PM).
+
+---
+
+### 23. Admin Reports — User Report Customer List
+> User Report now shows full customer list with contact info, visits, spending.
+
+- **Status:** DONE ✅
+- **Files:** `app/admin/reports/page.tsx`
+- **Note:** Added Customer List table with: name, email, phone, visit count, category (New/Returning/Frequent/VIP), total spent, last/first visit. Includes ALL registered users (even those with no bookings). Pagination (10/page). Admin/Staff badges. Users sorted first (by spending), staff/admin at bottom. Guest Visit Frequency pie chart fixed to only count confirmed/completed bookings. Date filter bypassed for User Report (shows all-time data).
+
+---
+
+### 24. Admin Reports — Booking Status Report Fixes
+> Fixed filters, date defaults, and chart accuracy for Booking Status Report.
+
+- **Status:** DONE ✅
+- **Files:** `app/admin/reports/page.tsx`
+- **Note:** Added "Completed" status to filter dropdown (was missing). Renamed "All Status" to "Active Bookings" (excludes cancelled by default). Default date range now current month (was today-only). Payment Status pie chart filters confirmed/completed only. Walk-in vs Online section filters confirmed/completed only. All charts respect dropdown filter when specific status selected. Fixed timezone bug in first-of-month date calculation.
+
+---
+
+### 25. Receipt Number Format (Sir Jericho)
+> Changed receipt number from timestamp-based to date+booking ID format.
+
+- **Status:** DONE ✅
+- **Files:** `app/utils/reactPdfReceiptService.tsx`, `app/utils/receiptService.ts`, `app/api/user/download-receipt/route.ts`, `app/api/user/generate-receipt/route.ts`, `app/api/admin/mark-balance-paid/route.ts`
+- **Note:** Old format: `KIR-260317-TTTT081` (random timestamp, changed every download). New format: `20260413-079` (check-in date YYYYMMDD + booking ID, deterministic). Balance reference: `BAL-20260323-078`. Same number on PDF download and email receipt. Updated 4 old database records from ARRIVAL-/BAL- format to new format. Tests updated.
+
+---
+
+### 26. Walk-in Payment Status Fix
+> Walk-in bookings now display correctly in admin payments page.
+
+- **Status:** DONE ✅
+- **Files:** `app/api/admin/payments/route.ts`, `app/admin/payments/page.tsx`
+- **Note:** Walk-ins showed ₱0 and "pending" because they have no payment_proofs records. Fixed API and frontend to detect walk-in bookings (confirmed OR completed) and show "paid (cash)" with correct amount. Added "Walk-in" filter button (amber) to payments page. Removed emojis from reference number displays.
+
+---
+
 ## Summary
 
 | # | Item | Status |
@@ -233,15 +280,20 @@ Audited against actual codebase — March 17, 2026.
 | 9 | Character Highlight | ✅ DONE |
 | 10 | Admin Balance Notification | ❌ NOT YET |
 | 11 | Balance Visibility | ❌ NOT YET |
-| 12 | Auto Staff Role | ❌ NOT YET |
+| 12 | Auto Staff Role | ✅ DONE |
 | 13 | Admin Reports Date Filter Range | ✅ DONE |
 | 14 | Footer Overlap Fix | ✅ DONE |
 | 15 | Daily Report Date Disable | ✅ DONE |
 | 16 | Gallery Carousel | ✅ DONE |
 | 17 | Gallery Category Page | ✅ DONE |
 | 18 | Guest Limit Confirmed | ✅ DONE |
-| 19 | Add User & Roles | ❌ NOT YET |
+| 19 | Add User & Roles | ✅ DONE |
 | 20 | Reschedule Price Preview Before Confirm | ❌ NOT YET |
 | 21 | Reschedule Upload Proof Blocked After Back | ❌ NOT YET |
+| 22 | Daily Operations Redesign | ✅ DONE |
+| 23 | User Report Customer List | ✅ DONE |
+| 24 | Booking Status Report Fixes | ✅ DONE |
+| 25 | Receipt Number Format | ✅ DONE |
+| 26 | Walk-in Payment Status Fix | ✅ DONE |
 
-**DONE: 15/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 6/21**
+**DONE: 22/26 | NOT YET DONE: 4/26**

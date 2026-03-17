@@ -2,36 +2,26 @@ import { describe, it, expect } from 'vitest';
 import { ReceiptService } from './receiptService';
 
 describe('ReceiptService.generateReceiptNumber', () => {
-  it('generates receipt number with KIR prefix', () => {
-    const receipt = ReceiptService.generateReceiptNumber(1);
-    expect(receipt).toMatch(/^KIR-0001-\d{6}$/);
+  it('generates receipt number from check-in date + booking ID', () => {
+    const receipt = ReceiptService.generateReceiptNumber(79, false, '2026-04-13');
+    expect(receipt).toBe('20260413-079');
   });
 
-  it('zero-pads booking ID to 4 digits', () => {
+  it('uses REF- prefix for rescheduled bookings', () => {
+    const receipt = ReceiptService.generateReceiptNumber(60, true, '2026-03-17');
+    expect(receipt).toBe('REF-20260317-060');
+  });
+
+  it('falls back to current date when no check-in date provided', () => {
     const receipt = ReceiptService.generateReceiptNumber(42);
-    expect(receipt).toMatch(/^KIR-0042-\d{6}$/);
+    expect(receipt).toMatch(/^\d{8}-042$/);
   });
 
-  it('handles large booking IDs', () => {
-    const receipt = ReceiptService.generateReceiptNumber(12345);
-    expect(receipt).toMatch(/^KIR-12345-\d{6}$/);
-  });
-
-  it('uses KIR-R prefix for rescheduled bookings', () => {
-    const receipt = ReceiptService.generateReceiptNumber(1, true);
-    expect(receipt).toMatch(/^KIR-R-0001-\d{6}$/);
-  });
-
-  it('uses KIR prefix when not rescheduled (default)', () => {
-    const receipt = ReceiptService.generateReceiptNumber(1, false);
-    expect(receipt).toMatch(/^KIR-0001-\d{6}$/);
-  });
-
-  it('appends 6-digit timestamp suffix', () => {
-    const receipt = ReceiptService.generateReceiptNumber(1);
-    const parts = receipt.split('-');
-    const timestamp = parts[parts.length - 1];
-    expect(timestamp).toMatch(/^\d{6}$/);
+  it('generates consistent number for same booking', () => {
+    const receipt1 = ReceiptService.generateReceiptNumber(60, false, '2026-03-17');
+    const receipt2 = ReceiptService.generateReceiptNumber(60, false, '2026-03-17');
+    expect(receipt1).toBe(receipt2);
+    expect(receipt1).toBe('20260317-060');
   });
 });
 
