@@ -479,6 +479,42 @@ function SmartWorkflowStatusCell({
 }
 
 // Smart Confirm Button - Only allows confirmation after payment verification
+// Shows paid/remaining in admin booking table — only when partially paid
+function AdminPaymentBreakdown({ bookingId, totalAmount, paymentStatus }: { bookingId: number; totalAmount: number; paymentStatus: string }) {
+  const [paidAmount, setPaidAmount] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Only fetch for non-fully-paid bookings
+    if (paymentStatus === "paid" || paymentStatus === "verified") {
+      setPaidAmount(totalAmount);
+      return;
+    }
+    const fetchPaid = async () => {
+      const { data } = await supabase
+        .from("payment_proofs")
+        .select("amount")
+        .eq("booking_id", bookingId)
+        .eq("status", "verified");
+      if (data) {
+        setPaidAmount(data.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0));
+      }
+    };
+    fetchPaid();
+  }, [bookingId, totalAmount, paymentStatus]);
+
+  if (paidAmount === null || paidAmount === 0 || paidAmount >= totalAmount) return null;
+
+  const remaining = totalAmount - paidAmount;
+  return (
+    <div className="text-[11px] mt-0.5">
+      <span className="text-green-600 font-medium">₱{paidAmount.toLocaleString()}</span>
+      <span className="text-gray-400"> paid · </span>
+      <span className="text-amber-600 font-medium">₱{remaining.toLocaleString()}</span>
+      <span className="text-gray-400"> due</span>
+    </div>
+  );
+}
+
 function SmartConfirmButton({
   booking,
   onConfirm,
@@ -2883,9 +2919,13 @@ export default function BookingsPage() {
                         ₱{booking.total_amount.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-gray-500">
-                        {booking.payment_type === "full"
-                          ? "Full Pay"
-                          : "50% Down"}
+                        {booking.payment_status === "paid" || booking.payment_status === "verified"
+                          ? "Paid"
+                          : booking.payment_status === "payment_review"
+                            ? "Under Review"
+                            : booking.payment_type === "half"
+                              ? "50% Down"
+                              : "Pending"}
                       </p>
                     </div>
                   </div>
@@ -3046,10 +3086,15 @@ export default function BookingsPage() {
                           ₱{booking.total_amount.toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {booking.payment_type === "full"
-                            ? "Full Pay"
-                            : "50% Down"}
+                          {booking.payment_status === "paid" || booking.payment_status === "verified"
+                            ? "Paid"
+                            : booking.payment_status === "payment_review"
+                              ? "Under Review"
+                              : booking.payment_type === "half"
+                                ? "50% Down"
+                                : "Pending"}
                         </div>
+                        <AdminPaymentBreakdown bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status || ""} />
                       </td>
                       <td className="p-3">
                         <SmartWorkflowStatusCell

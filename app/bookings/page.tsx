@@ -252,6 +252,101 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   );
 }
 
+// Component to show amount with paid/remaining on booking card
+function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus }: { bookingId: number; totalAmount: number; paymentStatus?: string }) {
+  const [paidAmount, setPaidAmount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchPaid = async () => {
+      const { data } = await supabase
+        .from("payment_proofs")
+        .select("amount")
+        .eq("booking_id", bookingId)
+        .eq("status", "verified");
+      if (data) {
+        const total = data.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0);
+        setPaidAmount(total);
+      }
+    };
+    fetchPaid();
+  }, [bookingId, paymentStatus]);
+
+  // Still loading or fully paid — show total
+  if (paidAmount === null || paidAmount >= totalAmount) {
+    return (
+      <p className="font-semibold text-green-400 text-xs">
+        ₱{(totalAmount / 1000).toFixed(1)}k
+      </p>
+    );
+  }
+
+  // No payment yet
+  if (paidAmount === 0) {
+    return (
+      <p className="font-semibold text-yellow-400 text-xs">
+        ₱{(totalAmount / 1000).toFixed(1)}k
+      </p>
+    );
+  }
+
+  // Partial payment — show breakdown
+  const remaining = totalAmount - paidAmount;
+  return (
+    <div>
+      <p className="font-bold text-amber-400 text-sm">
+        ₱{(totalAmount / 1000).toFixed(1)}k
+      </p>
+      <p className="text-xs text-gray-300">
+        <span className="text-green-400">₱{(paidAmount / 1000).toFixed(1)}k</span> paid · <span className="text-amber-400">₱{(remaining / 1000).toFixed(1)}k</span> due
+      </p>
+    </div>
+  );
+}
+
+// Component to show paid/remaining detail in booking details modal
+function PaymentBreakdownDetail({ bookingId, totalAmount }: { bookingId: number; totalAmount: number }) {
+  const [paidAmount, setPaidAmount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchPaid = async () => {
+      const { data } = await supabase
+        .from("payment_proofs")
+        .select("amount")
+        .eq("booking_id", bookingId)
+        .eq("status", "verified");
+      if (data) {
+        const total = data.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0);
+        setPaidAmount(total);
+      }
+    };
+    fetchPaid();
+  }, [bookingId]);
+
+  if (paidAmount === null) {
+    return <p className="text-sm text-gray-400">Loading...</p>;
+  }
+
+  const remaining = Math.max(0, totalAmount - paidAmount);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-gray-500 dark:text-gray-400">Paid</span>
+        <span className="text-sm font-semibold text-green-600 dark:text-green-400">₱{paidAmount.toLocaleString()}</span>
+      </div>
+      {remaining > 0 && (
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-gray-500 dark:text-gray-400">Remaining</span>
+          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">₱{remaining.toLocaleString()}</span>
+        </div>
+      )}
+      {remaining === 0 && paidAmount > 0 && (
+        <p className="text-xs text-green-600 dark:text-green-400 font-medium">Fully Paid</p>
+      )}
+    </div>
+  );
+}
+
 // Component to show dynamic payment amount info based on booking payment type
 function PaymentAmountInfo({ bookingId }: { bookingId: number }) {
   const [paymentInfo, setPaymentInfo] = useState<{
@@ -2001,20 +2096,15 @@ function BookingsPageContent() {
                         <PhilippinePeso className="w-3 h-3 text-blue-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-gray-400">
-                            {booking.payment_type === "full"
-                              ? "Full Pay"
-                              : "50% Down"}
+                            {booking.payment_status === "paid" || booking.payment_status === "verified"
+                              ? "Paid"
+                              : booking.payment_status === "payment_review"
+                                ? "Under Review"
+                                : booking.payment_type === "half"
+                                  ? "50% Down"
+                                  : "Total"}
                           </p>
-                          <p className="font-semibold text-green-400 text-xs">
-                            ₱
-                            {(
-                              (booking.payment_amount ||
-                                (booking.payment_type === "full"
-                                  ? booking.total_amount
-                                  : booking.total_amount * 0.5)) / 1000
-                            ).toFixed(1)}
-                            k
-                          </p>
+                          <PaymentBreakdownAmount bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status ?? undefined} />
                         </div>
                       </div>
                     </div>
@@ -2935,32 +3025,25 @@ function BookingsPageContent() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    {/* Payment Type */}
+                    {/* Total Amount */}
                     <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Payment Type
+                        Total Amount
                       </p>
-                      <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white capitalize">
-                        {selectedBooking.payment_type === "full"
-                          ? "Full Payment"
-                          : "Half Payment (50% Downpayment)"}
+                      <p className="font-bold text-lg text-green-600 dark:text-green-400">
+                        ₱{selectedBooking.total_amount.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        {selectedBooking.payment_type === "half" ? "50% Downpayment" : "Full Payment"}
                       </p>
                     </div>
 
-                    {/* Required Amount */}
+                    {/* Payment Breakdown */}
                     <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        {selectedBooking.payment_type === "full"
-                          ? "Total Amount"
-                          : "Required Downpayment"}
+                        Payment Breakdown
                       </p>
-                      <p className="font-bold text-lg text-green-600 dark:text-green-400">
-                        {selectedBooking.payment_type === "full"
-                          ? selectedBooking.total_amount.toLocaleString()
-                          : (
-                              selectedBooking.total_amount * 0.5
-                            ).toLocaleString()}
-                      </p>
+                      <PaymentBreakdownDetail bookingId={selectedBooking.id} totalAmount={selectedBooking.total_amount} />
                     </div>
 
                     {/* Payment Status */}
@@ -2969,25 +3052,32 @@ function BookingsPageContent() {
                         Payment Status
                       </p>
                       <div className="flex items-center gap-2">
-                        {selectedBooking.status === "confirmed" ? (
+                        {selectedBooking.payment_status === "paid" || selectedBooking.payment_status === "verified" ? (
                           <>
                             <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
                             <span className="text-sm font-medium text-green-600 dark:text-green-400">
                               Payment Verified
                             </span>
                           </>
-                        ) : selectedBooking.status === "pending" ? (
+                        ) : selectedBooking.payment_status === "payment_review" ? (
                           <>
                             <HourglassIcon className="w-3 h-3 text-yellow-500 flex-shrink-0" />
                             <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
-                              Awaiting Payment
+                              Under Review
+                            </span>
+                          </>
+                        ) : selectedBooking.payment_status === "rejected" ? (
+                          <>
+                            <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                              Payment Rejected
                             </span>
                           </>
                         ) : (
                           <>
-                            <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
-                            <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                              Payment Required
+                            <HourglassIcon className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                              Awaiting Payment
                             </span>
                           </>
                         )}

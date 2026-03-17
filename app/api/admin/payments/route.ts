@@ -135,13 +135,18 @@ export async function GET(request: NextRequest) {
       if (isWalkIn && (booking.status === 'confirmed' || booking.status === 'completed')) {
         // Walk-in bookings are always considered paid (cash on spot)
         consolidatedStatus = 'paid';
+      } else if (booking.payment_status === 'payment_review') {
+        // Payment proof uploaded and waiting for admin review — show as under review
+        consolidatedStatus = hasPendingProofs ? 'pending' : 'payment_review';
       } else if (totalPaidAmount >= (booking.total_amount || 0) && totalPaidAmount > 0) {
         consolidatedStatus = 'paid';
       } else if (booking.payment_status === 'paid' && proofs.length === 0) {
         // Other cash bookings: no proofs but booking marked as paid
         consolidatedStatus = 'paid';
-      } else if (originalProof && originalProof.status === 'verified') {
+      } else if (originalProof && originalProof.status === 'verified' && totalPaidAmount < (booking.total_amount || 0)) {
         consolidatedStatus = 'partially_paid';
+      } else if (originalProof && originalProof.status === 'verified') {
+        consolidatedStatus = 'paid';
       } else if (hasPendingProofs) {
         consolidatedStatus = 'pending';
       } else if (hasRejectedProofs) {

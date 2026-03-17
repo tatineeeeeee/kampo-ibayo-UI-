@@ -923,9 +923,17 @@ export default function PaymentsPage() {
                         )}
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-green-600">
-                      ₱{(payment.original_amount || 0).toLocaleString()}
-                    </span>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-green-600">
+                        ₱{(payment.amount || 0).toLocaleString()}
+                      </span>
+                      {payment.total_amount && payment.amount < payment.total_amount && payment.amount > 0 && (
+                        <div className="text-[10px]">
+                          <span className="text-amber-600 font-medium">₱{(payment.total_amount - payment.amount).toLocaleString()}</span>
+                          <span className="text-gray-400"> due</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                     <div>
@@ -1039,8 +1047,14 @@ export default function PaymentsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-lg font-bold text-green-600">
-                          ₱{(payment.original_amount || 0).toLocaleString()}
+                          ₱{(payment.amount || 0).toLocaleString()}
                         </span>
+                        {payment.total_amount && payment.amount < payment.total_amount && payment.amount > 0 && (
+                          <div className="text-xs mt-0.5">
+                            <span className="text-amber-600 font-medium">₱{(payment.total_amount - payment.amount).toLocaleString()}</span>
+                            <span className="text-gray-400"> due</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm">
@@ -1081,9 +1095,18 @@ export default function PaymentsPage() {
                                 </div>
                               );
                             } else if (paymentType === "full") {
+                              const paidAmt = amount || 0;
+                              const bookingTotal = totalAmount || 0;
+                              if (bookingTotal > 0 && paidAmt < bookingTotal && paidAmt > 0) {
+                                return (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                    Rescheduled
+                                  </span>
+                                );
+                              }
                               return (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  Full Payment (100%)
+                                  Full Payment
                                 </span>
                               );
                             }
