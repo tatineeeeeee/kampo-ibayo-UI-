@@ -13,9 +13,17 @@ import {
   ChevronsRight,
   ShieldCheck,
   Crown,
+  UserPlus,
+  Copy,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 import { exportUsersCSV } from "../../utils/csvExport";
 import { exportUsersPDF } from "../../utils/pdfExport";
+import {
+  validatePhilippinePhone,
+  formatPhoneForDisplay,
+} from "../../utils/phoneUtils";
 
 type User = Tables<"users">;
 type Booking = Tables<"bookings">;
@@ -285,6 +293,389 @@ function DeleteConfirmModal({
             className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
           >
             Delete User
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add User Modal
+// ---------------------------------------------------------------------------
+
+interface AddUserModalProps {
+  onClose: () => void;
+  onSuccess: (tempPassword: string, userName: string, userEmail: string) => void;
+  canCreateAdmin: boolean;
+}
+
+function AddUserModal({ onClose, onSuccess, canCreateAdmin }: AddUserModalProps) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("staff");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
+
+  const clearFieldError = (field: string) => {
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+    setGeneralError("");
+  };
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!firstName.trim()) newErrors.firstName = "First name is required";
+    else if (firstName.trim().length > 50)
+      newErrors.firstName = "Must be 50 characters or less";
+
+    if (!lastName.trim()) newErrors.lastName = "Last name is required";
+    else if (lastName.trim().length > 50)
+      newErrors.lastName = "Must be 50 characters or less";
+
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!email.includes("@") || !email.includes("."))
+      newErrors.email = "Please enter a valid email address";
+
+    if (phone.trim() && !validatePhilippinePhone(phone))
+      newErrors.phone = "Invalid format. Use 09XX-XXX-XXXX";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    setGeneralError("");
+
+    try {
+      const { getFreshSession } = await import("../../utils/apiTimeout");
+      const session = await getFreshSession(supabase);
+
+      if (!session) {
+        setGeneralError("Session expired. Please log in again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await fetch("/api/admin/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          role,
+        }),
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        setGeneralError("Server returned an unexpected response");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!response.ok) {
+        setGeneralError(result.error || "Failed to create user");
+        setIsSubmitting(false);
+        return;
+      }
+
+      onSuccess(result.tempPassword, result.user.fullName, result.user.email);
+    } catch {
+      setGeneralError("Network error. Please check your connection.");
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2 bg-emerald-100 rounded-full">
+            <UserPlus className="w-5 h-5 text-emerald-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900">Add New User</h2>
+        </div>
+
+        {generalError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            {generalError}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {/* First Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              First Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                clearFieldError("firstName");
+              }}
+              placeholder="Enter first name"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 ${
+                errors.firstName ? "border-red-400" : "border-gray-300"
+              }`}
+              disabled={isSubmitting}
+            />
+            {errors.firstName && (
+              <p className="text-xs text-red-600 mt-1">{errors.firstName}</p>
+            )}
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Last Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value);
+                clearFieldError("lastName");
+              }}
+              placeholder="Enter last name"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 ${
+                errors.lastName ? "border-red-400" : "border-gray-300"
+              }`}
+              disabled={isSubmitting}
+            />
+            {errors.lastName && (
+              <p className="text-xs text-red-600 mt-1">{errors.lastName}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
+              placeholder="user@example.com"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 ${
+                errors.email ? "border-red-400" : "border-gray-300"
+              }`}
+              disabled={isSubmitting}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => {
+                const formatted = formatPhoneForDisplay(e.target.value);
+                setPhone(formatted);
+                clearFieldError("phone");
+              }}
+              placeholder="09XX-XXX-XXXX"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 ${
+                errors.phone ? "border-red-400" : "border-gray-300"
+              }`}
+              disabled={isSubmitting}
+            />
+            {errors.phone && (
+              <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+            )}
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+              disabled={isSubmitting}
+            >
+              <option value="staff">Staff — Admin panel access</option>
+              {canCreateAdmin && (
+                <option value="admin">Admin — Full system access</option>
+              )}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {role === "staff"
+                ? "Staff can view the admin panel and manage bookings"
+                : "Admins have full system access and all permissions"}
+            </p>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end space-x-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                Creating...
+              </>
+            ) : (
+              "Create User"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Password Reveal Modal (shown once after user creation)
+// ---------------------------------------------------------------------------
+
+interface PasswordRevealModalProps {
+  userName: string;
+  userEmail: string;
+  tempPassword: string;
+  onClose: () => void;
+}
+
+function PasswordRevealModal({
+  userName,
+  userEmail,
+  tempPassword,
+  onClose,
+}: PasswordRevealModalProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: select the text
+      const el = document.getElementById("temp-password-display");
+      if (el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-emerald-100 rounded-full">
+            <Check className="w-5 h-5 text-emerald-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900">
+            User Created Successfully
+          </h2>
+        </div>
+
+        {/* User info card */}
+        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+          <p className="text-sm font-medium text-gray-900">{userName}</p>
+          <p className="text-sm text-gray-600">{userEmail}</p>
+        </div>
+
+        {/* Temporary password */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Temporary Password
+          </label>
+          <div className="flex items-center gap-2">
+            <code
+              id="temp-password-display"
+              className="flex-1 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm text-gray-900 select-all"
+            >
+              {tempPassword}
+            </code>
+            <button
+              onClick={handleCopy}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                copied
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Warning */}
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-3 mb-5 rounded-r-lg">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-800">
+              This password will only be shown once. Please share it securely
+              with the new user. They can change it later via password reset.
+            </p>
+          </div>
+        </div>
+
+        {/* Done button */}
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Done
           </button>
         </div>
       </div>
@@ -611,6 +1002,15 @@ export default function UsersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
+  // Add User modal state
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showPasswordReveal, setShowPasswordReveal] = useState(false);
+  const [createdUserInfo, setCreatedUserInfo] = useState<{
+    name: string;
+    email: string;
+    tempPassword: string;
+  } | null>(null);
+
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -799,6 +1199,30 @@ export default function UsersPage() {
 
     // Admins and Super Admins can edit users and staff roles
     return isCurrentUserAdmin || isCurrentUserSuperAdmin;
+  };
+
+  // 🔐 Permission check: Can current user create new users?
+  const canCreateUser = (): boolean => {
+    if (currentUserRole === "staff") return false;
+    return isCurrentUserAdmin || isCurrentUserSuperAdmin;
+  };
+
+  // Add User handlers
+  const handleAddUserSuccess = (
+    tempPassword: string,
+    userName: string,
+    userEmail: string
+  ) => {
+    setShowAddUserModal(false);
+    setCreatedUserInfo({ name: userName, email: userEmail, tempPassword });
+    setShowPasswordReveal(true);
+    success(`User ${userName} created successfully!`);
+    fetchUsers();
+  };
+
+  const handlePasswordRevealClose = () => {
+    setShowPasswordReveal(false);
+    setCreatedUserInfo(null);
   };
 
   const handleDeleteClick = (user: User) => {
@@ -1081,6 +1505,18 @@ export default function UsersPage() {
           </div>
 
           <div className="flex gap-2 w-full sm:w-auto">
+            {/* Add User Button */}
+            {canCreateUser() && (
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 text-sm"
+                title="Add a new staff or admin user"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add User</span>
+              </button>
+            )}
+
             {/* Export CSV Button */}
             <button
               onClick={() => {
@@ -1560,6 +1996,25 @@ export default function UsersPage() {
           user={userToDelete}
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
+        />
+      )}
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <AddUserModal
+          onClose={() => setShowAddUserModal(false)}
+          onSuccess={handleAddUserSuccess}
+          canCreateAdmin={isCurrentUserSuperAdmin}
+        />
+      )}
+
+      {/* Password Reveal Modal */}
+      {showPasswordReveal && createdUserInfo && (
+        <PasswordRevealModal
+          userName={createdUserInfo.name}
+          userEmail={createdUserInfo.email}
+          tempPassword={createdUserInfo.tempPassword}
+          onClose={handlePasswordRevealClose}
         />
       )}
     </div>

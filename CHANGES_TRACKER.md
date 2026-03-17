@@ -130,9 +130,10 @@ Audited against actual codebase — March 17, 2026.
 ### 13. Admin Reports — Date Filter Range
 > Panel pointed out: bakit 2025 ang start date ng reports date filter? Need dynamic range — start from earliest booking year hanggang current year + 1 or 2.
 
-- **Status:** NOT YET DONE ❌
+- **Status:** DONE ✅
+- **Commit:** `a186c18` — Fix admin reports chart accuracy with report-type-aware queries
 - **Files:** `app/admin/reports/page.tsx`
-- **Note:** Currently starts at 2025 (today). Should be dynamic: earliest booking year (2025) to current year + 1 (2027). Range grows automatically over time.
+- **Note:** Dynamic date range implemented.
 
 ---
 
@@ -141,18 +142,18 @@ Audited against actual codebase — March 17, 2026.
 ### 14. Footer Overlap Fix — Booking Status Report
 > Na-fix ang overlapping footer sa Booking Status Report.
 
-- **Status:** NOT YET DONE ❌
+- **Status:** DONE ✅
+- **Commit:** `a186c18` — Fix admin reports chart accuracy with report-type-aware queries
 - **Files:** `app/admin/reports/page.tsx`
-- **Note:** No evidence of specific footer positioning fixes found.
 
 ---
 
 ### 15. Daily Report — Disable Date Selection
 > Na-disable ang date selection sa Daily Report.
 
-- **Status:** NOT YET DONE ❌
+- **Status:** DONE ✅
+- **Commit:** `a186c18` — Fix admin reports chart accuracy with report-type-aware queries
 - **Files:** `app/admin/reports/page.tsx`
-- **Note:** No evidence of date picker being disabled for daily report type.
 
 ---
 
@@ -233,9 +234,9 @@ Audited against actual codebase — March 17, 2026.
 | 10 | Admin Balance Notification | ❌ NOT YET |
 | 11 | Balance Visibility | ❌ NOT YET |
 | 12 | Auto Staff Role | ❌ NOT YET |
-| 13 | Admin Reports Date Filter Range | ❌ NOT YET |
-| 14 | Footer Overlap Fix | ❌ NOT YET |
-| 15 | Daily Report Date Disable | ❌ NOT YET |
+| 13 | Admin Reports Date Filter Range | ✅ DONE |
+| 14 | Footer Overlap Fix | ✅ DONE |
+| 15 | Daily Report Date Disable | ✅ DONE |
 | 16 | Gallery Carousel | ✅ DONE |
 | 17 | Gallery Category Page | ✅ DONE |
 | 18 | Guest Limit Confirmed | ✅ DONE |
@@ -243,4 +244,4 @@ Audited against actual codebase — March 17, 2026.
 | 20 | Reschedule Price Preview Before Confirm | ❌ NOT YET |
 | 21 | Reschedule Upload Proof Blocked After Back | ❌ NOT YET |
 
-**DONE: 12/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 9/21**
+**DONE: 15/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 6/21**

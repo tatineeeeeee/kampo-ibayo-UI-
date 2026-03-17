@@ -80,8 +80,10 @@ export default function ReportsPage() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [customerPage, setCustomerPage] = useState(1);
   const [selectedReport, setSelectedReport] = useState(REPORT_TYPES[0]);
   const [isExporting, setIsExporting] = useState(false);
+  const [allUsers, setAllUsers] = useState<{ email: string; full_name: string; phone: string | null; created_at: string | null; role: string | null }[]>([]);
   const itemsPerPage = 10;
 
   const fetchBookings = useCallback(async () => {
@@ -120,6 +122,16 @@ export default function ReportsPage() {
       if (error) throw error;
 
       setBookings(data || []);
+
+      // For User Report, also fetch all registered users
+      if (selectedReport.id === "user-database") {
+        const { data: usersData } = await supabase
+          .from("users")
+          .select("email, full_name, phone, created_at, role")
+          .order("created_at", { ascending: false });
+        setAllUsers(usersData || []);
+        setCustomerPage(1);
+      }
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -140,6 +152,9 @@ export default function ReportsPage() {
 
   // 🎯 FILTERED BOOKINGS FOR CHARTS (respects date filters)
   const filteredBookings = bookings.filter((booking) => {
+    // User Report shows all-time data — skip date/status filtering
+    if (selectedReport.id === "user-database") return true;
+
     const checkInDate = booking.check_in_date;
     const isInDateRange = checkInDate >= startDate && checkInDate <= endDate;
     const matchesStatus =
@@ -1331,9 +1346,19 @@ export default function ReportsPage() {
                     setStatusFilter("all");
                     setPaymentStatusFilter("all");
                     setPaymentMethodFilter("all");
-                    const today = new Date().toISOString().split("T")[0];
-                    setStartDate(today);
-                    setEndDate(today);
+                    const today = new Date();
+                    const todayStr = today.toISOString().split("T")[0];
+                    if (report.id === "booking-status") {
+                      // Booking Status defaults to current month
+                      const y = today.getFullYear();
+                      const m = String(today.getMonth() + 1).padStart(2, "0");
+                      const firstOfMonth = `${y}-${m}-01`;
+                      setStartDate(firstOfMonth);
+                      setEndDate(todayStr);
+                    } else {
+                      setStartDate(todayStr);
+                      setEndDate(todayStr);
+                    }
                   }}
                   className={`p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${styles.card}`}
                 >
@@ -1410,8 +1435,9 @@ export default function ReportsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
-                  <option value="all">All Status</option>
+                  <option value="all">Active Bookings</option>
                   <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
                   <option value="pending">Pending</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
@@ -1518,129 +1544,167 @@ export default function ReportsPage() {
           {selectedReport.name} Analytics
         </h2>
 
-        {/* Daily Operations Charts */}
+        {/* Daily Operations Summary */}
         {selectedReport.id === "daily-operations" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4 flex items-center gap-2">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                Daily Overview
-              </h3>
-              {isLoading ? (
-                <div className="h-48 sm:h-64 bg-gray-100 animate-pulse rounded-lg"></div>
-              ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart
-                    data={(() => {
-                      const selectedDate = startDate;
-                      const dateStr = selectedDate;
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+            <h3 className="text-base sm:text-lg font-semibold text-black mb-4 flex items-center gap-2">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              {startDate === new Date().toISOString().split("T")[0]
+                ? "Today's Operations"
+                : `Operations for ${new Date(startDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`}
+            </h3>
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-24 bg-gray-100 animate-pulse rounded-lg" />
+                  ))}
+                </div>
+                <div className="h-32 bg-gray-100 animate-pulse rounded-lg" />
+              </div>
+            ) : (
+              (() => {
+                const dateStr = startDate;
+                const todayCheckIns = bookings.filter(
+                  (b) => b.check_in_date === dateStr && b.status === "confirmed",
+                );
+                const todayCheckOuts = bookings.filter(
+                  (b) => b.check_out_date === dateStr && b.status === "confirmed",
+                );
+                const currentlyStaying = bookings.filter(
+                  (b) =>
+                    b.check_in_date <= dateStr &&
+                    b.check_out_date > dateStr &&
+                    b.status === "confirmed",
+                );
+                const departingGuests = todayCheckOuts.reduce((sum, b) => sum + (b.number_of_guests || 0), 0);
+                const arrivingGuests = todayCheckIns.reduce((sum, b) => sum + (b.number_of_guests || 0), 0);
+                const allStayingTonight = new Map<number, typeof bookings[0]>();
+                for (const b of [...todayCheckIns, ...currentlyStaying]) {
+                  allStayingTonight.set(b.id, b);
+                }
+                const totalGuestsToday = Array.from(allStayingTonight.values())
+                  .reduce((sum, b) => sum + (b.number_of_guests || 0), 0);
 
-                      const checkIns = bookings.filter(
-                        (b) => b.check_in_date === dateStr,
-                      ).length;
-                      const checkOuts = bookings.filter(
-                        (b) => b.check_out_date === dateStr,
-                      ).length;
-                      const currentlyStaying = bookings.filter(
-                        (b) =>
-                          b.check_in_date <= dateStr &&
-                          b.check_out_date > dateStr &&
-                          b.status === "confirmed",
-                      ).length;
+                const formatDate = (d: string) =>
+                  new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-                      return [
-                        { label: "Check-ins", count: checkIns },
-                        { label: "Check-outs", count: checkOuts },
-                        { label: "Staying", count: currentlyStaying },
-                      ];
-                    })()}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fill: "#000000", fontSize: 12 }}
-                    />
-                    <YAxis
-                      tick={{ fill: "#000000", fontSize: 12 }}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #ccc",
-                        borderRadius: "8px",
-                        color: "#000000",
-                      }}
-                      labelStyle={{ color: "#000000" }}
-                    />
-                    <Bar dataKey="count" fill="#3b82f6" name="Bookings">
-                      {["#10b981", "#f59e0b", "#3b82f6"].map((color, index) => (
-                        <Cell key={index} fill={color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                {startDate === new Date().toISOString().split("T")[0] ? "Today's Summary" : `Summary for ${new Date(startDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
-              </h3>
-              {isLoading ? (
-                <div className="h-48 sm:h-64 bg-gray-100 animate-pulse rounded-lg"></div>
-              ) : (
-                (() => {
-                  const dateStr = startDate;
-                  const todayCheckIns = bookings.filter(
-                    (b) => b.check_in_date === dateStr,
-                  );
-                  const todayCheckOuts = bookings.filter(
-                    (b) => b.check_out_date === dateStr,
-                  );
-                  const currentlyStaying = bookings.filter(
-                    (b) =>
-                      b.check_in_date <= dateStr &&
-                      b.check_out_date > dateStr &&
-                      b.status === "confirmed",
-                  );
-                  const totalGuestsToday = [
-                    ...todayCheckIns,
-                    ...currentlyStaying,
-                  ].reduce((sum, b) => sum + (b.number_of_guests || 0), 0);
-
-                  return (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-green-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-green-600">
-                          {todayCheckIns.length}
-                        </p>
-                        <p className="text-xs text-gray-600">Arriving</p>
-                      </div>
-                      <div className="bg-orange-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-orange-600">
+                return (
+                  <div className="space-y-5">
+                    {/* Stat Cards */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-orange-600">
                           {todayCheckOuts.length}
                         </p>
-                        <p className="text-xs text-gray-600">Departing</p>
+                        <p className="text-sm font-medium text-gray-700 mt-1">Departing</p>
+                        <p className="text-xs text-gray-500">{departingGuests} guest{departingGuests !== 1 ? "s" : ""}</p>
                       </div>
-                      <div className="bg-blue-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-blue-600">
-                          {currentlyStaying.length}
+                      <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-green-600">
+                          {todayCheckIns.length}
                         </p>
-                        <p className="text-xs text-gray-600">Currently Staying</p>
+                        <p className="text-sm font-medium text-gray-700 mt-1">Arriving</p>
+                        <p className="text-xs text-gray-500">{arrivingGuests} guest{arrivingGuests !== 1 ? "s" : ""}</p>
                       </div>
-                      <div className="bg-purple-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-purple-600">
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-blue-600">
                           {totalGuestsToday}
                         </p>
-                        <p className="text-xs text-gray-600">Total Guests</p>
+                        <p className="text-sm font-medium text-gray-700 mt-1">Total Guests</p>
+                        <p className="text-xs text-gray-500">overnight</p>
                       </div>
                     </div>
-                  );
-                })()
-              )}
-            </div>
+
+                    {/* Departing Details */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-orange-500" />
+                        Departing — Check-out by 1:00 PM
+                      </h4>
+                      {todayCheckOuts.length === 0 ? (
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <p className="text-sm text-gray-500">No departures {startDate === new Date().toISOString().split("T")[0] ? "today" : "on this date"}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {todayCheckOuts.map((b) => (
+                            <div key={b.id} className="bg-orange-50/50 border border-orange-100 rounded-lg p-3 sm:p-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-sm font-semibold text-orange-700">
+                                      {b.guest_name?.charAt(0)?.toUpperCase() || "?"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-900">{b.guest_name}</p>
+                                    <p className="text-xs text-gray-500">{b.guest_email}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs text-gray-600 sm:text-right pl-12 sm:pl-0">
+                                  <span>{b.number_of_guests} guest{b.number_of_guests !== 1 ? "s" : ""}</span>
+                                  <span>{formatDate(b.check_in_date)} → {formatDate(b.check_out_date)}</span>
+                                  <span className="font-medium text-gray-900">₱{b.total_amount?.toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Arriving Details */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        Arriving — Check-in at 3:00 PM
+                      </h4>
+                      {todayCheckIns.length === 0 ? (
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <p className="text-sm text-gray-500">No arrivals {startDate === new Date().toISOString().split("T")[0] ? "today" : "on this date"}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {todayCheckIns.map((b) => (
+                            <div key={b.id} className="bg-green-50/50 border border-green-100 rounded-lg p-3 sm:p-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-sm font-semibold text-green-700">
+                                      {b.guest_name?.charAt(0)?.toUpperCase() || "?"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-900">{b.guest_name}</p>
+                                    <p className="text-xs text-gray-500">{b.guest_email}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs text-gray-600 sm:text-right pl-12 sm:pl-0">
+                                  <span>{b.number_of_guests} guest{b.number_of_guests !== 1 ? "s" : ""}</span>
+                                  <span>{formatDate(b.check_in_date)} → {formatDate(b.check_out_date)}</span>
+                                  <span className="font-medium text-gray-900">₱{b.total_amount?.toLocaleString()}</span>
+                                </div>
+                              </div>
+                              {b.special_requests && (
+                                <div className="mt-2 ml-12 bg-yellow-50 border border-yellow-100 rounded px-3 py-1.5">
+                                  <p className="text-xs text-yellow-800"><span className="font-medium">Note:</span> {b.special_requests}</p>
+                                </div>
+                              )}
+                              {b.brings_pet && (
+                                <div className="mt-1 ml-12">
+                                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Bringing pet</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()
+            )}
           </div>
         )}
 
@@ -1985,11 +2049,13 @@ export default function ReportsPage() {
                       data={(() => {
                         const visitCounts: { [key: string]: number } = {};
 
-                        // Count visits per guest (by email)
-                        filteredBookings.forEach((booking) => {
-                          const email = booking.guest_email || "Unknown";
-                          visitCounts[email] = (visitCounts[email] || 0) + 1;
-                        });
+                        // Count visits per guest (by email) — only confirmed/completed
+                        filteredBookings
+                          .filter((b) => b.status === "confirmed" || b.status === "completed")
+                          .forEach((booking) => {
+                            const email = booking.guest_email || "Unknown";
+                            visitCounts[email] = (visitCounts[email] || 0) + 1;
+                          });
 
                         // Categorize by visit frequency
                         const categories = {
@@ -2146,6 +2212,325 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Customer List Table - User Report */}
+        {selectedReport.id === "user-database" && (
+          <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <RefreshCw className="w-6 h-6 animate-spin text-gray-500" />
+                <span className="ml-2 text-gray-700">Loading customers...</span>
+              </div>
+            ) : (
+              (() => {
+                // Aggregate bookings per customer email
+                const customerMap = new Map<string, {
+                  name: string;
+                  email: string;
+                  phone: string | null;
+                  confirmedBookings: number;
+                  totalSpent: number;
+                  lastVisit: string | null;
+                  firstVisit: string | null;
+                  role: string | null;
+                }>();
+
+                // First: add all registered users so they appear even without bookings
+                allUsers.forEach((u) => {
+                  if (!customerMap.has(u.email)) {
+                    customerMap.set(u.email, {
+                      name: u.full_name,
+                      email: u.email,
+                      phone: u.phone,
+                      confirmedBookings: 0,
+                      totalSpent: 0,
+                      lastVisit: null,
+                      firstVisit: null,
+                      role: u.role,
+                    });
+                  }
+                });
+
+                // Then: layer booking data on top
+                filteredBookings.forEach((b) => {
+                  const email = b.guest_email || "Unknown";
+                  const existing = customerMap.get(email);
+                  const isConfirmedOrCompleted = b.status === "confirmed" || b.status === "completed";
+
+                  if (!existing) {
+                    customerMap.set(email, {
+                      name: b.guest_name || "Unknown",
+                      email,
+                      phone: b.guest_phone,
+                      confirmedBookings: isConfirmedOrCompleted ? 1 : 0,
+                      totalSpent: isConfirmedOrCompleted ? (b.total_amount || 0) : 0,
+                      lastVisit: b.check_in_date,
+                      firstVisit: b.check_in_date,
+                      role: null,
+                    });
+                  } else {
+                    if (isConfirmedOrCompleted) {
+                      existing.confirmedBookings++;
+                      existing.totalSpent += b.total_amount || 0;
+                    }
+                    if (!existing.phone && b.guest_phone) existing.phone = b.guest_phone;
+                    if (!existing.lastVisit || b.check_in_date > existing.lastVisit) existing.lastVisit = b.check_in_date;
+                    if (!existing.firstVisit || b.check_in_date < existing.firstVisit) existing.firstVisit = b.check_in_date;
+                  }
+                });
+
+                // Role priority: user (0) → staff (1) → admin (2)
+                const rolePriority = (role: string | null) => {
+                  if (role === "admin") return 2;
+                  if (role === "staff") return 1;
+                  return 0; // "user" or null
+                };
+
+                // Sort: users first (by spending), then staff, then admin at bottom
+                const customers = Array.from(customerMap.values()).sort((a, b) => {
+                  const roleA = rolePriority(a.role);
+                  const roleB = rolePriority(b.role);
+                  if (roleA !== roleB) return roleA - roleB;
+                  // Within same role: bookers first, then by spending
+                  if (a.confirmedBookings > 0 && b.confirmedBookings === 0) return -1;
+                  if (a.confirmedBookings === 0 && b.confirmedBookings > 0) return 1;
+                  return b.totalSpent - a.totalSpent;
+                });
+
+                const getRoleBadge = (role: string | null) => {
+                  if (role === "admin") return { label: "Admin", color: "bg-red-100 text-red-700" };
+                  if (role === "staff") return { label: "Staff", color: "bg-indigo-100 text-indigo-700" };
+                  return null;
+                };
+
+                const getCategory = (visits: number) => {
+                  if (visits === 0) return { label: "No Bookings", color: "bg-gray-100 text-gray-600" };
+                  if (visits >= 7) return { label: "VIP", color: "bg-purple-100 text-purple-800" };
+                  if (visits >= 4) return { label: "Frequent", color: "bg-green-100 text-green-800" };
+                  if (visits >= 2) return { label: "Returning", color: "bg-yellow-100 text-yellow-800" };
+                  return { label: "New", color: "bg-blue-100 text-blue-800" };
+                };
+
+                const formatDate = (d: string | null) =>
+                  d ? new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+
+                // Pagination
+                const custPerPage = 10;
+                const custTotalPages = Math.ceil(customers.length / custPerPage);
+                const custStart = (customerPage - 1) * custPerPage;
+                const custEnd = custStart + custPerPage;
+                const paginatedCustomers = customers.slice(custStart, custEnd);
+                const bookersCount = customers.filter((c) => c.confirmedBookings > 0).length;
+                const noBookingsCount = customers.length - bookersCount;
+
+                if (customers.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-gray-700">
+                      <Users className="w-12 h-12 mx-auto mb-4 opacity-60" />
+                      <p>No customers found</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <>
+                    {/* Header with stats */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-700">
+                        Customer List
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600">
+                        <span>{customers.length} total</span>
+                        <span className="text-gray-300">|</span>
+                        <span className="text-green-600 font-medium">{bookersCount} booked</span>
+                        <span className="text-gray-300">|</span>
+                        <span className="text-gray-500">{noBookingsCount} never booked</span>
+                      </div>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="block lg:hidden space-y-3">
+                      {paginatedCustomers.map((customer) => {
+                        const cat = getCategory(customer.confirmedBookings);
+                        return (
+                          <div
+                            key={customer.email}
+                            className="bg-gray-50 border border-gray-200 rounded-lg p-3"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-medium text-gray-900 text-sm flex items-center gap-1.5">
+                                  {customer.name}
+                                  {getRoleBadge(customer.role) && (
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${getRoleBadge(customer.role)!.color}`}>
+                                      {getRoleBadge(customer.role)!.label}
+                                    </span>
+                                  )}
+                                </h4>
+                                <p className="text-xs text-gray-600 truncate max-w-[180px]">
+                                  {customer.email}
+                                </p>
+                                {customer.phone && (
+                                  <p className="text-xs text-gray-500">{customer.phone}</p>
+                                )}
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${cat.color}`}>
+                                {cat.label}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+                              <div>
+                                <span className="text-gray-400">Visits</span>
+                                <p className="font-medium text-gray-900">{customer.confirmedBookings}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Spent</span>
+                                <p className="font-medium text-gray-900">₱{customer.totalSpent.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Last Visit</span>
+                                <p className="font-medium text-gray-900">{formatDate(customer.lastVisit)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden lg:block overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-gray-500 border-b border-gray-200">
+                          <tr>
+                            <th className="py-3 px-3 font-medium">Customer</th>
+                            <th className="py-3 px-3 font-medium">Contact</th>
+                            <th className="py-3 px-3 font-medium text-center">Visits</th>
+                            <th className="py-3 px-3 font-medium text-center">Category</th>
+                            <th className="py-3 px-3 font-medium text-right">Total Spent</th>
+                            <th className="py-3 px-3 font-medium">Last Visit</th>
+                            <th className="py-3 px-3 font-medium">First Visit</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {paginatedCustomers.map((customer) => {
+                            const cat = getCategory(customer.confirmedBookings);
+                            return (
+                              <tr key={customer.email} className={`hover:bg-gray-50 ${customer.confirmedBookings === 0 ? "opacity-60" : ""}`}>
+                                <td className="py-3 px-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${customer.confirmedBookings > 0 ? "bg-blue-100" : "bg-gray-100"}`}>
+                                      <span className={`text-xs font-semibold ${customer.confirmedBookings > 0 ? "text-blue-700" : "text-gray-500"}`}>
+                                        {customer.name.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                    <span className="font-medium text-gray-900">{customer.name}</span>
+                                    {getRoleBadge(customer.role) && (
+                                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getRoleBadge(customer.role)!.color}`}>
+                                        {getRoleBadge(customer.role)!.label}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-3">
+                                  <p className="text-gray-700">{customer.email}</p>
+                                  {customer.phone && (
+                                    <p className="text-xs text-gray-500">{customer.phone}</p>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3 text-center font-medium text-gray-900">
+                                  {customer.confirmedBookings}
+                                </td>
+                                <td className="py-3 px-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cat.color}`}>
+                                    {cat.label}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-right font-medium text-gray-900">
+                                  {customer.totalSpent > 0 ? `₱${customer.totalSpent.toLocaleString()}` : "—"}
+                                </td>
+                                <td className="py-3 px-3 text-gray-700">
+                                  {formatDate(customer.lastVisit)}
+                                </td>
+                                <td className="py-3 px-3 text-gray-700">
+                                  {formatDate(customer.firstVisit)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {custTotalPages > 1 && (
+                      <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-gray-200 gap-3">
+                        <div className="text-xs sm:text-sm text-gray-900 font-medium">
+                          Showing {custStart + 1} to {Math.min(custEnd, customers.length)} of {customers.length} customers
+                        </div>
+
+                        {/* Mobile Pagination */}
+                        <div className="flex sm:hidden w-full justify-between items-center">
+                          <button
+                            onClick={() => setCustomerPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={customerPage === 1}
+                            className="px-3 py-2 text-xs text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-xs text-gray-700">
+                            Page {customerPage}/{custTotalPages}
+                          </span>
+                          <button
+                            onClick={() => setCustomerPage((prev) => Math.min(prev + 1, custTotalPages))}
+                            disabled={customerPage === custTotalPages}
+                            className="px-3 py-2 text-xs text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            Next
+                          </button>
+                        </div>
+
+                        {/* Desktop Pagination */}
+                        <div className="hidden sm:flex items-center gap-2">
+                          <button
+                            onClick={() => setCustomerPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={customerPage === 1}
+                            className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            Previous
+                          </button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: custTotalPages }, (_, i) => i + 1).map((page) => (
+                              <button
+                                key={page}
+                                onClick={() => setCustomerPage(page)}
+                                className={`px-3 py-2 text-sm rounded-lg font-medium ${
+                                  customerPage === page
+                                    ? "bg-green-600 text-white"
+                                    : "border border-gray-300 text-gray-900 hover:bg-gray-50"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => setCustomerPage((prev) => Math.min(prev + 1, custTotalPages))}
+                            disabled={customerPage === custTotalPages}
+                            className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            )}
           </div>
         )}
 
@@ -2470,7 +2855,11 @@ export default function ReportsPage() {
                       data={(() => {
                         const statusBreakdown: Record<string, number> = {};
 
-                        filteredBookings.forEach((booking) => {
+                        // When "All Status", exclude cancelled; otherwise respect the filter
+                        const chartBookings = statusFilter === "all"
+                          ? filteredBookings.filter((b) => b.status === "confirmed" || b.status === "completed")
+                          : filteredBookings;
+                        chartBookings.forEach((booking) => {
                           const status = booking.payment_status || "unknown";
                           const amount = booking.total_amount || 0;
 
@@ -2534,7 +2923,11 @@ export default function ReportsPage() {
                     data={(() => {
                       const methodRevenue: Record<string, number> = {};
 
-                      filteredBookings
+                      // When "All Status", exclude cancelled; otherwise respect the filter
+                      (statusFilter === "all"
+                        ? filteredBookings.filter((b) => b.status === "confirmed" || b.status === "completed")
+                        : filteredBookings
+                      )
                         .filter(
                           (b) =>
                             b.payment_status === "paid" ||
@@ -2584,6 +2977,13 @@ export default function ReportsPage() {
                     />
                     <YAxis tick={{ fill: "#000000", fontSize: 12 }} />
                     <Tooltip
+                      contentStyle={{
+                        backgroundColor: "white",
+                        border: "1px solid #ccc",
+                        borderRadius: "8px",
+                        color: "#000000",
+                      }}
+                      labelStyle={{ color: "#000000" }}
                       formatter={(value) => [
                         `₱${value.toLocaleString()}`,
                         "Revenue",
@@ -2602,62 +3002,46 @@ export default function ReportsPage() {
               {isLoading ? (
                 <div className="h-32 bg-gray-100 animate-pulse rounded-lg"></div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="bg-amber-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-amber-600">
-                      {
-                        filteredBookings.filter((b) =>
-                          String(b.special_requests || "").startsWith(
-                            "[WALK-IN]",
-                          ),
-                        ).length
-                      }
-                    </p>
-                    <p className="text-sm text-amber-700">Walk-in Bookings</p>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {
-                        filteredBookings.filter(
-                          (b) =>
-                            !String(b.special_requests || "").startsWith(
-                              "[WALK-IN]",
-                            ),
-                        ).length
-                      }
-                    </p>
-                    <p className="text-sm text-blue-700">Online Bookings</p>
-                  </div>
-                  <div className="bg-amber-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-amber-600">
-                      {formatCurrency(
-                        filteredBookings
-                          .filter((b) =>
-                            String(b.special_requests || "").startsWith(
-                              "[WALK-IN]",
-                            ),
-                          )
-                          .reduce((sum, b) => sum + (b.total_amount || 0), 0),
-                      )}
-                    </p>
-                    <p className="text-sm text-amber-700">Walk-in Revenue</p>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(
-                        filteredBookings
-                          .filter(
-                            (b) =>
-                              !String(b.special_requests || "").startsWith(
-                                "[WALK-IN]",
-                              ),
-                          )
-                          .reduce((sum, b) => sum + (b.total_amount || 0), 0),
-                      )}
-                    </p>
-                    <p className="text-sm text-blue-700">Online Revenue</p>
-                  </div>
-                </div>
+                (() => {
+                  // When "All Status", exclude cancelled; otherwise respect the filter
+                  const activeBookings = statusFilter === "all"
+                    ? filteredBookings.filter((b) => b.status === "confirmed" || b.status === "completed")
+                    : filteredBookings;
+                  const walkIns = activeBookings.filter((b) =>
+                    String(b.special_requests || "").startsWith("[WALK-IN]"),
+                  );
+                  const online = activeBookings.filter(
+                    (b) => !String(b.special_requests || "").startsWith("[WALK-IN]"),
+                  );
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="bg-amber-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-amber-600">
+                          {walkIns.length}
+                        </p>
+                        <p className="text-sm text-amber-700">Walk-in Bookings</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-blue-600">
+                          {online.length}
+                        </p>
+                        <p className="text-sm text-blue-700">Online Bookings</p>
+                      </div>
+                      <div className="bg-amber-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-amber-600">
+                          {formatCurrency(walkIns.reduce((sum, b) => sum + (b.total_amount || 0), 0))}
+                        </p>
+                        <p className="text-sm text-amber-700">Walk-in Revenue</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-blue-600">
+                          {formatCurrency(online.reduce((sum, b) => sum + (b.total_amount || 0), 0))}
+                        </p>
+                        <p className="text-sm text-blue-700">Online Revenue</p>
+                      </div>
+                    </div>
+                  );
+                })()
               )}
             </div>
           </div>
