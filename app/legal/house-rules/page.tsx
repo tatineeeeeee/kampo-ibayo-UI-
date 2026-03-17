@@ -49,7 +49,7 @@ export default function HouseRulesPage() {
       color: "green",
       rules: [
         {
-          rule: "Maximum 15 Guests",
+          rule: "Maximum 25 Guests",
           details:
             "Strictly enforced for safety and facility capacity. Additional guests may incur extra charges and require approval.",
         },

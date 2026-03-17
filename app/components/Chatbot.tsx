@@ -477,7 +477,7 @@ const FAQ_DATABASE: FAQItem[] = [
     ],
     question: "How many guests maximum? / Ilan po ang maximum na tao?",
     answer:
-      "**English:** Maximum 15 guests. The ₱9,000 package is good for up to 15 guests, and there's an additional ₱300 per extra person.\n\n**Tagalog:** Maximum 15 guests po. Ang ₱9,000 ay para sa 15 katao, at may dagdag na ₱300 bawat ulo kung lalampas.",
+      "**English:** Maximum 25 guests. The ₱9,000 package is good for up to 15 guests, and there's an additional ₱300 per extra person.\n\n**Tagalog:** Maximum 25 guests po. Ang ₱9,000 ay para sa 15 katao, at may dagdag na ₱300 bawat ulo kung lalampas.",
   },
 
   // BOOKING PROCESS
@@ -645,7 +645,7 @@ const FAQ_DATABASE: FAQItem[] = [
     keywords: ["team building", "company", "corporate", "group"],
     question: "Good for team building?",
     answer:
-      "Yes! Great for corporate team building and group activities. We have open spaces, function hall, and various activities. Can accommodate up to 15 guests. Contact us for special arrangements.",
+      "Yes! Great for corporate team building and group activities. We have open spaces, function hall, and various activities. Can accommodate up to 25 guests. Contact us for special arrangements.",
   },
 
   // CONTACT & SUPPORT
@@ -667,7 +667,7 @@ const FAQ_DATABASE: FAQItem[] = [
     keywords: ["capacity", "how many", "guests", "people", "maximum"],
     question: "How many guests can you accommodate?",
     answer:
-      "Maximum 15 guests. We have 2 AC family rooms (8 pax each), plus camping area and treehouse. This ensures everyone is comfortable and can enjoy all facilities safely.",
+      "Maximum 25 guests. We have 2 AC family rooms (8 pax each), plus camping area and treehouse. This ensures everyone is comfortable and can enjoy all facilities safely.",
   },
   {
     keywords: ["kids", "children", "toddler", "baby", "family"],
@@ -777,7 +777,7 @@ const FAQ_DATABASE: FAQItem[] = [
     ],
     question: "Good for team building? / Maganda ba para sa team building?",
     answer:
-      "**English:** Yes! Great for corporate team building and group activities. We have open spaces, function hall, and various activities. Can accommodate up to 15 guests. Contact us for special arrangements.\n\n**Tagalog:** Opo! Napakaganda para sa corporate team building at group activities. May malawak na space, function hall, at iba't ibang activities. Pwede hanggang 15 guests. Makipag-ugnayan sa amin para sa special arrangements.",
+      "**English:** Yes! Great for corporate team building and group activities. We have open spaces, function hall, and various activities. Can accommodate up to 25 guests. Contact us for special arrangements.\n\n**Tagalog:** Opo! Napakaganda para sa corporate team building at group activities. May malawak na space, function hall, at iba't ibang activities. Pwede hanggang 25 guests. Makipag-ugnayan sa amin para sa special arrangements.",
   },
 
   // COMBINATION QUERIES (for better multi-keyword handling)

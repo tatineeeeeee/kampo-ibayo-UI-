@@ -1883,14 +1883,14 @@ function BookingPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, guests: "30" })}
+                    onClick={() => setFormData({ ...formData, guests: "25" })}
                     className={`p-3 rounded-lg border transition-all duration-200 text-center ${
-                      formData.guests === "30"
+                      formData.guests === "25"
                         ? "bg-white text-gray-900 border-white"
                         : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
                     }`}
                   >
-                    <div className="text-2xl font-bold">30</div>
+                    <div className="text-2xl font-bold">25</div>
                     <div className="text-xs opacity-70">Large</div>
                   </button>
                 </div>

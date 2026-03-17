@@ -140,7 +140,7 @@ export default function TermsPage() {
                   confirmation
                 </li>
                 <li>
-                  Maximum occupancy is 15 guests; additional guests subject to
+                  Maximum occupancy is 25 guests; additional guests subject to
                   approval and fees
                 </li>
                 <li>
