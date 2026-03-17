@@ -99,18 +99,18 @@ Audited against actual codebase — March 17, 2026.
 ### 10. Admin — Balance Trigger Notification
 > System nag-no-notify sa admin pag may guest na may remaining balance.
 
-- **Status:** NOT YET DONE ❌
+- **Status:** DONE ✅
 - **Files:** `app/components/AdminNotificationBell.tsx`
-- **Note:** Notification types include cancellation, flagged_review, pending_booking, payment_proof — but NO balance-related notification.
+- **Note:** Added "balance_remaining" notification type. Queries bookings with confirmed/pending status and pending/payment_review payment that have verified payments less than total amount. Shows orange notification: "Guest has ₱X remaining balance". Links to admin bookings page. Orange "Balance" counter in notification footer. Real-time updates via existing postgres_changes subscription.
 
 ---
 
 ### 11. Balance Visibility — Admin & User
 > Pareho nilang makikita kung may remaining balance pa.
 
-- **Status:** NOT YET DONE ❌
-- **Files:** `app/bookings/page.tsx` (reschedule modal), `app/admin/bookings/page.tsx`
-- **Note:** Static balance display exists on both sides (booking card shows "Remaining Balance" for half-payment, admin shows remaining balance card). BUT the reschedule flow is broken for this scenario: user with 50% down payment rescheduling to a higher-rate day (e.g. ₱9k weekday → ₱12k weekend) sees NO pricing preview before confirming — they only find out via toast AFTER the fact. Need to add a pricing breakdown inside the reschedule modal when new dates are selected: show new rate, amount already paid, and additional balance due.
+- **Status:** DONE ✅
+- **Files:** `app/bookings/page.tsx`, `app/admin/bookings/page.tsx`
+- **Note:** User side: reschedule modal now shows pricing preview (current amount, new amount, balance due). Upload button shows "Upload Balance" when balance is pending. Admin side: View modal shows prominent "Remaining Balance" card (red) with amount. Shows "Balance due after reschedule" note. Raw `payment_review` status replaced with "Under Review". "Downpayment Progress" renamed to "Payment Progress". "Fully Paid" badge when complete.
 
 ---
 
@@ -203,18 +203,18 @@ Audited against actual codebase — March 17, 2026.
 ### 20. Reschedule — Price Preview Before Confirm
 > No pricing breakdown shown in the reschedule modal before the user confirms. User cannot see the new rate, amount already paid, or remaining balance due — only sees it in a toast message AFTER confirming.
 
-- **Status:** NOT YET DONE ❌
-- **Files:** `app/bookings/page.tsx` (reschedule modal, around line 2580–2680)
-- **Note:** API already returns `result.pricing.newAmount` — data exists, just not shown in UI before confirm. Need to add a pricing summary card inside the reschedule modal when new dates are selected: (1) New rate, (2) Amount already paid, (3) Additional balance due. Only relevant when new date has a different price (weekday ↔ weekend).
+- **Status:** DONE ✅
+- **Files:** `app/bookings/page.tsx`
+- **Note:** Added pricing preview card in reschedule modal. When new dates are selected, shows: current amount, new amount, and balance due (or "No additional payment" if same/cheaper). Uses same pricing logic as API (weekday ₱9k, weekend ₱12k, excess guest fee). Warning note when balance is due.
 
 ---
 
 ### 21. Reschedule — Upload Proof Blocked After Going Back
 > When a confirmed + verified booking is rescheduled to a higher-priced date (e.g., ₱9k weekday → ₱12k weekend), the system redirects to `/upload-payment-proof` for the additional amount. But if the user navigates back from that page, they can no longer access the upload proof page for the rescheduled booking — the option is gone or blocked.
 
-- **Status:** NOT YET DONE ❌
-- **Files:** `app/upload-payment-proof/page.tsx`, `app/bookings/page.tsx`
-- **Note:** Likely cause — after reschedule, the booking's `payment_status` may still read as `verified` from the original payment, so the system thinks no payment is needed and hides the upload option. Same-price reschedules work fine (no additional payment required, no issue). Fix must: detect that a reschedule happened with a price increase and keep the upload-proof option accessible until the additional payment is verified.
+- **Status:** DONE ✅
+- **Files:** `app/api/user/reschedule-booking/route.ts`, `app/bookings/page.tsx`
+- **Note:** Three fixes: (1) Reschedule API now sets booking `status: "pending"` when price increases (same/cheaper stays confirmed). (2) Upload button component now shows "Upload Balance" when there's a verified proof but booking payment is pending. (3) Upload button renders when `payment_status === "pending"` not just `status === "pending"`. Also added `canRescheduleBooking` guard: only confirmed + verified payment can reschedule.
 
 ---
 
@@ -278,8 +278,8 @@ Audited against actual codebase — March 17, 2026.
 | 7 | Site-wide Red Removal | ✅ DONE |
 | 8 | Review Photos Optional | ✅ DONE |
 | 9 | Character Highlight | ✅ DONE |
-| 10 | Admin Balance Notification | ❌ NOT YET |
-| 11 | Balance Visibility | ❌ NOT YET |
+| 10 | Admin Balance Notification | ✅ DONE |
+| 11 | Balance Visibility | ✅ DONE |
 | 12 | Auto Staff Role | ✅ DONE |
 | 13 | Admin Reports Date Filter Range | ✅ DONE |
 | 14 | Footer Overlap Fix | ✅ DONE |
@@ -288,12 +288,12 @@ Audited against actual codebase — March 17, 2026.
 | 17 | Gallery Category Page | ✅ DONE |
 | 18 | Guest Limit Confirmed | ✅ DONE |
 | 19 | Add User & Roles | ✅ DONE |
-| 20 | Reschedule Price Preview Before Confirm | ❌ NOT YET |
-| 21 | Reschedule Upload Proof Blocked After Back | ❌ NOT YET |
+| 20 | Reschedule Price Preview Before Confirm | ✅ DONE |
+| 21 | Reschedule Upload Proof Blocked After Back | ✅ DONE |
 | 22 | Daily Operations Redesign | ✅ DONE |
 | 23 | User Report Customer List | ✅ DONE |
 | 24 | Booking Status Report Fixes | ✅ DONE |
 | 25 | Receipt Number Format | ✅ DONE |
 | 26 | Walk-in Payment Status Fix | ✅ DONE |
 
-**DONE: 22/26 | NOT YET DONE: 4/26**
+**DONE: 26/26 | NOT YET DONE: 0/26**

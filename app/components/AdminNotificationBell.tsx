@@ -24,7 +24,8 @@ interface Notification {
     | "pending_booking"
     | "payment_proof"
     | "payment_failed"
-    | "approved_review";
+    | "approved_review"
+    | "balance_remaining";
   title: string;
   message: string;
   timestamp: Date;
@@ -218,6 +219,43 @@ export default function AdminNotificationBell() {
         });
       }
 
+      // 7. Get bookings with remaining balance (confirmed/pending with partial payment)
+      const { data: balanceBookings } = await supabase
+        .from("bookings")
+        .select("id, guest_name, total_amount, payment_status, updated_at")
+        .in("status", ["confirmed", "pending"])
+        .in("payment_status", ["pending", "payment_review"])
+        .gte("updated_at", sevenDaysAgo.toISOString())
+        .order("updated_at", { ascending: false })
+        .limit(10);
+
+      if (balanceBookings) {
+        // Check which have verified payments less than total
+        for (const booking of balanceBookings) {
+          const { data: verifiedProofs } = await supabase
+            .from("payment_proofs")
+            .select("amount")
+            .eq("booking_id", booking.id)
+            .eq("status", "verified");
+
+          const totalPaid = (verifiedProofs || []).reduce((sum: number, p: { amount: number }) => sum + p.amount, 0);
+          const remaining = (booking.total_amount || 0) - totalPaid;
+
+          if (totalPaid > 0 && remaining > 0) {
+            notifs.push({
+              id: `balance-${booking.id}`,
+              type: "balance_remaining",
+              title: "Balance Remaining",
+              message: `${booking.guest_name} has ₱${remaining.toLocaleString()} remaining balance`,
+              timestamp: new Date(booking.updated_at || new Date()),
+              read: false,
+              link: "/admin/bookings",
+              data: { bookingId: booking.id, remaining },
+            });
+          }
+        }
+      }
+
       // Sort by timestamp (newest first) and limit to top 15
       notifs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
@@ -292,6 +330,8 @@ export default function AdminNotificationBell() {
         return <XCircle className="w-4 h-4 text-red-600" />;
       case "approved_review":
         return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+      case "balance_remaining":
+        return <CreditCard className="w-4 h-4 text-orange-500" />;
       default:
         return <Bell className="w-4 h-4 text-gray-500" />;
     }
@@ -469,6 +509,16 @@ export default function AdminNotificationBell() {
                     }
                   </div>
                   <div className="text-emerald-600 text-xs">Approved</div>
+                </div>
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <div className="font-bold text-orange-700">
+                    {
+                      notifications.filter(
+                        (n) => n.type === "balance_remaining"
+                      ).length
+                    }
+                  </div>
+                  <div className="text-orange-600 text-xs">Balance</div>
                 </div>
               </div>
               {/* Last Updated Timestamp */}

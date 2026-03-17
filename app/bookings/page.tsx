@@ -76,7 +76,7 @@ function SearchParamsHandler({
 }
 
 // Component to show upload button based on payment proof status
-function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
+function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { bookingId: number; bookingPaymentStatus?: string }) {
   const [proofStatus, setProofStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const fallbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -222,6 +222,17 @@ function PaymentProofUploadButton({ bookingId }: { bookingId: number }) {
   }
 
   if (proofStatus === "verified") {
+    // If there's a verified proof but booking payment is pending (balance due after reschedule)
+    if (bookingPaymentStatus === "pending") {
+      return (
+        <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
+          <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
+            <Upload className="w-3 h-3" />
+            Upload Balance
+          </button>
+        </Link>
+      );
+    }
     return (
       <div className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <CheckCircle2 className="w-3 h-3" />
@@ -1134,6 +1145,13 @@ function BookingsPageContent() {
   };
 
   const canRescheduleBooking = (booking: Booking) => {
+    // Only confirmed bookings with verified payment can reschedule
+    if (booking.status?.toLowerCase() !== "confirmed") {
+      return false;
+    }
+    if (booking.payment_status !== "paid" && booking.payment_status !== "verified") {
+      return false;
+    }
     // Can't reschedule if has pending payment proofs (wait for admin to verify/reject first)
     if (bookingsWithPendingProofs.has(booking.id)) {
       return false;
@@ -1142,8 +1160,11 @@ function BookingsPageContent() {
     if ((booking.reschedule_count || 0) >= 2) {
       return false;
     }
-    // Same rules as cancellation - can reschedule if can cancel
-    return canCancelBooking(booking);
+    // Check if it's at least 3 days before check-in
+    const checkInDate = new Date(booking.check_in_date);
+    const now = new Date();
+    const daysDifference = (checkInDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
+    return daysDifference >= 3;
   };
 
   const getCancellationMessage = (booking: Booking) => {
@@ -1466,6 +1487,8 @@ function BookingsPageContent() {
                   check_out_date: newCheckOutDate,
                   total_amount: result.booking.total_amount,
                   payment_status: result.booking.payment_status,
+                  status: result.booking.status,
+                  reschedule_count: result.booking.reschedule_count,
                 }
               : booking
           )
@@ -2074,11 +2097,12 @@ function BookingsPageContent() {
                           />
                         )}
 
-                        {/* Upload Payment Proof Button - Only show if pending */}
-                        {booking.status === "pending" && (
+                        {/* Upload Payment Proof Button - Show if pending or has unpaid balance */}
+                        {(booking.status === "pending" || booking.payment_status === "pending") && (
                           <PaymentProofUploadButton
                             key={`upload-button-${booking.id}-${refreshTrigger}`}
                             bookingId={booking.id}
+                            bookingPaymentStatus={booking.payment_status ?? undefined}
                           />
                         )}
 
@@ -2635,6 +2659,75 @@ function BookingsPageContent() {
                     </div>
                   </div>
                 )}
+
+                {/* Pricing Preview */}
+                {newCheckInDate && newCheckOutDate && selectedBooking && (() => {
+                  const checkIn = new Date(newCheckInDate);
+                  const checkOut = new Date(newCheckOutDate);
+                  if (checkOut <= checkIn) return null;
+
+                  // Calculate new price (same logic as API)
+                  let newTotal = 0;
+                  const currentNight = new Date(checkIn);
+                  const nights = [];
+                  while (currentNight < checkOut) {
+                    const day = currentNight.getDay();
+                    const isWeekend = day === 0 || day === 5 || day === 6;
+                    const rate = isWeekend ? 12000 : 9000;
+                    nights.push({ isWeekend, rate });
+                    newTotal += rate;
+                    currentNight.setDate(currentNight.getDate() + 1);
+                  }
+                  // Excess guest fee
+                  const guestCount = selectedBooking.number_of_guests || 15;
+                  if (guestCount > 15) {
+                    newTotal += (guestCount - 15) * 300 * nights.length;
+                  }
+
+                  const currentAmount = selectedBooking.total_amount || 0;
+                  const difference = newTotal - currentAmount;
+
+                  return (
+                    <div className="px-5 pt-4">
+                      <div className={`rounded-xl p-4 border ${difference > 0 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50" : difference < 0 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50" : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"}`}>
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Pricing Preview</p>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Current booking</span>
+                            <span>₱{currentAmount.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>New dates ({nights.length} night{nights.length !== 1 ? "s" : ""})</span>
+                            <span>₱{newTotal.toLocaleString()}</span>
+                          </div>
+                          <div className="border-t border-gray-200 dark:border-gray-700 pt-1.5">
+                            {difference > 0 ? (
+                              <div className="flex justify-between font-semibold text-amber-700 dark:text-amber-400">
+                                <span>Additional balance due</span>
+                                <span>₱{difference.toLocaleString()}</span>
+                              </div>
+                            ) : difference < 0 ? (
+                              <div className="flex justify-between font-semibold text-green-700 dark:text-green-400">
+                                <span>No additional payment</span>
+                                <span>-₱{Math.abs(difference).toLocaleString()}</span>
+                              </div>
+                            ) : (
+                              <div className="flex justify-between font-semibold text-gray-700 dark:text-gray-300">
+                                <span>Same price</span>
+                                <span>No change</span>
+                              </div>
+                            )}
+                          </div>
+                          {difference > 0 && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
+                              You will need to upload payment proof for the additional balance after confirming.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Policy Notice */}
                 <div className="px-5 pt-4 pb-4">

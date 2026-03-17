@@ -213,6 +213,10 @@ export async function POST(request: NextRequest) {
     // Only reset to pending if they still owe money; otherwise keep as verified
     const newPaymentStatus = totalVerified >= newPaymentAmount ? 'verified' : 'pending';
 
+    // If price increased and guest owes more, set booking back to pending
+    // Same price or cheaper = stays confirmed (instant reschedule)
+    const newBookingStatus = newPaymentStatus === 'pending' ? 'pending' : 'confirmed';
+
     // Update the booking with new dates, new amount, and smart payment status
     const { data: updatedBooking, error: updateError } = await supabaseAdmin
       .from('bookings')
@@ -222,6 +226,7 @@ export async function POST(request: NextRequest) {
         total_amount: newTotalAmount,
         payment_amount: newPaymentAmount,
         payment_status: newPaymentStatus,
+        status: newBookingStatus,
         reschedule_count: rescheduleCount + 1,
         updated_at: new Date().toISOString()
       })

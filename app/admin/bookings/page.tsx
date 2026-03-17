@@ -249,25 +249,10 @@ function PaymentStatusCell({
         let selectedProof = null;
 
         if (data && data.length > 0) {
-          // Priority: pending > verified > rejected > cancelled
-          // This ensures new pending proofs show "Payment Review" even if there are older rejected ones
+          // Only pending proofs need priority (admin action needed NOW)
+          // Otherwise use the most recent proof (already sorted by uploaded_at DESC)
           const pendingProof = data.find((proof) => proof.status === "pending");
-          const verifiedProof = data.find(
-            (proof) => proof.status === "verified",
-          );
-          const rejectedProof = data.find(
-            (proof) => proof.status === "rejected",
-          );
-          const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled",
-          );
-
-          selectedProof =
-            pendingProof ||
-            verifiedProof ||
-            rejectedProof ||
-            cancelledProof ||
-            data[0];
+          selectedProof = pendingProof || data[0];
         }
 
         setPaymentProof(selectedProof);
@@ -529,24 +514,10 @@ function SmartConfirmButton({
         let selectedProof = null;
 
         if (data && data.length > 0) {
-          // Priority: pending > verified > rejected > cancelled
+          // Only pending proofs need priority (admin action needed NOW)
+          // Otherwise use the most recent proof (already sorted by uploaded_at DESC)
           const pendingProof = data.find((proof) => proof.status === "pending");
-          const verifiedProof = data.find(
-            (proof) => proof.status === "verified",
-          );
-          const rejectedProof = data.find(
-            (proof) => proof.status === "rejected",
-          );
-          const cancelledProof = data.find(
-            (proof) => proof.status === "cancelled",
-          );
-
-          selectedProof =
-            pendingProof ||
-            verifiedProof ||
-            rejectedProof ||
-            cancelledProof ||
-            data[0];
+          selectedProof = pendingProof || data[0];
         }
 
         setPaymentProof(selectedProof);
@@ -588,7 +559,9 @@ function SmartConfirmButton({
     );
   }
 
-  const canConfirm = paymentProof && paymentProof.status === "verified";
+  // Can only confirm if: proof is verified AND booking payment is verified/paid (no outstanding balance)
+  const bookingPaymentOk = booking.payment_status === "verified" || booking.payment_status === "paid";
+  const canConfirm = paymentProof && paymentProof.status === "verified" && bookingPaymentOk;
 
   if (!canConfirm) {
     let reason, buttonText;
@@ -3443,7 +3416,7 @@ export default function BookingsPage() {
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs text-gray-500">
-                            Downpayment Progress
+                            Payment Progress
                           </span>
                           <span
                             className={`text-xs font-medium ${
@@ -3513,18 +3486,23 @@ export default function BookingsPage() {
                         );
 
                         return stillOwedOnline > 0 ? (
-                          <div>
-                            <span className="text-xs text-gray-500 block">
-                              Remaining
+                          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                            <span className="text-xs text-red-500 block">
+                              Remaining Balance
                             </span>
-                            <span className="text-sm font-semibold text-red-600">
+                            <span className="text-base font-bold text-red-600">
                               ₱{stillOwedOnline.toLocaleString()}
                             </span>
+                            {(selectedBooking.reschedule_count || 0) > 0 && (
+                              <p className="text-[10px] text-red-500 mt-0.5">
+                                Balance due after reschedule
+                              </p>
+                            )}
                           </div>
                         ) : (
-                          <div className="bg-green-50 rounded px-2 py-1 inline-block">
+                          <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 inline-block">
                             <span className="text-xs font-medium text-green-700">
-                              Complete
+                              Fully Paid
                             </span>
                           </div>
                         );
@@ -3588,12 +3566,24 @@ export default function BookingsPage() {
                             selectedBooking.payment_status === "paid" ||
                             selectedBooking.payment_status === "verified"
                               ? "bg-green-100 text-green-800"
-                              : selectedBooking.payment_status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
+                              : selectedBooking.payment_status === "payment_review"
+                                ? "bg-blue-100 text-blue-800"
+                                : selectedBooking.payment_status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : selectedBooking.payment_status === "rejected"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {selectedBooking.payment_status || "pending"}
+                          {selectedBooking.payment_status === "paid" || selectedBooking.payment_status === "verified"
+                            ? "Paid"
+                            : selectedBooking.payment_status === "payment_review"
+                              ? "Under Review"
+                              : selectedBooking.payment_status === "pending"
+                                ? "Pending Payment"
+                                : selectedBooking.payment_status === "rejected"
+                                  ? "Rejected"
+                                  : selectedBooking.payment_status || "Pending Payment"}
                         </span>
                       </div>
                     </div>
