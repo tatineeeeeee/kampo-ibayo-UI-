@@ -1623,10 +1623,10 @@ export default function BookingsPage() {
     setPaginatedBookings(filteredBookings.slice(startIndex, endIndex));
   }, [filteredBookings, currentPage, itemsPerPage]);
 
-  // Reset to first page when filtered bookings change
+  // Reset to first page only when filter criteria change (not when data refreshes)
   useEffect(() => {
     setCurrentPage(1);
-  }, [filteredBookings]);
+  }, [searchTerm, statusFilter]);
 
   // ✨ Enhanced refresh trigger for instant updates when payment proofs change
   useEffect(() => {
