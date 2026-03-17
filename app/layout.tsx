@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./components/Toast";
-import { EmailVerificationWelcome } from "./components/EmailVerificationWelcome";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -68,7 +67,6 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <ToastProvider>
           <AuthProvider>
-            <EmailVerificationWelcome />
             {children}
           </AuthProvider>
         </ToastProvider>

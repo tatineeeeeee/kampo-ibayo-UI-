@@ -236,8 +236,8 @@ export const useToastHelpers = () => {
       showToast({
         type: "success",
         title: "Email Verified!",
-        message: "Welcome to Kampo Ibayo! Your account is now active.",
-        duration: 4000,
+        message: "Please log in to continue.",
+        duration: 5000,
       });
     },
 

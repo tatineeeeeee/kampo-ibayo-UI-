@@ -82,10 +82,12 @@ export default function AuthPage() {
     loginSuccess,
     registrationSuccess,
     passwordResetSent,
+    verificationSuccess,
   } = useToastHelpers();
 
   // Prevent infinite loops in recovery detection
   const recoveryHandled = useRef(false);
+  const verifiedToastShown = useRef(false);
   const authStateChangeDebounce = useRef<NodeJS.Timeout | null>(null);
 
   // Utility function to completely clear all password reset related storage
@@ -146,6 +148,19 @@ export default function AuthPage() {
     }, 6000);
     return () => clearInterval(interval);
   }, [authTestimonials.length]);
+
+  // Show verification success toast when redirected from email confirmation
+  useEffect(() => {
+    if (searchParams.get("verified") === "true" && typeof window !== "undefined" && !verifiedToastShown.current) {
+      verifiedToastShown.current = true;
+      verificationSuccess();
+      // Clean URL params so toast doesn't re-show on refresh
+      const url = new URL(window.location.href);
+      url.searchParams.delete("verified");
+      url.searchParams.delete("tab");
+      window.history.replaceState({}, document.title, url.pathname);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle password recovery properly with Supabase's built-in flow
   useEffect(() => {
@@ -692,9 +707,7 @@ export default function AuthPage() {
         options: {
           data: { name: `${firstName} ${lastName}` },
           emailRedirectTo:
-            process.env.NEXT_PUBLIC_BASE_URL ||
-            process.env.NEXT_PUBLIC_SITE_URL ||
-            "https://kampo-ibayo-resort.vercel.app/",
+            `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://kampo-ibayo-resort.vercel.app"}/auth`,
         },
       });
 

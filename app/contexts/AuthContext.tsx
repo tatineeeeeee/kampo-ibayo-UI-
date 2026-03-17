@@ -1,9 +1,7 @@
 "use client";
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import type { User, Session } from "@supabase/supabase-js";
-import { useToastHelpers } from "../components/Toast";
-
 interface AuthContextType {
   user: User | null;
   userRole: string | null;
@@ -21,8 +19,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
-  const { verificationSuccess } = useToastHelpers();
-  const welcomeShownRef = useRef(false);
 
   // Fix hydration mismatch
   useEffect(() => {
@@ -161,54 +157,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUserRole("user");
           }
         }, 50); // 50ms delay to not block navigation
-
-        // 🔔 Guarded welcome toast for email verification sign-in
-        try {
-          if (typeof window !== "undefined" && !welcomeShownRef.current) {
-            const hash = window.location.hash || "";
-            const params = new URLSearchParams(
-              hash.startsWith("#") ? hash.substring(1) : hash
-            );
-            const accessToken = params.get("access_token");
-            const type = params.get("type");
-
-            // Fire only for verification (not password recovery), only once
-            const awaitingEmailVerification =
-              localStorage.getItem("awaiting_email_verification") === "true";
-            if (
-              (accessToken && type !== "recovery") ||
-              awaitingEmailVerification
-            ) {
-              // Debounce using sessionStorage to avoid duplicates across navigations
-              const lastWelcome = sessionStorage.getItem(
-                "email_verify_welcome"
-              );
-              const now = Date.now();
-              if (!lastWelcome || now - parseInt(lastWelcome) > 5000) {
-                sessionStorage.setItem("email_verify_welcome", now.toString());
-                welcomeShownRef.current = true;
-                // Slight delay to ensure UI/providers ready
-                setTimeout(() => {
-                  verificationSuccess();
-                }, 200);
-                // If we came from signup (flag set), clear it now
-                if (awaitingEmailVerification) {
-                  localStorage.removeItem("awaiting_email_verification");
-                }
-                // Clean hash to prevent re-trigger
-                if (window.history.replaceState) {
-                  window.history.replaceState(
-                    null,
-                    "",
-                    window.location.pathname + window.location.search
-                  );
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn("AuthContext: Welcome toast guard failed silently:", e);
-        }
       }
     });
 
