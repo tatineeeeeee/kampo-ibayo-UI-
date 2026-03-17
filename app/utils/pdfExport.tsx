@@ -71,7 +71,10 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
-    padding: 30,
+    paddingTop: 30,
+    paddingLeft: 30,
+    paddingRight: 30,
+    paddingBottom: 70,
     fontFamily: "Helvetica",
     fontSize: 9,
   },
@@ -146,16 +149,16 @@ const styles = StyleSheet.create({
   table: {
     display: "flex",
     width: "auto",
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 4,
     marginBottom: 15,
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
+    borderLeftWidth: 1,
+    borderLeftColor: "#e5e7eb",
+    borderRightWidth: 1,
+    borderRightColor: "#e5e7eb",
     minHeight: 24,
     alignItems: "center",
   },
@@ -168,6 +171,10 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#166534",
+    borderLeftWidth: 1,
+    borderLeftColor: "#166534",
+    borderRightWidth: 1,
+    borderRightColor: "#166534",
     minHeight: 28,
     alignItems: "center",
   },
@@ -355,7 +362,7 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
         {/* Table */}
         <View style={styles.table}>
           {/* Header Row */}
-          <View style={styles.tableHeader}>
+          <View style={styles.tableHeader} minPresenceAhead={40}>
             <Text
               style={[
                 styles.tableHeaderCell,
@@ -431,9 +438,10 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
           </View>
 
           {/* Data Rows */}
-          {data.slice(0, 25).map((booking, index) => (
+          {data.map((booking, index) => (
             <View
               key={index}
+              wrap={false}
               style={[
                 styles.tableRow,
                 index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd,
@@ -531,13 +539,6 @@ const BookingsPDFDocument: React.FC<BookingsPDFProps> = ({
           ))}
         </View>
 
-        {data.length > 25 && (
-          <Text style={{ fontSize: 8, color: "#6b7280", textAlign: "center" }}>
-            Showing first 25 of {data.length} records. Export to CSV for
-            complete data.
-          </Text>
-        )}
-
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
@@ -617,7 +618,7 @@ const UsersPDFDocument: React.FC<UsersPDFProps> = ({
         {/* Table */}
         <View style={styles.table}>
           {/* Header Row */}
-          <View style={styles.tableHeader}>
+          <View style={styles.tableHeader} minPresenceAhead={40}>
             <Text
               style={[
                 styles.tableHeaderCell,
@@ -653,9 +654,10 @@ const UsersPDFDocument: React.FC<UsersPDFProps> = ({
           </View>
 
           {/* Data Rows */}
-          {data.slice(0, 35).map((user, index) => (
+          {data.map((user, index) => (
             <View
               key={index}
+              wrap={false}
               style={[
                 styles.tableRow,
                 index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd,
@@ -687,13 +689,6 @@ const UsersPDFDocument: React.FC<UsersPDFProps> = ({
             </View>
           ))}
         </View>
-
-        {data.length > 35 && (
-          <Text style={{ fontSize: 8, color: "#6b7280", textAlign: "center" }}>
-            Showing first 35 of {data.length} records. Export to CSV for
-            complete data.
-          </Text>
-        )}
 
         {/* Footer */}
         <View style={styles.footer} fixed>
@@ -848,7 +843,7 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
         {/* Table */}
         <View style={styles.table}>
           {/* Header Row */}
-          <View style={styles.tableHeader}>
+          <View style={styles.tableHeader} minPresenceAhead={40}>
             <Text
               style={[
                 styles.tableHeaderCell,
@@ -916,7 +911,7 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
           </View>
 
           {/* Data Rows */}
-          {data.slice(0, 25).map((payment, index) => {
+          {data.map((payment, index) => {
             const total = (payment.total_amount as number) || 0;
             const paid = (payment.amount as number) || 0;
             const balance = Math.max(0, total - paid);
@@ -924,6 +919,7 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
             return (
               <View
                 key={index}
+                wrap={false}
                 style={[
                   styles.tableRow,
                   index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd,
@@ -1003,13 +999,6 @@ const PaymentsPDFDocument: React.FC<PaymentsPDFProps> = ({
             );
           })}
         </View>
-
-        {data.length > 25 && (
-          <Text style={{ fontSize: 8, color: "#6b7280", textAlign: "center" }}>
-            Showing first 25 of {data.length} records. Export to CSV for
-            complete data.
-          </Text>
-        )}
 
         {/* Footer */}
         <View style={styles.footer} fixed>
@@ -1360,7 +1349,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
           {isDailyOps && (
             <>
               {/* CHECK-INS TODAY Section */}
-              <View style={{ marginBottom: 15 }}>
+              <View style={{ marginBottom: 15 }} minPresenceAhead={80}>
                 <Text
                   style={{
                     fontSize: 11,
@@ -1465,7 +1454,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
               </View>
 
               {/* CHECK-OUTS TODAY Section */}
-              <View style={{ marginBottom: 15 }}>
+              <View style={{ marginBottom: 15 }} minPresenceAhead={80}>
                 <Text
                   style={{
                     fontSize: 11,
@@ -1571,7 +1560,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
 
               {/* CURRENTLY STAYING Section */}
               {currentGuestsData.length > 0 && (
-                <View>
+                <View minPresenceAhead={80}>
                   <Text
                     style={{
                       fontSize: 11,
@@ -1607,7 +1596,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                       Days Left
                     </Text>
                   </View>
-                  {currentGuestsData.slice(0, 15).map((booking, index) => {
+                  {currentGuestsData.map((booking, index) => {
                     const checkout = new Date(booking.check_out_date as string);
                     const today = new Date();
                     const daysLeft = Math.ceil(
@@ -1618,6 +1607,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                     return (
                       <View
                         key={`current-${index}`}
+                        wrap={false}
                         style={[
                           styles.tableRow,
                           index % 2 === 0
@@ -1671,7 +1661,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
 
           {/* USER REPORT TABLE - Unique Customers sorted by spending */}
           {isUserDb && (
-            <>
+            <View minPresenceAhead={80}>
               <Text
                 style={{
                   fontSize: 11,
@@ -1703,7 +1693,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                   Customer Type
                 </Text>
               </View>
-              {uniqueCustomers.slice(0, 30).map((customer, index) => {
+              {uniqueCustomers.map((customer, index) => {
                 // Determine customer type
                 let customerType = "New";
                 if (customer.totalSpent >= 50000 || customer.bookings >= 3) {
@@ -1715,6 +1705,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                 return (
                   <View
                     key={index}
+                    wrap={false}
                     style={[
                       styles.tableRow,
                       index % 2 === 0
@@ -1766,14 +1757,14 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                   </View>
                 );
               })}
-            </>
+            </View>
           )}
 
           {/* BOOKING STATUS TABLE - Grouped by Status */}
           {isBookingStatus && (
             <>
               {/* CONFIRMED BOOKINGS Section */}
-              <View style={{ marginBottom: 15 }}>
+              <View style={{ marginBottom: 15 }} minPresenceAhead={80}>
                 <Text
                   style={{
                     fontSize: 11,
@@ -1810,7 +1801,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                         Payment
                       </Text>
                     </View>
-                    {confirmedBookings.slice(0, 15).map((booking, index) => {
+                    {confirmedBookings.map((booking, index) => {
                       const total = (booking.total_amount as number) || 0;
                       const paid = (booking.payment_amount as number) || 0;
                       const balance = Math.max(0, total - paid);
@@ -1832,6 +1823,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                       return (
                         <View
                           key={`confirmed-${index}`}
+                          wrap={false}
                           style={[
                             styles.tableRow,
                             index % 2 === 0
@@ -1887,7 +1879,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
               </View>
 
               {/* PENDING BOOKINGS Section */}
-              <View style={{ marginBottom: 15 }}>
+              <View style={{ marginBottom: 15 }} minPresenceAhead={80}>
                 <Text
                   style={{
                     fontSize: 11,
@@ -1924,7 +1916,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                         Payment
                       </Text>
                     </View>
-                    {pendingBookings.slice(0, 10).map((booking, index) => {
+                    {pendingBookings.map((booking, index) => {
                       const total = (booking.total_amount as number) || 0;
                       const paid = (booking.payment_amount as number) || 0;
                       const balance = Math.max(0, total - paid);
@@ -1946,6 +1938,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                       return (
                         <View
                           key={`pending-${index}`}
+                          wrap={false}
                           style={[
                             styles.tableRow,
                             index % 2 === 0
@@ -2001,7 +1994,7 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
               </View>
 
               {/* CANCELLED BOOKINGS Section */}
-              <View>
+              <View minPresenceAhead={80}>
                 <Text
                   style={{
                     fontSize: 11,
@@ -2035,12 +2028,13 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
                         Refund Due
                       </Text>
                     </View>
-                    {cancelledBookings.slice(0, 10).map((booking, index) => {
+                    {cancelledBookings.map((booking, index) => {
                       const total = (booking.total_amount as number) || 0;
                       const paid = (booking.payment_amount as number) || 0;
                       return (
                         <View
                           key={`cancelled-${index}`}
+                          wrap={false}
                           style={[
                             styles.tableRow,
                             index % 2 === 0
@@ -2092,20 +2086,6 @@ const ReportsPDFDocument: React.FC<ReportsPDFProps> = ({
             </>
           )}
         </View>
-
-        {data.length > 30 && (
-          <Text
-            style={{
-              fontSize: 8,
-              color: "#6b7280",
-              textAlign: "center",
-              marginTop: 5,
-            }}
-          >
-            Showing first 30 of {data.length} records. Export to CSV for
-            complete data.
-          </Text>
-        )}
 
         {/* Footer */}
         <View style={styles.footer} fixed>

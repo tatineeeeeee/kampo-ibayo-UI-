@@ -28,9 +28,9 @@ Audited against actual codebase — March 17, 2026.
 ### 3. Login Redirect After Email Verification
 > Supabase default: pag clinick ang email confirmation link, auto-logged in. Panel ayaw nun — gusto lang ma-redirect sa auth page tapos manually mag-Login.
 
-- **Status:** NOT YET DONE ❌
-- **Files:** `app/auth/page.tsx`
-- **Note:** Need to disable Supabase auto-login after email confirm. Redirect to auth page with Login button instead.
+- **Status:** DONE ✅
+- **Files:** `app/auth/confirm/route.ts`, `app/auth/page.tsx`
+- **Note:** Added server-side `/auth/confirm` route that verifies OTP via `supabaseAdmin` then redirects to `/auth?tab=login&verified=true` — no auto-login. User sees success toast and must manually log in.
 
 ---
 
@@ -223,7 +223,7 @@ Audited against actual codebase — March 17, 2026.
 |---|------|--------|
 | 1 | Calendar Landscape | ✅ DONE |
 | 2 | Dialog Box (Create Account) | ✅ DONE |
-| 3 | Login Redirect After Verify | ❌ NOT YET |
+| 3 | Login Redirect After Verify | ✅ DONE |
 | 4 | GCash Reference Auto-clear | ✅ DONE |
 | 5 | File Validation Position | ✅ DONE |
 | 6 | Booking Details Red → Blue | ✅ DONE |
@@ -243,4 +243,4 @@ Audited against actual codebase — March 17, 2026.
 | 20 | Reschedule Price Preview Before Confirm | ❌ NOT YET |
 | 21 | Reschedule Upload Proof Blocked After Back | ❌ NOT YET |
 
-**DONE: 11/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 10/21**
+**DONE: 12/21 | PARTIALLY DONE: 0/21 | NOT YET DONE: 9/21**

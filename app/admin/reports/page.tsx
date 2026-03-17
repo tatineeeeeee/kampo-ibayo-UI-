@@ -71,14 +71,10 @@ export default function ReportsPage() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState(
-    new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
+    new Date().toISOString().split("T")[0],
   );
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
@@ -91,23 +87,33 @@ export default function ReportsPage() {
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
     try {
-      let query = supabase
-        .from("bookings")
-        .select("*")
-        .gte("check_in_date", startDate)
-        .lte("check_in_date", endDate)
-        .order("check_in_date", { ascending: false });
+      let query = supabase.from("bookings").select("*");
 
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
+      if (selectedReport.id === "daily-operations") {
+        // Fetch all bookings overlapping the selected date (arrivals + departures + staying)
+        query = query
+          .lte("check_in_date", startDate)
+          .gte("check_out_date", startDate)
+          .order("check_in_date", { ascending: false });
+      } else if (selectedReport.id === "user-database") {
+        // Fetch ALL bookings — customer database is not date-scoped
+        query = query.order("created_at", { ascending: false });
+      } else {
+        // Booking Status: filter by check_in_date range + status/payment filters
+        query = query
+          .gte("check_in_date", startDate)
+          .lte("check_in_date", endDate)
+          .order("check_in_date", { ascending: false });
 
-      if (paymentStatusFilter !== "all") {
-        query = query.eq("payment_status", paymentStatusFilter);
-      }
-
-      if (paymentMethodFilter !== "all") {
-        query = query.eq("payment_type", paymentMethodFilter);
+        if (statusFilter !== "all") {
+          query = query.eq("status", statusFilter);
+        }
+        if (paymentStatusFilter !== "all") {
+          query = query.eq("payment_status", paymentStatusFilter);
+        }
+        if (paymentMethodFilter !== "all") {
+          query = query.eq("payment_type", paymentMethodFilter);
+        }
       }
 
       const { data, error } = await query;
@@ -120,6 +126,7 @@ export default function ReportsPage() {
       setIsLoading(false);
     }
   }, [
+    selectedReport,
     startDate,
     endDate,
     statusFilter,
@@ -129,14 +136,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     fetchBookings();
-  }, [
-    startDate,
-    endDate,
-    statusFilter,
-    paymentStatusFilter,
-    paymentMethodFilter,
-    fetchBookings,
-  ]);
+  }, [fetchBookings]);
 
   // 🎯 FILTERED BOOKINGS FOR CHARTS (respects date filters)
   const filteredBookings = bookings.filter((booking) => {
@@ -1326,7 +1326,15 @@ export default function ReportsPage() {
               return (
                 <button
                   key={report.id}
-                  onClick={() => setSelectedReport(report)}
+                  onClick={() => {
+                    setSelectedReport(report);
+                    setStatusFilter("all");
+                    setPaymentStatusFilter("all");
+                    setPaymentMethodFilter("all");
+                    const today = new Date().toISOString().split("T")[0];
+                    setStartDate(today);
+                    setEndDate(today);
+                  }}
                   className={`p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${styles.card}`}
                 >
                   <IconComponent
@@ -1346,76 +1354,103 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Simple Filters */}
+        {/* Contextual Filters Based on Report Type */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-in Start Date
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-in End Date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="all">All Status</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Payment Status
-            </label>
-            <select
-              value={paymentStatusFilter}
-              onChange={(e) => setPaymentStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="all">All Payment Status</option>
-              <option value="verified">Verified</option>
-              <option value="paid">Paid</option>
-              <option value="payment_review">Under Review</option>
-              <option value="pending">Pending Payment</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Payment Type
-            </label>
-            <select
-              value={paymentMethodFilter}
-              onChange={(e) => setPaymentMethodFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="all">All Payment Types</option>
-              <option value="gcash">GCash</option>
-              <option value="maya">Maya</option>
-            </select>
-          </div>
+          {/* Daily Operations: Single date picker for the operations date */}
+          {selectedReport.id === "daily-operations" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Operations Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setEndDate(e.target.value);
+                }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          )}
+
+          {/* User Report: No date filter — fetches all customers */}
+
+          {/* Booking Status: Full filter suite (dates, status, payment) */}
+          {selectedReport.id === "booking-status" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Check-in Start Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Check-in End Date
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Booking Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="all">All Status</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="pending">Pending</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Status
+                </label>
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="all">All Payment Status</option>
+                  <option value="verified">Verified</option>
+                  <option value="paid">Paid</option>
+                  <option value="payment_review">Under Review</option>
+                  <option value="pending">Pending Payment</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Type
+                </label>
+                <select
+                  value={paymentMethodFilter}
+                  onChange={(e) => setPaymentMethodFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="all">All Payment Types</option>
+                  <option value="gcash">GCash</option>
+                  <option value="maya">Maya</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {/* Export buttons - always visible */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Export
@@ -1483,31 +1518,13 @@ export default function ReportsPage() {
           {selectedReport.name} Analytics
         </h2>
 
-        {/* Daily Operations Report Description */}
-        {selectedReport.id === "daily-operations" && (
-          <div className="text-center py-12 max-w-2xl mx-auto">
-            <Clock className="w-16 h-16 mx-auto mb-4 text-blue-600" />
-            <h3 className="text-lg font-semibold text-black mb-2">
-              Daily Operations Report
-            </h3>
-            <p className="text-gray-600 mb-4">
-              This report shows today&apos;s check-ins, check-outs, and current
-              guests for staff planning and operational management.
-            </p>
-            <p className="text-sm text-gray-500">
-              Click the <strong>Export</strong> button above to download the
-              complete daily operations report as CSV.
-            </p>
-          </div>
-        )}
-
         {/* Daily Operations Charts */}
         {selectedReport.id === "daily-operations" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
               <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4 flex items-center gap-2">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                Daily Check-ins vs Check-outs
+                Daily Overview
               </h3>
               {isLoading ? (
                 <div className="h-48 sm:h-64 bg-gray-100 animate-pulse rounded-lg"></div>
@@ -1515,51 +1532,38 @@ export default function ReportsPage() {
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart
                     data={(() => {
-                      // 📅 REAL CHECK-IN/OUT DATA from filtered date range
-                      const dailyData = [];
+                      const selectedDate = startDate;
+                      const dateStr = selectedDate;
 
-                      // Create date range from startDate to endDate
-                      const start = new Date(startDate);
-                      const end = new Date(endDate);
-                      const daysDiff = Math.ceil(
-                        (end.getTime() - start.getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      );
+                      const checkIns = bookings.filter(
+                        (b) => b.check_in_date === dateStr,
+                      ).length;
+                      const checkOuts = bookings.filter(
+                        (b) => b.check_out_date === dateStr,
+                      ).length;
+                      const currentlyStaying = bookings.filter(
+                        (b) =>
+                          b.check_in_date <= dateStr &&
+                          b.check_out_date > dateStr &&
+                          b.status === "confirmed",
+                      ).length;
 
-                      // Show up to 14 days to keep chart readable
-                      const daysToShow = Math.min(daysDiff, 14);
-
-                      for (let i = 0; i < daysToShow; i++) {
-                        const date = new Date(start);
-                        date.setDate(date.getDate() + i);
-                        const dateStr = date.toISOString().split("T")[0];
-
-                        const checkIns = filteredBookings.filter(
-                          (b) => b.check_in_date === dateStr,
-                        ).length;
-                        const checkOuts = filteredBookings.filter(
-                          (b) => b.check_out_date === dateStr,
-                        ).length;
-
-                        dailyData.push({
-                          date: date.toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          }),
-                          checkIns,
-                          checkOuts,
-                        });
-                      }
-                      return dailyData;
+                      return [
+                        { label: "Check-ins", count: checkIns },
+                        { label: "Check-outs", count: checkOuts },
+                        { label: "Staying", count: currentlyStaying },
+                      ];
                     })()}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
-                      dataKey="date"
+                      dataKey="label"
                       tick={{ fill: "#000000", fontSize: 12 }}
                     />
-                    <YAxis tick={{ fill: "#000000", fontSize: 12 }} />
+                    <YAxis
+                      tick={{ fill: "#000000", fontSize: 12 }}
+                      allowDecimals={false}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "white",
@@ -1569,9 +1573,11 @@ export default function ReportsPage() {
                       }}
                       labelStyle={{ color: "#000000" }}
                     />
-                    <Legend wrapperStyle={{ color: "#000000" }} />
-                    <Bar dataKey="checkIns" fill="#10b981" name="Check-ins" />
-                    <Bar dataKey="checkOuts" fill="#f59e0b" name="Check-outs" />
+                    <Bar dataKey="count" fill="#3b82f6" name="Bookings">
+                      {["#10b981", "#f59e0b", "#3b82f6"].map((color, index) => (
+                        <Cell key={index} fill={color} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1580,62 +1586,59 @@ export default function ReportsPage() {
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
               <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                Guest Count by Day
+                {startDate === new Date().toISOString().split("T")[0] ? "Today's Summary" : `Summary for ${new Date(startDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
               </h3>
               {isLoading ? (
                 <div className="h-48 sm:h-64 bg-gray-100 animate-pulse rounded-lg"></div>
               ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart
-                    data={(() => {
-                      const dailyData = [];
-                      for (let i = 0; i < 7; i++) {
-                        const date = new Date();
-                        date.setDate(date.getDate() + i);
-                        const dateStr = date.toISOString().split("T")[0];
+                (() => {
+                  const dateStr = startDate;
+                  const todayCheckIns = bookings.filter(
+                    (b) => b.check_in_date === dateStr,
+                  );
+                  const todayCheckOuts = bookings.filter(
+                    (b) => b.check_out_date === dateStr,
+                  );
+                  const currentlyStaying = bookings.filter(
+                    (b) =>
+                      b.check_in_date <= dateStr &&
+                      b.check_out_date > dateStr &&
+                      b.status === "confirmed",
+                  );
+                  const totalGuestsToday = [
+                    ...todayCheckIns,
+                    ...currentlyStaying,
+                  ].reduce((sum, b) => sum + (b.number_of_guests || 0), 0);
 
-                        const totalGuests = filteredBookings
-                          .filter((b) => b.check_in_date === dateStr)
-                          .reduce(
-                            (sum, b) => sum + (b.number_of_guests || 0),
-                            0,
-                          );
-
-                        dailyData.push({
-                          date: date.toLocaleDateString("en-US", {
-                            weekday: "short",
-                          }),
-                          guests: totalGuests,
-                        });
-                      }
-                      return dailyData;
-                    })()}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fill: "#000000", fontSize: 12 }}
-                    />
-                    <YAxis tick={{ fill: "#000000", fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #ccc",
-                        borderRadius: "8px",
-                        color: "#000000",
-                      }}
-                      labelStyle={{ color: "#000000" }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="guests"
-                      stroke="#3b82f6"
-                      fill="#3b82f6"
-                      fillOpacity={0.3}
-                      name="Total Guests"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                  return (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-green-50 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-green-600">
+                          {todayCheckIns.length}
+                        </p>
+                        <p className="text-xs text-gray-600">Arriving</p>
+                      </div>
+                      <div className="bg-orange-50 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-orange-600">
+                          {todayCheckOuts.length}
+                        </p>
+                        <p className="text-xs text-gray-600">Departing</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-blue-600">
+                          {currentlyStaying.length}
+                        </p>
+                        <p className="text-xs text-gray-600">Currently Staying</p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-purple-600">
+                          {totalGuestsToday}
+                        </p>
+                        <p className="text-xs text-gray-600">Total Guests</p>
+                      </div>
+                    </div>
+                  );
+                })()
               )}
             </div>
           </div>
@@ -1962,25 +1965,6 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               )}
             </div>
-          </div>
-        )}
-
-        {/* User Report Description */}
-        {selectedReport.id === "user-database" && (
-          <div className="text-center py-12 max-w-2xl mx-auto">
-            <Users className="w-16 h-16 mx-auto mb-4 text-purple-600" />
-            <h3 className="text-lg font-semibold text-black mb-2">
-              User Report
-            </h3>
-            <p className="text-gray-600 mb-4">
-              This report shows your complete user list with contact
-              information, visit history, and spending patterns for marketing
-              and customer service.
-            </p>
-            <p className="text-sm text-gray-500">
-              Click the <strong>Export</strong> button above to download the
-              complete user report as CSV.
-            </p>
           </div>
         )}
 
@@ -2318,23 +2302,7 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* Booking Status - Simple Display */}
-        {selectedReport.id === "booking-status" && (
-          <div className="bg-white p-6 rounded-xl shadow-md text-center py-8">
-            <FileText className="w-16 h-16 mx-auto mb-4 text-green-600" />
-            <h3 className="text-lg font-semibold text-black mb-2">
-              Booking Status Report
-            </h3>
-            <p className="text-gray-600 mb-4">
-              This report shows all bookings organized by payment status (Paid,
-              Pending, Cancelled) and booking status.
-            </p>
-            <p className="text-sm text-gray-500">
-              Click the <strong>Export</strong> button above to download the
-              complete booking status report as CSV.
-            </p>
-          </div>
-        )}
+        {/* Booking Status Charts */}
 
         {/* Legacy Guest Spending Analysis - unused */}
         {selectedReport.id === "unused-legacy-guest" && (
@@ -3248,7 +3216,8 @@ export default function ReportsPage() {
         )}
       </div>
 
-      {/* Bookings Table */}
+      {/* Bookings Table - Only for Daily Operations and Booking Status */}
+      {selectedReport.id !== "user-database" && (
       <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-gray-700">
@@ -3528,6 +3497,7 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

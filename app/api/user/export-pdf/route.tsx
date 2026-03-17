@@ -25,7 +25,10 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
-    padding: 30,
+    paddingTop: 30,
+    paddingLeft: 30,
+    paddingRight: 30,
+    paddingBottom: 70,
     fontFamily: "Helvetica",
     fontSize: 9,
   },
@@ -624,10 +627,11 @@ const UserDataExportPDF = ({ data }: { data: ExportData }) => {
               </Text>
             </View>
 
-            {/* Table Rows - Show up to 12 for landscape */}
-            {data.bookings.slice(0, 12).map((booking, index) => (
+            {/* Table Rows */}
+            {data.bookings.map((booking, index) => (
               <View
                 key={booking.id}
+                wrap={false}
                 style={[
                   styles.tableRow,
                   index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd,
@@ -672,22 +676,12 @@ const UserDataExportPDF = ({ data }: { data: ExportData }) => {
               </View>
             ))}
 
-            {/* More rows indicator */}
-            {data.bookings.length > 12 && (
-              <View style={styles.tableRow}>
-                <Text
-                  style={[styles.moreRows, { width: "100%", borderBottom: 0 }]}
-                >
-                  + {data.bookings.length - 12} more bookings (export as CSV or
-                  JSON for complete list)
-                </Text>
-              </View>
-            )}
+
           </View>
         )}
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <View style={styles.footer} fixed>
           <View>
             <Text style={styles.footerText}>
               Kampo Ibayo Resort • Brgy. Tapia, General Trias, Cavite
