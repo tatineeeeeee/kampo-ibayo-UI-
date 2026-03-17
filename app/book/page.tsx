@@ -2362,7 +2362,7 @@ function BookingPage() {
                       className="w-3 h-3 rounded"
                       style={{
                         background:
-                          "linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)",
+                          "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)",
                       }}
                     ></span>
                     <span className="text-gray-400">Check-out</span>
