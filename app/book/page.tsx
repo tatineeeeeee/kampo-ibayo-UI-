@@ -737,10 +737,10 @@ function BookingPage() {
     }
 
     // Validate guest count doesn't exceed capacity
-    if (parseInt(formData.guests) > 50) {
+    if (parseInt(formData.guests) > 25) {
       showError(
         "Guest Limit Exceeded",
-        "Maximum capacity is 50 guests. Please contact us directly for larger events.",
+        "Maximum capacity is 25 guests. Please contact us directly for larger events.",
       );
       setIsSubmitting(false);
       return;
@@ -1846,7 +1846,7 @@ function BookingPage() {
                     <FaInfoCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
                     <span>
                       <span className="font-semibold">Standard:</span> Up to 15
-                      guests included · ₱300/night per extra guest · Max 50
+                      guests included · ₱300/night per extra guest · Max 25
                       guests
                     </span>
                   </p>
@@ -1929,7 +1929,7 @@ function BookingPage() {
                     type="button"
                     onClick={() => {
                       const current = parseInt(formData.guests) || 0;
-                      if (current < 50) {
+                      if (current < 25) {
                         setFormData({
                           ...formData,
                           guests: String(current + 1),
@@ -1938,7 +1938,7 @@ function BookingPage() {
                     }}
                     className="w-10 h-10 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-bold text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled={
-                      !!(formData.guests && parseInt(formData.guests) >= 50)
+                      !!(formData.guests && parseInt(formData.guests) >= 25)
                     }
                   >
                     +
