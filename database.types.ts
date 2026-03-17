@@ -309,6 +309,7 @@ export type Database = {
           admin_notes: string | null
           uploaded_at: string
           verified_at: string | null
+          verified_by: string | null
           created_at: string
           updated_at: string
         }
@@ -324,6 +325,7 @@ export type Database = {
           admin_notes?: string | null
           uploaded_at?: string
           verified_at?: string | null
+          verified_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -339,6 +341,7 @@ export type Database = {
           admin_notes?: string | null
           uploaded_at?: string
           verified_at?: string | null
+          verified_by?: string | null
           created_at?: string
           updated_at?: string
         }
