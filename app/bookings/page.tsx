@@ -253,7 +253,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
 }
 
 // Component to show amount with paid/remaining on booking card
-function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus }: { bookingId: number; totalAmount: number; paymentStatus?: string }) {
+function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus, paymentType }: { bookingId: number; totalAmount: number; paymentStatus?: string; paymentType?: string }) {
   const [paidAmount, setPaidAmount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -297,7 +297,7 @@ function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus }: { boo
         ₱{(totalAmount / 1000).toFixed(1)}k
       </p>
       <p className="text-xs text-gray-300">
-        <span className="text-green-400">₱{(paidAmount / 1000).toFixed(1)}k</span> paid · <span className="text-amber-400">₱{(remaining / 1000).toFixed(1)}k</span> due
+        <span className="text-green-400">₱{(paidAmount / 1000).toFixed(1)}k</span> paid · <span className="text-amber-400">₱{(remaining / 1000).toFixed(1)}k</span> {paymentType === "half" ? "due at check-in" : "due"}
       </p>
     </div>
   );
@@ -2097,14 +2097,14 @@ function BookingsPageContent() {
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-gray-400">
                             {booking.payment_status === "paid" || booking.payment_status === "verified"
-                              ? "Paid"
+                              ? booking.payment_type === "half" ? "50% Down" : "Paid"
                               : booking.payment_status === "payment_review"
                                 ? "Under Review"
                                 : booking.payment_type === "half"
                                   ? "50% Down"
                                   : "Total"}
                           </p>
-                          <PaymentBreakdownAmount bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status ?? undefined} />
+                          <PaymentBreakdownAmount bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status ?? undefined} paymentType={booking.payment_type} />
                         </div>
                       </div>
                     </div>

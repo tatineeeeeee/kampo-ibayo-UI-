@@ -480,15 +480,16 @@ function SmartWorkflowStatusCell({
 
 // Smart Confirm Button - Only allows confirmation after payment verification
 // Shows paid/remaining in admin booking table — only when partially paid
-function AdminPaymentBreakdown({ bookingId, totalAmount, paymentStatus }: { bookingId: number; totalAmount: number; paymentStatus: string }) {
+function AdminPaymentBreakdown({ bookingId, totalAmount, paymentStatus, paymentType }: { bookingId: number; totalAmount: number; paymentStatus: string; paymentType?: string }) {
   const [paidAmount, setPaidAmount] = useState<number | null>(null);
 
   useEffect(() => {
-    // Only fetch for non-fully-paid bookings
-    if (paymentStatus === "paid" || paymentStatus === "verified") {
+    // For full payment bookings that are paid/verified, assume fully paid
+    if ((paymentStatus === "paid" || paymentStatus === "verified") && paymentType !== "half") {
       setPaidAmount(totalAmount);
       return;
     }
+    // Always fetch actual proofs for half payment or non-paid bookings
     const fetchPaid = async () => {
       const { data } = await supabase
         .from("payment_proofs")
@@ -500,7 +501,7 @@ function AdminPaymentBreakdown({ bookingId, totalAmount, paymentStatus }: { book
       }
     };
     fetchPaid();
-  }, [bookingId, totalAmount, paymentStatus]);
+  }, [bookingId, totalAmount, paymentStatus, paymentType]);
 
   if (paidAmount === null || paidAmount === 0 || paidAmount >= totalAmount) return null;
 
@@ -3087,14 +3088,14 @@ export default function BookingsPage() {
                         </div>
                         <div className="text-xs text-gray-500">
                           {booking.payment_status === "paid" || booking.payment_status === "verified"
-                            ? "Paid"
+                            ? booking.payment_type === "half" ? "50% Down" : "Paid"
                             : booking.payment_status === "payment_review"
                               ? "Under Review"
                               : booking.payment_type === "half"
                                 ? "50% Down"
                                 : "Pending"}
                         </div>
-                        <AdminPaymentBreakdown bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status || ""} />
+                        <AdminPaymentBreakdown bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status || ""} paymentType={booking.payment_type} />
                       </td>
                       <td className="p-3">
                         <SmartWorkflowStatusCell
