@@ -1,7 +1,10 @@
 {
-  "name": "my-next-app",
-  "version": "0.1.0",
+  "name": "kampo-ibayo-resort",
+  "version": "2.0.0",
+  "description": "Booking and Reservation System for Kampo Ibayo Resort",
   "private": true,
+  "license": "MIT",
+  "author": "Dai Ren Dacasin, Justine Cesar Ocampo, John Reign Reyes",
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
