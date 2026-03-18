@@ -2104,7 +2104,7 @@ function BookingsPageContent() {
                                   ? "50% Down"
                                   : "Total"}
                           </p>
-                          <PaymentBreakdownAmount bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status ?? undefined} paymentType={booking.payment_type} />
+                          <PaymentBreakdownAmount bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status ?? undefined} paymentType={booking.payment_type ?? undefined} />
                         </div>
                       </div>
                     </div>

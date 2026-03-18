@@ -3095,7 +3095,7 @@ export default function BookingsPage() {
                                 ? "50% Down"
                                 : "Pending"}
                         </div>
-                        <AdminPaymentBreakdown bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status || ""} paymentType={booking.payment_type} />
+                        <AdminPaymentBreakdown bookingId={booking.id} totalAmount={booking.total_amount} paymentStatus={booking.payment_status || ""} paymentType={booking.payment_type ?? undefined} />
                       </td>
                       <td className="p-3">
                         <SmartWorkflowStatusCell
