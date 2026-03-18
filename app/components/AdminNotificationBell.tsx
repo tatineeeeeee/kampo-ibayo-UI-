@@ -220,14 +220,15 @@ export default function AdminNotificationBell() {
       }
 
       // 7. Get bookings with remaining balance (confirmed/pending with partial payment)
+      // Include reschedule balances (pending/payment_review) AND half payment balances (verified but only 50% paid)
       const { data: balanceBookings } = await supabase
         .from("bookings")
-        .select("id, guest_name, total_amount, payment_status, updated_at")
+        .select("id, guest_name, total_amount, payment_status, payment_type, updated_at")
         .in("status", ["confirmed", "pending"])
-        .in("payment_status", ["pending", "payment_review"])
+        .in("payment_status", ["pending", "payment_review", "verified", "paid"])
         .gte("updated_at", sevenDaysAgo.toISOString())
         .order("updated_at", { ascending: false })
-        .limit(10);
+        .limit(20);
 
       if (balanceBookings) {
         // Check which have verified payments less than total
@@ -242,11 +243,12 @@ export default function AdminNotificationBell() {
           const remaining = (booking.total_amount || 0) - totalPaid;
 
           if (totalPaid > 0 && remaining > 0) {
+            const balanceType = booking.payment_type === "half" ? "down payment balance" : "remaining balance";
             notifs.push({
               id: `balance-${booking.id}`,
               type: "balance_remaining",
               title: "Balance Remaining",
-              message: `${booking.guest_name} has ₱${remaining.toLocaleString()} remaining balance`,
+              message: `${booking.guest_name} has ₱${remaining.toLocaleString()} ${balanceType}`,
               timestamp: new Date(booking.updated_at || new Date()),
               read: false,
               link: "/admin/bookings",
