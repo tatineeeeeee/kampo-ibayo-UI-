@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
-import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, PHILIPPINE_HOLIDAYS, PEAK_SEASON_RANGES } from '@/lib/constants/pricing';
+import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, PHILIPPINE_HOLIDAYS, PEAK_SEASON_RANGES } from '@/app/lib/constants/pricing';
 
 export async function POST(request: NextRequest) {
     try {

@@ -21,11 +21,9 @@ import {
   cleanPhoneForDatabase,
   validatePhilippinePhone,
 } from "../utils/phoneUtils";
-import "react-datepicker/dist/react-datepicker.css";
 import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, MAX_GUESTS, PHILIPPINE_HOLIDAYS } from "../lib/constants/pricing";
 import { MAX_PENDING_BOOKINGS, MAINTENANCE_CHECK_INTERVAL_MS } from "../lib/constants";
 import type { BookingBasic } from "../lib/types/booking";
-import DatePickerStyles from "../components/booking/DatePickerStyles";
 import BookingFormFields from "../components/booking/BookingFormFields";
 import BookingCalendar from "../components/booking/BookingCalendar";
 import PriceBreakdown from "../components/booking/PriceBreakdown";
@@ -843,8 +841,6 @@ function BookingPage() {
 
   return (
     <>
-      <DatePickerStyles />
-
       {/* Navigation Bar */}
       <div className="sticky top-0 bg-background/90 backdrop-blur-sm border-b border-border z-20">
         <div className="px-4 py-3 sm:px-6">

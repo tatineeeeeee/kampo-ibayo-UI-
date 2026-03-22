@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
-import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, PHILIPPINE_HOLIDAYS, PEAK_SEASON_RANGES } from '@/lib/constants/pricing';
+import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, PHILIPPINE_HOLIDAYS, PEAK_SEASON_RANGES } from '@/app/lib/constants/pricing';
 
 // Initialize Supabase admin client for database operations
 const supabaseAdmin = createClient(
