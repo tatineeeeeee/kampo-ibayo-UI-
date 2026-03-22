@@ -353,14 +353,14 @@ export default function AdminNotificationBell() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+        className="relative p-2 rounded-full hover:bg-muted transition-colors"
         title="Notifications"
       >
-        <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+        <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
 
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+          <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -368,15 +368,15 @@ export default function AdminNotificationBell() {
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="fixed inset-x-0 top-14 mx-2 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mx-0 sm:mt-2 w-auto sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+        <div className="fixed inset-x-0 top-14 mx-2 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mx-0 sm:mt-2 w-auto sm:w-96 bg-popover text-popover-foreground rounded-xl shadow-2xl border border-border overflow-hidden z-50">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-gray-50 border-b">
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">Notifications</h3>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-muted/50 border-b border-border">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">Notifications</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchNotifications(false)} // Manual refresh shows loading
                 disabled={loading}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                className="text-xs text-primary hover:text-primary/80 font-medium disabled:opacity-50"
                 title="Refresh notifications"
               >
                 <RefreshCw
@@ -386,16 +386,16 @@ export default function AdminNotificationBell() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-xs text-primary hover:text-primary/80 font-medium"
                 >
                   Mark all read
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-gray-200 rounded"
+                className="p-1 hover:bg-muted rounded"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -403,13 +403,13 @@ export default function AdminNotificationBell() {
           {/* Notification List */}
           <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-gray-500">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
+              <div className="p-4 text-center text-muted-foreground">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent mx-auto mb-2"></div>
                 Loading...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Bell className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <div className="p-8 text-center text-muted-foreground">
+                <Bell className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
                 <p className="font-medium">All caught up!</p>
                 <p className="text-sm">No new notifications</p>
               </div>
@@ -418,8 +418,8 @@ export default function AdminNotificationBell() {
                 <button
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`w-full text-left px-3 sm:px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    !notification.read ? "bg-blue-50/50" : ""
+                  className={`w-full text-left px-3 sm:px-4 py-3 border-b border-border hover:bg-muted transition-colors ${
+                    !notification.read ? "bg-primary/5" : ""
                   }`}
                 >
                   <div className="flex gap-3">
@@ -431,20 +431,20 @@ export default function AdminNotificationBell() {
                         <span
                           className={`text-sm font-medium ${
                             !notification.read
-                              ? "text-gray-900"
-                              : "text-gray-700"
+                              ? "text-foreground"
+                              : "text-foreground/70"
                           }`}
                         >
                           {notification.title}
                         </span>
                         {!notification.read && (
-                          <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
+                          <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-muted-foreground/60 mt-1">
                         {getTimeAgo(notification.timestamp)}
                       </p>
                     </div>
@@ -456,7 +456,7 @@ export default function AdminNotificationBell() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-3 sm:px-4 py-3 bg-gray-50 border-t">
+            <div className="px-3 sm:px-4 py-3 bg-muted/50 border-t border-border">
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xs">
                 <div className="p-2 bg-red-100 rounded-lg">
                   <div className="font-bold text-red-700">
@@ -476,14 +476,14 @@ export default function AdminNotificationBell() {
                   </div>
                   <div className="text-yellow-600 text-xs">Flagged</div>
                 </div>
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <div className="font-bold text-blue-700">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <div className="font-bold text-primary">
                     {
                       notifications.filter((n) => n.type === "pending_booking")
                         .length
                     }
                   </div>
-                  <div className="text-blue-600 text-xs">Pending</div>
+                  <div className="text-primary text-xs">Pending</div>
                 </div>
                 <div className="p-2 bg-green-100 rounded-lg">
                   <div className="font-bold text-green-700">
@@ -524,10 +524,10 @@ export default function AdminNotificationBell() {
                 </div>
               </div>
               {/* Last Updated Timestamp */}
-              <div className="text-center mt-3 pt-3 border-t border-gray-200">
+              <div className="text-center mt-3 pt-3 border-t border-border">
                 <div className="flex items-center justify-center gap-1">
-                  <Clock className="w-3 h-3 text-gray-400" />
-                  <p className="text-xs text-gray-500">
+                  <Clock className="w-3 h-3 text-muted-foreground/60" />
+                  <p className="text-xs text-muted-foreground">
                     Last updated: {getTimeAgo(lastUpdated)}
                   </p>
                 </div>

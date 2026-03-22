@@ -1,0 +1,128 @@
+"use client";
+
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
+
+interface BookingPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  itemsPerPage: number;
+  totalItems: number;
+  onGoToPage: (page: number) => void;
+  onGoToFirstPage: () => void;
+  onGoToLastPage: () => void;
+  onGoToPreviousPage: () => void;
+  onGoToNextPage: () => void;
+}
+
+export function BookingPagination({
+  currentPage,
+  totalPages,
+  itemsPerPage,
+  totalItems,
+  onGoToPage,
+  onGoToFirstPage,
+  onGoToLastPage,
+  onGoToPreviousPage,
+  onGoToNextPage,
+}: BookingPaginationProps) {
+  if (totalItems <= itemsPerPage) return null;
+
+  return (
+    <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 pt-4">
+      {/* Mobile: Simple prev/next */}
+      <div className="flex sm:hidden w-full justify-between items-center">
+        <button
+          onClick={onGoToPreviousPage}
+          disabled={currentPage === 1}
+          className="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        >
+          Previous
+        </button>
+        <span className="text-sm text-gray-600">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={onGoToNextPage}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* Desktop: Full pagination */}
+      <div className="hidden sm:flex items-center gap-2">
+        <button
+          onClick={onGoToFirstPage}
+          disabled={currentPage === 1}
+          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="First page"
+        >
+          <ChevronsLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onGoToPreviousPage}
+          disabled={currentPage === 1}
+          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Previous page"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="hidden sm:flex items-center gap-2">
+        {/* Page numbers */}
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          let pageNumber;
+          if (totalPages <= 5) {
+            pageNumber = i + 1;
+          } else if (currentPage <= 3) {
+            pageNumber = i + 1;
+          } else if (currentPage >= totalPages - 2) {
+            pageNumber = totalPages - 4 + i;
+          } else {
+            pageNumber = currentPage - 2 + i;
+          }
+
+          return (
+            <button
+              key={pageNumber}
+              onClick={() => onGoToPage(pageNumber)}
+              className={`px-3 py-2 text-sm font-medium rounded-md border ${
+                currentPage === pageNumber
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {pageNumber}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:flex items-center gap-2">
+        <button
+          onClick={onGoToNextPage}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Next page"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onGoToLastPage}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Last page"
+        >
+          <ChevronsRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}

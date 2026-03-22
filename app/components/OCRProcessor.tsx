@@ -97,10 +97,10 @@ export default function OCRProcessor({
   if (!file) {
     return (
       <div
-        className={`p-4 bg-gray-700/50 border border-gray-600 rounded-lg text-center ${className}`}
+        className={`p-4 bg-muted/50 border border-border rounded-lg text-center ${className}`}
       >
-        <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-gray-400 text-sm">
+        <Eye className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+        <p className="text-muted-foreground text-sm">
           Upload an image to enable auto-fill
         </p>
       </div>
@@ -110,7 +110,7 @@ export default function OCRProcessor({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* OCR Action Button */}
-      <div className="bg-gradient-to-r from-blue-800/20 to-purple-800/20 border border-blue-600/30 rounded-lg p-4">
+      <div className="bg-gradient-to-r from-primary/10 to-purple-800/20 border border-primary/30 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div
@@ -119,7 +119,7 @@ export default function OCRProcessor({
                   ? "bg-yellow-600/30"
                   : ocrResult
                   ? "bg-green-600/30"
-                  : "bg-blue-600/30"
+                  : "bg-primary/30"
               }`}
             >
               {isProcessing ? (
@@ -127,13 +127,13 @@ export default function OCRProcessor({
               ) : (
                 <Zap
                   className={`w-5 h-5 ${
-                    ocrResult ? "text-green-400" : "text-blue-400"
+                    ocrResult ? "text-green-400" : "text-primary"
                   }`}
                 />
               )}
             </div>
             <div>
-              <h3 className="font-semibold text-white">
+              <h3 className="font-semibold text-foreground">
                 {isProcessing
                   ? "Processing Image..."
                   : ocrResult
@@ -154,7 +154,7 @@ export default function OCRProcessor({
         {!isProcessing && !autoProcessed && (
           <button
             onClick={processImage}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-foreground py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
           >
             <Zap className="w-4 h-4" />
             🚀 Process Image Manually
@@ -162,8 +162,8 @@ export default function OCRProcessor({
         )}
 
         {isProcessing && (
-          <div className="w-full bg-gray-700 rounded-lg p-3 flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+          <div className="w-full bg-muted rounded-lg p-3 flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary/80"></div>
             <span className="text-blue-200 text-sm">
               {processingStep || "Processing..."}
             </span>
@@ -181,14 +181,14 @@ export default function OCRProcessor({
 
       {/* OCR Results */}
       {ocrResult && !isProcessing && (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
+        <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-white flex items-center gap-2">
-              <Eye className="w-4 h-4 text-blue-400" />
+            <h4 className="font-semibold text-foreground flex items-center gap-2">
+              <Eye className="w-4 h-4 text-primary" />
               Extracted Information
             </h4>
             <span
-              className={`text-xs px-2 py-1 rounded-full bg-gray-700 ${getConfidenceColor(
+              className={`text-xs px-2 py-1 rounded-full bg-muted ${getConfidenceColor(
                 ocrResult.confidence
               )}`}
             >
@@ -199,22 +199,22 @@ export default function OCRProcessor({
           <div className="space-y-3">
             {/* Payment Method */}
             {ocrResult.method !== "unknown" && (
-              <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-                <span className="text-gray-400 text-sm">Detected Method:</span>
-                <span className="text-white font-medium">
+              <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                <span className="text-muted-foreground text-sm">Detected Method:</span>
+                <span className="text-foreground font-medium">
                   {getMethodLabel(ocrResult.method)}
                 </span>
               </div>
             )}
 
             {/* Reference Number */}
-            <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-              <span className="text-gray-400 text-sm">Reference Number:</span>
+            <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+              <span className="text-muted-foreground text-sm">Reference Number:</span>
               <div className="flex items-center gap-2">
                 {ocrResult.referenceNumber ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-white font-mono text-sm">
+                    <span className="text-foreground font-mono text-sm">
                       {ocrResult.referenceNumber}
                     </span>
                   </>
@@ -228,13 +228,13 @@ export default function OCRProcessor({
             </div>
 
             {/* Amount */}
-            <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-              <span className="text-gray-400 text-sm">Amount:</span>
+            <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+              <span className="text-muted-foreground text-sm">Amount:</span>
               <div className="flex items-center gap-2">
                 {ocrResult.amount ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-white font-semibold">
+                    <span className="text-foreground font-semibold">
                       ₱{ocrResult.amount.toLocaleString()}
                     </span>
                     {expectedAmount &&
@@ -276,16 +276,16 @@ export default function OCRProcessor({
             {/* Raw Text Toggle */}
             <button
               onClick={() => setShowRawText(!showRawText)}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-xs text-primary hover:text-primary/80 transition-colors"
             >
               {showRawText ? "🙈 Hide" : "👁️ Show"} Raw OCR Text
             </button>
 
             {/* Raw OCR Text */}
             {showRawText && ocrResult.rawText && (
-              <div className="mt-2 p-3 bg-gray-900/50 border border-gray-700 rounded text-xs">
-                <p className="text-gray-400 mb-1">Raw OCR Output:</p>
-                <pre className="text-gray-300 whitespace-pre-wrap font-mono text-xs overflow-auto max-h-32">
+              <div className="mt-2 p-3 bg-background/50 border border-border rounded text-xs">
+                <p className="text-muted-foreground mb-1">Raw OCR Output:</p>
+                <pre className="text-muted-foreground whitespace-pre-wrap font-mono text-xs overflow-auto max-h-32">
                   {ocrResult.rawText}
                 </pre>
               </div>

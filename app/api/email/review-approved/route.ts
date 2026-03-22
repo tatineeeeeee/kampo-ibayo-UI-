@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error sending review approval email:', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Failed to send email' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

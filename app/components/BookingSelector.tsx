@@ -193,9 +193,9 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
     if (daysSinceStay <= 30) {
       return { label: 'Recent Stay', color: 'text-green-400', bgColor: 'bg-green-900/20 border-green-500/30' };
     } else if (daysSinceStay <= 90) {
-      return { label: 'Past Stay', color: 'text-blue-400', bgColor: 'bg-blue-900/20 border-blue-500/30' };
+      return { label: 'Past Stay', color: 'text-primary', bgColor: 'bg-primary/10 border-primary/30' };
     } else {
-      return { label: 'Older Stay', color: 'text-gray-400', bgColor: 'bg-gray-900/20 border-gray-500/30' };
+      return { label: 'Older Stay', color: 'text-muted-foreground', bgColor: 'bg-background/20 border-gray-500/30' };
     }
   };
 
@@ -204,8 +204,8 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
       return {
         icon: Star,
         text: 'Leave Review',
-        color: 'text-blue-400 group-hover:text-blue-300',
-        bgColor: 'bg-blue-900/20 border-blue-500/30',
+        color: 'text-primary group-hover:text-primary/80',
+        bgColor: 'bg-primary/10 border-primary/30',
         clickable: true
       };
     }
@@ -239,16 +239,16 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
         return {
           icon: XCircle,
           text: 'Review Limit Reached',
-          color: 'text-gray-400',
-          bgColor: 'bg-gray-900/20 border-gray-500/30',
+          color: 'text-muted-foreground',
+          bgColor: 'bg-background/20 border-gray-500/30',
           clickable: false // No more submissions allowed
         };
       default:
         return {
           icon: Star,
           text: 'Leave Review',
-          color: 'text-blue-400 group-hover:text-blue-300',
-          bgColor: 'bg-blue-900/20 border-blue-500/30',
+          color: 'text-primary group-hover:text-primary/80',
+          bgColor: 'bg-primary/10 border-primary/30',
           clickable: true
         };
     }
@@ -257,8 +257,8 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
   if (loading) {
     return (
       <div className={`${className} text-center py-12`}>
-        <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-spin" />
-        <p className="text-gray-400">Loading your stays...</p>
+        <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+        <p className="text-muted-foreground">Loading your stays...</p>
       </div>
     );
   }
@@ -270,7 +270,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
           <p className="text-red-400">{error}</p>
           <button
             onClick={fetchUserBookings}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="mt-4 px-4 py-2 bg-primary hover:bg-primary/90 text-foreground rounded-lg transition-colors"
           >
             Try Again
           </button>
@@ -291,15 +291,15 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
     return (
       <>
         <div className={`${className} text-center py-12`}>
-          <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">No Past Stays Found</h3>
-          <p className="text-gray-400 mb-6">
+          <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-foreground mb-2">No Past Stays Found</h3>
+          <p className="text-muted-foreground mb-6">
             You need to have completed a stay at Kampo Ibayo to leave a review.
           </p>
           <button
             type="button"
             onClick={handleBookClick}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-foreground rounded-lg transition-colors"
           >
             <Calendar className="w-4 h-4 mr-2" />
             Book Your Stay
@@ -316,10 +316,10 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
   return (
     <div className={className}>
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           Which stay would you like to review?
         </h2>
-        <p className="text-gray-400">
+        <p className="text-muted-foreground">
           Select from your completed stays at Kampo Ibayo
         </p>
       </div>
@@ -335,36 +335,36 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
               key={booking.id}
               className={`${status.bgColor} border rounded-lg p-6 transition-all ${
                 reviewStatus.clickable 
-                  ? 'hover:border-blue-500/50 cursor-pointer group'
+                  ? 'hover:border-primary/50 cursor-pointer group'
                   : 'cursor-default opacity-75'
               }`}
               onClick={() => reviewStatus.clickable && onBookingSelect(booking)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-lg">
+                    <h3 className="text-foreground font-semibold text-lg">
                       Kampo Ibayo Resort
                     </h3>
                     <div className="flex items-center gap-2 text-sm">
                       <span className={`${status.color} font-medium`}>
                         {status.label}
                       </span>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-400">
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
                         Booking #{booking.id}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">
+                  <p className="text-foreground font-semibold">
                     ₱{booking.total_amount.toLocaleString()}
                   </p>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {nights} night{nights !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -372,36 +372,36 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-white text-sm font-medium">Check-in</p>
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-foreground text-sm font-medium">Check-in</p>
+                    <p className="text-muted-foreground text-xs">
                       {formatDate(booking.check_in_date)}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-white text-sm font-medium">Check-out</p>
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-foreground text-sm font-medium">Check-out</p>
+                    <p className="text-muted-foreground text-xs">
                       {formatDate(booking.check_out_date)}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-gray-400" />
+                  <Users className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-white text-sm font-medium">Guests</p>
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-foreground text-sm font-medium">Guests</p>
+                    <p className="text-muted-foreground text-xs">
                       {booking.number_of_guests} guest{booking.number_of_guests !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-600/30">
-                <p className="text-gray-400 text-sm">
+              <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                <p className="text-muted-foreground text-sm">
                   Guest: {booking.guest_name}
                 </p>
                 <div className={`flex items-center gap-2 ${reviewStatus.color} transition-colors`}>
@@ -415,13 +415,13 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                 <div className={`mt-4 p-3 rounded-lg ${
                   booking.reviewStatus === 'approved' ? 'bg-green-900/30 border border-green-600/30' :
                   booking.reviewStatus === 'pending' ? 'bg-yellow-900/30 border border-yellow-600/30' :
-                  booking.reviewStatus === 'blocked' ? 'bg-gray-900/30 border border-gray-600/30' :
+                  booking.reviewStatus === 'blocked' ? 'bg-background/30 border border-border/30' :
                   'bg-red-900/30 border border-red-600/30'
                 }`}>
                   <div className={`text-sm ${
                     booking.reviewStatus === 'approved' ? 'text-green-200' :
                     booking.reviewStatus === 'pending' ? 'text-yellow-200' :
-                    booking.reviewStatus === 'blocked' ? 'text-gray-200' :
+                    booking.reviewStatus === 'blocked' ? 'text-foreground' :
                     'text-red-200'
                   }`}>
                     {booking.reviewStatus === 'approved' && 
@@ -450,12 +450,12 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                           🚫 <strong>Review limit reached</strong> - No more submissions allowed for this booking
                         </div>
                         {booking.rejectionReason && (
-                          <div className="mt-2 p-2 bg-gray-800/30 rounded border-l-2 border-gray-500">
-                            <div className="text-xs text-gray-400 font-medium mb-1">Last Rejection Reason:</div>
-                            <div className="text-xs text-gray-200">{booking.rejectionReason}</div>
+                          <div className="mt-2 p-2 bg-card/30 rounded border-l-2 border-gray-500">
+                            <div className="text-xs text-muted-foreground font-medium mb-1">Last Rejection Reason:</div>
+                            <div className="text-xs text-foreground">{booking.rejectionReason}</div>
                           </div>
                         )}
-                        <div className="text-xs text-gray-400 mt-2">
+                        <div className="text-xs text-muted-foreground mt-2">
                           You had 2 attempts to submit a review for this booking. Contact support if you believe this was an error.
                         </div>
                       </div>
@@ -469,21 +469,21 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
       </div>
 
       <div className="mt-8 text-center space-y-2">
-        <p className="text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Don&apos;t see your stay? Only completed bookings are available for review.
         </p>
         <div className="flex items-center justify-center gap-6 text-xs">
           <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 text-blue-400" />
-            <span className="text-gray-400">Can review</span>
+            <Star className="w-3 h-3 text-primary" />
+            <span className="text-muted-foreground">Can review</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3 text-yellow-400" />
-            <span className="text-gray-400">Under review</span>
+            <span className="text-muted-foreground">Under review</span>
           </div>
           <div className="flex items-center gap-1">
             <CheckCircle className="w-3 h-3 text-green-400" />
-            <span className="text-gray-400">Published</span>
+            <span className="text-muted-foreground">Published</span>
           </div>
         </div>
       </div>

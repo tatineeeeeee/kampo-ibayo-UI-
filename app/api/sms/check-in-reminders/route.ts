@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
           phone: booking.guest_phone as string,
           reminderType,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: 'Failed to send reminder'
         });
       }
     }
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: 'Internal server error'
       },
       { status: 500 }
     );

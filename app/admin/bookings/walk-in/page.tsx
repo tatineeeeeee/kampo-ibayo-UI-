@@ -27,6 +27,8 @@ import {
   validatePhilippinePhone,
   cleanPhoneForDatabase,
 } from "../../../utils/phoneUtils";
+import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, MAX_GUESTS, PHILIPPINE_HOLIDAYS } from "../../../lib/constants/pricing";
+import { CHECK_IN_TIME, CHECK_OUT_TIME } from "../../../lib/constants";
 
 export default function WalkInBookingPage() {
   const router = useRouter();
@@ -37,7 +39,7 @@ export default function WalkInBookingPage() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  const [numberOfGuests, setNumberOfGuests] = useState("15");
+  const [numberOfGuests, setNumberOfGuests] = useState(String(INCLUDED_GUESTS));
   const [bringsPet, setBringsPet] = useState(false);
   const [specialRequests, setSpecialRequests] = useState("");
 
@@ -67,55 +69,11 @@ export default function WalkInBookingPage() {
     }
   }, [user, userRole, authLoading, router]);
 
-  // Philippine holidays 2024-2027
-  const holidays = [
-    "2024-12-25",
-    "2024-12-30",
-    "2024-12-31",
-    "2025-01-01",
-    "2025-02-14",
-    "2025-04-17",
-    "2025-04-18",
-    "2025-04-19",
-    "2025-06-12",
-    "2025-08-25",
-    "2025-11-01",
-    "2025-11-02",
-    "2025-11-30",
-    "2025-12-25",
-    "2025-12-30",
-    "2025-12-31",
-    "2026-01-01",
-    "2026-02-14",
-    "2026-04-02",
-    "2026-04-03",
-    "2026-04-04",
-    "2026-06-12",
-    "2026-08-31",
-    "2026-11-01",
-    "2026-11-02",
-    "2026-11-30",
-    "2026-12-25",
-    "2026-12-30",
-    "2026-12-31",
-    "2027-01-01",
-    "2027-02-14",
-    "2027-03-25",
-    "2027-03-26",
-    "2027-03-27",
-    "2027-06-12",
-    "2027-08-30",
-    "2027-11-01",
-    "2027-11-02",
-    "2027-11-30",
-    "2027-12-25",
-    "2027-12-30",
-    "2027-12-31",
-  ];
+  const holidays = PHILIPPINE_HOLIDAYS;
 
   // Calculate price for multi-day bookings with per-day rates
   const calculateMultiDayPrice = useCallback(
-    (checkIn: string, checkOut: string, guestCount: number = 15) => {
+    (checkIn: string, checkOut: string, guestCount: number = INCLUDED_GUESTS) => {
       const checkInDate = new Date(checkIn + "T00:00:00");
       const checkOutDate = new Date(checkOut + "T00:00:00");
 
@@ -130,9 +88,9 @@ export default function WalkInBookingPage() {
       while (current < checkOutDate) {
         const day = current.getDay();
         const dateString = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
-        const isHoliday = holidays.includes(dateString);
+        const isHoliday = (holidays as readonly string[]).includes(dateString);
         const isWeekend = day === 0 || day === 5 || day === 6;
-        const nightRate = isWeekend || isHoliday ? 12000 : 9000;
+        const nightRate = isWeekend || isHoliday ? BASE_RATE_WEEKEND : BASE_RATE_WEEKDAY;
 
         nights.push({
           date: new Date(current),
@@ -147,7 +105,7 @@ export default function WalkInBookingPage() {
       const totalBaseRate = nights.reduce((sum, night) => sum + night.rate, 0);
       const totalNights = nights.length;
       const excessGuestFee =
-        guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
+        guestCount > INCLUDED_GUESTS ? (guestCount - INCLUDED_GUESTS) * EXTRA_GUEST_FEE * totalNights : 0;
 
       return {
         nights,
@@ -158,8 +116,8 @@ export default function WalkInBookingPage() {
         breakdown: {
           weekdayNights: nights.filter((n) => !n.isWeekend).length,
           weekendNights: nights.filter((n) => n.isWeekend).length,
-          weekdayTotal: nights.filter((n) => !n.isWeekend).length * 9000,
-          weekendTotal: nights.filter((n) => n.isWeekend).length * 12000,
+          weekdayTotal: nights.filter((n) => !n.isWeekend).length * BASE_RATE_WEEKDAY,
+          weekendTotal: nights.filter((n) => n.isWeekend).length * BASE_RATE_WEEKEND,
         },
       };
     },
@@ -179,7 +137,7 @@ export default function WalkInBookingPage() {
       ? calculateMultiDayPrice(
           selectedCheckIn,
           selectedCheckOut,
-          parseInt(numberOfGuests) || 15,
+          parseInt(numberOfGuests) || INCLUDED_GUESTS,
         )
       : null;
 
@@ -245,9 +203,9 @@ export default function WalkInBookingPage() {
         return;
       }
 
-      const guestCount = parseInt(numberOfGuests) || 15;
-      if (guestCount < 1 || guestCount > 25) {
-        showError("Invalid Guests", "Guest count must be between 1 and 25.");
+      const guestCount = parseInt(numberOfGuests) || INCLUDED_GUESTS;
+      if (guestCount < 1 || guestCount > MAX_GUESTS) {
+        showError("Invalid Guests", `Guest count must be between 1 and ${MAX_GUESTS}.`);
         setIsSubmitting(false);
         return;
       }
@@ -509,17 +467,17 @@ export default function WalkInBookingPage() {
                   <input
                     type="number"
                     min="1"
-                    max="25"
+                    max={MAX_GUESTS}
                     value={numberOfGuests}
                     onChange={(e) => setNumberOfGuests(e.target.value)}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
                   />
-                  {parseInt(numberOfGuests) > 15 && (
+                  {parseInt(numberOfGuests) > INCLUDED_GUESTS && (
                     <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
-                      Excess guest fee: +₱300/guest/night for{" "}
-                      {parseInt(numberOfGuests) - 15} extra guest
-                      {parseInt(numberOfGuests) - 15 > 1 ? "s" : ""}
+                      Excess guest fee: +₱{EXTRA_GUEST_FEE}/guest/night for{" "}
+                      {parseInt(numberOfGuests) - INCLUDED_GUESTS} extra guest
+                      {parseInt(numberOfGuests) - INCLUDED_GUESTS > 1 ? "s" : ""}
                     </p>
                   )}
                 </div>
@@ -651,7 +609,7 @@ export default function WalkInBookingPage() {
                         day: "numeric",
                         year: "numeric",
                       })}{" "}
-                      at 3:00 PM
+                      at {CHECK_IN_TIME}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
@@ -665,7 +623,7 @@ export default function WalkInBookingPage() {
                         day: "numeric",
                         year: "numeric",
                       })}{" "}
-                      at 1:00 PM
+                      at {CHECK_OUT_TIME}
                     </span>
                   </div>
 
@@ -683,7 +641,7 @@ export default function WalkInBookingPage() {
                         <span className="text-gray-500 ml-5">
                           {pricing.breakdown.weekdayNights} weekday
                           {pricing.breakdown.weekdayNights !== 1 ? "s" : ""} ×
-                          ₱9,000
+                          ₱{BASE_RATE_WEEKDAY.toLocaleString()}
                         </span>
                         <span className="text-gray-700">
                           ₱{pricing.breakdown.weekdayTotal.toLocaleString()}
@@ -696,7 +654,7 @@ export default function WalkInBookingPage() {
                         <span className="text-gray-500 ml-5">
                           {pricing.breakdown.weekendNights} weekend/holiday
                           {pricing.breakdown.weekendNights !== 1 ? "s" : ""} ×
-                          ₱12,000
+                          ₱{BASE_RATE_WEEKEND.toLocaleString()}
                         </span>
                         <span className="text-gray-700">
                           ₱{pricing.breakdown.weekendTotal.toLocaleString()}
@@ -707,8 +665,8 @@ export default function WalkInBookingPage() {
                     {pricing.excessGuestFee > 0 && (
                       <div className="flex items-center justify-between text-sm mt-1">
                         <span className="text-amber-600 ml-5">
-                          Excess guest fee ({parseInt(numberOfGuests) - 15} ×
-                          ₱300 × {pricing.totalNights} nights)
+                          Excess guest fee ({parseInt(numberOfGuests) - INCLUDED_GUESTS} ×
+                          ₱{EXTRA_GUEST_FEE} × {pricing.totalNights} nights)
                         </span>
                         <span className="text-amber-700">
                           ₱{pricing.excessGuestFee.toLocaleString()}

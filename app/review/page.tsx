@@ -116,10 +116,10 @@ export default function ReviewPage() {
   const SuccessPage = () => (
     <div className="text-center py-6 sm:py-8 px-3 sm:px-0">
       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-        <Check className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+        <Check className="w-8 h-8 sm:w-10 sm:h-10 text-foreground" />
       </div>
-      <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Thank you for your review!</h2>
-      <p className="text-gray-300 text-base sm:text-lg mb-4 sm:mb-6 max-w-md mx-auto px-2 sm:px-0">
+      <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">Thank you for your review!</h2>
+      <p className="text-muted-foreground text-base sm:text-lg mb-4 sm:mb-6 max-w-md mx-auto px-2 sm:px-0">
         Your review has been published successfully and is now visible to other guests!
       </p>
       
@@ -149,12 +149,12 @@ export default function ReviewPage() {
               amenities: 0
             });
           }}
-          className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm sm:text-base"
+          className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-foreground rounded-lg transition-colors font-medium text-sm sm:text-base"
         >
           Submit Another Review
         </button>
-        <div className="text-gray-400 text-xs sm:text-sm">
-          Redirecting to home in <span className="text-white">5 seconds</span>...
+        <div className="text-muted-foreground text-xs sm:text-sm">
+          Redirecting to home in <span className="text-foreground">5 seconds</span>...
         </div>
       </div>
     </div>
@@ -163,17 +163,17 @@ export default function ReviewPage() {
   return (
     <>
       {/* Navigation Bar */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-20">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link 
                 href="/" 
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors"
               >
-                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div className="text-foreground">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 relative">
                     <Image
@@ -185,27 +185,27 @@ export default function ReviewPage() {
                   </div>
                   <h1 className="text-lg sm:text-xl font-bold">Kampo Ibayo</h1>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Review Portal</p>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Review Portal</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Link 
                 href="/profile" 
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors"
               >
-                <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-xs sm:text-sm text-gray-400 text-right">
+              <div className="text-xs sm:text-sm text-muted-foreground text-right">
                 {loading ? (
-                  <span className="inline-block bg-gray-600 text-gray-300 px-2 py-1 rounded-full text-xs font-medium">
+                  <span className="inline-block bg-gray-600 text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                     ● Loading...
                   </span>
                 ) : user ? (
-                  <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-green-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                     ● Signed In
                   </span>
                 ) : (
-                  <span className="inline-block bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-orange-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                     ● Guest
                   </span>
                 )}
@@ -222,18 +222,18 @@ export default function ReviewPage() {
           backgroundImage: "url('/pool.jpg')",
         }}
       >
-        <div className="bg-gray-900/95 backdrop-blur-sm text-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl p-3 sm:p-6 lg:p-8 border border-gray-700/50 my-4 sm:my-8">
+        <div className="bg-background/95 backdrop-blur-sm text-foreground rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl p-3 sm:p-6 lg:p-8 border border-border/50 my-4 sm:my-8">
           {/* Header with Steps */}
           <div className="text-center mb-6 sm:mb-8">
             <div className="inline-block mb-3">
-              <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-full mx-auto"></div>
+              <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-primary via-primary to-cyan-500 rounded-full mx-auto"></div>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent mb-2">
               {getStepTitle()}
             </h1>
             
             {currentStep === 1 && (
-              <p className="text-gray-400 max-w-md mx-auto text-sm sm:text-base px-4 sm:px-0">
+              <p className="text-muted-foreground max-w-md mx-auto text-sm sm:text-base px-4 sm:px-0">
                 Choose a completed stay to review. Your honest feedback will be published immediately to help future guests.
               </p>
             )}
@@ -244,10 +244,10 @@ export default function ReviewPage() {
                 <div key={step} className="flex items-center">
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                     step === currentStep
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary text-foreground'
                       : step < currentStep 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-600 text-gray-300'
+                        ? 'bg-green-600 text-foreground' 
+                        : 'bg-gray-600 text-muted-foreground'
                   }`}>
                     {step < currentStep ? '✓' : step}
                   </div>
@@ -261,13 +261,13 @@ export default function ReviewPage() {
             </div>
 
             <div className="flex justify-center gap-2 sm:gap-4 md:gap-8 mt-4 text-xs sm:text-sm px-2">
-              <span className={`text-center flex-1 sm:flex-none ${currentStep === 1 ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-center flex-1 sm:flex-none ${currentStep === 1 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
                 Select Stay
               </span>
-              <span className={`text-center flex-1 sm:flex-none ${currentStep === 2 ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-center flex-1 sm:flex-none ${currentStep === 2 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
                 Rate Experience
               </span>
-              <span className={`text-center flex-1 sm:flex-none ${currentStep === 3 ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-center flex-1 sm:flex-none ${currentStep === 3 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
                 Write Review
               </span>
             </div>
@@ -290,17 +290,17 @@ export default function ReviewPage() {
                 {currentStep === 2 && selectedBooking && (
               <div>
                 {/* Selected Booking Info */}
-                <div className="bg-gray-800/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-700/50">
+                <div className="bg-card/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-border/50">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold text-sm sm:text-base">Reviewing: Kampo Ibayo Resort</h3>
-                      <p className="text-gray-400 text-xs sm:text-sm">
+                      <h3 className="text-foreground font-semibold text-sm sm:text-base">Reviewing: Kampo Ibayo Resort</h3>
+                      <p className="text-muted-foreground text-xs sm:text-sm">
                         {formatStayDates(selectedBooking)} • Booking #{selectedBooking.id}
                       </p>
                     </div>
                     <button
                       onClick={handleBack}
-                      className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors text-sm w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-muted hover:bg-gray-600 text-muted-foreground rounded-lg transition-colors text-sm w-full sm:w-auto"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Change Booking
@@ -319,17 +319,17 @@ export default function ReviewPage() {
             {currentStep === 3 && selectedBooking && (
               <div>
                 {/* Selected Booking Info */}
-                <div className="bg-gray-800/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-700/50">
+                <div className="bg-card/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-border/50">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold text-sm sm:text-base">Kampo Ibayo Resort</h3>
-                      <p className="text-gray-400 text-xs sm:text-sm">
+                      <h3 className="text-foreground font-semibold text-sm sm:text-base">Kampo Ibayo Resort</h3>
+                      <p className="text-muted-foreground text-xs sm:text-sm">
                         {formatStayDates(selectedBooking)} • Your ratings: {categoryRatings.overall}/5 overall
                       </p>
                     </div>
                     <button
                       onClick={handleBack}
-                      className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors text-sm w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-muted hover:bg-gray-600 text-muted-foreground rounded-lg transition-colors text-sm w-full sm:w-auto"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Back to Ratings
@@ -358,10 +358,10 @@ export default function ReviewPage() {
 
           {/* Navigation Buttons - only show if on step 2 and not on success page */}
           {currentStep === 2 && !showSuccess && selectedBooking && (
-            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-600">
+            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border">
               <button
                 onClick={handleBack}
-                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-2 sm:order-1"
+                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-gray-600 hover:bg-gray-500 text-foreground rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-2 sm:order-1"
               >
                 <ChevronLeft className="w-4 h-4 sm:w-4 sm:h-4" />
                 Back to Selection
@@ -369,7 +369,7 @@ export default function ReviewPage() {
               <button
                 onClick={handleNext}
                 disabled={!canProceedToStep3}
-                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-1 sm:order-2"
+                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-primary hover:bg-primary/90 disabled:bg-gray-600 disabled:cursor-not-allowed text-foreground rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-1 sm:order-2"
               >
                 Continue to Review
                 <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4" />

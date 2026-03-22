@@ -22,7 +22,7 @@ export default function LegalNavigation() {
       href: "/legal/faq",
       label: "FAQ",
       icon: <MessageCircle className="w-4 h-4" />,
-      color: "text-blue-400",
+      color: "text-primary",
     },
     {
       href: "/legal/house-rules",
@@ -46,7 +46,7 @@ export default function LegalNavigation() {
       href: "/legal/help",
       label: "Help Center",
       icon: <Phone className="w-4 h-4" />,
-      color: "text-blue-400",
+      color: "text-primary",
     },
   ];
 
@@ -55,9 +55,9 @@ export default function LegalNavigation() {
 
   return (
     <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50">
-      <div className="bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl overflow-hidden">
+      <div className="bg-gray-800/95 backdrop-blur-sm border border-border/50 rounded-xl shadow-xl overflow-hidden">
         {/* Current Page Indicator */}
-        <div className="px-4 py-3 bg-gray-700/50 border-b border-gray-600/50">
+        <div className="px-4 py-3 bg-gray-700/50 border-b border-border/50">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               {currentPageData && (
@@ -65,7 +65,7 @@ export default function LegalNavigation() {
                   <span className={currentPageData.color}>
                     {currentPageData.icon}
                   </span>
-                  <span className="text-white text-sm font-medium">
+                  <span className="text-foreground text-sm font-medium">
                     {currentPageData.label}
                   </span>
                 </>
@@ -73,7 +73,7 @@ export default function LegalNavigation() {
             </div>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-gray-400 hover:text-white transition-colors p-2 min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-600/50"
+              className="text-muted-foreground hover:text-foreground transition-colors p-2 min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-600/50"
             >
               {isExpanded ? (
                 <ChevronDown className="w-5 h-5" />
@@ -89,9 +89,9 @@ export default function LegalNavigation() {
           <div className="py-1">
             <Link
               href="/legal"
-              className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-colors text-sm min-h-[44px] touch-manipulation"
+              className="flex items-center gap-2 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-gray-700/50 transition-colors text-sm min-h-[44px] touch-manipulation"
             >
-              <FileText className="w-4 h-4 text-blue-400" />
+              <FileText className="w-4 h-4 text-primary" />
               Legal Hub
             </Link>
 
@@ -99,7 +99,7 @@ export default function LegalNavigation() {
               <Link
                 key={page.href}
                 href={page.href}
-                className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-colors text-sm min-h-[44px] touch-manipulation"
+                className="flex items-center gap-2 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-gray-700/50 transition-colors text-sm min-h-[44px] touch-manipulation"
               >
                 <span className={page.color}>{page.icon}</span>
                 {page.label}

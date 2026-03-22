@@ -188,29 +188,29 @@ export default function FAQPage() {
     .filter((category) => category.faqs.length > 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Mobile-First Sticky Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-10">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors touch-manipulation"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div className="text-foreground">
                 <h1 className="text-lg sm:text-xl font-bold">
                   Frequently Asked Questions
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                   Find answers to common questions
                 </p>
               </div>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400 text-right">
-              <span className="inline-block bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+            <div className="text-xs sm:text-sm text-muted-foreground text-right">
+              <span className="inline-block bg-primary text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                 FAQ
               </span>
             </div>
@@ -220,15 +220,15 @@ export default function FAQPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
         {/* Search Bar */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <input
               type="text"
               placeholder="Search FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-700 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition-colors text-base min-h-[48px]"
+              className="w-full bg-muted text-foreground pl-12 pr-4 py-3 rounded-lg border border-border focus:border-primary focus:outline-none transition-colors text-base min-h-[48px]"
             />
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function FAQPage() {
           {filteredFAQs.map((category, categoryIndex) => (
             <div
               key={categoryIndex}
-              className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+              className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
             >
               <h2
                 className={`text-2xl font-bold mb-6 text-${category.color}-400 flex items-center gap-3`}
@@ -255,25 +255,25 @@ export default function FAQPage() {
                   return (
                     <div
                       key={faqIndex}
-                      className="border border-gray-700 rounded-lg overflow-hidden"
+                      className="border border-border rounded-lg overflow-hidden"
                     >
                       <button
                         onClick={() => toggleFAQ(globalIndex)}
-                        className="w-full px-4 py-4 text-left bg-gray-700/50 hover:bg-gray-700 transition-colors flex items-center justify-between min-h-[56px] touch-manipulation"
+                        className="w-full px-4 py-4 text-left bg-muted/50 hover:bg-muted transition-colors flex items-center justify-between min-h-[56px] touch-manipulation"
                       >
-                        <span className="font-medium text-white pr-4 text-sm sm:text-base">
+                        <span className="font-medium text-foreground pr-4 text-sm sm:text-base">
                           {faq.question}
                         </span>
                         {isOpen ? (
-                          <ChevronDown className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                          <ChevronDown className="w-5 h-5 text-primary flex-shrink-0" />
                         ) : (
-                          <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                         )}
                       </button>
 
                       {isOpen && (
-                        <div className="px-4 py-4 bg-gray-800/50 border-t border-gray-700">
-                          <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
+                        <div className="px-4 py-4 bg-card/60 border-t border-border">
+                          <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
                             {faq.answer}
                           </p>
                         </div>
@@ -288,11 +288,11 @@ export default function FAQPage() {
 
         {/* No Results Message */}
         {searchQuery && filteredFAQs.length === 0 && (
-          <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50 text-center">
-            <h3 className="text-xl font-semibold mb-2 text-gray-300">
+          <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50 text-center">
+            <h3 className="text-xl font-semibold mb-2 text-muted-foreground">
               No results found
             </h3>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Try different keywords or contact us directly for assistance.
             </p>
           </div>

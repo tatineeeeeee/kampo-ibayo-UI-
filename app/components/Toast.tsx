@@ -7,6 +7,7 @@ import {
   ReactNode,
 } from "react";
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { TOAST_DURATION_MS } from "../lib/constants/timeouts";
 
 // Toast types
 export type ToastType = "success" | "error" | "warning" | "info";
@@ -46,7 +47,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       id,
-      duration: 4000,
+      duration: TOAST_DURATION_MS,
       ...toast,
     };
 
@@ -122,9 +123,9 @@ const ToastComponent = ({ toast, onRemove }: ToastComponentProps) => {
       case "warning":
         return `${baseStyles} ${positionStyles} bg-yellow-50 border border-yellow-200 text-yellow-800`;
       case "info":
-        return `${baseStyles} ${positionStyles} bg-blue-50 border border-blue-200 text-blue-800`;
+        return `${baseStyles} ${positionStyles} bg-primary/5 border border-primary/20 text-primary`;
       default:
-        return `${baseStyles} ${positionStyles} bg-gray-50 border border-gray-200 text-gray-800`;
+        return `${baseStyles} ${positionStyles} bg-card border border-border text-foreground`;
     }
   };
 
@@ -138,7 +139,7 @@ const ToastComponent = ({ toast, onRemove }: ToastComponentProps) => {
       case "warning":
         return <AlertTriangle className={`${iconClass} text-yellow-600`} />;
       case "info":
-        return <Info className={`${iconClass} text-blue-600`} />;
+        return <Info className={`${iconClass} text-primary`} />;
     }
   };
 
@@ -151,9 +152,9 @@ const ToastComponent = ({ toast, onRemove }: ToastComponentProps) => {
       case "warning":
         return "bg-yellow-600";
       case "info":
-        return "bg-blue-600";
+        return "bg-primary";
       default:
-        return "bg-gray-600";
+        return "bg-muted-foreground";
     }
   };
 

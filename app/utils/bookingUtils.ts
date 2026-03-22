@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { MAX_PENDING_BOOKINGS, BOOKING_EXPIRY_DAYS } from "../lib/constants/booking";
 
 export interface BookingExpiration {
   id: number;
@@ -68,11 +69,11 @@ export async function getUserBookingStats(userId: string): Promise<BookingStats>
       }
     });
 
-    const canCreatePending = stats.pendingCount < 3;
+    const canCreatePending = stats.pendingCount < MAX_PENDING_BOOKINGS;
     let message = '';
 
     if (!canCreatePending) {
-      message = 'You have reached the maximum of 3 pending bookings. Please wait for confirmation or cancel existing pending bookings.';
+      message = `You have reached the maximum of ${MAX_PENDING_BOOKINGS} pending bookings. Please wait for confirmation or cancel existing pending bookings.`;
     }
 
     return {
@@ -199,9 +200,9 @@ export async function canUserCreatePendingBooking(userId: string): Promise<{ can
  */
 export async function checkAndExpirePendingBookings(): Promise<BookingExpiration[]> {
   try {
-    // Calculate 7 days ago for production
+    // Calculate expiry threshold
     const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - BOOKING_EXPIRY_DAYS);
 
     // Find bookings that are pending and older than 7 days
     const { data: expiredBookings, error: fetchError } = await supabase
@@ -228,7 +229,7 @@ export async function checkAndExpirePendingBookings(): Promise<BookingExpiration
       .from('bookings')
       .update({
         status: 'cancelled',
-        cancellation_reason: 'Auto-expired: No confirmation received within 7 days',
+        cancellation_reason: `Auto-expired: No confirmation received within ${BOOKING_EXPIRY_DAYS} days`,
         cancelled_by: 'system',
         cancelled_at: new Date().toISOString()
       })
@@ -293,7 +294,7 @@ export function shouldShowExpirationWarning(createdAt: string | null, status: st
 export function getExpirationWarningMessage(createdAt: string | null): string {
   if (!createdAt) return "";
   const daysPending = getDaysPending(createdAt);
-  const daysLeft = Math.max(0, 7 - daysPending);
+  const daysLeft = Math.max(0, BOOKING_EXPIRY_DAYS - daysPending);
 
   if (daysLeft === 0) {
     return "⚠️ This booking will expire today";

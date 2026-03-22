@@ -357,7 +357,7 @@ const ReviewSystem = ({
             className={`${sizeClasses[size]} ${
               star <= rating
                 ? "text-yellow-400 fill-yellow-400"
-                : "text-gray-400"
+                : "text-muted-foreground"
             }`}
           />
         ))}
@@ -382,23 +382,23 @@ const ReviewSystem = ({
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg animate-pulse"
+              className="bg-card border border-border/60 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg animate-pulse"
             >
               <div className="flex items-center mb-3 sm:mb-4">
                 <div className="flex gap-1">
                   {[...Array(5)].map((_, j) => (
-                    <div key={j} className="w-4 h-4 bg-gray-600 rounded"></div>
+                    <div key={j} className="w-4 h-4 bg-muted-foreground/30 rounded"></div>
                   ))}
                 </div>
               </div>
               <div className="space-y-2 mb-4">
-                <div className="h-4 bg-gray-600 rounded w-full"></div>
-                <div className="h-4 bg-gray-600 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-600 rounded w-1/2"></div>
+                <div className="h-4 bg-muted-foreground/30 rounded w-full"></div>
+                <div className="h-4 bg-muted-foreground/30 rounded w-3/4"></div>
+                <div className="h-4 bg-muted-foreground/30 rounded w-1/2"></div>
               </div>
               <div className="border-t border-gray-600 pt-3 sm:pt-4">
-                <div className="h-4 bg-gray-600 rounded w-1/3 mb-2"></div>
-                <div className="h-3 bg-gray-600 rounded w-1/4"></div>
+                <div className="h-4 bg-muted-foreground/30 rounded w-1/3 mb-2"></div>
+                <div className="h-3 bg-muted-foreground/30 rounded w-1/4"></div>
               </div>
             </div>
           ))}
@@ -414,13 +414,13 @@ const ReviewSystem = ({
         <div className="flex flex-col items-center gap-4">
           <AlertCircle className="w-12 h-12 text-red-400" />
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Unable to Load Reviews
             </h3>
-            <p className="text-gray-400 mb-4">{error}</p>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <button
               onClick={() => fetchReviews(currentPage)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
             >
               Try Again
             </button>
@@ -435,12 +435,12 @@ const ReviewSystem = ({
     return (
       <div className={`${className} text-center py-8`}>
         <div className="flex flex-col items-center gap-4">
-          <Star className="w-12 h-12 text-gray-400" />
+          <Star className="w-12 h-12 text-muted-foreground" />
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               No Reviews Yet
             </h3>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Be the first to share your experience at Kampo Ibayo!
             </p>
           </div>
@@ -456,15 +456,15 @@ const ReviewSystem = ({
         <div className="flex flex-col xs:flex-row items-center justify-center gap-1 xs:gap-2 mb-4">
           {renderStars(averageRating, "lg")}
           <div className="flex items-center gap-2">
-            <span className="text-xl xs:text-2xl font-bold text-white">
+            <span className="text-xl xs:text-2xl font-bold text-foreground">
               {averageRating}
             </span>
-            <span className="text-gray-400 text-sm xs:text-base">
+            <span className="text-muted-foreground text-sm xs:text-base">
               ({totalReviews} reviews)
             </span>
           </div>
         </div>
-        <p className="text-gray-400 text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
+        <p className="text-muted-foreground text-sm xs:text-base sm:text-lg max-w-2xl mx-auto">
           Read authentic reviews from families and adventurers who experienced
           Kampo Ibayo
         </p>
@@ -490,7 +490,7 @@ const ReviewSystem = ({
                 className="flex-shrink-0 px-2"
                 style={{ width: `${100 / cardsPerView}%` }}
               >
-                <div className="group bg-gray-800 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+                <div className="group bg-card border border-border/60 hover:border-primary/40 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-muted/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
                   {/* Rating and Verification */}
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     {renderStars(review.rating)}
@@ -508,7 +508,7 @@ const ReviewSystem = ({
                   <div className="mb-4 sm:mb-6">
                     <p
                       ref={(el) => checkTruncation(el, review.id)}
-                      className="text-gray-300 italic text-xs xs:text-sm sm:text-base leading-relaxed line-clamp-4"
+                      className="text-foreground/80 italic text-xs xs:text-sm sm:text-base leading-relaxed line-clamp-4"
                     >
                       &ldquo;{review.review_text}&rdquo;
                     </p>
@@ -516,7 +516,7 @@ const ReviewSystem = ({
                       <button
                         type="button"
                         onClick={() => setSelectedReview(review)}
-                        className="text-blue-400 hover:text-blue-300 text-xs mt-1.5 transition-colors"
+                        className="text-primary hover:text-primary/80 text-xs mt-1.5 transition-colors"
                       >
                         See more
                       </button>
@@ -554,7 +554,7 @@ const ReviewSystem = ({
                             ))}
                         </div>
                         {review.review_photos.length > 3 && (
-                          <p className="text-gray-500 text-xs mt-2">
+                          <p className="text-muted-foreground text-xs mt-2">
                             +{review.review_photos.length - 3} more photo
                             {review.review_photos.length - 3 > 1 ? "s" : ""}
                           </p>
@@ -563,21 +563,21 @@ const ReviewSystem = ({
                     )}
 
                   {/* Guest Info */}
-                  <div className="border-t border-gray-600 pt-3 sm:pt-4 mt-auto">
+                  <div className="border-t border-border pt-3 sm:pt-4 mt-auto">
                     <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0">
                       <div>
-                        <p className="font-bold text-blue-400 text-sm xs:text-base">
+                        <p className="font-bold text-primary text-sm xs:text-base">
                           - {review.guest_name}
                         </p>
                         {review.guest_location && (
-                          <div className="flex items-center gap-1 text-gray-500 text-xs xs:text-sm mt-1">
+                          <div className="flex items-center gap-1 text-muted-foreground text-xs xs:text-sm mt-1">
                             <MapPin className="w-3 h-3" />
                             <span>{review.guest_location}</span>
                           </div>
                         )}
                       </div>
                       <div className="xs:text-right">
-                        <div className="flex items-center gap-1 text-gray-500 text-xs">
+                        <div className="flex items-center gap-1 text-muted-foreground text-xs">
                           <Calendar className="w-3 h-3" />
                           <span>{formatDate(review.created_at)}</span>
                         </div>
@@ -596,7 +596,7 @@ const ReviewSystem = ({
             <button
               type="button"
               onClick={prevSlide}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-600 bg-gray-800 hover:bg-gray-700 hover:border-gray-500 text-white transition-colors"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border bg-muted hover:bg-secondary hover:border-border text-foreground transition-colors"
               aria-label="Previous review"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -610,8 +610,8 @@ const ReviewSystem = ({
                   onClick={() => setCurrentSlide(index)}
                   className={`rounded-full transition-all duration-300 ${
                     currentSlide === index
-                      ? "bg-blue-500 w-6 h-2"
-                      : "bg-gray-600 hover:bg-gray-500 w-2 h-2"
+                      ? "bg-primary w-6 h-2"
+                      : "bg-muted-foreground/40 hover:bg-muted-foreground/60 w-2 h-2"
                   }`}
                   aria-label={`Go to position ${index + 1}`}
                 />
@@ -621,7 +621,7 @@ const ReviewSystem = ({
             <button
               type="button"
               onClick={nextSlide}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-600 bg-gray-800 hover:bg-gray-700 hover:border-gray-500 text-white transition-colors"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border bg-muted hover:bg-secondary hover:border-border text-foreground transition-colors"
               aria-label="Next review"
             >
               <ChevronRight className="w-4 h-4" />
@@ -636,7 +636,7 @@ const ReviewSystem = ({
           <button
             type="button"
             onClick={openAllReviewsModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-medium rounded-lg transition-all duration-300"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-border hover:border-primary text-muted-foreground hover:text-foreground font-medium rounded-lg transition-all duration-300"
           >
             <Eye className="w-4 h-4" />
             View All {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
@@ -645,7 +645,7 @@ const ReviewSystem = ({
       )}
 
       {/* Review Summary */}
-      <div className="text-center mt-6 text-sm text-gray-400">
+      <div className="text-center mt-6 text-sm text-muted-foreground">
         Showing {reviews.length} of {totalReviews} verified guest reviews
       </div>
 
@@ -656,7 +656,7 @@ const ReviewSystem = ({
           onClick={() => setSelectedReview(null)}
         >
           <div
-            className="bg-gray-900 border border-gray-700 rounded-2xl max-w-lg w-full shadow-2xl"
+            className="bg-card border border-border rounded-2xl max-w-lg w-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -673,15 +673,15 @@ const ReviewSystem = ({
                 type="button"
                 aria-label="Close review"
                 onClick={() => setSelectedReview(null)}
-                className="p-1.5 hover:bg-gray-800 rounded-full transition-colors"
+                className="p-1.5 hover:bg-muted rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400 hover:text-white" />
+                <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
               </button>
             </div>
 
             {/* Body */}
             <div className="p-5 max-h-[60vh] overflow-y-auto">
-              <p className="text-gray-300 italic text-sm leading-relaxed">
+              <p className="text-foreground/80 italic text-sm leading-relaxed">
                 &ldquo;{selectedReview.review_text}&rdquo;
               </p>
 
@@ -705,15 +705,15 @@ const ReviewSystem = ({
 
             {/* Footer */}
             <div className="px-5 py-4 border-t border-gray-700">
-              <p className="font-bold text-blue-400 text-sm">- {selectedReview.guest_name}</p>
+              <p className="font-bold text-primary text-sm">- {selectedReview.guest_name}</p>
               {selectedReview.guest_location && (
-                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
+                <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
                   <MapPin className="w-3 h-3" />
                   <span>{selectedReview.guest_location}</span>
                 </div>
               )}
               {selectedReview.created_at && (
-                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
+                <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
                   <Calendar className="w-3 h-3" />
                   <span>{new Date(selectedReview.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
                 </div>
@@ -730,19 +730,19 @@ const ReviewSystem = ({
           onClick={() => setShowAllReviewsModal(false)}
         >
           <div
-            className="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            className="bg-card rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 sm:p-6 z-10">
+            <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 z-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                     All Guest Reviews
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
                     {renderStars(averageRating, "sm")}
-                    <span className="text-gray-400 text-sm">
+                    <span className="text-muted-foreground text-sm">
                       {averageRating} average · {totalReviews} reviews
                     </span>
                   </div>
@@ -751,23 +751,23 @@ const ReviewSystem = ({
                   type="button"
                   aria-label="Close reviews"
                   onClick={() => setShowAllReviewsModal(false)}
-                  className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                  className="p-2 hover:bg-muted rounded-full transition-colors"
                 >
-                  <X className="w-6 h-6 text-gray-400 hover:text-white" />
+                  <X className="w-6 h-6 text-muted-foreground hover:text-foreground" />
                 </button>
               </div>
 
               {/* Rating Filter */}
               <div className="flex flex-wrap items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-400 text-sm mr-2">Filter:</span>
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground text-sm mr-2">Filter:</span>
                 <button
                   type="button"
                   onClick={() => setModalFilter("all")}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     modalFilter === "all"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-secondary"
                   }`}
                 >
                   All ({totalReviews})
@@ -779,8 +779,8 @@ const ReviewSystem = ({
                     onClick={() => setModalFilter(rating)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
                       modalFilter === rating
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-secondary"
                     } ${ratingCounts[rating] === 0 ? "opacity-50" : ""}`}
                     disabled={ratingCounts[rating] === 0}
                   >
@@ -795,12 +795,12 @@ const ReviewSystem = ({
             <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-4 sm:p-6">
               {modalLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : getFilteredModalReviews().length === 0 ? (
                 <div className="text-center py-12">
-                  <Star className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400">
+                  <Star className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
                     No reviews found for this rating
                   </p>
                 </div>
@@ -809,7 +809,7 @@ const ReviewSystem = ({
                   {getFilteredModalReviews().map((review) => (
                     <div
                       key={review.id}
-                      className="bg-gray-800 p-4 sm:p-6 rounded-xl hover:bg-gray-750 transition-colors"
+                      className="bg-muted/50 p-4 sm:p-6 rounded-xl hover:bg-muted transition-colors"
                     >
                       {/* Rating and Date */}
                       <div className="flex items-center justify-between mb-3">
@@ -819,14 +819,14 @@ const ReviewSystem = ({
                             {review.rating}/5
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-gray-500 text-xs sm:text-sm">
+                        <div className="flex items-center gap-1 text-muted-foreground text-xs sm:text-sm">
                           <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>{formatDate(review.created_at)}</span>
                         </div>
                       </div>
 
                       {/* Review Text */}
-                      <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4">
+                      <p className="text-foreground/80 text-sm sm:text-base leading-relaxed mb-4">
                         &ldquo;{review.review_text}&rdquo;
                       </p>
 
@@ -862,7 +862,7 @@ const ReviewSystem = ({
                       {/* Guest Info */}
                       <div className="flex items-center justify-between pt-3 border-t border-gray-700">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-blue-400">
+                          <span className="font-semibold text-primary">
                             {review.guest_name}
                           </span>
                           {review.approved && (
@@ -873,7 +873,7 @@ const ReviewSystem = ({
                           )}
                         </div>
                         {review.guest_location && (
-                          <div className="flex items-center gap-1 text-gray-500 text-xs sm:text-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground text-xs sm:text-sm">
                             <MapPin className="w-3 h-3" />
                             <span>{review.guest_location}</span>
                           </div>
@@ -886,8 +886,8 @@ const ReviewSystem = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-4 text-center">
-              <p className="text-gray-400 text-sm">
+            <div className="sticky bottom-0 bg-card border-t border-border p-4 text-center">
+              <p className="text-muted-foreground text-sm">
                 Showing {getFilteredModalReviews().length}{" "}
                 {modalFilter === "all" ? "" : `${modalFilter}-star `}reviews
               </p>

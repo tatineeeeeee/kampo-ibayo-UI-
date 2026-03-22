@@ -3,6 +3,10 @@ import { supabaseAdmin } from '../../../utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production' && !process.env.ENABLE_DEBUG_ENDPOINTS) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const { searchParams } = new URL(request.url);
   const bookingId = searchParams.get('bookingId');
 

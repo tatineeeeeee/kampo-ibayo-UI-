@@ -32,8 +32,8 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
     } else if (overall === 4) {
       return {
         text: "Great! What did you enjoy most about your stay?",
-        color: "text-blue-400",
-        bgColor: "bg-blue-900/20 border-blue-600/30"
+        color: "text-primary",
+        bgColor: "bg-primary/10 border-primary/30"
       };
     } else if (overall === 3) {
       return {
@@ -66,7 +66,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
       label: 'Cleanliness',
       icon: Sparkles,
       description: 'How clean and well-maintained everything was',
-      color: 'text-blue-400'
+      color: 'text-primary'
     },
     {
       key: 'service',
@@ -162,7 +162,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
               className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all"
             >
               <div className="flex items-start gap-4 mb-4">
-                <div className={`${category.color} bg-gray-700/50 rounded-lg p-3`}>
+                <div className={`${category.color} bg-muted/50 rounded-lg p-3`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
@@ -178,7 +178,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
                     {currentRating > 0 ? `${currentRating}/5` : '—'}
                   </div>
                   <div className={`text-sm ${
-                    currentRating > 0 ? category.color : 'text-gray-500'
+                    currentRating > 0 ? category.color : 'text-muted-foreground'
                   }`}>
                     {getRatingText(currentRating)}
                   </div>
@@ -202,7 +202,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
                         className={`w-9 h-9 sm:w-8 sm:h-8 transition-colors ${
                           isActive
                             ? `${category.color} fill-current`
-                            : 'text-gray-500 hover:text-gray-400'
+                            : 'text-muted-foreground hover:text-gray-400'
                         } ${
                           isHovered && starIndex <= hoveredRating
                             ? 'scale-110'
@@ -216,7 +216,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
 
               {currentRating > 0 && (
                 <div className="mt-3 text-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-700/50 rounded-full">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full">
                     <Star className={`w-3 h-3 ${category.color} fill-current`} />
                     <span className="text-white text-sm font-medium">
                       {currentRating} star{currentRating !== 1 ? 's' : ''} - {getRatingText(currentRating)}
@@ -229,9 +229,9 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
         })}
       </div>
 
-      <div className="mt-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+      <div className="mt-8 p-4 bg-primary/10 border border-primary/30 rounded-lg">
         <div className="flex items-center gap-3 mb-2">
-          <Star className="w-5 h-5 text-blue-400" />
+          <Star className="w-5 h-5 text-primary" />
           <h4 className="text-white font-semibold">Rating Guidelines</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-sm">
@@ -252,7 +252,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
             <div className="text-gray-400">Above expectations</div>
           </div>
           <div className="text-center">
-            <div className="text-blue-400 font-medium">5 Stars - Excellent</div>
+            <div className="text-primary font-medium">5 Stars - Excellent</div>
             <div className="text-gray-400">Exceptional</div>
           </div>
         </div>

@@ -1,0 +1,38 @@
+// Booking-related constants
+
+export const BOOKING_STATUS = {
+  PENDING: "pending",
+  CONFIRMED: "confirmed",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+} as const;
+
+export const PAYMENT_STATUS = {
+  PENDING: "pending",
+  PAID: "paid",
+  PAYMENT_REVIEW: "payment_review",
+  REJECTED: "rejected",
+} as const;
+
+export const PAYMENT_TYPE = {
+  FULL: "full",
+  HALF: "half",
+} as const;
+
+/** Check-in time displayed to guests */
+export const CHECK_IN_TIME = "3:00 PM";
+
+/** Check-out time displayed to guests */
+export const CHECK_OUT_TIME = "1:00 PM";
+
+/** Duration of stay in hours */
+export const STAY_DURATION_HOURS = 22;
+
+/** Maximum number of pending bookings per user */
+export const MAX_PENDING_BOOKINGS = 3;
+
+/** Days before a pending booking auto-expires */
+export const BOOKING_EXPIRY_DAYS = 7;
+
+/** Default items per page for paginated tables */
+export const ITEMS_PER_PAGE = 10;

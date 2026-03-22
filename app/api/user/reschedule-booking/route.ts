@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit';
+import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, PHILIPPINE_HOLIDAYS, PEAK_SEASON_RANGES } from '@/lib/constants/pricing';
 
 // Initialize Supabase admin client for database operations
 const supabaseAdmin = createClient(
@@ -149,33 +150,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate new total amount based on new dates
-    const calculateMultiDayPrice = (checkInDate: Date, checkOutDate: Date, guestCount: number = 15) => {
+    const calculateMultiDayPrice = (checkInDate: Date, checkOutDate: Date, guestCount: number = INCLUDED_GUESTS) => {
       const nights = [];
       const currentNight = new Date(checkInDate);
 
       // Calculate each night between check-in and check-out
       while (currentNight < checkOutDate) {
         const dayOfWeek = currentNight.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6; // Sunday = 0, Friday = 5, Saturday = 6
-
-        // Simple weekend/holiday logic (can be expanded later)
-        const nightRate = isWeekend ? 12000 : 9000;
+        const dateStr = `${currentNight.getFullYear()}-${String(currentNight.getMonth() + 1).padStart(2, '0')}-${String(currentNight.getDate()).padStart(2, '0')}`;
+        const isHoliday = (PHILIPPINE_HOLIDAYS as readonly string[]).includes(dateStr);
+        const isPeak = (PEAK_SEASON_RANGES as { start: string; end: string }[]).some((r) => dateStr >= r.start && dateStr <= r.end);
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
+        const nightRate = isWeekend || isHoliday || isPeak ? BASE_RATE_WEEKEND : BASE_RATE_WEEKDAY;
 
         nights.push({
           date: new Date(currentNight),
           rate: nightRate,
-          isWeekend
+          isWeekend: isWeekend || isHoliday || isPeak
         });
 
         currentNight.setDate(currentNight.getDate() + 1);
       }
 
-      // Calculate total base cost
       const totalBaseRate = nights.reduce((sum, night) => sum + night.rate, 0);
-
-      // Add excess guest fee (₱300 per guest over 15, per night)
       const totalNights = nights.length;
-      const excessGuestFee = guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
+      const excessGuestFee = guestCount > INCLUDED_GUESTS
+        ? (guestCount - INCLUDED_GUESTS) * EXTRA_GUEST_FEE * totalNights
+        : 0;
 
       return {
         totalNights,
@@ -190,8 +191,8 @@ export async function POST(request: NextRequest) {
     const newTotalAmount = newPricing.totalAmount;
 
     // Format dates for database (with times)
-    const newCheckInDateTime = `${newCheckIn}T15:00:00`; // 3 PM check-in
-    const newCheckOutDateTime = `${newCheckOut}T13:00:00`; // 1 PM check-out
+    const newCheckInDateTime = `${newCheckIn}T15:00:00`;
+    const newCheckOutDateTime = `${newCheckOut}T13:00:00`;
 
     // Auto-cancel old pending proofs — admin shouldn't have to review outdated submissions
     await supabaseAdmin

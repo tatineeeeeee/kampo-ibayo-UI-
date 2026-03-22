@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import type { User, Session } from "@supabase/supabase-js";
+import { SESSION_TIMEOUT_MS, RETRY_DELAY_MS, MAX_AUTH_RETRIES } from "../lib/constants/timeouts";
 interface AuthContextType {
   user: User | null;
   userRole: string | null;
@@ -45,12 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // 🛡️ SAFE FIX: Add retry logic with timeout
         let session = null;
-        for (let attempt = 1; attempt <= 3; attempt++) {
+        for (let attempt = 1; attempt <= MAX_AUTH_RETRIES; attempt++) {
           try {
 
             const sessionPromise = supabase.auth.getSession();
             const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Session timeout")), 5000)
+              setTimeout(() => reject(new Error("Session timeout")), SESSION_TIMEOUT_MS)
             );
 
             const result = (await Promise.race([
@@ -60,11 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             session = result.data?.session;
             break; // Success - exit retry loop
           } catch (retryError) {
-            if (attempt === 3) {
+            if (attempt === MAX_AUTH_RETRIES) {
               throw retryError; // Final attempt failed
             }
             // Wait 1 second before retry
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
           }
         }
 

@@ -161,7 +161,7 @@ export default function HelpPage() {
 
   const getColorClasses = (color: string) => {
     const colorMap = {
-      blue: "bg-blue-900/20 border-blue-700/50",
+      blue: "bg-primary/10 border-primary/30",
       green: "bg-green-900/20 border-green-700/50",
       purple: "bg-purple-900/20 border-purple-700/50",
     };
@@ -178,36 +178,36 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Mobile-First Sticky Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-20">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors touch-manipulation"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div className="text-foreground">
                 <h1 className="text-lg sm:text-xl font-bold">Help Center</h1>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                   Support and assistance
                 </p>
               </div>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400 text-right">
+            <div className="text-xs sm:text-sm text-muted-foreground text-right">
               {loading ? (
-                <span className="inline-block bg-gray-600 text-gray-300 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="inline-block bg-gray-600 text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                   ● Loading...
                 </span>
               ) : user ? (
-                <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-block bg-green-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                   ● Signed In
                 </span>
               ) : (
-                <span className="inline-block bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-block bg-orange-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                   ● Guest
                 </span>
               )}
@@ -218,20 +218,20 @@ export default function HelpPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
         {/* Emergency Contact Banner */}
-        <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4 sm:p-6">
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 sm:p-6">
           <div className="flex items-start gap-4">
             <AlertTriangle className="w-6 h-6 text-blue-400 mt-1 flex-shrink-0" />
             <div>
               <h2 className="text-xl font-semibold mb-2 text-blue-400">
                 Emergency Contact
               </h2>
-              <p className="text-gray-300 mb-3">
+              <p className="text-muted-foreground mb-3">
                 For immediate emergencies during your stay, call our 24/7
                 emergency line:
               </p>
               <a
                 href="tel:+639662815123"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-medium transition-colors min-h-[48px] touch-manipulation"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 px-4 py-3 rounded-lg font-medium transition-colors min-h-[48px] touch-manipulation"
               >
                 <Phone className="w-4 h-4" />
                 Emergency: 0966-281-5123
@@ -241,7 +241,7 @@ export default function HelpPage() {
         </div>
 
         {/* Contact Methods */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
           <h2 className="text-2xl font-bold mb-6 text-blue-400">
             How to Reach Us
           </h2>
@@ -259,17 +259,17 @@ export default function HelpPage() {
                   <div className={getIconColor(method.color)}>
                     {method.icon}
                   </div>
-                  <h3 className="font-semibold text-white">{method.title}</h3>
+                  <h3 className="font-semibold text-foreground">{method.title}</h3>
                 </div>
-                <p className="text-white font-medium mb-1">{method.contact}</p>
-                <p className="text-gray-300 text-sm">{method.description}</p>
+                <p className="text-foreground font-medium mb-1">{method.contact}</p>
+                <p className="text-muted-foreground text-sm">{method.description}</p>
               </a>
             ))}
           </div>
         </div>
 
         {/* Business Hours */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
           <h2 className="text-2xl font-bold mb-6 text-blue-400">
             Support Hours
           </h2>
@@ -279,30 +279,30 @@ export default function HelpPage() {
               <h3 className="font-semibold text-green-400 mb-2">
                 On-site Support
               </h3>
-              <p className="text-gray-300 text-sm">Daily: 8:00 AM - 6:00 PM</p>
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-muted-foreground text-sm">Daily: 8:00 AM - 6:00 PM</p>
+              <p className="text-muted-foreground text-xs mt-1">
                 Available during your stay
               </p>
             </div>
 
-            <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
               <h3 className="font-semibold text-blue-400 mb-2">
                 Phone Support
               </h3>
-              <p className="text-gray-300 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Mon-Fri: 9:00 AM - 6:00 PM
               </p>
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-muted-foreground text-xs mt-1">
                 Booking & general inquiries
               </p>
             </div>
 
-            <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
               <h3 className="font-semibold text-blue-400 mb-2">
                 Emergency Line
               </h3>
-              <p className="text-gray-300 text-sm">24/7 Available</p>
-              <p className="text-gray-400 text-xs mt-1">Emergencies only</p>
+              <p className="text-muted-foreground text-sm">24/7 Available</p>
+              <p className="text-muted-foreground text-xs mt-1">Emergencies only</p>
             </div>
           </div>
         </div>
@@ -312,7 +312,7 @@ export default function HelpPage() {
           {supportCategories.map((category, categoryIndex) => (
             <div
               key={categoryIndex}
-              className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+              className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
             >
               <h2
                 className={`text-2xl font-bold mb-6 ${getIconColor(
@@ -327,12 +327,12 @@ export default function HelpPage() {
                 {category.items.map((item, itemIndex) => (
                   <div
                     key={itemIndex}
-                    className="bg-gray-700/50 rounded-lg p-4"
+                    className="bg-muted/50 rounded-lg p-4"
                   >
-                    <h3 className="font-semibold text-white mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       {item.question}
                     </h3>
-                    <p className="text-gray-300 text-sm leading-relaxed">
+                    <p className="text-muted-foreground text-sm leading-relaxed">
                       {item.answer}
                     </p>
                   </div>
@@ -343,7 +343,7 @@ export default function HelpPage() {
         </div>
 
         {/* Local Information */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
           <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <MapPin className="w-6 h-6" />
             Local Information
@@ -351,10 +351,10 @@ export default function HelpPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-white">
+              <h3 className="text-lg font-semibold mb-3 text-foreground">
                 Nearby Services
               </h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
+              <ul className="space-y-2 text-muted-foreground text-sm">
                 <li>
                   • <strong>Grocery Store:</strong> SM General Trias (15 min
                   drive)
@@ -377,10 +377,10 @@ export default function HelpPage() {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-white">
+              <h3 className="text-lg font-semibold mb-3 text-foreground">
                 Transportation
               </h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
+              <ul className="space-y-2 text-muted-foreground text-sm">
                 <li>
                   • <strong>Private Vehicle:</strong> Recommended (parking
                   available)
@@ -410,7 +410,7 @@ export default function HelpPage() {
           <h3 className="text-xl font-semibold mb-3 text-green-400">
             We Value Your Feedback
           </h3>
-          <p className="text-gray-300 mb-4">
+          <p className="text-muted-foreground mb-4">
             Help us improve by sharing your experience. Your feedback helps us
             provide better service for all guests.
           </p>

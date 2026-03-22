@@ -131,7 +131,7 @@ const GalleryCarousel = ({
               style={{ width: `${100 / effectiveItemsPerView}%` }}
             >
               <div
-                className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group bg-gray-700"
+                className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group bg-muted"
                 onClick={() => onImageClick(index)}
               >
                 <Image
@@ -150,11 +150,11 @@ const GalleryCarousel = ({
 
                 {/* Caption */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                  <p className="text-white font-semibold text-sm sm:text-base truncate">
+                  <p className="text-foreground font-semibold text-sm sm:text-base truncate">
                     {image.caption || image.alt}
                   </p>
                   {image.categoryLabel && (
-                    <span className="text-white/70 text-xs sm:text-sm">
+                    <span className="text-foreground/70 text-xs sm:text-sm">
                       {image.categoryLabel}
                     </span>
                   )}
@@ -172,7 +172,7 @@ const GalleryCarousel = ({
             type="button"
             onClick={prevSlide}
             disabled={currentSlide === 0}
-            className="absolute left-0 sm:-left-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-full p-2 sm:p-2.5 lg:p-3 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/20 z-10"
+            className="absolute left-0 sm:-left-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed text-foreground rounded-full p-2 sm:p-2.5 lg:p-3 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/20 z-10"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -182,7 +182,7 @@ const GalleryCarousel = ({
             type="button"
             onClick={nextSlide}
             disabled={currentSlide >= maxIndex}
-            className="absolute right-0 sm:-right-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-full p-2 sm:p-2.5 lg:p-3 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/20 z-10"
+            className="absolute right-0 sm:-right-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed text-foreground rounded-full p-2 sm:p-2.5 lg:p-3 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/20 z-10"
             aria-label="Next slide"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -200,8 +200,8 @@ const GalleryCarousel = ({
               onClick={() => setCurrentSlide(index)}
               className={`rounded-full transition-all duration-300 ${
                 currentSlide === index
-                  ? "bg-blue-500 w-6 h-2"
-                  : "bg-gray-600 hover:bg-gray-500 w-2 h-2"
+                  ? "bg-primary w-6 h-2"
+                  : "bg-muted-foreground/40 hover:bg-muted-foreground/70 w-2 h-2"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />

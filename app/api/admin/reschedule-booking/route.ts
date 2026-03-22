@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, PHILIPPINE_HOLIDAYS, PEAK_SEASON_RANGES } from '@/lib/constants/pricing';
 
 export async function POST(request: NextRequest) {
     try {
@@ -99,22 +100,26 @@ export async function POST(request: NextRequest) {
         const calculatePrice = (
             checkIn: Date,
             checkOut: Date,
-            guestCount: number = 15
+            guestCount: number = INCLUDED_GUESTS
         ) => {
             const nights: { date: Date; rate: number; isWeekend: boolean }[] = [];
             const cur = new Date(checkIn);
 
             while (cur < checkOut) {
                 const dow = cur.getDay();
+                const dateStr = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+                const isHoliday = (PHILIPPINE_HOLIDAYS as readonly string[]).includes(dateStr);
+                const isPeak = (PEAK_SEASON_RANGES as { start: string; end: string }[]).some((r) => dateStr >= r.start && dateStr <= r.end);
                 const isWeekend = dow === 0 || dow === 5 || dow === 6;
-                nights.push({ date: new Date(cur), rate: isWeekend ? 12000 : 9000, isWeekend });
+                const isPeakRate = isWeekend || isHoliday || isPeak;
+                nights.push({ date: new Date(cur), rate: isPeakRate ? BASE_RATE_WEEKEND : BASE_RATE_WEEKDAY, isWeekend: isPeakRate });
                 cur.setDate(cur.getDate() + 1);
             }
 
             const totalBaseRate = nights.reduce((s, n) => s + n.rate, 0);
             const totalNights = nights.length;
             const excessGuestFee =
-                guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
+                guestCount > INCLUDED_GUESTS ? (guestCount - INCLUDED_GUESTS) * EXTRA_GUEST_FEE * totalNights : 0;
 
             return { totalNights, totalBaseRate, excessGuestFee, totalAmount: totalBaseRate + excessGuestFee };
         };

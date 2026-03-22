@@ -177,7 +177,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
 
   if (loading) {
     return (
-      <div className="bg-gray-700 text-gray-400 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-muted text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
         Loading
       </div>
@@ -188,7 +188,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   if (!proofStatus) {
     return (
       <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-        <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
+        <button className="bg-teal-600 hover:bg-teal-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
           <Upload className="w-3 h-3" />
           Upload
         </button>
@@ -204,7 +204,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   // For cancelled proofs, show cancelled status
   if (proofStatus === "cancelled") {
     return (
-      <div className="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-gray-500 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <Ban className="w-3 h-3" />
         Cancelled
       </div>
@@ -214,7 +214,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   // Show status for pending or verified proofs
   if (proofStatus === "pending") {
     return (
-      <div className="bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-yellow-600 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <HourglassIcon className="w-3 h-3" />
         Pending
       </div>
@@ -226,7 +226,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
     if (bookingPaymentStatus === "pending") {
       return (
         <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-          <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
+          <button className="bg-teal-600 hover:bg-teal-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
             <Upload className="w-3 h-3" />
             Upload Balance
           </button>
@@ -234,7 +234,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
       );
     }
     return (
-      <div className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-green-600 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <CheckCircle2 className="w-3 h-3" />
         Verified
       </div>
@@ -244,7 +244,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   // Fallback for unknown status
   return (
     <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-      <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
+      <button className="bg-teal-600 hover:bg-teal-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] w-full sm:w-auto touch-manipulation">
         <Upload className="w-3 h-3" />
         Upload
       </button>
@@ -296,7 +296,7 @@ function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus, payment
       <p className="font-bold text-amber-400 text-sm">
         ₱{(totalAmount / 1000).toFixed(1)}k
       </p>
-      <p className="text-xs text-gray-300">
+      <p className="text-xs text-muted-foreground">
         <span className="text-green-400">₱{(paidAmount / 1000).toFixed(1)}k</span> paid · <span className="text-amber-400">₱{(remaining / 1000).toFixed(1)}k</span> {paymentType === "half" ? "due at check-in" : "due"}
       </p>
     </div>
@@ -323,7 +323,7 @@ function PaymentBreakdownDetail({ bookingId, totalAmount }: { bookingId: number;
   }, [bookingId]);
 
   if (paidAmount === null) {
-    return <p className="text-sm text-gray-400">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
   }
 
   const remaining = Math.max(0, totalAmount - paidAmount);
@@ -331,12 +331,12 @@ function PaymentBreakdownDetail({ bookingId, totalAmount }: { bookingId: number;
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <span className="text-xs text-gray-500 dark:text-gray-400">Paid</span>
+        <span className="text-xs text-muted-foreground dark:text-muted-foreground">Paid</span>
         <span className="text-sm font-semibold text-green-600 dark:text-green-400">₱{paidAmount.toLocaleString()}</span>
       </div>
       {remaining > 0 && (
         <div className="flex justify-between items-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Remaining</span>
+          <span className="text-xs text-muted-foreground dark:text-muted-foreground">Remaining</span>
           <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">₱{remaining.toLocaleString()}</span>
         </div>
       )}
@@ -504,7 +504,7 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
 
   if (loading) {
     return (
-      <span className="text-xs text-gray-400">Loading payment status...</span>
+      <span className="text-xs text-muted-foreground">Loading payment status...</span>
     );
   }
 
@@ -560,22 +560,22 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
       case "cancelled":
         return {
           color:
-            "bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300",
-          icon: <Ban className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+            "bg-gray-100 dark:bg-card border border-gray-300 dark:border-border text-gray-700 dark:text-muted-foreground",
+          icon: <Ban className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />,
           title: "Payment Cancelled",
           message: "This payment proof has been cancelled",
-          messageColor: "text-gray-500 dark:text-gray-400",
+          messageColor: "text-muted-foreground dark:text-muted-foreground",
         };
       default:
         return {
           color:
-            "bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300",
+            "bg-gray-100 dark:bg-card border border-gray-300 dark:border-border text-gray-700 dark:text-muted-foreground",
           icon: (
-            <AlertTriangle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <AlertTriangle className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
           ),
           title: "Unknown Status",
           message: "Please contact support for assistance",
-          messageColor: "text-gray-500 dark:text-gray-400",
+          messageColor: "text-muted-foreground dark:text-muted-foreground",
         };
     }
   };
@@ -595,7 +595,7 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
           </div>
           {paymentProof.status === "rejected" && (
             <Link href={`/upload-payment-proof?bookingId=${bookingId}`}>
-              <button className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transform min-h-[44px]">
+              <button className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 active:bg-primary/80 text-foreground px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transform min-h-[44px]">
                 <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
                 Upload New Proof
               </button>
@@ -644,21 +644,21 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
 
                   {/* Admin Notes Card */}
                   {adminNotes && (
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/30 border border-blue-200/60 dark:border-blue-800/30 rounded-2xl p-5 shadow-sm">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/30 border border-primary/20/60 dark:border-blue-800/30 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/60 rounded-xl flex items-center justify-center shadow-sm">
-                          <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 dark:bg-primary/15 rounded-xl flex items-center justify-center shadow-sm">
+                          <MessageSquare className="w-5 h-5 text-primary dark:text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">
                               Additional Notes
                             </h4>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary/80">
                               From Admin
                             </span>
                           </div>
-                          <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                          <p className="text-sm text-primary dark:text-blue-200 leading-relaxed">
                             {adminNotes}
                           </p>
                         </div>
@@ -672,16 +672,16 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
         )}
 
         {paymentProof.admin_notes && paymentProof.status !== "rejected" && (
-          <div className="mt-3 bg-blue-50/90 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
+          <div className="mt-3 bg-primary/5 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="flex-shrink-0 w-8 h-8 bg-primary/10 dark:bg-primary/10 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-primary dark:text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
+                <h4 className="text-sm font-semibold text-primary dark:text-blue-200 mb-1">
                   Admin Notes
                 </h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                <p className="text-sm text-primary dark:text-primary/80 leading-relaxed">
                   {paymentProof.admin_notes}
                 </p>
               </div>
@@ -1684,7 +1684,7 @@ function BookingsPageContent() {
       case "cancelled":
         return <XCircle className="w-5 h-5 text-red-500" />;
       default:
-        return <Clock className="w-5 h-5 text-gray-500" />;
+        return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -1699,7 +1699,7 @@ function BookingsPageContent() {
       case "cancelled":
         return "bg-red-600";
       case "completed":
-        return "bg-blue-600";
+        return "bg-primary";
       default:
         return "bg-gray-600";
     }
@@ -1714,13 +1714,13 @@ function BookingsPageContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <div className="text-white text-xl font-semibold mb-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="text-foreground text-xl font-semibold mb-2">
             Loading your bookings...
           </div>
-          <div className="text-gray-400 text-sm">
+          <div className="text-muted-foreground text-sm">
             {authLoading ? "Authenticating..." : "Fetching booking data..."}
           </div>
         </div>
@@ -1733,25 +1733,25 @@ function BookingsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Search params handler */}
       <Suspense fallback={null}>
         <SearchParamsHandler onPaymentUploaded={handlePaymentUploaded} />
       </Suspense>
       {/* Mobile-First Sticky Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-10">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors"
               >
-                <Home className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <Home className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div className="text-foreground">
                 <h1 className="text-lg sm:text-xl font-bold">My Bookings</h1>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                   Manage your reservations
                 </p>
               </div>
@@ -1763,7 +1763,7 @@ function BookingsPageContent() {
                   }
                 }}
                 disabled={isRefreshing}
-                className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors ml-2 ${
+                className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors ml-2 ${
                   isRefreshing ? "opacity-50" : ""
                 }`}
                 title="Refresh Bookings"
@@ -1771,13 +1771,13 @@ function BookingsPageContent() {
                 {isRefreshing ? (
                   <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-gray-300"></div>
                 ) : (
-                  <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                  <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 )}
               </button>
             </div>
             {maintenanceActive ? (
               <div className="flex-shrink-0">
-                <div className="flex items-center gap-1 sm:gap-2 bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed">
+                <div className="flex items-center gap-1 sm:gap-2 bg-gray-500 text-muted-foreground px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">New </span>Book
                   <span className="text-xs">(Disabled)</span>
@@ -1785,7 +1785,7 @@ function BookingsPageContent() {
               </div>
             ) : (
               <Link href="/book" className="flex-shrink-0" prefetch={true}>
-                <button className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-blue-700 transition">
+                <button className="flex items-center gap-1 sm:gap-2 bg-primary text-foreground px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-primary/90 transition">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">New </span>Book
                 </button>
@@ -1799,8 +1799,8 @@ function BookingsPageContent() {
         {/* Booking Stats - Mobile Optimized */}
         {bookingStats && (
           <div className="mb-4 sm:mb-6">
-            <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
-              <h2 className="text-sm sm:text-base lg:text-lg font-bold text-white mb-3 sm:mb-4">
+            <div className="bg-card rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
+              <h2 className="text-sm sm:text-base lg:text-lg font-bold text-foreground mb-3 sm:mb-4">
                 Booking Summary
               </h2>
               <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
@@ -1811,7 +1811,7 @@ function BookingsPageContent() {
                       Pending
                     </span>
                   </div>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.pendingCount}/3
                   </p>
                   <p className="text-xs text-yellow-300 truncate">
@@ -1828,23 +1828,23 @@ function BookingsPageContent() {
                       Confirmed
                     </span>
                   </div>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.confirmedCount}
                   </p>
                   <p className="text-xs text-green-300">Active bookings</p>
                 </div>
 
-                <div className="bg-blue-600/20 border border-blue-600/50 rounded-lg p-2 sm:p-3">
+                <div className="bg-primary/20 border border-primary/50 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
-                    <span className="text-blue-400 font-medium text-xs sm:text-sm">
+                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                    <span className="text-primary font-medium text-xs sm:text-sm">
                       Completed
                     </span>
                   </div>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.completedCount}/5
                   </p>
-                  <p className="text-xs text-blue-300 truncate">
+                  <p className="text-xs text-primary/80 truncate">
                     {bookingStats.completedCount >= 5
                       ? "Auto-archived"
                       : "Recent ones"}
@@ -1858,7 +1858,7 @@ function BookingsPageContent() {
                       Cancelled
                     </span>
                   </div>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.cancelledCount}
                   </p>
                   <p className="text-xs text-red-300">Total cancelled</p>
@@ -1882,31 +1882,31 @@ function BookingsPageContent() {
         {/* Main Content - Mobile First */}
         {bookings.length === 0 ? (
           // Empty State - Mobile Optimized
-          <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 lg:p-12 text-center">
-            <div className="bg-gray-700 p-3 sm:p-4 lg:p-6 rounded-full w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto mb-3 sm:mb-4 lg:mb-6 flex items-center justify-center">
-              <Calendar className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-gray-400" />
+          <div className="bg-card rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 lg:p-12 text-center">
+            <div className="bg-muted p-3 sm:p-4 lg:p-6 rounded-full w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto mb-3 sm:mb-4 lg:mb-6 flex items-center justify-center">
+              <Calendar className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-muted-foreground" />
             </div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-2 sm:mb-3 lg:mb-4">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-2 sm:mb-3 lg:mb-4">
               No bookings yet
             </h2>
-            <p className="text-gray-400 mb-4 sm:mb-6 lg:mb-8 max-w-md mx-auto text-xs sm:text-sm lg:text-base px-2">
+            <p className="text-muted-foreground mb-4 sm:mb-6 lg:mb-8 max-w-md mx-auto text-xs sm:text-sm lg:text-base px-2">
               You haven&apos;t made any reservations yet. Start planning your
               perfect getaway at Kampo Ibayo!
             </p>
             <div className="space-y-2 sm:space-y-3 lg:space-y-4">
               {maintenanceActive ? (
-                <div className="bg-gray-500 text-gray-300 px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed w-full sm:w-auto text-center">
+                <div className="bg-gray-500 text-muted-foreground px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed w-full sm:w-auto text-center">
                   Booking Temporarily Disabled
                 </div>
               ) : (
                 <Link href="/book">
-                  <button className="bg-blue-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-blue-700 transition w-full sm:w-auto">
+                  <button className="bg-primary text-foreground px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary/90 transition w-full sm:w-auto">
                     Make Your First Booking
                   </button>
                 </Link>
               )}
               {maintenanceActive && (
-                <p className="text-gray-400 text-xs sm:text-sm text-center">
+                <p className="text-muted-foreground text-xs sm:text-sm text-center">
                   Resort is temporarily closed for maintenance. Call{" "}
                   <a
                     href="tel:+639662815123"
@@ -1920,7 +1920,7 @@ function BookingsPageContent() {
               <div className="text-center">
                 <Link
                   href="/"
-                  className="text-gray-400 hover:text-white transition text-xs sm:text-sm"
+                  className="text-muted-foreground hover:text-foreground transition text-xs sm:text-sm"
                 >
                   ← Back to Home
                 </Link>
@@ -1932,9 +1932,9 @@ function BookingsPageContent() {
           <div className="space-y-3 sm:space-y-4">
             {/* Payment Process Info - Show if user has pending bookings */}
             {bookings.some((b) => b.status === "pending") && (
-              <div className="bg-blue-800/50 border border-blue-600/50 rounded-lg p-3 sm:p-4">
-                <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-blue-300" />
+              <div className="bg-primary/15 border border-primary/50 rounded-lg p-3 sm:p-4">
+                <h3 className="text-foreground font-semibold text-sm mb-2 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-primary/80" />
                   Complete Your Booking
                 </h3>
                 <p className="text-blue-200 text-xs sm:text-sm mb-2">
@@ -1966,12 +1966,12 @@ function BookingsPageContent() {
               </div>
             )}
 
-            <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
+            <div className="bg-card rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 lg:mb-6 gap-2">
-                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white">
+                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-foreground">
                   Your Reservations ({bookings.length})
                 </h2>
-                <div className="text-xs sm:text-sm text-gray-400">
+                <div className="text-xs sm:text-sm text-muted-foreground">
                   {bookings.length > 6 ? (
                     <>
                       Showing {startIndex + 1} to {endIndex} of{" "}
@@ -1987,17 +1987,17 @@ function BookingsPageContent() {
                 {paginatedBookings.map((booking) => (
                   <div
                     key={booking.id}
-                    className="bg-gray-700 rounded-lg p-3 sm:p-4 lg:p-6 hover:bg-gray-650 transition border border-gray-600/50"
+                    className="bg-muted rounded-lg p-3 sm:p-4 lg:p-6 hover:bg-gray-650 transition border border-border/50"
                   >
                     {/* Header Section - Mobile Stack */}
                     <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                          <div className="bg-blue-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
-                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                          <div className="bg-primary p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-foreground" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-white truncate">
+                            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-foreground truncate">
                               {formatBookingNumber(booking.id)}
                             </h3>
                           </div>
@@ -2005,7 +2005,7 @@ function BookingsPageContent() {
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           {getStatusIcon(booking.status || "pending")}
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(
+                            className={`px-2 py-1 rounded-full text-xs font-semibold text-foreground ${getStatusColor(
                               booking.status || "pending"
                             )}`}
                           >
@@ -2014,7 +2014,7 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       <div className="px-2 sm:px-3">
-                        <p className="text-gray-400 text-xs sm:text-sm">
+                        <p className="text-muted-foreground text-xs sm:text-sm">
                           {booking.guest_name} •{" "}
                           {booking.guest_email || "No email"}
                         </p>
@@ -2045,10 +2045,10 @@ function BookingsPageContent() {
 
                     {/* Details Grid - 2x2 on Mobile */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                        <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] sm:text-xs text-gray-400">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Check-in
                           </p>
                           <p className="font-semibold text-xs truncate">
@@ -2063,10 +2063,10 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                        <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] sm:text-xs text-gray-400">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Check-out
                           </p>
                           <p className="font-semibold text-xs truncate">
@@ -2081,10 +2081,10 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <Users className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                        <Users className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] sm:text-xs text-gray-400">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Guests
                           </p>
                           <p className="font-semibold text-xs">
@@ -2092,10 +2092,10 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-300 p-2 bg-gray-600/30 rounded">
-                        <PhilippinePeso className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                        <PhilippinePeso className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] sm:text-xs text-gray-400">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
                             {booking.payment_status === "paid" || booking.payment_status === "verified"
                               ? booking.payment_type === "half" ? "50% Down" : "Paid"
                               : booking.payment_status === "payment_review"
@@ -2112,12 +2112,12 @@ function BookingsPageContent() {
                     {/* Contact Info - Mobile Optimized */}
                     {booking.guest_phone && (
                       <div className="mb-3 sm:mb-4 p-2 bg-gray-600/30 rounded">
-                        <p className="text-gray-400 text-xs sm:text-sm flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-gray-500" />
+                        <p className="text-muted-foreground text-xs sm:text-sm flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-muted-foreground" />
                           Contact:{" "}
                           <a
                             href={`tel:${booking.guest_phone}`}
-                            className="text-blue-400 hover:text-blue-300 hover:underline font-medium"
+                            className="text-primary hover:text-primary/80 hover:underline font-medium"
                           >
                             {displayPhoneNumber(booking.guest_phone)}
                           </a>
@@ -2134,10 +2134,10 @@ function BookingsPageContent() {
                         .trim();
                       return cleanedRequest ? (
                         <div className="bg-gray-600/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
-                          <p className="text-xs text-gray-400 mb-1">
+                          <p className="text-xs text-muted-foreground mb-1">
                             💬 Special Request:
                           </p>
-                          <p className="text-gray-200 text-xs sm:text-sm">
+                          <p className="text-foreground text-xs sm:text-sm">
                             {cleanedRequest}
                           </p>
                         </div>
@@ -2153,10 +2153,10 @@ function BookingsPageContent() {
                     )}
 
                     {/* Actions Section - 2x2 Grid on Mobile */}
-                    <div className="flex flex-col gap-2 sm:gap-3 pt-3 border-t border-gray-600">
+                    <div className="flex flex-col gap-2 sm:gap-3 pt-3 border-t border-border">
                       <div className="flex items-center justify-between">
-                        <p className="text-gray-400 text-xs flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-gray-500" />
+                        <p className="text-muted-foreground text-xs flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-muted-foreground" />
                           {booking.created_at
                             ? new Date(booking.created_at).toLocaleDateString()
                             : "N/A"}
@@ -2165,7 +2165,7 @@ function BookingsPageContent() {
                       <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
                         <button
                           onClick={() => openModal(booking)}
-                          className="bg-gray-600 hover:bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
+                          className="bg-gray-600 hover:bg-gray-500 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                         >
                           Details
                         </button>
@@ -2200,7 +2200,7 @@ function BookingsPageContent() {
                         {canRescheduleBooking(booking) ? (
                           <button
                             onClick={() => handleOpenReschedule(booking)}
-                            className="bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
+                            className="bg-amber-600 hover:bg-amber-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                           >
                             <Calendar className="w-3 h-3" />
                             Resched {(booking.reschedule_count || 0) > 0 && <span className="text-amber-200 text-[10px]">({booking.reschedule_count}/2)</span>}
@@ -2209,7 +2209,7 @@ function BookingsPageContent() {
                           canCancelBooking(booking) && (
                             <button
                               disabled
-                              className="bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
+                              className="bg-gray-500 text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
                             >
                               <Calendar className="w-3 h-3" />
                               {bookingsWithPendingProofs.has(booking.id)
@@ -2227,7 +2227,7 @@ function BookingsPageContent() {
                               setSelectedBooking(booking);
                               setShowCancelModal(true);
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
+                            className="bg-red-600 hover:bg-red-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                             title={getCancellationMessage(booking)}
                           >
                             Cancel
@@ -2236,7 +2236,7 @@ function BookingsPageContent() {
                           booking.status?.toLowerCase() !== "cancelled" && (
                             <button
                               disabled
-                              className="bg-gray-500 text-gray-300 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
+                              className="bg-gray-500 text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
                               title={getCancellationMessage(booking)}
                             >
                               <Ban className="w-3 h-3" />
@@ -2252,14 +2252,14 @@ function BookingsPageContent() {
 
               {/* Pagination Controls - Mobile First Layout */}
               {bookings.length > 6 && (
-                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-700">
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-border">
                   {/* Mobile: Single row with Prev | Numbers | Next */}
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     {/* Previous Button */}
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
+                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-gray-600 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
                       title="Previous page"
                     >
                       <ChevronLeft className="w-3 h-3" />
@@ -2289,8 +2289,8 @@ function BookingsPageContent() {
                               onClick={() => goToPage(pageNumber)}
                               className={`px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg transition min-w-[28px] sm:min-w-[32px] ${
                                 currentPage === pageNumber
-                                  ? "bg-blue-600 text-white"
-                                  : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
+                                  ? "bg-primary text-foreground"
+                                  : "bg-muted text-muted-foreground hover:bg-gray-600 hover:text-foreground"
                               }`}
                             >
                               {pageNumber}
@@ -2304,7 +2304,7 @@ function BookingsPageContent() {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
+                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-gray-600 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
                       title="Next page"
                     >
                       <span className="hidden sm:inline">Next</span>
@@ -2321,17 +2321,17 @@ function BookingsPageContent() {
         {/* Enhanced Cancellation Modal - Familiar Design + Policy Info */}
         {showCancelModal && selectedBooking && (
           <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-start justify-center pt-20 z-[60] p-4">
-            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/50 dark:border-gray-700/50 transform animate-in slide-in-from-top-4 fade-in duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white/95 dark:bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/50 dark:border-border/50 transform animate-in slide-in-from-top-4 fade-in duration-300 max-h-[90vh] overflow-y-auto">
               {/* Header with Icon */}
               <div className="flex items-center gap-3 p-5 pb-4">
                 <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
                   <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-foreground">
                     Cancel Booking
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                     {formatBookingNumber(selectedBooking.id)}
                   </p>
                 </div>
@@ -2339,20 +2339,20 @@ function BookingsPageContent() {
 
               {/* Booking Summary Card */}
               <div className="mx-5 mb-4">
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
+                <div className="bg-gray-50 dark:bg-card/50 rounded-xl p-4 border border-gray-200/50 dark:border-border/50">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <span className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
                       Guest
                     </span>
-                    <span className="text-sm text-gray-900 dark:text-white font-medium">
+                    <span className="text-sm text-gray-900 dark:text-foreground font-medium">
                       {selectedBooking.guest_name}
                     </span>
                   </div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <span className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
                       Check-in
                     </span>
-                    <span className="text-sm text-gray-900 dark:text-white">
+                    <span className="text-sm text-gray-900 dark:text-foreground">
                       {selectedBooking.check_in_date
                         ? new Date(
                             selectedBooking.check_in_date
@@ -2365,7 +2365,7 @@ function BookingsPageContent() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <span className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
                       Amount
                     </span>
                     <span className="text-lg font-bold text-green-600 dark:text-green-400">
@@ -2377,8 +2377,8 @@ function BookingsPageContent() {
 
               {/* Refund Information - Compact Policy Integration */}
               <div className="mx-5 mb-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
-                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                <div className="bg-primary/5 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 rounded-xl p-4">
+                  <h4 className="text-sm font-semibold text-primary dark:text-primary/80 mb-2">
                     Your Refund
                   </h4>
                   {(() => {
@@ -2422,22 +2422,22 @@ function BookingsPageContent() {
                     return (
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-blue-600 dark:text-blue-400">
+                          <span className="text-xs text-primary dark:text-primary">
                             Down Payment
                           </span>
-                          <span className="font-medium text-blue-800 dark:text-blue-300">
+                          <span className="font-medium text-primary dark:text-primary/80">
                             {downPayment.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-blue-600 dark:text-blue-400">
+                          <span className="text-xs text-primary dark:text-primary">
                             Refund Amount ({percentage}%)
                           </span>
                           <span className="text-lg font-bold text-green-600 dark:text-green-400">
                             {refundAmount.toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                        <p className="text-xs text-primary dark:text-primary">
                           Time until check-in: {Math.floor(daysUntilCheckIn)}{" "}
                           days
                         </p>
@@ -2449,19 +2449,19 @@ function BookingsPageContent() {
 
               {/* Cancellation Reason Input */}
               <div className="mx-5 mb-4">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide block mb-2">
+                <label className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide block mb-2">
                   Reason for cancellation
                 </label>
                 <textarea
                   value={cancellationReason}
                   onChange={(e) => setCancellationReason(e.target.value)}
                   placeholder="Please tell us why you're cancelling (required)"
-                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200 dark:border-gray-700/50 focus:border-red-500 dark:focus:border-red-400 focus:outline-none resize-none text-sm backdrop-blur-sm"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-card/50 text-gray-900 dark:text-foreground placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200 dark:border-border/50 focus:border-red-500 dark:focus:border-red-400 focus:outline-none resize-none text-sm backdrop-blur-sm"
                   rows={3}
                   maxLength={200}
                 />
                 <div className="flex justify-between items-center mt-2">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                     {cancellationReason.length}/200 characters
                   </p>
                   {!cancellationReason.trim() && (
@@ -2477,7 +2477,7 @@ function BookingsPageContent() {
                     setShowCancelModal(false);
                     setCancellationReason("");
                   }}
-                  className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-gray-200 dark:border-gray-700"
+                  className="flex-1 bg-gray-100 dark:bg-card hover:bg-gray-200 dark:hover:bg-muted text-gray-700 dark:text-muted-foreground px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-gray-200 dark:border-border"
                 >
                   Keep Booking
                 </button>
@@ -2492,7 +2492,7 @@ function BookingsPageContent() {
                     return (
                       <button
                         disabled
-                        className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 px-4 py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex-1 bg-gray-300 dark:bg-gray-600 text-muted-foreground dark:text-muted-foreground px-4 py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         <XCircle className="w-4 h-4" />
                         Cannot Cancel
@@ -2506,8 +2506,8 @@ function BookingsPageContent() {
                       disabled={!cancellationReason.trim()}
                       className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${
                         cancellationReason.trim()
-                          ? "bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-red-600/25"
-                          : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                          ? "bg-red-600 hover:bg-red-700 active:bg-red-800 text-foreground shadow-red-600/25"
+                          : "bg-gray-300 dark:bg-gray-600 text-muted-foreground dark:text-muted-foreground cursor-not-allowed"
                       }`}
                     >
                       <XCircle className="w-4 h-4" />
@@ -2523,31 +2523,31 @@ function BookingsPageContent() {
         {/* Enhanced Reschedule Modal - Premium UI/UX */}
         {showRescheduleModal && selectedBooking && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-300">
+            <div className="bg-white dark:bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-border animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-300">
               {/* Header - Sticky */}
-              <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 px-5 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="sticky top-0 bg-white dark:bg-background z-10 px-5 pt-4 pb-3 border-b border-border dark:border-border">
                 {/* Mobile drag indicator */}
                 <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4 sm:hidden"></div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
-                      <Calendar className="w-5 h-5 text-white" />
+                      <Calendar className="w-5 h-5 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-foreground">
                         Reschedule
                       </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                         {formatBookingNumber(selectedBooking.id)}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={closeModal}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-card hover:bg-gray-200 dark:hover:bg-muted transition-colors"
                   >
-                    <XCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <XCircle className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
                   </button>
                 </div>
               </div>
@@ -2556,19 +2556,19 @@ function BookingsPageContent() {
               <div className="overflow-y-auto max-h-[calc(95vh-180px)] sm:max-h-[calc(90vh-200px)]">
                 {/* Current Booking Summary */}
                 <div className="px-5 pt-4">
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
+                  <div className="bg-gray-50 dark:bg-card/50 rounded-2xl p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                         Current Dates
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+                      <div className="flex-1 bg-white dark:bg-background rounded-xl p-3 border border-gray-200 dark:border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
                           Check-in
                         </p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-foreground">
                           {new Date(
                             selectedBooking.check_in_date
                           ).toLocaleDateString("en-US", {
@@ -2578,12 +2578,12 @@ function BookingsPageContent() {
                           })}
                         </p>
                       </div>
-                      <div className="text-gray-300 dark:text-gray-600">→</div>
-                      <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+                      <div className="text-muted-foreground dark:text-gray-600">→</div>
+                      <div className="flex-1 bg-white dark:bg-background rounded-xl p-3 border border-gray-200 dark:border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
                           Check-out
                         </p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-foreground">
                           {new Date(
                             selectedBooking.check_out_date
                           ).toLocaleDateString("en-US", {
@@ -2599,13 +2599,13 @@ function BookingsPageContent() {
 
                 {/* View Toggle */}
                 <div className="px-5 pt-4">
-                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                  <div className="flex bg-gray-100 dark:bg-card rounded-xl p-1">
                     <button
                       onClick={() => setShowCalendar(true)}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         showCalendar
-                          ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                          : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                          ? "bg-white dark:bg-muted text-gray-900 dark:text-foreground shadow-sm"
+                          : "text-muted-foreground dark:text-muted-foreground hover:text-gray-700 dark:hover:text-muted-foreground"
                       }`}
                     >
                       <Calendar className="w-4 h-4" />
@@ -2615,8 +2615,8 @@ function BookingsPageContent() {
                       onClick={() => setShowCalendar(false)}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         !showCalendar
-                          ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                          : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                          ? "bg-white dark:bg-muted text-gray-900 dark:text-foreground shadow-sm"
+                          : "text-muted-foreground dark:text-muted-foreground hover:text-gray-700 dark:hover:text-muted-foreground"
                       }`}
                     >
                       <Edit3 className="w-4 h-4" />
@@ -2629,13 +2629,13 @@ function BookingsPageContent() {
                 <div className="px-5 pt-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calendar className="w-4 h-4 text-amber-500" />
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                       Select New Dates
                     </span>
                   </div>
 
                   {showCalendar ? (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800">
+                    <div className="border border-gray-200 dark:border-border rounded-2xl overflow-hidden bg-white dark:bg-card">
                       <AvailabilityCalendar
                         selectedCheckIn={
                           selectedBooking.check_in_date.split("T")[0]
@@ -2651,8 +2651,8 @@ function BookingsPageContent() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      <div className="bg-white dark:bg-card rounded-xl border border-gray-200 dark:border-border p-4">
+                        <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide mb-2">
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                           New Check-in
                         </label>
@@ -2661,12 +2661,12 @@ function BookingsPageContent() {
                           value={newCheckInDate}
                           onChange={(e) => setNewCheckInDate(e.target.value)}
                           min={new Date().toISOString().split("T")[0]}
-                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-white text-base font-medium"
+                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-background border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-foreground text-base font-medium"
                         />
                       </div>
-                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="bg-white dark:bg-card rounded-xl border border-gray-200 dark:border-border p-4">
+                        <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide mb-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
                           New Check-out
                         </label>
                         <input
@@ -2677,7 +2677,7 @@ function BookingsPageContent() {
                             newCheckInDate ||
                             new Date().toISOString().split("T")[0]
                           }
-                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-white text-base font-medium"
+                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-background border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-foreground text-base font-medium"
                         />
                       </div>
                     </div>
@@ -2779,18 +2779,18 @@ function BookingsPageContent() {
 
                   return (
                     <div className="px-5 pt-4">
-                      <div className={`rounded-xl p-4 border ${difference > 0 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50" : difference < 0 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50" : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"}`}>
-                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Pricing Preview</p>
+                      <div className={`rounded-xl p-4 border ${difference > 0 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50" : difference < 0 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50" : "bg-gray-50 dark:bg-card/50 border-gray-200 dark:border-border"}`}>
+                        <p className="text-xs font-semibold text-gray-700 dark:text-muted-foreground mb-2">Pricing Preview</p>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                          <div className="flex justify-between text-gray-600 dark:text-muted-foreground">
                             <span>Current booking</span>
                             <span>₱{currentAmount.toLocaleString()}</span>
                           </div>
-                          <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                          <div className="flex justify-between text-gray-600 dark:text-muted-foreground">
                             <span>New dates ({nights.length} night{nights.length !== 1 ? "s" : ""})</span>
                             <span>₱{newTotal.toLocaleString()}</span>
                           </div>
-                          <div className="border-t border-gray-200 dark:border-gray-700 pt-1.5">
+                          <div className="border-t border-gray-200 dark:border-border pt-1.5">
                             {difference > 0 ? (
                               <div className="flex justify-between font-semibold text-amber-700 dark:text-amber-400">
                                 <span>Additional balance due</span>
@@ -2802,7 +2802,7 @@ function BookingsPageContent() {
                                 <span>-₱{Math.abs(difference).toLocaleString()}</span>
                               </div>
                             ) : (
-                              <div className="flex justify-between font-semibold text-gray-700 dark:text-gray-300">
+                              <div className="flex justify-between font-semibold text-gray-700 dark:text-muted-foreground">
                                 <span>Same price</span>
                                 <span>No change</span>
                               </div>
@@ -2821,11 +2821,11 @@ function BookingsPageContent() {
 
                 {/* Policy Notice */}
                 <div className="px-5 pt-4 pb-4">
-                  <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-3">
-                    <Lightbulb className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                  <div className="flex items-start gap-3 bg-primary/5 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 rounded-xl p-3">
+                    <Lightbulb className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-primary dark:text-primary/80 space-y-1">
                       <p className="font-medium">Reschedule policy</p>
-                      <p className="text-blue-600/80 dark:text-blue-400/80">
+                      <p className="text-primary/80 dark:text-primary/80">
                         Maximum 2 reschedules per booking. Must be at least 3 days before check-in. Original
                         dates will be released for new bookings.
                       </p>
@@ -2835,11 +2835,11 @@ function BookingsPageContent() {
               </div>
 
               {/* Fixed Footer Actions */}
-              <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 pb-6 sm:pb-4">
+              <div className="sticky bottom-0 bg-white dark:bg-background border-t border-border dark:border-border p-4 pb-6 sm:pb-4">
                 <div className="flex gap-3">
                   <button
                     onClick={closeModal}
-                    className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3.5 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors active:scale-[0.98]"
+                    className="flex-1 bg-gray-100 dark:bg-card text-gray-700 dark:text-muted-foreground py-3.5 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-muted transition-colors active:scale-[0.98]"
                   >
                     Cancel
                   </button>
@@ -2848,7 +2848,7 @@ function BookingsPageContent() {
                     disabled={
                       !newCheckInDate || !newCheckOutDate || rescheduleLoading
                     }
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25 active:scale-[0.98]"
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-foreground py-3.5 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25 active:scale-[0.98]"
                   >
                     {rescheduleLoading ? (
                       <>
@@ -2871,26 +2871,26 @@ function BookingsPageContent() {
         {/* Booking Details Modal - Keep for "View Details" button */}
         {showModal && selectedBooking && !showCancelModal && (
           <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-white/95 dark:bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-border/50">
               {/* Modal Header */}
-              <div className="bg-blue-600/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-gray-200/20 dark:border-gray-700/20">
+              <div className="bg-primary/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-gray-200/20 dark:border-border/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     <div className="bg-white/20 p-1.5 sm:p-2 rounded-full flex-shrink-0">
-                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-lg sm:text-xl font-bold text-white truncate">
+                      <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">
                         Booking Details
                       </h2>
-                      <p className="text-white/90 text-xs sm:text-sm">
+                      <p className="text-foreground/90 text-xs sm:text-sm">
                         Your reservation information
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={closeModal}
-                    className="text-white/80 hover:text-white text-xl sm:text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition flex-shrink-0"
+                    className="text-foreground/80 hover:text-foreground text-xl sm:text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition flex-shrink-0"
                   >
                     ×
                   </button>
@@ -2898,19 +2898,19 @@ function BookingsPageContent() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-4 sm:p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+              <div className="p-4 sm:p-6 bg-white/90 dark:bg-card/90 backdrop-blur-sm">
                 {/* Booking Info Section */}
-                <div className="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-200/50 dark:border-gray-600/50">
+                <div className="bg-gray-50/80 dark:bg-muted/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-200/50 dark:border-border/50">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <div className="bg-blue-600/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                      <div className="bg-primary/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-foreground" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-foreground truncate">
                           {formatBookingNumber(selectedBooking.id)}
                         </h3>
-                        <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
+                        <p className="text-gray-600 dark:text-muted-foreground text-xs sm:text-sm truncate">
                           {selectedBooking.guest_name} •{" "}
                           {selectedBooking.guest_email || "No email"}
                         </p>
@@ -2919,7 +2919,7 @@ function BookingsPageContent() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {getStatusIcon(selectedBooking.status || "pending")}
                       <span
-                        className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(
+                        className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-foreground ${getStatusColor(
                           selectedBooking.status || "pending"
                         )}`}
                       >
@@ -2933,10 +2933,10 @@ function BookingsPageContent() {
                   {/* Dates and Guest Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                     <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">Check-in Date</p>
+                          <p className="text-xs text-muted-foreground">Check-in Date</p>
                           <p className="font-semibold text-sm sm:text-base truncate">
                             {selectedBooking.check_in_date
                               ? new Date(
@@ -2946,10 +2946,10 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
+                        <Users className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             Number of Guests
                           </p>
                           <p className="font-semibold text-sm sm:text-base">
@@ -2959,10 +2959,10 @@ function BookingsPageContent() {
                       </div>
                     </div>
                     <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             Check-out Date
                           </p>
                           <p className="font-semibold text-sm sm:text-base truncate">
@@ -2974,10 +2974,10 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 text-gray-300">
-                        <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
+                        <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             {selectedBooking.payment_type === "full"
                               ? "Payment Required"
                               : "Down Payment (50%)"}
@@ -2998,13 +2998,13 @@ function BookingsPageContent() {
 
                   {/* Contact Information */}
                   {selectedBooking.guest_phone && (
-                    <div className="border-t border-gray-600 pt-3 sm:pt-4">
-                      <div className="flex items-center gap-2 text-gray-400 text-xs sm:text-sm">
-                        <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                    <div className="border-t border-border pt-3 sm:pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs sm:text-sm">
+                        <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                         <span>Phone:</span>
                         <a
                           href={`tel:${selectedBooking.guest_phone}`}
-                          className="text-blue-400 hover:text-blue-300 hover:underline font-medium"
+                          className="text-primary hover:text-primary/80 hover:underline font-medium"
                         >
                           {displayPhoneNumber(selectedBooking.guest_phone)}
                         </a>
@@ -3014,41 +3014,41 @@ function BookingsPageContent() {
                 </div>
 
                 {/* Payment Information Section */}
-                <div className="bg-gradient-to-br from-green-50/90 to-emerald-50/90 dark:from-gray-700/90 dark:to-gray-600/90 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-green-200/50 dark:border-gray-600/50">
+                <div className="bg-gradient-to-br from-green-50/90 to-emerald-50/90 dark:from-gray-700/90 dark:to-gray-600/90 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-green-200/50 dark:border-border/50">
                   <div className="flex items-center gap-2 sm:gap-3 mb-4">
                     <div className="bg-green-600/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
-                      <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                      <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-foreground" />
                     </div>
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-foreground">
                       Payment Information
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* Total Amount */}
-                    <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                         Total Amount
                       </p>
                       <p className="font-bold text-lg text-green-600 dark:text-green-400">
                         ₱{selectedBooking.total_amount.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-0.5">
                         {selectedBooking.payment_type === "half" ? "50% Downpayment" : "Full Payment"}
                       </p>
                     </div>
 
                     {/* Payment Breakdown */}
-                    <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                         Payment Breakdown
                       </p>
                       <PaymentBreakdownDetail bookingId={selectedBooking.id} totalAmount={selectedBooking.total_amount} />
                     </div>
 
                     {/* Payment Status */}
-                    <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-blue-200/30 dark:border-gray-500/30">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-primary/20/30 dark:border-gray-500/30">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                         Payment Status
                       </p>
                       <div className="flex items-center gap-2">
@@ -3088,10 +3088,10 @@ function BookingsPageContent() {
                   {/* Additional Row for Half Payment - Remaining Balance */}
                   {selectedBooking.payment_type === "half" && (
                     <div className="mt-3 sm:mt-4">
-                      <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-orange-200/30 dark:border-gray-500/30">
+                      <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-orange-200/30 dark:border-gray-500/30">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                               Remaining Balance
                             </p>
                             <p className="font-semibold text-sm sm:text-base text-orange-600 dark:text-orange-400">
@@ -3101,7 +3101,7 @@ function BookingsPageContent() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-muted-foreground">
                               Due on check-in
                             </p>
                           </div>
@@ -3112,8 +3112,8 @@ function BookingsPageContent() {
 
                   {/* Payment Timeline or Notes */}
                   {selectedBooking.payment_type === "half" && (
-                    <div className="mt-4 p-3 bg-blue-50/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-lg border border-blue-200/30 dark:border-gray-500/30">
-                      <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                    <div className="mt-4 p-3 bg-primary/5/70 dark:bg-card/70 backdrop-blur-sm rounded-lg border border-primary/20/30 dark:border-gray-500/30">
+                      <p className="text-xs sm:text-sm text-primary dark:text-primary/80">
                         <strong>Payment Schedule:</strong> 50% paid as
                         downpayment, remaining 50% due upon check-in at the
                         resort.
@@ -3132,12 +3132,12 @@ function BookingsPageContent() {
                       .replace(/\[WALK-IN\]/g, '')
                       .trim();
                     return cleanedRequest ? (
-                      <div className="bg-blue-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-200/50 dark:border-gray-600/50">
-                        <h4 className="text-gray-900 dark:text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                          <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
+                      <div className="bg-primary/5/80 dark:bg-muted/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-primary/20/50 dark:border-border/50">
+                        <h4 className="text-gray-900 dark:text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                          <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-primary dark:text-primary" />
                           Special Requests
                         </h4>
-                        <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
+                        <p className="text-gray-700 dark:text-muted-foreground text-xs sm:text-sm bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
                           {cleanedRequest}
                         </p>
                       </div>
@@ -3146,19 +3146,19 @@ function BookingsPageContent() {
 
                   {/* Pet Information */}
                   {selectedBooking.brings_pet !== null && (
-                    <div className="bg-green-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-green-200/50 dark:border-gray-600/50">
-                      <h4 className="text-gray-900 dark:text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                    <div className="bg-green-50/80 dark:bg-muted/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-green-200/50 dark:border-border/50">
+                      <h4 className="text-gray-900 dark:text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
                         <PawPrint className="w-4 h-4 text-amber-500" />
                         Pet Policy
                       </h4>
-                      <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
+                      <p className="text-gray-700 dark:text-muted-foreground text-xs sm:text-sm">
                         {selectedBooking.brings_pet ? (
                           <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" /> Pet-friendly
                             booking
                           </span>
                         ) : (
-                          <span className="text-gray-400 flex items-center gap-1">
+                          <span className="text-muted-foreground flex items-center gap-1">
                             <XCircle className="w-3 h-3" /> No pets for this
                             booking
                           </span>
@@ -3168,14 +3168,14 @@ function BookingsPageContent() {
                   )}
 
                   {/* Booking Date */}
-                  <div className="bg-gray-700 rounded-lg p-3 sm:p-4">
-                    <h4 className="text-white font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+                  <div className="bg-muted rounded-lg p-3 sm:p-4">
+                    <h4 className="text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                       Booking Timeline
                     </h4>
                     <div className="space-y-1 sm:space-y-2">
-                      <p className="text-gray-300 text-xs sm:text-sm">
-                        <span className="text-gray-400">Created:</span>{" "}
+                      <p className="text-muted-foreground text-xs sm:text-sm">
+                        <span className="text-muted-foreground">Created:</span>{" "}
                         {selectedBooking.created_at
                           ? new Date(
                               selectedBooking.created_at
@@ -3184,7 +3184,7 @@ function BookingsPageContent() {
                       </p>
                       {selectedBooking.status?.toLowerCase() === "cancelled" &&
                         selectedBooking.cancelled_by && (
-                          <div className="border-t border-gray-600 pt-2 mt-2">
+                          <div className="border-t border-border pt-2 mt-2">
                             <p className="text-red-400 text-xs sm:text-sm font-medium flex items-center gap-1">
                               <XCircle className="w-3 h-3" /> Cancelled by{" "}
                               {selectedBooking.cancelled_by === "user"
@@ -3192,8 +3192,8 @@ function BookingsPageContent() {
                                 : "Admin"}
                             </p>
                             {selectedBooking.cancelled_at && (
-                              <p className="text-gray-400 text-xs">
-                                <span className="text-gray-500">When:</span>{" "}
+                              <p className="text-muted-foreground text-xs">
+                                <span className="text-muted-foreground">When:</span>{" "}
                                 {new Date(
                                   selectedBooking.cancelled_at
                                 ).toLocaleDateString()}{" "}
@@ -3208,8 +3208,8 @@ function BookingsPageContent() {
                               </p>
                             )}
                             {selectedBooking.cancellation_reason && (
-                              <p className="text-gray-400 text-xs break-words">
-                                <span className="text-gray-500">Reason:</span>{" "}
+                              <p className="text-muted-foreground text-xs break-words">
+                                <span className="text-muted-foreground">Reason:</span>{" "}
                                 {selectedBooking.cancellation_reason}
                               </p>
                             )}
@@ -3250,19 +3250,19 @@ function BookingsPageContent() {
               </div>
 
               {/* Modal Footer - Modern Design */}
-              <div className="bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm p-4 sm:p-6 rounded-b-2xl border-t border-gray-200/50 dark:border-gray-600/50">
+              <div className="bg-white/80 dark:bg-muted/80 backdrop-blur-sm p-4 sm:p-6 rounded-b-2xl border-t border-gray-200/50 dark:border-border/50">
                 {canCancelBooking(selectedBooking) && !showCancelModal ? (
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                     <button
                       onClick={() => setShowCancelModal(true)}
-                      className="bg-red-600 text-white px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition order-2 sm:order-1"
+                      className="bg-red-600 text-foreground px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition order-2 sm:order-1"
                       title={getCancellationMessage(selectedBooking)}
                     >
                       Cancel Booking
                     </button>
                     <button
                       onClick={closeModal}
-                      className="bg-gray-600 text-white px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
+                      className="bg-gray-600 text-foreground px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
                     >
                       Close
                     </button>
@@ -3270,18 +3270,18 @@ function BookingsPageContent() {
                 ) : showCancelModal ? (
                   <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <h4 className="text-white font-medium mb-2 text-sm sm:text-base">
+                      <h4 className="text-foreground font-medium mb-2 text-sm sm:text-base">
                         Why are you cancelling this booking?
                       </h4>
                       <textarea
                         value={cancellationReason}
                         onChange={(e) => setCancellationReason(e.target.value)}
                         placeholder="Please provide a reason for cancellation (required)"
-                        className="w-full p-3 rounded-lg bg-gray-600 text-white placeholder-gray-400 border border-gray-500 focus:border-red-500 focus:outline-none resize-none text-sm"
+                        className="w-full p-3 rounded-lg bg-gray-600 text-foreground placeholder-gray-400 border border-gray-500 focus:border-red-500 focus:outline-none resize-none text-sm"
                         rows={3}
                         maxLength={200}
                       />
-                      <p className="text-gray-400 text-xs mt-1">
+                      <p className="text-muted-foreground text-xs mt-1">
                         {cancellationReason.length}/200 characters
                       </p>
                     </div>
@@ -3291,8 +3291,8 @@ function BookingsPageContent() {
                         disabled={!cancellationReason.trim()}
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition order-2 sm:order-1 ${
                           cancellationReason.trim()
-                            ? "bg-red-600 text-white hover:bg-red-700"
-                            : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                            ? "bg-red-600 text-foreground hover:bg-red-700"
+                            : "bg-gray-500 text-muted-foreground cursor-not-allowed"
                         }`}
                       >
                         Confirm Cancellation
@@ -3302,7 +3302,7 @@ function BookingsPageContent() {
                           setShowCancelModal(false);
                           setCancellationReason("");
                         }}
-                        className="bg-gray-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
+                        className="bg-gray-600 text-foreground py-2 px-4 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
                       >
                         Back
                       </button>
@@ -3314,7 +3314,7 @@ function BookingsPageContent() {
                       selectedBooking.status?.toLowerCase() !== "cancelled" && (
                         <button
                           disabled
-                          className="bg-gray-500 text-gray-300 px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed"
+                          className="bg-gray-500 text-muted-foreground px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed"
                           title={getCancellationMessage(selectedBooking)}
                         >
                           Cannot Cancel
@@ -3322,7 +3322,7 @@ function BookingsPageContent() {
                       )}
                     <button
                       onClick={closeModal}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition flex-1"
+                      className="bg-gray-600 text-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition flex-1"
                     >
                       Close
                     </button>
@@ -3343,10 +3343,10 @@ export default function BookingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <div className="text-white text-xl font-semibold">Loading...</div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="text-foreground text-xl font-semibold">Loading...</div>
           </div>
         </div>
       }

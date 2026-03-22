@@ -59,10 +59,10 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
       )}
 
       {/* Down Payment Info */}
-      <div className="p-4 rounded-lg border bg-blue-50 border-blue-200">
+      <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
         <h3 className="font-semibold text-blue-900 mb-2">Payment Structure</h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="p-2 rounded bg-blue-100">
+          <div className="p-2 rounded bg-primary/10">
             <p className="font-medium text-blue-900">Down Payment (Paid)</p>
             <p className="text-lg font-bold text-blue-900">₱{downPayment.toLocaleString()}</p>
           </div>
@@ -86,7 +86,7 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
               percentage >= 50 ? 'bg-yellow-500' :
               'bg-red-500'
             }`}>
-              <DollarSign className="w-5 h-5 text-white" />
+              <DollarSign className="w-5 h-5 text-foreground" />
             </div>
             <div>
               <h3 className={`font-semibold ${
@@ -148,17 +148,17 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <button
           onClick={() => setShowPolicy(!showPolicy)}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
           type="button"
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Info className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Info className="w-4 h-4 text-primary" />
             </div>
             <span className="text-sm font-semibold text-gray-900">Cancellation Policy Details</span>
           </div>
           <div className={`transform transition-transform duration-200 ${showPolicy ? 'rotate-180' : 'rotate-0'}`}>
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
@@ -199,14 +199,14 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
               </div>
               
               {/* Important Notes */}
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Info className="w-3 h-3 text-blue-600" />
+                  <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Info className="w-3 h-3 text-primary" />
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-blue-900">Important Information:</p>
-                    <p className="text-xs text-blue-800">
+                    <p className="text-xs text-primary">
                       • Only the down payment (50% of total booking) is refundable<br/>
                       • Remaining 50% is paid upon arrival at the resort<br/>
                       • Refunds processed by admin within 5-10 business days
@@ -223,10 +223,10 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
       {onConfirm && canCancel && (
         <button
           onClick={() => onConfirm(amount)}
-          className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
+          className={`w-full py-3 px-4 rounded-lg font-semibold text-foreground transition-colors ${
             percentage >= 75 ? 'bg-green-600 hover:bg-green-700' :
             percentage >= 50 ? 'bg-yellow-600 hover:bg-yellow-700' :
-            'bg-blue-600 hover:bg-blue-700'
+            'bg-primary hover:bg-primary/90'
           }`}
         >
           Cancel Booking & Request ₱{amount.toLocaleString()} Refund

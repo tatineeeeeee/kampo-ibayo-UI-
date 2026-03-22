@@ -1,6 +1,8 @@
 // 🔧 API Timeout Utility - Prevents hanging API calls after tab inactivity
 // This utility wraps API calls with timeout protection
 
+import { SESSION_TIMEOUT_MS, AUTH_TIMEOUT_MS, LOGOUT_TIMEOUT_MS, SESSION_REFRESH_BUFFER_MS } from "../lib/constants/timeouts";
+
 export class TimeoutError extends Error {
   constructor(message: string = 'Operation timed out') {
     super(message);
@@ -16,7 +18,7 @@ export class TimeoutError extends Error {
  */
 export function withTimeout<T>(
   promise: Promise<T>, 
-  timeoutMs: number = 5000, 
+  timeoutMs: number = SESSION_TIMEOUT_MS,
   errorMessage?: string
 ): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -39,7 +41,7 @@ export function withTimeout<T>(
  */
 export async function withAuthTimeout<T>(
   operation: () => Promise<T>,
-  timeoutMs: number = 3000,
+  timeoutMs: number = AUTH_TIMEOUT_MS,
   retries: number = 1
 ): Promise<T> {
   let lastError: Error;
@@ -78,7 +80,7 @@ export async function getFreshSession(supabaseClient: {
 
   // Check if token is expired or about to expire (within 60 seconds)
   const expiresAt = cached.expires_at ? cached.expires_at * 1000 : 0;
-  const isExpiringSoon = expiresAt > 0 && expiresAt - Date.now() < 60000;
+  const isExpiringSoon = expiresAt > 0 && expiresAt - Date.now() < SESSION_REFRESH_BUFFER_MS;
 
   if (!isExpiringSoon) return cached;
 
@@ -141,7 +143,7 @@ export async function fetchWithAuth(
  * @param supabase Supabase client
  * @param timeoutMs Timeout for the signOut operation (default: 2000ms)
  */
-export async function safeLogout(supabase: { auth: { signOut: (options?: { scope?: 'global' | 'local' | 'others' }) => Promise<{ error: unknown }> } }, timeoutMs: number = 2000): Promise<void> {
+export async function safeLogout(supabase: { auth: { signOut: (options?: { scope?: 'global' | 'local' | 'others' }) => Promise<{ error: unknown }> } }, timeoutMs: number = LOGOUT_TIMEOUT_MS): Promise<void> {
   try {
     // Try to sign out with timeout
     await withTimeout(

@@ -342,9 +342,9 @@ const ReviewSubmissionForm = ({
   if (submitted && !onSuccess) {
     return (
       <div className={`${className} ${isModal ? 'max-w-full' : 'max-w-md'} mx-auto`}>
-        <div className={`${isModal ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-900/20 border-green-500/30 text-white'} border rounded-xl p-6 text-center`}>
+        <div className={`${isModal ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-900/20 border-green-500/30 text-foreground'} border rounded-xl p-6 text-center`}>
           <CheckCircle className={`w-16 h-16 ${isModal ? 'text-green-500' : 'text-green-400'} mx-auto mb-4`} />
-          <h3 className={`text-xl font-bold ${isModal ? 'text-green-800' : 'text-white'} mb-2`}>Thank You!</h3>
+          <h3 className={`text-xl font-bold ${isModal ? 'text-green-800' : 'text-foreground'} mb-2`}>Thank You!</h3>
           <p className={`${isModal ? 'text-green-700' : 'text-green-100'} mb-4`}>
             Your review has been published successfully and is now visible to other guests!
           </p>
@@ -360,15 +360,15 @@ const ReviewSubmissionForm = ({
   if (!user) {
     return (
       <div className={`${className} ${isModal ? 'max-w-full' : 'max-w-md'} mx-auto`}>
-        <div className={`${isModal ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-blue-900/20 border-blue-500/30 text-white'} border rounded-xl p-6 text-center`}>
-          <User className={`w-16 h-16 ${isModal ? 'text-blue-500' : 'text-blue-400'} mx-auto mb-4`} />
-          <h3 className={`text-xl font-bold ${isModal ? 'text-blue-800' : 'text-white'} mb-2`}>Please Log In</h3>
-          <p className={`${isModal ? 'text-blue-700' : 'text-blue-100'} mb-4`}>
+        <div className={`${isModal ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-primary/10 border-primary/30 text-foreground'} border rounded-xl p-6 text-center`}>
+          <User className={`w-16 h-16 ${isModal ? 'text-primary' : 'text-primary'} mx-auto mb-4`} />
+          <h3 className={`text-xl font-bold ${isModal ? 'text-primary' : 'text-foreground'} mb-2`}>Please Log In</h3>
+          <p className={`${isModal ? 'text-primary' : 'text-blue-100'} mb-4`}>
             You need to be logged in to submit a review.
           </p>
           <a
             href="/auth"
-            className={`inline-flex items-center px-4 py-2 ${isModal ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} rounded-lg transition-colors`}
+            className={`inline-flex items-center px-4 py-2 ${isModal ? 'bg-primary hover:bg-primary text-foreground' : 'bg-primary hover:bg-primary/90 text-foreground'} rounded-lg transition-colors`}
           >
             <User className="w-4 h-4 mr-2" />
             Log In
@@ -384,10 +384,10 @@ const ReviewSubmissionForm = ({
         {/* Header - only show in modal mode */}
         {isModal && (
           <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               Share Your Experience
             </h2>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Help future guests by sharing your honest review of Kampo Ibayo
             </p>
           </div>
@@ -431,7 +431,7 @@ const ReviewSubmissionForm = ({
           {/* Rating - only show if no category ratings provided */}
           {!categoryRatings && (
             <div className="space-y-3">
-              <label className="block text-white font-semibold">
+              <label className="block text-foreground font-semibold">
                 Overall Rating *
               </label>
               <div className="flex items-center gap-2">
@@ -447,12 +447,12 @@ const ReviewSubmissionForm = ({
                       className={`w-8 h-8 ${
                         star <= formData.rating
                           ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-400 hover:text-yellow-300'
+                          : 'text-muted-foreground hover:text-yellow-300'
                       }`}
                     />
                   </button>
                 ))}
-                <span className="ml-3 text-white font-medium">
+                <span className="ml-3 text-foreground font-medium">
                   {formData.rating > 0 && (
                     <>
                       {formData.rating}/5 {
@@ -471,13 +471,13 @@ const ReviewSubmissionForm = ({
           {/* Review Text */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-white font-semibold">
+              <label className="block text-foreground font-semibold">
                 Your Review *
               </label>
               <button
                 type="button"
                 onClick={() => setShowTemplates(!showTemplates)}
-                className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
+                className="text-primary hover:text-primary/80 text-sm flex items-center gap-1"
               >
                 {showTemplates ? 'Hide' : 'Show'} Templates
               </button>
@@ -486,57 +486,57 @@ const ReviewSubmissionForm = ({
             {/* Quick Review Templates - Always available */}
             {showTemplates && (
               <div className="space-y-2 mb-4">
-                <p className="text-gray-400 text-sm">Choose a template to get started:</p>
+                <p className="text-muted-foreground text-sm">Choose a template to get started:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "Great stay! The rooms were clean, staff was friendly, and the facilities were excellent. The pool area was particularly enjoyable. Would definitely recommend to families and couples alike!")}
-                    className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors border border-gray-600"
+                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
                   >
                     <div className="text-green-400 text-sm font-medium mb-1">👍 Positive Experience</div>
-                    <div className="text-gray-300 text-xs">Clean, friendly, excellent facilities</div>
+                    <div className="text-muted-foreground text-xs">Clean, friendly, excellent facilities</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "Perfect for our family vacation! The kids loved the pool, and we appreciated the clean facilities and helpful staff. Great location and value for money. Will be back!")}
-                    className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors border border-gray-600"
+                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
                   >
-                    <div className="text-blue-400 text-sm font-medium mb-1">👨‍👩‍👧‍👦 Family-Friendly</div>
-                    <div className="text-gray-300 text-xs">Kids enjoyed, good value</div>
+                    <div className="text-primary text-sm font-medium mb-1">👨‍👩‍👧‍👦 Family-Friendly</div>
+                    <div className="text-muted-foreground text-xs">Kids enjoyed, good value</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "Wonderful romantic getaway! Beautiful, peaceful setting with excellent amenities. The staff was attentive and the rooms were spotless. Highly recommend for couples!")}
-                    className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors border border-gray-600"
+                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
                   >
                     <div className="text-pink-400 text-sm font-medium mb-1">💕 Romantic Getaway</div>
-                    <div className="text-gray-300 text-xs">Peaceful, spotless, for couples</div>
+                    <div className="text-muted-foreground text-xs">Peaceful, spotless, for couples</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "")}
-                    className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors border border-gray-600"
+                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
                   >
-                    <div className="text-gray-400 text-sm font-medium mb-1">✍️ Start Fresh</div>
-                    <div className="text-gray-300 text-xs">Clear and write your own</div>
+                    <div className="text-muted-foreground text-sm font-medium mb-1">✍️ Start Fresh</div>
+                    <div className="text-muted-foreground text-xs">Clear and write your own</div>
                   </button>
                 </div>
               </div>
             )}
             
             <div className="relative">
-              <MessageSquare className="absolute top-3 left-3 w-5 h-5 text-gray-400" />
+              <MessageSquare className="absolute top-3 left-3 w-5 h-5 text-muted-foreground" />
               <textarea
                 value={formData.reviewText}
                 onChange={(e) => handleInputChange('reviewText', e.target.value)}
                 placeholder="Tell us about your experience at Kampo Ibayo..."
                 rows={5}
-                className={`w-full pl-12 pr-4 py-3 bg-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-1 resize-none transition-colors duration-200 ${
+                className={`w-full pl-12 pr-4 py-3 bg-muted rounded-lg text-foreground placeholder-gray-400 focus:ring-1 resize-none transition-colors duration-200 ${
                   formData.reviewText.length > 0 && formData.reviewText.length < 10
                     ? 'border-2 border-red-500 focus:border-red-400 focus:ring-red-500'
                     : formData.reviewText.length >= 10
                     ? 'border border-green-500 focus:border-green-400 focus:ring-green-500'
-                    : 'border border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+                    : 'border border-border focus:border-primary focus:ring-primary'
                 }`}
                 maxLength={1000}
               />
@@ -545,7 +545,7 @@ const ReviewSubmissionForm = ({
                   ? 'text-red-400'
                   : formData.reviewText.length >= 10
                   ? 'text-green-400'
-                  : 'text-gray-400'
+                  : 'text-muted-foreground'
               }`}>
                 {formData.reviewText.length}/1000
               </div>
@@ -553,7 +553,7 @@ const ReviewSubmissionForm = ({
             {/* Minimum character hint */}
             <div className={`flex items-center gap-1.5 text-xs transition-colors duration-200 ${
               formData.reviewText.length === 0
-                ? 'text-gray-500'
+                ? 'text-muted-foreground'
                 : formData.reviewText.length < 10
                 ? 'text-red-400'
                 : 'text-green-400'
@@ -584,21 +584,21 @@ const ReviewSubmissionForm = ({
           <div className="space-y-4">
             {/* Name */}
             <div className="space-y-3">
-              <label className="block text-white font-semibold">
+              <label className="block text-foreground font-semibold">
                 Display Name *
               </label>
               <div className="relative">
-                <User className="absolute top-3 left-3 w-5 h-5 text-gray-400" />
+                <User className="absolute top-3 left-3 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   value={formData.guestName}
                   onChange={(e) => handleInputChange('guestName', e.target.value)}
                   placeholder="How should we display your name?"
-                  className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full pl-12 pr-4 py-3 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary"
                   maxLength={100}
                 />
               </div>
-              <p className="text-gray-400 text-xs">
+              <p className="text-muted-foreground text-xs">
                 This is how your name will appear on the review
               </p>
             </div>
@@ -606,17 +606,17 @@ const ReviewSubmissionForm = ({
 
           {/* Location */}
           <div className="space-y-3">
-            <label className="block text-white font-semibold">
+            <label className="block text-foreground font-semibold">
               Your Location (Optional)
             </label>
             <div className="relative">
-              <MapPin className="absolute top-3 left-3 w-5 h-5 text-gray-400" />
+              <MapPin className="absolute top-3 left-3 w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
                 value={formData.guestLocation}
                 onChange={(e) => handleInputChange('guestLocation', e.target.value)}
                 placeholder="e.g., Manila, Philippines"
-                className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-12 pr-4 py-3 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary"
                 maxLength={100}
               />
             </div>
@@ -624,11 +624,11 @@ const ReviewSubmissionForm = ({
 
           {/* Booking ID (if provided) */}
           {bookingId && (
-            <div className="bg-gray-700/50 rounded-lg p-4 flex items-center gap-3">
+            <div className="bg-muted/50 rounded-lg p-4 flex items-center gap-3">
               <Calendar className="w-5 h-5 text-green-400" />
               <div>
-                <p className="text-white font-medium">Verified Booking</p>
-                <p className="text-gray-400 text-sm">Booking ID: #{bookingId}</p>
+                <p className="text-foreground font-medium">Verified Booking</p>
+                <p className="text-muted-foreground text-sm">Booking ID: #{bookingId}</p>
               </div>
             </div>
           )}
@@ -639,7 +639,7 @@ const ReviewSubmissionForm = ({
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
+                className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-500 text-foreground rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -647,7 +647,7 @@ const ReviewSubmissionForm = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-primary hover:bg-primary/90 disabled:bg-muted text-foreground rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -665,8 +665,8 @@ const ReviewSubmissionForm = ({
         </form>
 
         {/* Footer Note */}
-        <div className="mt-6 pt-6 border-t border-gray-600">
-          <p className="text-gray-400 text-sm text-center">
+        <div className="mt-6 pt-6 border-t border-border">
+          <p className="text-muted-foreground text-sm text-center">
             Your review will be moderated before being published. 
             We only publish honest and constructive feedback.
           </p>

@@ -1,64 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
+import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Validate environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing environment variables:', {
-        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-      })
-      return NextResponse.json({
-        error: 'Server configuration error'
-      }, { status: 500 })
-    }
+    const auth = await validateAdminAuth(request);
+    if (!auth.success) return authErrorResponse(auth as AuthFailure);
 
-    // Create admin client inside the function
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // 🔐 Get the access token from Authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized - No token provided' }, { status: 401 })
-    }
-
-    const accessToken = authHeader.replace('Bearer ', '')
-
-    // Verify the token and get the user using admin client
-    const { data: { user: currentAuthUser }, error: authError } = await supabaseAdmin.auth.getUser(accessToken)
-
-    if (authError || !currentAuthUser) {
-      console.error('Auth verification failed:', authError)
-      return NextResponse.json({ error: 'Unauthorized - Invalid or expired session' }, { status: 401 })
-    }
-
-    // Get current user's role and super admin status
-    const { data: currentUser } = await supabaseAdmin
-      .from('users')
-      .select('id, role, is_super_admin')
-      .eq('auth_id', currentAuthUser.id)
-      .single()
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Current user not found' }, { status: 401 })
-    }
-
-    // 🔐 Only admins can delete users
-    if (currentUser.role !== 'admin') {
-      return NextResponse.json({ error: 'Permission denied - Admin access required' }, { status: 403 })
-    }
-
-    const isCurrentUserSuperAdmin = currentUser.is_super_admin === true
+    const isCurrentUserSuperAdmin = auth.user.isSuperAdmin;
 
     // Parse request body
     let requestBody
@@ -98,7 +47,7 @@ export async function DELETE(request: NextRequest) {
     // 🔐 PERMISSION CHECKS
 
     // 1. Cannot delete yourself
-    if (userDetails?.id === currentUser.id) {
+    if (userDetails?.id === auth.user.userId) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 403 })
     }
 

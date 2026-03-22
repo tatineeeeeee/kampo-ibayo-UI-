@@ -98,7 +98,7 @@ export async function GET(
     console.error('API error:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error' 
+      details: 'See server logs for details'
     }, { status: 500 });
   }
 }

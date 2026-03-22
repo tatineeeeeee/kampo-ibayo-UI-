@@ -10,16 +10,8 @@ import {
   FaHome,
   FaUser,
   FaSpinner,
-  FaDog,
-  FaCat,
-  FaPaw,
-  FaCheck,
-  FaInfoCircle,
-  FaLightbulb,
   FaBan,
 } from "react-icons/fa";
-import { Rabbit, Bird } from "lucide-react";
-import { GiRat } from "react-icons/gi";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../contexts/AuthContext";
 import { canUserCreatePendingBooking } from "../utils/bookingUtils";
@@ -29,15 +21,15 @@ import {
   cleanPhoneForDatabase,
   validatePhilippinePhone,
 } from "../utils/phoneUtils";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-interface Booking {
-  id: number;
-  check_in_date: string;
-  check_out_date: string;
-  status: string | null;
-}
+import { BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND, EXTRA_GUEST_FEE, INCLUDED_GUESTS, MAX_GUESTS, PHILIPPINE_HOLIDAYS } from "../lib/constants/pricing";
+import { MAX_PENDING_BOOKINGS, MAINTENANCE_CHECK_INTERVAL_MS } from "../lib/constants";
+import type { BookingBasic } from "../lib/types/booking";
+import DatePickerStyles from "../components/booking/DatePickerStyles";
+import BookingFormFields from "../components/booking/BookingFormFields";
+import BookingCalendar from "../components/booking/BookingCalendar";
+import PriceBreakdown from "../components/booking/PriceBreakdown";
+import PaymentTypeSelector from "../components/booking/PaymentTypeSelector";
 
 function BookingPage() {
   const { user, loading } = useAuth();
@@ -49,7 +41,7 @@ function BookingPage() {
     name: "",
     email: "",
     phone: "",
-    guests: "",
+    guests: "1",
     checkIn: null as Date | null,
     checkOut: null as Date | null,
     pet: false,
@@ -57,7 +49,7 @@ function BookingPage() {
   });
 
   const [minDate, setMinDate] = useState<Date>(new Date());
-  const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
+  const [existingBookings, setExistingBookings] = useState<BookingBasic[]>([]);
   const [canCreateBooking, setCanCreateBooking] = useState(true);
   const [limitMessage, setLimitMessage] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
@@ -102,33 +94,15 @@ function BookingPage() {
     // Check every 3 seconds but don't show multiple warnings
     const interval = setInterval(() => {
       checkMaintenanceMode();
-    }, 3000);
+    }, MAINTENANCE_CHECK_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [router, warning]);
 
   // Calculate price for multi-day bookings with per-day rates
   const calculateMultiDayPrice = useCallback(
-    (checkInDate: Date, checkOutDate: Date, guestCount: number = 15) => {
-      // Philippine holidays 2025-2026 (add more as needed)
-      const holidays = [
-        "2025-12-25",
-        "2025-12-30",
-        "2025-12-31",
-        "2026-01-01", // New Year
-        "2026-02-14", // Valentine's Day
-        "2026-04-02",
-        "2026-04-03",
-        "2026-04-04", // Holy Week
-        "2026-06-12", // Independence Day
-        "2026-08-31", // National Heroes Day
-        "2026-11-01",
-        "2026-11-02", // All Saints/Souls Day
-        "2026-11-30", // Bonifacio Day
-        "2026-12-25",
-        "2026-12-30",
-        "2026-12-31", // Christmas season
-      ];
+    (checkInDate: Date, checkOutDate: Date, guestCount: number = INCLUDED_GUESTS) => {
+      const holidays = PHILIPPINE_HOLIDAYS;
 
       const nights = [];
       const current = new Date(checkInDate);
@@ -138,13 +112,13 @@ function BookingPage() {
       while (current < end) {
         const day = current.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
         const dateString = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
-        const isHoliday = holidays.includes(dateString);
+        const isHoliday = (holidays as readonly string[]).includes(dateString);
 
         // Weekend: Friday (5), Saturday (6), Sunday (0)
         const isWeekend = day === 0 || day === 5 || day === 6;
 
         // Base rate per night: weekend/holiday or weekday
-        const nightRate = isWeekend || isHoliday ? 12000 : 9000;
+        const nightRate = isWeekend || isHoliday ? BASE_RATE_WEEKEND : BASE_RATE_WEEKDAY;
 
         nights.push({
           date: new Date(current),
@@ -162,7 +136,7 @@ function BookingPage() {
       // Add excess guest fee for entire stay
       const totalNights = nights.length;
       const excessGuestFee =
-        guestCount > 15 ? (guestCount - 15) * 300 * totalNights : 0;
+        guestCount > INCLUDED_GUESTS ? (guestCount - INCLUDED_GUESTS) * EXTRA_GUEST_FEE * totalNights : 0;
 
       return {
         nights,
@@ -173,8 +147,8 @@ function BookingPage() {
         breakdown: {
           weekdayNights: nights.filter((n) => !n.isWeekend).length,
           weekendNights: nights.filter((n) => n.isWeekend).length,
-          weekdayTotal: nights.filter((n) => !n.isWeekend).length * 9000,
-          weekendTotal: nights.filter((n) => n.isWeekend).length * 12000,
+          weekdayTotal: nights.filter((n) => !n.isWeekend).length * BASE_RATE_WEEKDAY,
+          weekendTotal: nights.filter((n) => n.isWeekend).length * BASE_RATE_WEEKEND,
         },
       };
     },
@@ -183,7 +157,7 @@ function BookingPage() {
 
   // Legacy single-day price calculation (for backward compatibility)
   const calculatePrice = useCallback(
-    (checkInDate: Date, guestCount: number = 15) => {
+    (checkInDate: Date, guestCount: number = INCLUDED_GUESTS) => {
       const nextDay = new Date(checkInDate);
       nextDay.setDate(nextDay.getDate() + 1);
       return calculateMultiDayPrice(checkInDate, nextDay, guestCount)
@@ -351,7 +325,7 @@ function BookingPage() {
   // Update price when check-in/check-out dates or guest count changes
   useEffect(() => {
     if (formData.checkIn && formData.checkOut && formData.guests) {
-      const guestCount = parseInt(formData.guests) || 15;
+      const guestCount = parseInt(formData.guests) || INCLUDED_GUESTS;
       const pricing = calculateMultiDayPrice(
         formData.checkIn,
         formData.checkOut,
@@ -363,19 +337,19 @@ function BookingPage() {
       const pricing = calculateMultiDayPrice(
         formData.checkIn,
         formData.checkOut,
-        15,
+        INCLUDED_GUESTS,
       );
       setEstimatedPrice(pricing.totalAmount);
       setPricingBreakdown(pricing);
     } else if (formData.checkIn && formData.guests) {
       // Single day fallback (if no checkout selected yet)
-      const guestCount = parseInt(formData.guests) || 15;
+      const guestCount = parseInt(formData.guests) || INCLUDED_GUESTS;
       const price = calculatePrice(formData.checkIn, guestCount);
       setEstimatedPrice(price);
       setPricingBreakdown(null);
     } else if (formData.checkIn) {
       // Single day fallback (if no checkout selected yet)
-      const price = calculatePrice(formData.checkIn, 15);
+      const price = calculatePrice(formData.checkIn, INCLUDED_GUESTS);
       setEstimatedPrice(price);
       setPricingBreakdown(null);
     } else {
@@ -393,10 +367,10 @@ function BookingPage() {
   // Show loading if auth is still loading or page is loading data
   if (loading || isPageLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-300">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="text-lg text-muted-foreground">
             {loading ? "Loading..." : "Preparing booking form..."}
           </div>
         </div>
@@ -408,106 +382,6 @@ function BookingPage() {
   if (!user) {
     return null;
   }
-
-  // Calculate capacity for visual indicators
-  const getDateCapacity = (date: Date) => {
-    // Don't show capacity indicators for past dates
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (date < today) {
-      return 0; // Past dates should appear normal
-    }
-
-    const activeBookings = existingBookings.filter(
-      (booking) =>
-        booking.status === "confirmed" || booking.status === "pending",
-    );
-
-    // Normalize date for comparison (remove time component)
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
-
-    let isCheckIn = false;
-    let isCheckOut = false;
-    let isOccupied = false;
-
-    activeBookings.forEach((booking) => {
-      const checkIn = new Date(booking.check_in_date);
-      checkIn.setHours(0, 0, 0, 0);
-
-      const checkOut = new Date(booking.check_out_date);
-      checkOut.setHours(0, 0, 0, 0);
-
-      // Check if this date is a check-in date
-      if (targetDate.getTime() === checkIn.getTime()) {
-        isCheckIn = true;
-      }
-
-      // Check if this date is a check-out date
-      if (targetDate.getTime() === checkOut.getTime()) {
-        isCheckOut = true;
-      }
-
-      // Check if this date is between check-in and check-out (occupied)
-      if (targetDate > checkIn && targetDate < checkOut) {
-        isOccupied = true;
-      }
-    });
-
-    // Determine the appropriate indicator
-    if (isCheckIn && isCheckOut) {
-      return "same-day"; // Same day check-in and check-out (1-day stay)
-    } else if (isCheckIn) {
-      return "checkin";
-    } else if (isCheckOut) {
-      return "checkout";
-    } else if (isOccupied) {
-      return "occupied";
-    }
-
-    return "";
-  };
-
-  // Calculate unavailable dates for the date picker - ONLY block real conflicts
-  const getUnavailableDates = () => {
-    const toYMD = (d: Date) => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const da = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${da}`;
-    };
-
-    // Filter confirmed and pending bookings
-    const activeBookings = existingBookings.filter(
-      (booking) =>
-        booking.status === "confirmed" || booking.status === "pending",
-    );
-
-    const unavailableDates: Date[] = [];
-
-    // Count check-ins per date (max 2 check-ins allowed per day)
-    const checkInCounts = new Map<string, number>();
-
-    activeBookings.forEach((booking) => {
-      const checkIn = new Date(booking.check_in_date);
-      const checkInDate = toYMD(checkIn);
-
-      const prevCount = checkInCounts.get(checkInDate) || 0;
-      checkInCounts.set(checkInDate, prevCount + 1);
-    });
-
-    // Only block dates that have reached check-in capacity (2/2)
-    for (const [dateStr, count] of checkInCounts) {
-      if (count >= 2) {
-        unavailableDates.push(new Date(dateStr));
-      }
-    }
-
-    // Don't block any other dates - let the conflict checker handle it
-    // This allows checkout dates to be selectable for new checkins
-
-    return unavailableDates;
-  };
 
   // Enhanced multi-day conflict detection with detailed messaging
   const checkBookingConflict = (
@@ -574,7 +448,7 @@ function BookingPage() {
 
     // 2. Detailed multi-day overlap detection
     const conflictingBookings: Array<{
-      booking: Booking;
+      booking: BookingBasic;
       conflictDates: string[];
     }> = [];
 
@@ -705,7 +579,7 @@ function BookingPage() {
       warning(
         "Booking Limit Reached",
         limitMessage ||
-          "You have reached the maximum number of pending bookings (3). Please wait for confirmation or cancel existing pending bookings.",
+          `You have reached the maximum number of pending bookings (${MAX_PENDING_BOOKINGS}). Please wait for confirmation or cancel existing pending bookings.`,
       );
       setIsSubmitting(false);
       return;
@@ -737,10 +611,10 @@ function BookingPage() {
     }
 
     // Validate guest count doesn't exceed capacity
-    if (parseInt(formData.guests) > 25) {
+    if (parseInt(formData.guests) > MAX_GUESTS) {
       showError(
         "Guest Limit Exceeded",
-        "Maximum capacity is 25 guests. Please contact us directly for larger events.",
+        `Maximum capacity is ${MAX_GUESTS} guests. Please contact us directly for larger events.`,
       );
       setIsSubmitting(false);
       return;
@@ -969,739 +843,20 @@ function BookingPage() {
 
   return (
     <>
-      <style jsx global>{`
-        .react-datepicker {
-          background: linear-gradient(
-            135deg,
-            #1f2937 0%,
-            #111827 100%
-          ) !important;
-          border: 2px solid #374151 !important;
-          color: white !important;
-          font-family: inherit !important;
-          border-radius: 1rem !important;
-          box-shadow:
-            0 20px 25px -5px rgba(0, 0, 0, 0.3),
-            0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
-          min-height: 480px !important;
-          max-height: 480px !important;
-          height: 480px !important;
-          overflow: hidden !important;
-        }
-        .react-datepicker__month-container {
-          min-height: 420px !important;
-          max-height: 420px !important;
-          height: 420px !important;
-        }
-        .react-datepicker__month {
-          min-height: 360px !important;
-          max-height: 360px !important;
-          height: 360px !important;
-          display: flex !important;
-          flex-direction: column !important;
-        }
-        .react-datepicker__week {
-          display: flex !important;
-          justify-content: space-around !important;
-          align-items: center !important;
-          height: 4rem !important;
-          min-height: 4rem !important;
-        }
-
-        /* Mobile responsiveness for date cells */
-        @media (max-width: 768px) {
-          .react-datepicker__week {
-            height: 3.5rem !important;
-            min-height: 3.5rem !important;
-          }
-
-          .react-datepicker__day {
-            width: 2.8rem !important;
-            height: 2.8rem !important;
-            line-height: 2.8rem !important;
-            margin: 0.15rem !important;
-            font-size: 0.9rem !important;
-          }
-
-          .react-datepicker__day-name {
-            width: 2.8rem !important;
-            height: 2.2rem !important;
-            line-height: 2.2rem !important;
-            font-size: 0.8rem !important;
-          }
-        }
-
-        /* Extra mobile optimization for very small screens */
-        @media (max-width: 480px) {
-          .react-datepicker__day {
-            width: 2.5rem !important;
-            height: 2.5rem !important;
-            line-height: 2.5rem !important;
-            margin: 0.1rem !important;
-            font-size: 0.85rem !important;
-          }
-
-          .react-datepicker__day-name {
-            width: 2.5rem !important;
-            height: 2rem !important;
-            line-height: 2rem !important;
-            font-size: 0.75rem !important;
-          }
-        }
-        .react-datepicker__header {
-          background: linear-gradient(
-            135deg,
-            #2563eb 0%,
-            #1e3a8a 100%
-          ) !important;
-          border-bottom: none !important;
-          border-radius: 1rem 1rem 0 0 !important;
-          padding: 1.25rem 0 !important;
-        }
-        .react-datepicker__current-month {
-          color: white !important;
-          font-weight: 700 !important;
-          font-size: 1.3rem !important;
-          margin-bottom: 1rem !important;
-        }
-        .react-datepicker__day-name {
-          color: rgba(255, 255, 255, 0.9) !important;
-          font-weight: 600 !important;
-          font-size: 1rem !important;
-          width: 3rem !important;
-          height: 3rem !important;
-          line-height: 3rem !important;
-          margin: 0.25rem !important;
-          display: inline-block !important;
-          text-align: center !important;
-        }
-        .react-datepicker__day {
-          color: white !important;
-          border-radius: 0.5rem !important;
-          margin: 0.25rem !important;
-          border: none !important;
-          width: 3rem !important;
-          height: 3rem !important;
-          line-height: 3rem !important;
-          font-size: 1rem !important;
-          transition: all 0.2s ease !important;
-          display: inline-block !important;
-          text-align: center !important;
-          background: linear-gradient(
-            135deg,
-            #059669 0%,
-            #047857 100%
-          ) !important;
-          position: relative !important;
-        }
-        .react-datepicker__day:hover {
-          background: linear-gradient(
-            135deg,
-            #10b981 0%,
-            #059669 100%
-          ) !important;
-          transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
-        }
-        .react-datepicker__day::after {
-          content: "AVAILABLE" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 8px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-        }
-
-        /* 📱 MOBILE: Keep AVAILABLE readable */
-        @media (max-width: 768px) {
-          .react-datepicker__day::after {
-            content: "AVAILABLE" !important;
-            font-size: 8px !important;
-            padding: 1px 2px !important;
-            bottom: 2px !important;
-          }
-        }
-        .react-datepicker__day--selected,
-        .react-datepicker__day--range-start,
-        .react-datepicker__day--range-end {
-          background: linear-gradient(
-            135deg,
-            #f97316 0%,
-            #ea580c 100%
-          ) !important;
-          color: white !important;
-          font-weight: 700 !important;
-          box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.5) !important;
-        }
-        .react-datepicker__day--in-range {
-          background: rgba(249, 115, 22, 0.3) !important;
-          color: white !important;
-        }
-        .react-datepicker__day--excluded {
-          color: #6b7280 !important;
-          text-decoration: none !important;
-          background: #374151 !important;
-          opacity: 0.6 !important;
-        }
-        .react-datepicker__day--excluded:hover {
-          background: #374151 !important;
-          cursor: not-allowed !important;
-          transform: none !important;
-        }
-        .react-datepicker__day--excluded::after {
-          content: "N/A" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 10px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: #9ca3af !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
-        }
-
-        /* Override today styling to look normal */
-        .react-datepicker__day--today {
-          background: linear-gradient(
-            135deg,
-            #059669 0%,
-            #047857 100%
-          ) !important;
-          color: white !important;
-          font-weight: normal !important;
-          border: none !important;
-        }
-        .react-datepicker__day--today:hover {
-          background: linear-gradient(
-            135deg,
-            #10b981 0%,
-            #059669 100%
-          ) !important;
-          transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
-        }
-        .react-datepicker__day--disabled {
-          color: #6b7280 !important;
-          background: #374151 !important;
-          opacity: 0.5 !important;
-        }
-        .react-datepicker__day--disabled:hover {
-          background: #374151 !important;
-          cursor: not-allowed !important;
-          transform: none !important;
-        }
-        .react-datepicker__day--disabled::after {
-          content: "N/A" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 10px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: #9ca3af !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-          max-width: 90% !important;
-          overflow: hidden !important;
-        }
-
-        /* Selected dates override all other states */
-        .react-datepicker__day--selected {
-          background: linear-gradient(
-            135deg,
-            #f97316 0%,
-            #ea580c 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-          border: 2px solid #ea580c !important;
-        }
-        .react-datepicker__day--selected:hover {
-          background: linear-gradient(
-            135deg,
-            #fb923c 0%,
-            #f97316 100%
-          ) !important;
-          transform: scale(1.05) !important;
-        }
-        .react-datepicker__day--selected::after {
-          content: "PICK" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 8px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-        }
-
-        /* 📱 MOBILE: Shorter labels for better readability */
-        @media (max-width: 768px) {
-          .react-datepicker__day--selected::after {
-            content: "PICK" !important;
-            font-size: 8px !important;
-            padding: 1px 2px !important;
-            bottom: 2px !important;
-          }
-        }
-
-        .react-datepicker__day--same-day {
-          background: linear-gradient(
-            135deg,
-            #7c3aed 0%,
-            #5b21b6 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-        }
-        .react-datepicker__day--same-day:hover {
-          background: linear-gradient(
-            135deg,
-            #8b5cf6 0%,
-            #7c3aed 100%
-          ) !important;
-          transform: scale(1.05) !important;
-        }
-        .react-datepicker__day--same-day::after {
-          content: "FULL" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 8px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-        }
-
-        /* 📱 MOBILE: Shorter labels for better readability */
-        @media (max-width: 768px) {
-          .react-datepicker__day--same-day::after {
-            content: "FULL" !important;
-            font-size: 8px !important;
-            padding: 1px 2px !important;
-            bottom: 2px !important;
-          }
-        }
-
-        /* Custom capacity indicator classes */
-        .react-datepicker__day--checkin {
-          background: linear-gradient(
-            135deg,
-            #2563eb 0%,
-            #1d4ed8 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-        }
-        .react-datepicker__day--checkin:hover {
-          background: linear-gradient(
-            135deg,
-            #3b82f6 0%,
-            #2563eb 100%
-          ) !important;
-          transform: scale(1.05) !important;
-        }
-        .react-datepicker__day--checkin::after {
-          content: "CHECK-IN" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 8px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-        }
-
-        /* 📱 MOBILE: Shorter labels for better readability */
-        @media (max-width: 768px) {
-          .react-datepicker__day--checkin::after {
-            content: "CHECK-IN" !important;
-            font-size: 8px !important;
-            padding: 1px 2px !important;
-            bottom: 2px !important;
-          }
-        }
-
-        .react-datepicker__day--checkout {
-          background: linear-gradient(
-            135deg,
-            #fb7185 0%,
-            #f43f5e 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-        }
-        .react-datepicker__day--checkout:hover {
-          background: linear-gradient(
-            135deg,
-            #fda4af 0%,
-            #fb7185 100%
-          ) !important;
-          transform: scale(1.05) !important;
-        }
-        .react-datepicker__day--checkout::after {
-          content: "CHECK-OUT" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 8px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-        }
-
-        /* 📱 MOBILE: Shorter labels for better readability */
-        @media (max-width: 768px) {
-          .react-datepicker__day--checkout::after {
-            content: "CHECK-OUT" !important;
-            font-size: 8px !important;
-            padding: 1px 2px !important;
-            bottom: 2px !important;
-          }
-        }
-
-        .react-datepicker__day--occupied {
-          background: linear-gradient(
-            135deg,
-            #eab308 0%,
-            #ca8a04 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-        }
-        .react-datepicker__day--occupied:hover {
-          background: linear-gradient(
-            135deg,
-            #f59e0b 0%,
-            #eab308 100%
-          ) !important;
-          transform: scale(1.05) !important;
-        }
-        .react-datepicker__day--occupied::after {
-          content: "OCCUPIED" !important;
-          position: absolute !important;
-          bottom: 1px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          font-size: 8px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-          font-weight: bold !important;
-          white-space: nowrap !important;
-        }
-
-        /* 📱 MOBILE: Shorter labels for better readability */
-        @media (max-width: 768px) {
-          .react-datepicker__day--occupied::after {
-            content: "OCCUPIED" !important;
-            font-size: 8px !important;
-            padding: 1px 2px !important;
-            bottom: 2px !important;
-          }
-        }
-
-        .react-datepicker__day--partial {
-          background: linear-gradient(
-            135deg,
-            #eab308 0%,
-            #ca8a04 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-        }
-        .react-datepicker__day--partial:hover {
-          background: linear-gradient(
-            135deg,
-            #f59e0b 0%,
-            #eab308 100%
-          ) !important;
-          transform: scale(1.05) !important;
-        }
-        .react-datepicker__day--partial::after {
-          content: "BOOKED" !important;
-          position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 7px !important;
-          background: rgba(0, 0, 0, 0.7) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-        }
-
-        .react-datepicker__day--booked {
-          background: linear-gradient(
-            135deg,
-            #2563eb 0%,
-            #1e3a8a 100%
-          ) !important;
-          color: white !important;
-          font-weight: 600 !important;
-          position: relative !important;
-        }
-        .react-datepicker__day--booked:hover {
-          background: linear-gradient(
-            135deg,
-            #3b82f6 0%,
-            #2563eb 100%
-          ) !important;
-          cursor: not-allowed !important;
-          transform: none !important;
-        }
-        .react-datepicker__day--booked::after {
-          content: "ERROR" !important;
-          position: absolute !important;
-          bottom: 2px !important;
-          right: 2px !important;
-          font-size: 7px !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          color: white !important;
-          padding: 1px 2px !important;
-          border-radius: 2px !important;
-          line-height: 1 !important;
-        }
-        .react-datepicker__navigation {
-          top: 1.2rem !important;
-        }
-        .react-datepicker__navigation--previous {
-          border-right-color: white !important;
-          left: 1rem !important;
-        }
-        .react-datepicker__navigation--next {
-          border-left-color: white !important;
-          right: 1rem !important;
-        }
-        .react-datepicker__input-container input {
-          background-color: #1f2937 !important;
-          border: 1px solid #374151 !important;
-          color: white !important;
-          width: 100% !important;
-          padding: 0.5rem 1rem !important;
-          border-radius: 0.375rem !important;
-          height: auto !important;
-          min-height: 42px !important;
-          font-size: 1rem !important;
-          line-height: 1.5 !important;
-        }
-        .react-datepicker__input-container input:focus {
-          outline: none !important;
-          border-color: #374151 !important;
-        }
-        .react-datepicker__input-container input::placeholder {
-          color: #9ca3af !important;
-        }
-
-        /* Fix browser autofill styling - consistent dark theme */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important;
-          -webkit-text-fill-color: white !important;
-          background-color: #1f2937 !important;
-          border: 1px solid #374151 !important;
-          transition: background-color 5000s ease-in-out 0s !important;
-        }
-
-        /* Force DatePicker input to be transparent */
-        .react-datepicker__input-container input {
-          background-color: transparent !important;
-          background: transparent !important;
-        }
-
-        /* Inline calendar specific styles */
-        .inline-calendar {
-          border: none !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          width: 100% !important;
-        }
-        .inline-calendar .react-datepicker__month-container {
-          background: transparent !important;
-          width: 100% !important;
-        }
-        .react-datepicker--inline {
-          background: transparent !important;
-          border: none !important;
-          width: 100% !important;
-        }
-        .react-datepicker--inline .react-datepicker__month {
-          margin: 0 !important;
-        }
-        .react-datepicker__week {
-          display: flex !important;
-          justify-content: space-around !important;
-        }
-        .react-datepicker__day-names {
-          display: flex !important;
-          justify-content: space-around !important;
-        }
-
-        /* Style for adjacent month dates - slightly dimmed but still selectable */
-        .react-datepicker__day--outside-month {
-          opacity: 0.4 !important;
-          color: #9ca3af !important;
-        }
-
-        /* Allow interaction with outside month dates */
-        .react-datepicker__day--outside-month:hover {
-          opacity: 0.6 !important;
-          transform: scale(1.05) !important;
-          box-shadow: 0 4px 6px -1px rgba(156, 163, 175, 0.3) !important;
-        }
-
-        /* Force consistent 6-row calendar layout */
-        .react-datepicker__month {
-          min-height: 390px !important;
-          max-height: 390px !important;
-          height: 390px !important;
-          display: flex !important;
-          flex-direction: column !important;
-          justify-content: space-between !important;
-        }
-
-        /* Ensure 6 weeks are always shown */
-        .react-datepicker__week {
-          display: flex !important;
-          justify-content: space-around !important;
-          align-items: center !important;
-          height: 60px !important;
-          min-height: 60px !important;
-          flex: 1 !important;
-        }
-
-        /* Force calendar container to maintain consistent height */
-        .react-datepicker {
-          min-height: 480px !important;
-          max-height: 480px !important;
-          height: 480px !important;
-        }
-
-        /* Ensure month container maintains height */
-        .react-datepicker__month-container {
-          min-height: 420px !important;
-          max-height: 420px !important;
-          height: 420px !important;
-          display: flex !important;
-          flex-direction: column !important;
-        }
-
-        /* Ensure day names row has consistent height */
-        .react-datepicker__day-names {
-          display: flex !important;
-          justify-content: space-around !important;
-          height: 40px !important;
-          min-height: 40px !important;
-          align-items: center !important;
-        }
-
-        /* Force consistent spacing between all calendar elements */
-        .react-datepicker__header {
-          padding: 1rem 0 !important;
-          height: 60px !important;
-          min-height: 60px !important;
-        }
-
-        /* 🚀 FINAL MOBILE OVERRIDES - Must come last to override desktop styles */
-        @media (max-width: 768px) {
-          .react-datepicker__day {
-            width: 2.8rem !important;
-            height: 2.8rem !important;
-            line-height: 2.8rem !important;
-            margin: 0.15rem !important;
-            font-size: 0.9rem !important;
-          }
-
-          .react-datepicker__day-name {
-            width: 2.8rem !important;
-            height: 2.2rem !important;
-            line-height: 2.2rem !important;
-            font-size: 0.8rem !important;
-          }
-
-          .react-datepicker__week {
-            height: 3.5rem !important;
-            min-height: 3.5rem !important;
-          }
-        }
-
-        /* Extra small mobile screens */
-        @media (max-width: 480px) {
-          .react-datepicker__day {
-            width: 2.5rem !important;
-            height: 2.5rem !important;
-            line-height: 2.5rem !important;
-            margin: 0.1rem !important;
-            font-size: 0.85rem !important;
-          }
-
-          .react-datepicker__day-name {
-            width: 2.5rem !important;
-            height: 2rem !important;
-            line-height: 2rem !important;
-            font-size: 0.75rem !important;
-          }
-        }
-      `}</style>
+      <DatePickerStyles />
 
       {/* Navigation Bar */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+      <div className="sticky top-0 bg-background/90 backdrop-blur-sm border-b border-border z-20">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-muted hover:bg-secondary rounded-lg transition-colors"
               >
-                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <FaHome className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 relative">
                     <Image
@@ -1711,9 +866,9 @@ function BookingPage() {
                       className="object-contain"
                     />
                   </div>
-                  <h1 className="text-lg sm:text-xl font-bold">Kampo Ibayo</h1>
+                  <h1 className="text-lg sm:text-xl font-bold text-foreground">Kampo Ibayo</h1>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                   Booking Portal
                 </p>
               </div>
@@ -1721,21 +876,21 @@ function BookingPage() {
             <div className="flex items-center gap-3">
               <Link
                 href="/profile"
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-muted hover:bg-secondary rounded-lg transition-colors"
               >
-                <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <FaUser className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-xs sm:text-sm text-gray-400 text-right">
+              <div className="text-xs sm:text-sm text-right">
                 {loading ? (
-                  <span className="inline-block bg-gray-600 text-gray-300 px-2 py-1 rounded-full text-xs font-medium">
+                  <span className="inline-block bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                     ● Loading...
                   </span>
                 ) : user ? (
-                  <span className="inline-block bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-success/20 text-success px-2 py-1 rounded-full text-xs font-semibold border border-success/30">
                     ● Signed In
                   </span>
                 ) : (
-                  <span className="inline-block bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-warning/20 text-warning px-2 py-1 rounded-full text-xs font-semibold border border-warning/30">
                     ● Guest
                   </span>
                 )}
@@ -1745,994 +900,125 @@ function BookingPage() {
         </div>
       </div>
 
-      <main
-        className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center p-4 sm:p-6 pt-24"
-        style={{
-          backgroundImage: "url('/pool.jpg')",
-        }}
-      >
-        <div className="bg-gray-900/95 backdrop-blur-sm text-white rounded-2xl shadow-2xl w-full max-w-6xl p-4 sm:p-6 lg:p-8 border border-gray-700/50">
-          {/* Modern header with gradient accent */}
-          <div className="text-center mb-6">
-            <div className="inline-block mb-3">
-              <div className="w-16 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-full mx-auto"></div>
-            </div>
-            <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent mb-2">
+      <main className="min-h-screen bg-background">
+        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+
+          {/* Page Header */}
+          <div className="mb-4">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
               Book Your Escape
             </h1>
-            <p className="text-gray-400 text-base">
-              Experience luxury and comfort at Kampo Ibayo
+            <p className="text-muted-foreground mt-1">
+              Experience luxury and comfort at Kampo Ibayo Resort
             </p>
           </div>
 
           {/* Booking Limit Warning */}
           {!canCreateBooking && (
-            <div className="mb-6 p-4 bg-red-900/30 border border-red-600 rounded-lg">
+            <div className="mb-5 p-4 bg-destructive/10 border border-destructive/40 rounded-xl">
               <div className="flex items-center gap-2">
-                <FaExclamationTriangle className="w-4 h-4 text-red-500" />
-                <p className="text-red-400 text-sm font-medium">
-                  {limitMessage}
-                </p>
+                <FaExclamationTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+                <p className="text-destructive text-sm font-medium">{limitMessage}</p>
               </div>
             </div>
           )}
 
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-          >
-            {/* Left Column - Personal Info & Preferences */}
-            <div className="space-y-6 flex flex-col">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                  <FaUser className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-white">Guest Details</h2>
-              </div>
+          {/* Two-panel landscape form */}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
 
-              {/* Full Name - Read Only */}
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-300">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  readOnly
-                  className="w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 bg-gray-700/50 border-gray-600 text-gray-300 cursor-not-allowed placeholder-gray-500"
-                  placeholder="Loading from your profile..."
+            {/* Left panel — Guest details + payment choice */}
+            <div className="space-y-4">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-5">
+                <BookingFormFields
+                  formData={formData}
+                  setFormData={setFormData}
+                  handleChange={handleChange}
                 />
               </div>
-
-              {/* Email + Mobile - Read Only */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-300">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    readOnly
-                    className="w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 bg-gray-700/50 border-gray-600 text-gray-300 cursor-not-allowed placeholder-gray-500"
-                    placeholder="Loading from your profile..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-300">
-                    Mobile Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    readOnly
-                    className="w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 bg-gray-700/50 border-gray-600 text-gray-300 cursor-not-allowed placeholder-gray-500"
-                    placeholder="Loading from your profile..."
-                  />
-                </div>
-              </div>
-
-              {/* Guests */}
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-300">
-                  Number of Guests <span className="text-red-500">*</span>
-                </label>
-                <div className="mb-3 p-3 bg-blue-900/20 border border-blue-600/40 rounded-lg">
-                  <p className="text-xs text-blue-200 flex items-start gap-2">
-                    <FaInfoCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-                    <span>
-                      <span className="font-semibold">Standard:</span> Up to 15
-                      guests included · ₱300/night per extra guest · Max 25
-                      guests
-                    </span>
-                  </p>
-                </div>
-
-                {/* Quick Select Cards */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, guests: "8" })}
-                    className={`p-3 rounded-lg border transition-all duration-200 text-center ${
-                      formData.guests === "8"
-                        ? "bg-white text-gray-900 border-white"
-                        : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
-                    }`}
-                  >
-                    <div className="text-2xl font-bold">8</div>
-                    <div className="text-xs opacity-70">Small</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, guests: "15" })}
-                    className={`p-3 rounded-lg border transition-all duration-200 text-center relative ${
-                      formData.guests === "15"
-                        ? "bg-white text-gray-900 border-white"
-                        : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
-                    }`}
-                  >
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-[10px] font-bold rounded text-white">
-                      BEST
-                    </div>
-                    <div className="text-2xl font-bold">15</div>
-                    <div className="text-xs opacity-70">Standard</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, guests: "25" })}
-                    className={`p-3 rounded-lg border transition-all duration-200 text-center ${
-                      formData.guests === "25"
-                        ? "bg-white text-gray-900 border-white"
-                        : "bg-transparent text-white border-gray-600 hover:bg-white/10 hover:border-white/50"
-                    }`}
-                  >
-                    <div className="text-2xl font-bold">25</div>
-                    <div className="text-xs opacity-70">Large</div>
-                  </button>
-                </div>
-
-                {/* Custom Counter */}
-                <div className="flex items-center justify-between rounded-lg border border-gray-600 px-4 py-3 bg-gray-800/50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const current = parseInt(formData.guests) || 1;
-                      if (current > 1) {
-                        setFormData({
-                          ...formData,
-                          guests: String(current - 1),
-                        });
-                      }
-                    }}
-                    className="w-10 h-10 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-bold text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    disabled={
-                      !formData.guests || parseInt(formData.guests) <= 1
-                    }
-                  >
-                    −
-                  </button>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-white">
-                      {formData.guests || 0}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {formData.guests
-                        ? `guest${parseInt(formData.guests) > 1 ? "s" : ""}`
-                        : "Select"}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const current = parseInt(formData.guests) || 0;
-                      if (current < 25) {
-                        setFormData({
-                          ...formData,
-                          guests: String(current + 1),
-                        });
-                      }
-                    }}
-                    className="w-10 h-10 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-bold text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    disabled={
-                      !!(formData.guests && parseInt(formData.guests) >= 25)
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Pet Section - Enhanced UI */}
-              <div
-                className={`rounded-xl border-2 transition-all duration-300 overflow-hidden ${
-                  formData.pet
-                    ? "bg-gradient-to-br from-green-900/30 to-emerald-900/20 border-green-500/60"
-                    : "bg-gray-800/30 border-gray-600 hover:border-gray-500"
-                }`}
-              >
-                {/* Main Toggle */}
-                <label className="flex items-center gap-4 p-4 cursor-pointer">
-                  <div
-                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                      formData.pet
-                        ? "bg-green-500 border-green-500"
-                        : "border-gray-500 hover:border-gray-400"
-                    }`}
-                  >
-                    {formData.pet && (
-                      <FaCheck className="w-3.5 h-3.5 text-white" />
-                    )}
-                  </div>
-                  <input
-                    type="checkbox"
-                    name="pet"
-                    checked={formData.pet}
-                    onChange={handleChange}
-                    className="sr-only"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <FaPaw
-                        className={`w-5 h-5 ${
-                          formData.pet ? "text-green-400" : "text-gray-400"
-                        }`}
-                      />
-                      <span
-                        className={`font-semibold ${
-                          formData.pet ? "text-green-200" : "text-white"
-                        }`}
-                      >
-                        I&apos;m bringing a pet
-                      </span>
-                    </div>
-                  </div>
-                  {/* Pet icons preview */}
-                  <div className="flex items-center gap-1.5">
-                    <FaDog
-                      className={`w-4 h-4 ${
-                        formData.pet ? "text-green-400" : "text-gray-500"
-                      }`}
-                    />
-                    <FaCat
-                      className={`w-4 h-4 ${
-                        formData.pet ? "text-green-400" : "text-gray-500"
-                      }`}
-                    />
-                    <Rabbit
-                      className={`w-4 h-4 ${
-                        formData.pet ? "text-green-400" : "text-gray-500"
-                      }`}
-                    />
-                    <GiRat
-                      className={`w-4 h-4 ${
-                        formData.pet ? "text-green-400" : "text-gray-500"
-                      }`}
-                    />
-                    <Bird
-                      className={`w-4 h-4 ${
-                        formData.pet ? "text-green-400" : "text-gray-500"
-                      }`}
-                    />
-                  </div>
-                </label>
-
-                {/* Expanded Info - Only shows when pet is checked */}
-                {formData.pet && (
-                  <div className="px-4 pb-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                    {/* Divider */}
-                    <div className="h-px bg-green-600/30"></div>
-
-                    {/* Allowed pets */}
-                    <div className="flex items-start gap-3 p-3 bg-green-900/20 rounded-lg">
-                      <FaInfoCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm">
-                        <p className="text-green-200 font-medium mb-2">
-                          Domestic Pets Welcome
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            Dogs
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            Cats
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            Rabbits
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            Hamsters
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 bg-green-800/40 rounded-full text-xs text-green-300">
-                            Birds
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Pet guidelines */}
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center gap-2 text-green-300">
-                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
-                        <span>No additional fees</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-green-300">
-                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
-                        <span>Pet-friendly spaces</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-green-300">
-                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
-                        <span>Please keep on leash</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-green-300">
-                        <FaCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
-                        <span>Clean up after pet</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Collapsed hint - Only shows when pet is NOT checked */}
-                {!formData.pet && (
-                  <div className="px-4 pb-3 -mt-1">
-                    <p className="text-xs text-gray-500">
-                      Dogs, cats, and small domestic pets welcome at no extra
-                      cost
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Special Request */}
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-300">
-                  Special Requests
-                </label>
-                <textarea
-                  name="request"
-                  value={formData.request}
-                  onChange={handleChange}
-                  rows={9.9}
-                  placeholder="Tell us about any special accommodations or requests..."
-                  className={`w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2 resize-none ${
-                    formData.request
-                      ? "bg-green-900/20 border-green-600 focus:border-green-500 focus:ring-green-500/30 text-white"
-                      : "bg-gray-800/50 border-gray-600 focus:border-blue-500 focus:ring-blue-500/30 text-white"
-                  } placeholder-gray-500`}
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-5">
+                <PaymentTypeSelector
+                  paymentType={paymentType}
+                  setPaymentType={setPaymentType}
+                  estimatedPrice={estimatedPrice}
                 />
-              </div>
-
-              {/* Payment Type Selection */}
-              <div>
-                <label className="block text-sm font-semibold mb-3 text-gray-300">
-                  Payment Option <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Half Payment Option */}
-                  <button
-                    key="half-payment"
-                    type="button"
-                    onClick={() => {
-                      setPaymentType("half");
-                    }}
-                    className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
-                      paymentType === "half"
-                        ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-500/30 scale-[1.02]"
-                        : "bg-gray-800/50 border-gray-600 hover:border-blue-500 hover:bg-gray-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                          paymentType === "half"
-                            ? "border-white bg-white"
-                            : "border-gray-400"
-                        }`}
-                      >
-                        {paymentType === "half" && (
-                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                        )}
-                      </div>
-                      <span className="font-bold text-white">
-                        50% Down Payment
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-300 ml-7">
-                      Pay half now, settle the balance on check-in
-                    </div>
-                    {estimatedPrice !== null && estimatedPrice > 0 && (
-                      <div className="text-lg font-bold text-blue-400 ml-7 mt-1">
-                        ₱{Math.round(estimatedPrice * 0.5).toLocaleString()}
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Full Payment Option */}
-                  <button
-                    key="full-payment"
-                    type="button"
-                    onClick={() => {
-                      setPaymentType("full");
-                    }}
-                    className={`p-4 rounded-xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
-                      paymentType === "full"
-                        ? "bg-green-600 border-green-500 shadow-lg shadow-green-500/30 scale-[1.02]"
-                        : "bg-gray-800/50 border-gray-600 hover:border-green-500 hover:bg-gray-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                          paymentType === "full"
-                            ? "border-white bg-white"
-                            : "border-gray-400"
-                        }`}
-                      >
-                        {paymentType === "full" && (
-                          <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                        )}
-                      </div>
-                      <span className="font-bold text-white">Full Payment</span>
-                    </div>
-                    <div className="text-sm text-gray-300 ml-7">
-                      Pay the complete amount upfront
-                    </div>
-                    {estimatedPrice !== null && estimatedPrice > 0 && (
-                      <div className="text-lg font-bold text-green-400 ml-7 mt-1">
-                        ₱{estimatedPrice.toLocaleString()}
-                      </div>
-                    )}
-                  </button>
-                </div>
-
-                {/* Payment Benefits */}
-                <div className="mt-3 p-3 bg-gray-800/30 border border-gray-600 rounded-lg">
-                  <p className="text-xs text-gray-400 flex items-start gap-2">
-                    <FaLightbulb className="w-3.5 h-3.5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                    <span>
-                      <span className="font-semibold">Tip:</span>{" "}
-                      {paymentType === "half"
-                        ? "Down payment secures your booking. Pay remaining balance on arrival."
-                        : "Full payment provides peace of mind - no additional payments needed!"}
-                    </span>
-                  </p>
-                </div>
               </div>
             </div>
 
-            {/* Right Column - Dates & Calendar */}
-            <div className="space-y-6 flex flex-col">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                  <FaCalendarAlt className="w-5 h-5 text-white" />
+            {/* Right panel — Calendar + Price + Submit (sticky) */}
+            <div className="space-y-3 md:sticky md:top-20">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <FaCalendarAlt className="w-4 h-4 text-primary flex-shrink-0" />
+                  <h2 className="text-lg font-bold text-foreground">Select Your Dates</h2>
                 </div>
-                <h2 className="text-2xl font-bold text-white">
-                  Select Your Dates
-                </h2>
+                <BookingCalendar
+                  formData={formData}
+                  setFormData={setFormData}
+                  minDate={minDate}
+                  maxBookingDate={maxBookingDate}
+                  existingBookings={existingBookings}
+                  pricingBreakdown={pricingBreakdown}
+                />
               </div>
 
-              {/* Inline Calendar - Larger */}
+              <PriceBreakdown
+                formData={formData}
+                estimatedPrice={estimatedPrice}
+                pricingBreakdown={pricingBreakdown}
+                paymentType={paymentType}
+              />
+
+              {/* Submit — inside sticky right panel, always visible */}
               <div>
-                <div className="bg-gray-800/50 rounded-xl border-2 border-gray-700 p-4 flex justify-center min-h-[520px]">
-                  <DatePicker
-                    selected={formData.checkIn}
-                    onChange={(dates) => {
-                      if (Array.isArray(dates)) {
-                        const [start, end] = dates;
-
-                        // ✅ Allow cross-month date selection
-                        // Simply update the dates without month restrictions
-                        setFormData({
-                          ...formData,
-                          checkIn: start,
-                          checkOut: end,
-                        });
-                      }
-                    }}
-                    startDate={formData.checkIn}
-                    endDate={formData.checkOut}
-                    selectsRange
-                    minDate={minDate}
-                    maxDate={maxBookingDate}
-                    excludeDates={getUnavailableDates()}
-                    // Force 6 weeks to be shown for consistent layout
-                    fixedHeight
-                    showWeekNumbers={false}
-                    dayClassName={(date) => {
-                      // Check if this date is selected (check-in or check-out)
-                      const isSelected =
-                        (formData.checkIn &&
-                          date.toDateString() ===
-                            formData.checkIn.toDateString()) ||
-                        (formData.checkOut &&
-                          date.toDateString() ===
-                            formData.checkOut.toDateString());
-
-                      // Selected dates override booking status
-                      if (isSelected) {
-                        return "react-datepicker__day--selected";
-                      }
-
-                      // Show booking status for all visible dates (including adjacent month dates)
-                      const capacity = getDateCapacity(date);
-                      if (capacity === "same-day")
-                        return "react-datepicker__day--same-day";
-                      if (capacity === "checkin")
-                        return "react-datepicker__day--checkin";
-                      if (capacity === "checkout")
-                        return "react-datepicker__day--checkout";
-                      if (capacity === "occupied")
-                        return "react-datepicker__day--occupied";
-                      return "";
-                    }}
-                    inline
-                    monthsShown={1}
-                    calendarClassName="inline-calendar"
-                  />
-                </div>
-
-                {/* Multi-day booking instructions - Only show when no dates selected */}
-                {!formData.checkIn && (
-                  <div className="mt-3 p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      <FaInfoCircle className="w-4 h-4 text-blue-400" />
-                      <span className="text-blue-300 text-sm font-medium">
-                        Select Your Dates
-                      </span>
+                <button
+                  type="submit"
+                  disabled={
+                    !canCreateBooking ||
+                    isSubmitting ||
+                    (estimatedPrice !== null && estimatedPrice === 0)
+                  }
+                  className={`w-full font-bold py-3.5 rounded-2xl transition-all duration-200 text-base shadow-lg ${
+                    canCreateBooking && !isSubmitting && estimatedPrice !== 0
+                      ? "bg-primary text-white hover:bg-primary/90 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <FaSpinner className="animate-spin w-4 h-4" />
+                      <span>Processing Reservation...</span>
                     </div>
-                    <p className="text-blue-200 text-xs leading-relaxed">
-                      Click a date to set <strong>check-in</strong>, then click
-                      another for <strong>check-out</strong>.
-                    </p>
-                  </div>
-                )}
-
-                {/* Show summary when dates are selected */}
-                {formData.checkIn && formData.checkOut && (
-                  <>
-                    {pricingBreakdown && pricingBreakdown.totalNights > 0 ? (
-                      <div className="mt-3 p-3 bg-green-900/20 border border-green-600/30 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <FaCheck className="w-4 h-4 text-green-400" />
-                            <span className="text-green-300 text-sm font-medium">
-                              {pricingBreakdown.totalNights}{" "}
-                              {pricingBreakdown.totalNights === 1
-                                ? "Night"
-                                : "Nights"}{" "}
-                              Selected
-                            </span>
-                          </div>
-                          <span className="text-green-200 text-sm font-bold">
-                            ₱{pricingBreakdown.totalAmount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ) : formData.checkIn.toDateString() ===
-                      formData.checkOut.toDateString() ? (
-                      <div className="mt-3 p-3 bg-orange-900/20 border border-orange-600/30 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <FaExclamationTriangle className="w-4 h-4 text-orange-400" />
-                          <span className="text-orange-300 text-sm font-medium">
-                            Select a different check-out date
-                          </span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
-                )}
-
-                {/* Calendar Legend */}
-                <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-3 h-3 rounded"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                      }}
-                    ></span>
-                    <span className="text-gray-400">Available</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-3 h-3 rounded"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                      }}
-                    ></span>
-                    <span className="text-gray-400">Your Pick</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-3 h-3 rounded"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                      }}
-                    ></span>
-                    <span className="text-gray-400">Check-in</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-3 h-3 rounded"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)",
-                      }}
-                    ></span>
-                    <span className="text-gray-400">Check-out</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-3 h-3 rounded"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)",
-                      }}
-                    ></span>
-                    <span className="text-gray-400">Occupied</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="w-3 h-3 rounded"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)",
-                      }}
-                    ></span>
-                    <span className="text-gray-400">Full</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded bg-gray-600"></span>
-                    <span className="text-gray-400">Unavailable</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Pricing Info - Always Show with Dates */}
-              <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border-2 border-gray-700 p-5 shadow-xl">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">₱</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-white">
-                      Booking Summary
-                    </h3>
-                  </div>
-                  <div
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  ) : canCreateBooking ? (
+                    estimatedPrice && estimatedPrice > 0 ? (
                       paymentType === "half"
-                        ? "bg-blue-900/40 text-blue-300 border border-blue-600/30"
-                        : "bg-green-900/40 text-green-300 border border-green-600/30"
-                    }`}
-                  >
-                    {paymentType === "half" ? "50% Payment" : "Full Payment"}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {/* Check-in and Check-out Dates */}
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div className="p-2.5 bg-gray-800/50 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-1">Check-in</p>
-                      <p className="text-white font-semibold text-sm">
-                        {formData.checkIn
-                          ? formData.checkIn.toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "Select date"}
-                      </p>
-                      <p className="text-xs text-green-400 mt-0.5">● 3:00 PM</p>
-                    </div>
-                    <div className="p-2.5 bg-gray-800/50 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-1">Check-out</p>
-                      <p className="text-white font-semibold text-sm">
-                        {formData.checkOut
-                          ? formData.checkOut.toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "Select date"}
-                      </p>
-                      <p className="text-xs text-orange-400 mt-0.5">
-                        ● 1:00 PM
-                      </p>
-                    </div>
-                  </div>
-
-                  {estimatedPrice &&
-                  formData.checkIn &&
-                  formData.checkOut &&
-                  pricingBreakdown ? (
-                    <>
-                      {/* Multi-day pricing breakdown */}
-                      <div className="p-3 bg-gray-800/50 rounded-lg mb-2">
-                        {/* Compact pricing breakdown */}
-                        <div className="space-y-1.5 text-xs">
-                          {pricingBreakdown.breakdown.weekdayNights > 0 && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-400">
-                                {pricingBreakdown.breakdown.weekdayNights}{" "}
-                                {pricingBreakdown.breakdown.weekdayNights === 1
-                                  ? "weekday"
-                                  : "weekdays"}{" "}
-                                × ₱9,000
-                              </span>
-                              <span className="text-gray-200">
-                                ₱
-                                {pricingBreakdown.breakdown.weekdayTotal.toLocaleString()}
-                              </span>
-                            </div>
-                          )}
-                          {pricingBreakdown.breakdown.weekendNights > 0 && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-400">
-                                {pricingBreakdown.breakdown.weekendNights}{" "}
-                                {pricingBreakdown.breakdown.weekendNights === 1
-                                  ? "weekend"
-                                  : "weekends"}{" "}
-                                × ₱12,000
-                              </span>
-                              <span className="text-gray-200">
-                                ₱
-                                {pricingBreakdown.breakdown.weekendTotal.toLocaleString()}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div
-                        className={`flex justify-between items-center p-2.5 rounded-lg border ${
-                          formData.guests && parseInt(formData.guests) > 15
-                            ? "bg-yellow-900/20 border-yellow-600/30"
-                            : "bg-gray-800/50 border-gray-700"
-                        }`}
-                      >
-                        <span
-                          className={`text-sm font-medium ${
-                            formData.guests && parseInt(formData.guests) > 15
-                              ? "text-yellow-200"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Extra Guests{" "}
-                          {formData.guests && parseInt(formData.guests) > 15
-                            ? `(+${parseInt(formData.guests) - 15})`
-                            : "(+0)"}
-                          :
-                        </span>
-                        <span
-                          className={`font-semibold ${
-                            formData.guests && parseInt(formData.guests) > 15
-                              ? "text-yellow-400"
-                              : "text-white"
-                          }`}
-                        >
-                          {formData.guests &&
-                          parseInt(formData.guests) > 15 &&
-                          pricingBreakdown
-                            ? `+₱${pricingBreakdown.excessGuestFee.toLocaleString()}`
-                            : "₱0"}
-                        </span>
-                      </div>
-
-                      {/* Show per-night breakdown for extra guests if multi-day */}
-                      {formData.guests &&
-                        parseInt(formData.guests) > 15 &&
-                        pricingBreakdown &&
-                        pricingBreakdown.totalNights > 1 && (
-                          <div className="text-xs text-yellow-300 bg-yellow-900/10 p-2 rounded flex items-start gap-1.5">
-                            <FaInfoCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                            <span>
-                              Extra guest fee: ₱300 ×{" "}
-                              {parseInt(formData.guests) - 15} guests ×{" "}
-                              {pricingBreakdown.totalNights} nights
-                            </span>
-                          </div>
-                        )}
-                      <div className="pt-3 mt-2 border-t-2 border-gray-700">
-                        {/* Simplified Payment Summary */}
-                        <div
-                          key={paymentType}
-                          className="transition-all duration-300"
-                        >
-                          {paymentType === "half" ? (
-                            <div className="space-y-3">
-                              {/* Main amount */}
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-300 text-sm">
-                                  Pay Now (50%)
-                                </span>
-                                <span className="text-2xl font-bold text-blue-400">
-                                  ₱
-                                  {Math.round(
-                                    estimatedPrice * 0.5,
-                                  ).toLocaleString()}
-                                </span>
-                              </div>
-                              {/* Balance info */}
-                              <div className="flex justify-between items-center text-sm text-gray-400">
-                                <span>Balance on arrival</span>
-                                <span>
-                                  ₱
-                                  {(
-                                    estimatedPrice -
-                                    Math.round(estimatedPrice * 0.5)
-                                  ).toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              {/* Main amount */}
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-300 text-sm">
-                                  Total Payment
-                                </span>
-                                <span className="text-2xl font-bold text-green-400">
-                                  ₱{estimatedPrice.toLocaleString()}
-                                </span>
-                              </div>
-                              {/* Benefit */}
-                              <div className="flex items-center gap-1.5 text-xs text-green-300">
-                                <FaCheck className="w-3 h-3" />
-                                <span>No payment needed on arrival</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* Show different content based on date selection state */}
-                      {formData.checkIn &&
-                      formData.checkOut &&
-                      formData.checkIn.toDateString() ===
-                        formData.checkOut.toDateString() ? (
-                        // Same day selected - invalid booking
-                        <div className="p-3 bg-orange-900/20 rounded-lg border border-orange-600/30">
-                          <div className="flex items-start gap-2">
-                            <FaExclamationTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-orange-300 text-sm font-medium">
-                                Same-day booking
-                              </p>
-                              <p className="text-orange-200/70 text-xs mt-1">
-                                Please select a different check-out date for at
-                                least 1 night stay.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : !formData.checkIn ? (
-                        // No dates selected - show rates preview
-                        <>
-                          <div className="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                            <p className="text-xs text-gray-400 mb-2 font-medium">
-                              Nightly Rates
-                            </p>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-300">
-                                  Mon - Thu
-                                </span>
-                                <span className="text-sm font-semibold text-white">
-                                  ₱9,000
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-300">
-                                  Fri - Sat
-                                </span>
-                                <span className="text-sm font-semibold text-white">
-                                  ₱12,000
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center text-xs pt-1 border-t border-gray-700/50">
-                                <span className="text-gray-500">
-                                  Extra guest (16+)
-                                </span>
-                                <span className="text-gray-400">
-                                  +₱300/night
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-center pt-1">
-                            <p className="text-gray-500 text-xs">
-                              Select dates above to calculate total
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        // Check-in selected, waiting for check-out
-                        <div className="p-3 bg-blue-900/20 rounded-lg border border-blue-600/30">
-                          <div className="flex items-start gap-2">
-                            <FaInfoCircle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-blue-300 text-sm font-medium">
-                                Select check-out date
-                              </p>
-                              <p className="text-blue-200/70 text-xs mt-1">
-                                Click another date on the calendar to complete
-                                your booking.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Full Width Submit Button */}
-            <div className="lg:col-span-2 mt-6">
-              <button
-                type="submit"
-                disabled={
-                  !canCreateBooking ||
-                  isSubmitting ||
-                  (estimatedPrice !== null && estimatedPrice === 0)
-                }
-                className={`w-full font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-lg relative overflow-hidden ${
-                  canCreateBooking && !isSubmitting && estimatedPrice !== 0
-                    ? "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
-                    : "bg-gray-600 text-gray-300 cursor-not-allowed"
-                }`}
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <FaSpinner className="animate-spin w-5 h-5" />
-                    <span>Processing Reservation...</span>
-                  </div>
-                ) : canCreateBooking ? (
-                  estimatedPrice && estimatedPrice > 0 ? (
-                    paymentType === "half" ? (
-                      `Pay Down Payment - ₱${Math.round(
-                        estimatedPrice * 0.5,
-                      ).toLocaleString()}`
+                        ? `Pay Down Payment — ₱${Math.round(estimatedPrice * 0.5).toLocaleString()}`
+                        : `Pay Full Amount — ₱${estimatedPrice.toLocaleString()}`
+                    ) : estimatedPrice === 0 ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <FaExclamationTriangle className="w-4 h-4" /> Select Valid Dates
+                      </span>
                     ) : (
-                      `Pay Full Amount - ₱${estimatedPrice.toLocaleString()}`
+                      "Complete Booking Details"
                     )
-                  ) : estimatedPrice === 0 ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <FaExclamationTriangle className="w-4 h-4" /> Select Valid
-                      Dates
-                    </span>
                   ) : (
-                    "Complete Booking Details"
-                  )
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <FaBan className="w-4 h-4" /> Booking Limit Reached
-                  </span>
-                )}
-              </button>
-              {estimatedPrice !== null &&
-                estimatedPrice > 0 &&
-                canCreateBooking &&
-                !isSubmitting && (
-                  <p className="text-center text-sm text-gray-400 mt-3">
+                    <span className="flex items-center justify-center gap-2">
+                      <FaBan className="w-4 h-4" /> Booking Limit Reached
+                    </span>
+                  )}
+                </button>
+                {estimatedPrice !== null && estimatedPrice > 0 && canCreateBooking && !isSubmitting && (
+                  <p className="text-center text-xs text-muted-foreground mt-2">
                     By reserving, you agree to our booking terms and conditions
                   </p>
                 )}
-              {isSubmitting && (
-                <p className="text-center text-sm text-blue-400 mt-3 animate-pulse flex items-center justify-center gap-2">
-                  <FaSpinner className="w-3 h-3 animate-spin" /> Securing your
-                  reservation... Please don&apos;t close this page
-                </p>
-              )}
+                {isSubmitting && (
+                  <p className="text-center text-xs text-primary mt-2 animate-pulse flex items-center justify-center gap-2">
+                    <FaSpinner className="w-3 h-3 animate-spin" /> Securing your reservation... Please don&apos;t close this page
+                  </p>
+                )}
+              </div>
             </div>
+
           </form>
         </div>
       </main>

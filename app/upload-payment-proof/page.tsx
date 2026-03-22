@@ -12,113 +12,23 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowLeft,
-  Smartphone,
-  Wallet,
-  Copy,
-  User,
-  Phone,
   Check,
-  ChevronDown,
-  Calendar,
-  Users,
-  Bot,
-  Sparkles,
   Camera,
   Zap,
   Lightbulb,
-  Info,
   AlertTriangle,
 } from "lucide-react";
 import { useToastHelpers } from "../components/Toast";
-
-interface Booking {
-  id: number;
-  guest_name: string;
-  guest_email: string;
-  check_in_date: string;
-  check_out_date: string;
-  number_of_guests: number;
-  total_amount: number;
-  status: string | null;
-  payment_status: string | null;
-  payment_type: string | null; // 'half' or 'full'
-  payment_amount: number | null; // Amount to be paid based on payment_type
-}
-
-interface PaymentHistoryEntry {
-  id: number;
-  attemptNumber: number;
-  amount: number;
-  paymentMethod: string;
-  referenceNumber: string | null;
-  status: string;
-  uploadedAt: string;
-  verifiedAt: string | null;
-  adminNotes: string | null;
-  isLatest: boolean;
-}
-
-interface PaymentSummary {
-  totalPaid: number;
-  pendingAmount: number;
-  totalSubmissions: number;
-}
-
-interface EnhancedOCRResult {
-  referenceNumber: string | null;
-  amount: number | null;
-  confidence: number;
-  method: string;
-  warnings: string[];
-  suggestions: Array<{ type: string; expectedAmount?: number }>;
-  processingTime?: number;
-}
-
-interface OCRProgress {
-  stage:
-    | "idle"
-    | "preprocessing"
-    | "analyzing"
-    | "extracting"
-    | "validating"
-    | "complete"
-    | "error";
-  progress: number;
-  detected: {
-    amount?: number;
-    reference?: string;
-    method?: string;
-  };
-  message?: string;
-}
-
-interface ValidationResult {
-  isValid: boolean;
-  warnings: string[];
-  suggestions: Array<{ type: string; expectedAmount?: number }>;
-}
-
-interface ExtractedPaymentData {
-  service: string;
-  amount: number | null;
-  reference: string | null;
-  confidence: number;
-}
-
-interface PaymentValidation {
-  level: "none" | "warning" | "error";
-  message: string;
-  allowSubmission: boolean;
-  suggestions?: Array<{
-    type: "expectedAmount" | "partialPayment" | "fullPayment";
-    amount: number;
-    label: string;
-  }>;
-}
+import type { BookingWithPayment, PaymentHistoryEntry, PaymentSummary, PaymentValidation, EnhancedOCRResult, OCRProgress, ExtractedPaymentData, ValidationResult } from "../lib/types";
+import OCRResultDisplay from "../components/payment/OCRResultDisplay";
+import PaymentHistoryList from "../components/payment/PaymentHistoryList";
+import PaymentMethodSelector from "../components/payment/PaymentMethodSelector";
+import UploadInstructions from "../components/payment/UploadInstructions";
+import BookingDetailsSummary from "../components/payment/BookingDetailsSummary";
 
 function UploadPaymentProofContent() {
   const toast = useToastHelpers();
-  const [booking, setBooking] = useState<Booking | null>(null);
+  const [booking, setBooking] = useState<BookingWithPayment | null>(null);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -305,7 +215,7 @@ function UploadPaymentProofContent() {
   const validateOCRResult = useCallback(
     (
       result: ExtractedPaymentData | null,
-      booking: Booking
+      booking: BookingWithPayment
     ): ValidationResult => {
       const warnings: string[] = [];
       const suggestions: Array<{ type: string; expectedAmount?: number }> = [];
@@ -1183,10 +1093,10 @@ function UploadPaymentProofContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Please log in to continue</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Please log in to continue</p>
         </div>
       </div>
     );
@@ -1194,10 +1104,10 @@ function UploadPaymentProofContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Loading booking details...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading booking details...</p>
         </div>
       </div>
     );
@@ -1205,14 +1115,14 @@ function UploadPaymentProofContent() {
 
   if (error && !booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-        <div className="bg-gray-800 p-8 rounded-lg shadow-md text-center max-w-md border border-gray-700">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="bg-card p-8 rounded-lg shadow-md text-center max-w-md border border-border">
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+          <h2 className="text-xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <AlertTriangle className="w-5 h-5" /> Access Error
           </h2>
-          <p className="text-gray-300 mb-4">{error}</p>
-          <p className="text-gray-400 text-sm mb-6">
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-muted-foreground text-sm mb-6">
             Please select a booking from your bookings page to upload payment
             proof.
           </p>
@@ -1221,7 +1131,7 @@ function UploadPaymentProofContent() {
               // Use replace instead of push to prevent back button issues
               router.replace("/bookings");
             }}
-            className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-600 transition-colors flex items-center gap-2 mx-auto"
+            className="bg-gradient-to-r from-primary to-blue-500 text-foreground px-6 py-2 rounded-lg hover:from-primary/90 hover:to-primary transition-colors flex items-center gap-2 mx-auto"
           >
             <CreditCard className="w-4 h-4" /> Go to My Bookings
           </button>
@@ -1231,9 +1141,9 @@ function UploadPaymentProofContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Sticky Header - Match bookings page style */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-10">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1241,23 +1151,23 @@ function UploadPaymentProofContent() {
                 onClick={() => {
                   router.replace("/bookings");
                 }}
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors"
                 title="Back to Bookings"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </button>
-              <div className="text-white">
+              <div className="text-foreground">
                 <h1 className="text-lg sm:text-xl font-bold">
                   Upload Payment Proof
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Booking #{booking?.id}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-              <span className="hidden sm:inline text-sm text-gray-300">
+              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              <span className="hidden sm:inline text-sm text-muted-foreground">
                 Secure Upload
               </span>
             </div>
@@ -1268,7 +1178,7 @@ function UploadPaymentProofContent() {
       {/* Copy Toast Notification */}
       {copyToast && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
-          <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+          <div className="bg-green-600 text-foreground px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
             <Check className="w-4 h-4" />
             <span className="text-sm font-medium">{copyToast}</span>
           </div>
@@ -1281,10 +1191,10 @@ function UploadPaymentProofContent() {
         <div className="flex items-center justify-center gap-2 py-2">
           {/* Step 1: Pay */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-600/30">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-foreground font-bold text-xs shadow-lg shadow-primary/30">
               <Check className="w-4 h-4" />
             </div>
-            <span className="text-xs text-blue-400 font-medium hidden sm:inline">
+            <span className="text-xs text-primary font-medium hidden sm:inline">
               Pay
             </span>
           </div>
@@ -1292,7 +1202,7 @@ function UploadPaymentProofContent() {
           {/* Line 1-2 */}
           <div
             className={`w-8 sm:w-16 h-1 rounded-full transition-all duration-500 ${
-              proofImage ? "bg-blue-500" : "bg-gray-600"
+              proofImage ? "bg-primary" : "bg-muted"
             }`}
           ></div>
 
@@ -1301,15 +1211,15 @@ function UploadPaymentProofContent() {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
                 proofImage
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                  : "bg-gray-700 text-gray-400"
+                  ? "bg-primary text-foreground shadow-lg shadow-primary/30"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {proofImage ? <Check className="w-4 h-4" /> : "2"}
             </div>
             <span
               className={`text-xs font-medium hidden sm:inline ${
-                proofImage ? "text-blue-400" : "text-gray-500"
+                proofImage ? "text-primary" : "text-muted-foreground"
               }`}
             >
               Upload
@@ -1319,7 +1229,7 @@ function UploadPaymentProofContent() {
           {/* Line 2-3 */}
           <div
             className={`w-8 sm:w-16 h-1 rounded-full transition-all duration-500 ${
-              uploadSuccess ? "bg-green-500" : "bg-gray-600"
+              uploadSuccess ? "bg-green-500" : "bg-muted"
             }`}
           ></div>
 
@@ -1328,15 +1238,15 @@ function UploadPaymentProofContent() {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
                 uploadSuccess
-                  ? "bg-green-600 text-white shadow-lg shadow-green-600/30"
-                  : "bg-gray-700 text-gray-400"
+                  ? "bg-green-600 text-foreground shadow-lg shadow-green-600/30"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {uploadSuccess ? <Check className="w-4 h-4" /> : "3"}
             </div>
             <span
               className={`text-xs font-medium hidden sm:inline ${
-                uploadSuccess ? "text-green-400" : "text-gray-500"
+                uploadSuccess ? "text-green-400" : "text-muted-foreground"
               }`}
             >
               Done
@@ -1346,9 +1256,9 @@ function UploadPaymentProofContent() {
 
         {/* STEP 1: Amount to Pay - Hero Section */}
         {booking && (
-          <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/30 border border-blue-500/50 rounded-xl p-4 sm:p-6">
+          <div className="bg-primary/8 border border-primary/30 rounded-xl p-4 sm:p-6">
             <div className="text-center">
-              <p className="text-gray-300 text-sm mb-1">
+              <p className="text-muted-foreground text-sm mb-1">
                 {remainingAmount <= 0
                   ? "Fully Paid"
                   : paymentSummary.totalPaid > 0
@@ -1357,7 +1267,7 @@ function UploadPaymentProofContent() {
                   ? "50% Down Payment Required"
                   : "Total Amount to Pay"}
               </p>
-              <div className="text-4xl sm:text-5xl font-bold text-white mb-2">
+              <div className="text-4xl sm:text-5xl font-bold text-foreground mb-2">
                 ₱{remainingAmount.toLocaleString()}
               </div>
               {paymentSummary.totalPaid > 0 && (
@@ -1367,7 +1277,7 @@ function UploadPaymentProofContent() {
                 </p>
               )}
               {paymentSummary.totalPaid > 0 && remainingAmount > 0 && (
-                <p className="text-gray-400 text-xs">
+                <p className="text-muted-foreground text-xs">
                   Total booking: ₱{(booking.payment_amount || booking.total_amount).toLocaleString()}
                 </p>
               )}
@@ -1381,437 +1291,39 @@ function UploadPaymentProofContent() {
         )}
 
         {/* STEP 1: Payment Methods - Now at Top */}
-        <div className="bg-gradient-to-br from-green-900/40 to-green-800/30 border border-green-500/50 rounded-xl p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-green-200 flex items-center gap-2 text-lg">
-              <div className="bg-green-600/30 p-2 rounded-full">
-                <Smartphone className="w-5 h-5 text-green-400" />
-              </div>
-              Send Payment Here
-            </h2>
-            <span className="bg-green-600/30 text-green-300 text-xs px-2 py-1 rounded-full">
-              Step 1
-            </span>
-          </div>
-
-          {/* Single Payment Card - Same number for both */}
-          <div className="bg-gray-800/70 rounded-xl p-4 sm:p-5 border border-gray-600/50">
-            {/* Logos */}
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="flex items-center gap-2 bg-blue-600/20 px-3 py-1.5 rounded-full">
-                <Wallet className="w-4 h-4 text-blue-400" />
-                <span className="text-blue-300 text-sm font-medium">GCash</span>
-              </div>
-              <span className="text-gray-500">or</span>
-              <div className="flex items-center gap-2 bg-green-600/20 px-3 py-1.5 rounded-full">
-                <CreditCard className="w-4 h-4 text-green-400" />
-                <span className="text-green-300 text-sm font-medium">Maya</span>
-              </div>
-            </div>
-
-            {/* Phone Number - Large & Centered */}
-            <div className="text-center py-3">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-400 text-xs uppercase tracking-wider">
-                  Mobile Number
-                </span>
-              </div>
-              <p className="font-mono text-3xl sm:text-4xl font-bold text-white tracking-widest mb-3">
-                0966 281 5123
-              </p>
-              <button
-                type="button"
-                onClick={() => handleCopyNumber("09662815123", "Payment")}
-                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg transition-colors font-medium"
-              >
-                <Copy className="w-4 h-4" />
-                Copy Number
-              </button>
-            </div>
-
-            {/* Account Name */}
-            <div className="mt-4 pt-4 border-t border-gray-600/50 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <User className="w-4 h-4 text-yellow-400" />
-                <span className="text-yellow-300 text-xs">Account Name</span>
-              </div>
-              <p className="text-yellow-100 font-bold text-xl tracking-wide">
-                KAMPO IBAYO
-              </p>
-            </div>
-          </div>
-
-          <p className="text-green-400/70 text-xs mt-3 text-center flex items-center justify-center gap-1">
-            <Info className="w-3 h-3" /> Same number works for both GCash and
-            Maya
-          </p>
-        </div>
+        <UploadInstructions handleCopyNumber={handleCopyNumber} />
 
         {/* Payment Balance & History */}
-        {(paymentSummary.totalSubmissions > 0 ||
-          paymentSummary.totalPaid > 0) && (
-          <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <div className="bg-blue-600/30 p-1.5 rounded-full">
-                  <CreditCard className="w-4 h-4 text-blue-500" />
-                </div>
-                Payment History
-                {paymentSummary.totalSubmissions > 0 && (
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                    {paymentSummary.totalSubmissions} submission
-                    {paymentSummary.totalSubmissions !== 1 ? "s" : ""}
-                  </span>
-                )}
-              </h2>
-              {paymentSummary.totalSubmissions > 0 && (
-                <button
-                  onClick={() => setShowPaymentHistory(!showPaymentHistory)}
-                  className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
-                >
-                  {showPaymentHistory ? "Hide Details" : "Show Details"}
-                </button>
-              )}
-            </div>
-
-            {/* Payment Balance Summary */}
-            {booking && paymentSummary.totalPaid > 0 && (
-              <div className="mb-4 p-4 bg-green-900/20 border border-green-600/50 rounded-lg">
-                <h3 className="text-green-300 font-semibold mb-3 flex items-center gap-2">
-                  <span>💰</span> Payment Balance
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <p className="text-gray-400">Total Booking</p>
-                    <p className="text-white font-semibold text-lg">
-                      ₱{booking.total_amount.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-400">Verified Payments</p>
-                    <p className="text-green-400 font-semibold text-lg">
-                      ₱{paymentSummary.totalPaid.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-400">Remaining Balance</p>
-                    <p className="font-semibold text-lg text-orange-400">
-                      ₱{Math.max(0, remainingAmount).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                {paymentSummary.pendingAmount > 0 && (
-                  <div className="mt-3 p-2 bg-yellow-900/20 border border-yellow-600/50 rounded">
-                    <p className="text-yellow-300 text-sm flex items-center gap-1">
-                      <span className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin inline-block"></span>
-                      <span className="font-medium">Pending Review:</span> ₱
-                      {paymentSummary.pendingAmount.toLocaleString()}
-                    </p>
-                  </div>
-                )}
-
-                {remainingAmount <= 0 && (
-                  <div className="mt-3 p-3 bg-green-900/20 border border-green-600/50 rounded-lg">
-                    <p className="text-green-300 text-sm font-medium flex items-center gap-1 mb-3">
-                      <CheckCircle className="w-4 h-4" /> Booking fully paid! No
-                      additional payment required.
-                    </p>
-                    <a
-                      href="/bookings"
-                      className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                    >
-                      ← Back to My Bookings
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Payment History Details */}
-            {showPaymentHistory && paymentHistory.length > 0 && (
-              <div className="space-y-3">
-                {paymentHistory.map((entry) => {
-                  const isRejected = entry.status === "rejected";
-                  const isPending = entry.status === "pending";
-                  const isVerified = entry.status === "verified";
-
-                  // Extract rejection reason from admin notes
-                  let rejectionReason = null;
-                  if (isRejected && entry.adminNotes) {
-                    const reasonMatch = entry.adminNotes.match(
-                      /REJECTION REASON: (.+?)(?:\n|$)/
-                    );
-                    rejectionReason = reasonMatch
-                      ? reasonMatch[1]
-                      : entry.adminNotes;
-                  }
-
-                  return (
-                    <div
-                      key={entry.id}
-                      className="p-4 rounded-lg border bg-gray-900/20 border-gray-600/50"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-400">
-                            Attempt #{entry.attemptNumber} •{" "}
-                            {new Date(entry.uploadedAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              }
-                            )}
-                          </span>
-                          {entry.isLatest && (
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                              Latest
-                            </span>
-                          )}
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
-                            isRejected
-                              ? "bg-red-600/30 text-red-300"
-                              : isPending
-                              ? "bg-yellow-600/30 text-yellow-300"
-                              : "bg-green-600/30 text-green-300"
-                          }`}
-                        >
-                          {isRejected ? (
-                            <>
-                              <AlertCircle className="w-3 h-3" /> Rejected
-                            </>
-                          ) : isPending ? (
-                            <>
-                              <span className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin inline-block"></span>{" "}
-                              Under Review
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-3 h-3" /> Verified
-                            </>
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <span className="text-gray-400">Method:</span>
-                          <span className="text-white ml-1">
-                            {entry.paymentMethod}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Amount:</span>
-                          <span className="text-white ml-1">
-                            ₱{entry.amount.toLocaleString()}
-                          </span>
-                        </div>
-                        {entry.referenceNumber && (
-                          <div>
-                            <span className="text-gray-400">Ref:</span>
-                            <span className="text-white ml-1">
-                              {entry.referenceNumber}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {isRejected && rejectionReason && (
-                        <div className="mt-3 p-3 bg-red-800/30 border border-red-600/30 rounded">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <h4 className="text-red-300 font-medium text-sm">
-                                Reason for rejection:
-                              </h4>
-                              <p className="text-red-200 text-sm mt-1">
-                                {rejectionReason}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {isPending && (
-                        <div className="mt-3 p-3 bg-yellow-800/30 border border-yellow-600/30 rounded">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-yellow-200 text-sm">
-                              Currently under admin review. You will be notified
-                              via email once reviewed.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {isVerified && entry.verifiedAt && (
-                        <div className="mt-3 p-2 bg-green-800/30 border border-green-600/30 rounded">
-                          <p className="text-green-200 text-sm flex items-center gap-1">
-                            <CheckCircle className="w-4 h-4" /> Verified on{" "}
-                            {new Date(entry.verifiedAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        <PaymentHistoryList
+          booking={booking}
+          paymentHistory={paymentHistory}
+          paymentSummary={paymentSummary}
+          showPaymentHistory={showPaymentHistory}
+          setShowPaymentHistory={setShowPaymentHistory}
+          remainingAmount={remainingAmount}
+        />
 
         {/* Collapsible Booking Details - Compact Summary */}
         {booking && (
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowBookingDetails(!showBookingDetails)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-700/30 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-gray-600/30 p-1.5 rounded-full">
-                  <CreditCard className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium text-sm">
-                    Booking #{booking.id}
-                  </p>
-                  <p className="text-gray-400 text-xs flex items-center gap-2">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(booking.check_in_date).toLocaleDateString(
-                        "en-US",
-                        { month: "short", day: "numeric" }
-                      )}{" "}
-                      -{" "}
-                      {new Date(booking.check_out_date).toLocaleDateString(
-                        "en-US",
-                        { month: "short", day: "numeric" }
-                      )}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {booking.number_of_guests}{" "}
-                      {booking.number_of_guests === 1 ? "guest" : "guests"}
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                className={`w-5 h-5 text-gray-400 transition-transform ${
-                  showBookingDetails ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {showBookingDetails && (
-              <div className="px-4 pb-4 border-t border-gray-700/50">
-                <div className="pt-3 space-y-3">
-                  {/* Guest & Stay Details */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                    <div>
-                      <span className="text-gray-500 text-xs block">Guest</span>
-                      <span className="text-white font-medium">
-                        {booking.guest_name}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 text-xs block">
-                        Duration
-                      </span>
-                      <span className="text-white">
-                        {(() => {
-                          const checkIn = new Date(booking.check_in_date);
-                          const checkOut = new Date(booking.check_out_date);
-                          const nights = Math.ceil(
-                            (checkOut.getTime() - checkIn.getTime()) /
-                              (1000 * 60 * 60 * 24)
-                          );
-                          return `${nights} ${
-                            nights === 1 ? "night" : "nights"
-                          }`;
-                        })()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 text-xs block">
-                        Status
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          booking.status === "confirmed"
-                            ? "bg-green-900/30 text-green-400"
-                            : booking.status === "pending"
-                            ? "bg-yellow-900/30 text-yellow-400"
-                            : "bg-gray-700 text-gray-300"
-                        }`}
-                      >
-                        {booking.status
-                          ? booking.status.charAt(0).toUpperCase() +
-                            booking.status.slice(1)
-                          : "Pending"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 text-xs block">
-                        Total Amount
-                      </span>
-                      <span className="text-white font-medium">
-                        ₱{booking.total_amount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Payment Status */}
-                  {paymentSummary.totalPaid > 0 && (
-                    <div className="flex items-center gap-4 text-sm pt-2 border-t border-gray-700/30">
-                      <span className="text-green-400 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> ₱
-                        {paymentSummary.totalPaid.toLocaleString()} paid
-                      </span>
-                      {paymentSummary.pendingAmount > 0 && (
-                        <span className="text-yellow-400">
-                          • ₱{paymentSummary.pendingAmount.toLocaleString()}{" "}
-                          pending
-                        </span>
-                      )}
-                      {remainingAmount > 0 && (
-                        <span className="text-orange-400">
-                          • ₱{remainingAmount.toLocaleString()} remaining
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <BookingDetailsSummary
+            booking={booking}
+            showBookingDetails={showBookingDetails}
+            setShowBookingDetails={setShowBookingDetails}
+            paymentSummary={paymentSummary}
+            remainingAmount={remainingAmount}
+          />
         )}
 
         {/* Upload Form - Full Width */}
-        <div className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
+        <div className="bg-card rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-green-600/30">
                 <Upload className="w-4 h-4 text-green-500" />
               </div>
               {isResubmission ? "Resubmit Payment Proof" : "Upload Screenshot"}
             </h2>
-            <span className="bg-blue-600/30 text-blue-300 text-xs px-2 py-1 rounded-full">
+            <span className="bg-primary/30 text-primary/80 text-xs px-2 py-1 rounded-full">
               Step 2
             </span>
           </div>
@@ -1832,11 +1344,11 @@ function UploadPaymentProofContent() {
             {
               /* File Upload - Dark Theme */
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Payment Screenshot/Receipt{" "}
                   <span className="text-red-400">*</span>
                 </label>
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors bg-gray-700/50">
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors bg-muted/50">
                   <input
                     type="file"
                     accept="image/*"
@@ -1852,7 +1364,7 @@ function UploadPaymentProofContent() {
                           alt="Payment proof preview"
                           width={200}
                           height={150}
-                          className="mx-auto rounded-lg shadow-md max-h-40 object-contain border border-gray-600"
+                          className="mx-auto rounded-lg shadow-md max-h-40 object-contain border border-border"
                         />
                         <p className="text-sm text-green-400 font-medium flex items-center justify-center gap-1">
                           <CheckCircle className="w-4 h-4" /> Image uploaded -
@@ -1861,17 +1373,17 @@ function UploadPaymentProofContent() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <FileImage className="w-12 h-12 text-gray-400 mx-auto" />
+                        <FileImage className="w-12 h-12 text-muted-foreground mx-auto" />
                         <div>
-                          <Upload className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                          <p className="text-gray-300 flex items-center justify-center gap-1">
+                          <Upload className="w-6 h-6 text-primary mx-auto mb-2" />
+                          <p className="text-muted-foreground flex items-center justify-center gap-1">
                             <Camera className="w-4 h-4" /> Click to upload
                             payment screenshot
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             JPG, PNG, GIF up to 5MB
                           </p>
-                          <p className="text-xs text-blue-400 mt-1 flex items-center justify-center gap-1">
+                          <p className="text-xs text-primary mt-1 flex items-center justify-center gap-1">
                             <Zap className="w-3 h-3" /> Smart auto-fill enabled
                           </p>
                         </div>
@@ -1880,7 +1392,7 @@ function UploadPaymentProofContent() {
                   </label>
                 </div>
                 {!previewUrl && (
-                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                     <Lightbulb className="w-3 h-3" /> Clear screenshots help AI
                     detect payment details
                   </p>
@@ -1898,441 +1410,34 @@ function UploadPaymentProofContent() {
             )}
 
             {/* Enhanced OCR Progress and Results */}
-            {ocrProgress.stage !== "idle" && proofImage && (
-              <div className="mt-3 p-3 bg-gray-800/40 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-400 flex items-center gap-2">
-                    <Bot className="w-4 h-4 text-blue-400" />
-                    {ocrProgress.stage === "preprocessing"
-                      ? "Enhancing image..."
-                      : ocrProgress.stage === "analyzing"
-                      ? "Analyzing content..."
-                      : ocrProgress.stage === "extracting"
-                      ? "Extracting details..."
-                      : ocrProgress.stage === "validating"
-                      ? "Validating data..."
-                      : ocrProgress.stage === "complete"
-                      ? "Analysis complete!"
-                      : ocrProgress.stage === "error"
-                      ? "Processing failed"
-                      : "Processing..."}
-                  </span>
-                  {ocrProgress.progress > 0 && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-blue-900/30 text-blue-400">
-                      {ocrProgress.progress}%
-                    </span>
-                  )}
-                </div>
+            <OCRResultDisplay
+              ocrProgress={ocrProgress}
+              ocrResult={ocrResult}
+              proofImage={proofImage}
+              showOCREditor={showOCREditor}
+              setShowOCREditor={setShowOCREditor}
+              setOcrResult={setOcrResult}
+              setReferenceNumber={setReferenceNumber}
+              setAmount={setAmount}
+              setIsManualAmountSet={setIsManualAmountSet}
+            />
 
-                {/* Progress bar */}
-                {ocrProgress.progress > 0 && (
-                  <div className="w-full bg-gray-700 rounded-full h-1.5 mb-2">
-                    <div
-                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: `${ocrProgress.progress}%` }}
-                    />
-                  </div>
-                )}
-
-                {/* Live detection feedback */}
-                {Object.keys(ocrProgress.detected).length > 0 && (
-                  <div className="flex gap-4 text-sm mb-2">
-                    {ocrProgress.detected.amount && (
-                      <span className="text-green-400 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Amount: ₱{ocrProgress.detected.amount.toLocaleString()}
-                      </span>
-                    )}
-                    {ocrProgress.detected.reference && (
-                      <span className="text-green-400 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Reference: {ocrProgress.detected.reference}
-                      </span>
-                    )}
-                    {ocrProgress.detected.method && (
-                      <span className="text-blue-400 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Method: {ocrProgress.detected.method}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Status message */}
-                {ocrProgress.message && (
-                  <p className="text-xs text-gray-400">{ocrProgress.message}</p>
-                )}
-
-                {/* Final OCR Results with Confidence and Actions */}
-                {ocrResult && ocrProgress.stage === "complete" && (
-                  <div className="mt-3 pt-3 border-t border-gray-600">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-yellow-400" /> Final
-                        Results
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-900/30 text-green-400">
-                          {ocrResult.confidence.toFixed(0)}% confidence
-                        </span>
-                      </span>
-                      <button
-                        onClick={() => setShowOCREditor(!showOCREditor)}
-                        className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded border border-blue-400/30"
-                      >
-                        {showOCREditor ? "Hide Editor" : "Edit Results"}
-                      </button>
-                    </div>
-
-                    {showOCREditor ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={ocrResult.referenceNumber || ""}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            setOcrResult((prev) =>
-                              prev
-                                ? { ...prev, referenceNumber: newValue }
-                                : null
-                            );
-                            setReferenceNumber(newValue);
-                          }}
-                          placeholder="Reference Number"
-                          className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm text-white"
-                        />
-                        <input
-                          type="number"
-                          value={ocrResult.amount || ""}
-                          onChange={(e) => {
-                            const newValue = parseFloat(e.target.value) || null;
-                            setOcrResult((prev) =>
-                              prev ? { ...prev, amount: newValue } : null
-                            );
-                            setAmount(e.target.value);
-                            setIsManualAmountSet(true);
-                          }}
-                          placeholder="Amount"
-                          className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm text-white"
-                        />
-                      </div>
-                    ) : (
-                      <div className="text-sm space-y-1">
-                        {ocrResult.amount && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400">Amount:</span>
-                            <span className="text-white font-mono">
-                              ₱{ocrResult.amount.toLocaleString()}
-                            </span>
-                          </div>
-                        )}
-                        {ocrResult.referenceNumber && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400">Reference:</span>
-                            <span className="text-white font-mono">
-                              {ocrResult.referenceNumber}
-                            </span>
-                          </div>
-                        )}
-                        {ocrResult.processingTime && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400">
-                              Processing time:
-                            </span>
-                            <span className="text-gray-300">
-                              {(ocrResult.processingTime / 1000).toFixed(1)}s
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Validation warnings */}
-                {ocrResult?.warnings && ocrResult.warnings.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {ocrResult.warnings.map((warning, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2 bg-yellow-900/20 border border-yellow-600/30 rounded text-xs text-yellow-300 flex items-start gap-2"
-                      >
-                        <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                        {warning}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Payment Method */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Payment Method <span className="text-red-400">*</span>
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="" className="bg-gray-700">
-                  Select Payment Method
-                </option>
-                <option value="gcash" className="bg-gray-700">
-                  GCash
-                </option>
-                <option value="maya" className="bg-gray-700">
-                  Maya/PayMaya
-                </option>
-              </select>
-            </div>
-
-            {/* Reference Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Reference/Transaction Number
-                {(paymentMethod === "gcash" || paymentMethod === "maya") && (
-                  <span className="text-red-400">*</span>
-                )}
-              </label>
-              <input
-                type="text"
-                value={referenceNumber}
-                onChange={(e) => setReferenceNumber(e.target.value)}
-                autoComplete="off"
-                placeholder={
-                  paymentMethod === "gcash"
-                    ? "Enter GCash reference number (e.g., 1234567890)"
-                    : paymentMethod === "maya"
-                    ? "Enter Maya reference number"
-                    : "Enter transaction reference (if available)"
-                }
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required={paymentMethod === "gcash" || paymentMethod === "maya"}
-              />
-            </div>
-
-            {/* Amount Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Amount Paid <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  // Only mark as manual if user is actually typing (not auto-population)
-                  if (
-                    e.target.value !== (ocrResult?.amount?.toString() || "")
-                  ) {
-                    setIsManualAmountSet(true);
-                  }
-                }}
-                autoComplete="off"
-                min="0"
-                step="0.01"
-                placeholder="Upload receipt to auto-detect amount"
-                className={`w-full px-3 py-2 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                  paymentValidation.level === "error"
-                    ? "border-red-500 focus:ring-red-500"
-                    : paymentValidation.level === "warning"
-                    ? "border-yellow-500 focus:ring-yellow-500"
-                    : "border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                }`}
-                required
-              />
-
-              {/* Payment Validation Messages */}
-              {paymentValidation.level !== "none" && (
-                <div
-                  className={`mt-4 rounded-xl overflow-hidden ${
-                    paymentValidation.level === "error"
-                      ? "bg-red-950/40 border-2 border-red-500/60"
-                      : "bg-gradient-to-b from-amber-950/40 to-amber-950/20 border border-amber-500/40"
-                  }`}
-                >
-                  {/* Error State */}
-                  {paymentValidation.level === "error" && (
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-full bg-red-500/20 flex-shrink-0">
-                          <AlertCircle className="w-5 h-5 text-red-400" />
-                        </div>
-                        <p className="text-sm text-red-200 font-medium leading-relaxed pt-1.5">
-                          {paymentValidation.message}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Warning State - Amount Mismatch */}
-                  {paymentValidation.level === "warning" && (
-                    <div className="p-4 space-y-4">
-                      {/* Header */}
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-amber-500/20">
-                          <AlertTriangle className="w-5 h-5 text-amber-400" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-amber-100">
-                            Amount Mismatch
-                          </h4>
-                          <p className="text-xs text-amber-300/70">
-                            Please verify your payment amount
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Amount comparison bar */}
-                      <div className="relative bg-gray-800/60 rounded-lg p-1">
-                        <div className="flex items-stretch">
-                          <div className="flex-1 bg-gray-700/50 rounded-l-md p-3 text-center border-r border-gray-600/50">
-                            <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">
-                              Required
-                            </p>
-                            <p className="text-xl font-bold text-white">
-                              ₱{remainingAmount.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="flex-1 bg-amber-900/40 rounded-r-md p-3 text-center">
-                            <p className="text-[10px] uppercase tracking-wider text-amber-400 mb-0.5">
-                              Entered
-                            </p>
-                            <p className="text-xl font-bold text-amber-300">
-                              ₱{parseFloat(amount || "0").toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        {/* Difference badge */}
-                        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-amber-600 rounded-full text-xs font-bold text-white shadow-lg">
-                          −₱
-                          {(
-                            remainingAmount - parseFloat(amount || "0")
-                          ).toLocaleString()}
-                        </div>
-                      </div>
-
-                      {/* Spacer for badge */}
-                      <div className="h-1"></div>
-
-                      {/* Previous payment context */}
-                      {paymentSummary.totalPaid > 0 && (
-                        <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3 flex items-center gap-2">
-                          <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
-                          <p className="text-sm text-green-300">
-                            ₱{paymentSummary.totalPaid.toLocaleString()} already verified — only ₱{remainingAmount.toLocaleString()} remaining
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Quick fix button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAmount(remainingAmount.toString());
-                          setIsManualAmountSet(true);
-                        }}
-                        className="w-full py-3 px-4 bg-green-600 hover:bg-green-500 rounded-lg text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-900/30"
-                      >
-                        <Check className="w-4 h-4" />
-                        Use Correct Amount: ₱{remainingAmount.toLocaleString()}
-                      </button>
-
-                      {/* Confirmation checkbox - more subtle */}
-                      <div className="pt-2 border-t border-gray-700/50">
-                        <label
-                          htmlFor="confirm-unusual-amount"
-                          className="flex items-center gap-3 cursor-pointer group py-2"
-                        >
-                          <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              confirmUnusualAmount
-                                ? "bg-amber-500 border-amber-500"
-                                : "border-gray-500 group-hover:border-amber-400"
-                            }`}
-                          >
-                            {confirmUnusualAmount && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <input
-                            type="checkbox"
-                            id="confirm-unusual-amount"
-                            checked={confirmUnusualAmount}
-                            onChange={(e) =>
-                              setConfirmUnusualAmount(e.target.checked)
-                            }
-                            className="sr-only"
-                          />
-                          <span
-                            className={`text-sm transition-colors ${
-                              confirmUnusualAmount
-                                ? "text-amber-200"
-                                : "text-gray-400 group-hover:text-gray-300"
-                            }`}
-                          >
-                            This amount matches my receipt exactly
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Simple Payment Notice - Only show when amount field is empty */}
-              {remainingAmount > 0 &&
-                paymentValidation.level === "none" &&
-                !amount && (
-                  <div className="mt-2 p-2 bg-blue-900/20 border border-blue-600/50 rounded">
-                    <p className="text-blue-200 text-xs">
-                      <strong>Required payment:</strong> ₱
-                      {remainingAmount.toLocaleString()}
-                      {booking?.payment_type === "half"
-                        ? " (50% down payment)"
-                        : " (remaining balance)"}
-                    </p>
-                  </div>
-                )}
-
-              {/* Payment Status - Clean single indicator */}
-              {remainingAmount > 0 &&
-                amount &&
-                parseFloat(amount) > 0 &&
-                paymentValidation.level === "none" &&
-                (() => {
-                  const enteredAmount = parseFloat(amount);
-                  const overpayment = enteredAmount - remainingAmount;
-
-                  if (enteredAmount === remainingAmount) {
-                    // Exact match
-                    return (
-                      <div className="mt-3 p-2.5 rounded-lg flex items-center justify-center gap-2 bg-green-900/30 border border-green-600/40">
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                        <span className="text-green-400 text-sm font-medium">
-                          Amount matches perfectly
-                        </span>
-                      </div>
-                    );
-                  } else if (enteredAmount > remainingAmount) {
-                    // Overpayment
-                    return (
-                      <div className="mt-3 p-2.5 rounded-lg flex items-center justify-center gap-2 bg-blue-900/20 border border-blue-600/40">
-                        <Info className="w-4 h-4 text-blue-400" />
-                        <span className="text-blue-300 text-sm">
-                          Overpayment of{" "}
-                          <span className="font-semibold text-blue-200">
-                            ₱{overpayment.toLocaleString()}
-                          </span>{" "}
-                          — that&apos;s okay!
-                        </span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-            </div>
+            <PaymentMethodSelector
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              referenceNumber={referenceNumber}
+              setReferenceNumber={setReferenceNumber}
+              amount={amount}
+              setAmount={setAmount}
+              ocrResult={ocrResult}
+              setIsManualAmountSet={setIsManualAmountSet}
+              paymentValidation={paymentValidation}
+              remainingAmount={remainingAmount}
+              confirmUnusualAmount={confirmUnusualAmount}
+              setConfirmUnusualAmount={setConfirmUnusualAmount}
+              paymentSummary={paymentSummary}
+              booking={booking}
+            />
 
             {/* OCR Unrecognized Image Warning */}
             {ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && (
@@ -2355,11 +1460,11 @@ function UploadPaymentProofContent() {
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                             confirmUnrecognizedImage
                               ? "bg-amber-500 border-amber-500"
-                              : "border-gray-500 group-hover:border-amber-400"
+                              : "border-border group-hover:border-amber-400"
                           }`}
                         >
                           {confirmUnrecognizedImage && (
-                            <Check className="w-3 h-3 text-white" />
+                            <Check className="w-3 h-3 text-foreground" />
                           )}
                         </div>
                         <input
@@ -2375,7 +1480,7 @@ function UploadPaymentProofContent() {
                           className={`text-sm transition-colors ${
                             confirmUnrecognizedImage
                               ? "text-amber-200"
-                              : "text-gray-400 group-hover:text-gray-300"
+                              : "text-muted-foreground group-hover:text-muted-foreground"
                           }`}
                         >
                           I confirm this is a valid payment receipt
@@ -2403,8 +1508,8 @@ function UploadPaymentProofContent() {
                 !paymentValidation.allowSubmission ||
                 (paymentValidation.level === "warning" && !confirmUnusualAmount) ||
                 !!(ocrResult && ocrProgress.stage === "complete" && !ocrResult.amount && !ocrResult.referenceNumber && ocrResult.method === "unknown" && !confirmUnrecognizedImage)
-                  ? "bg-gray-600 text-gray-400 cursor-not-allowed scale-100"
-                  : "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 hover:scale-105 active:scale-95"
+                  ? "bg-muted text-muted-foreground cursor-not-allowed scale-100"
+                  : "bg-gradient-to-r from-primary to-blue-500 text-foreground hover:from-primary/90 hover:to-primary hover:scale-105 active:scale-95"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isUploading ? (
@@ -2427,7 +1532,7 @@ function UploadPaymentProofContent() {
 
             {/* Dynamic helper text */}
             {!proofImage ? (
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 Please upload an image before submitting
               </p>
             ) : !paymentValidation.allowSubmission ? (
@@ -2440,7 +1545,7 @@ function UploadPaymentProofContent() {
                 Please confirm the amount is correct before submitting
               </p>
             ) : (
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 Ready to submit your payment proof
               </p>
             )}
@@ -2448,13 +1553,13 @@ function UploadPaymentProofContent() {
         </div>
 
         {/* Compact Footer Info */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500 py-2">
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground py-2">
           <span className="flex items-center gap-1.5">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
             Verified within 24hrs
           </span>
           <span className="flex items-center gap-1.5">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
             Email confirmation
           </span>
           <span className="flex items-center gap-1.5">
@@ -2472,10 +1577,10 @@ export default function UploadPaymentProof() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <div className="text-white text-xl font-semibold">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="text-foreground text-xl font-semibold">
               Loading payment page...
             </div>
           </div>

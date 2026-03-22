@@ -49,17 +49,17 @@ export default function BookingAuthModal({ isOpen, onClose }: BookingAuthModalPr
       onClick={handleClose}
     >
       <div
-        className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-modal-in"
+        className="relative bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header gradient bar */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
-          <span className="text-white font-semibold text-sm tracking-wide uppercase">
+        <div className="bg-primary px-6 py-4 flex items-center justify-between">
+          <span className="text-primary-foreground font-semibold text-sm tracking-wide uppercase">
             Kampo Ibayo Resort
           </span>
           <button
             onClick={handleClose}
-            className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+            className="text-primary-foreground/80 hover:text-primary-foreground transition-colors p-1 rounded-full hover:bg-white/10"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -69,17 +69,17 @@ export default function BookingAuthModal({ isOpen, onClose }: BookingAuthModalPr
         {/* Body */}
         <div className="px-6 py-8 text-center">
           {/* Icon */}
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/15 border border-blue-500/30 mx-auto mb-5">
-            <CalendarHeart className="w-8 h-8 text-blue-400" />
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/15 border border-primary/30 mx-auto mb-5">
+            <CalendarHeart className="w-8 h-8 text-primary" />
           </div>
 
           {/* Headline */}
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 leading-snug">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 leading-snug">
             One Step Away From<br />Your Kampo Ibayo Stay!
           </h2>
 
           {/* Description */}
-          <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-8">
+          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-8">
             Create a free account to manage your bookings, receive confirmation
             emails, and track your reservation status — all in one place.
           </p>
@@ -88,14 +88,14 @@ export default function BookingAuthModal({ isOpen, onClose }: BookingAuthModalPr
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleCreateAccount}
-              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-blue-900/30"
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-primary/20"
             >
               <UserPlus className="w-4 h-4" />
               Create Account
             </button>
             <button
               onClick={handleLogin}
-              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white hover:bg-gray-800 font-semibold rounded-xl transition-all duration-200"
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-border hover:border-primary/50 text-muted-foreground hover:text-foreground hover:bg-muted font-semibold rounded-xl transition-all duration-200"
             >
               <LogIn className="w-4 h-4" />
               Log In

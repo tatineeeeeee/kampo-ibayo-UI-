@@ -114,7 +114,8 @@ export async function POST(request: NextRequest) {
         cancelled_at: philippinesTime.toISOString(),
         cancellation_reason: cancellationReason || 'Cancelled by guest'
       })
-      .eq('id', bookingId);
+      .eq('id', bookingId)
+      .eq('user_id', userId);
 
     if (updateError) {
       return NextResponse.json(
@@ -337,7 +338,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: 'Internal server error'
       },
       { status: 500 }
     );

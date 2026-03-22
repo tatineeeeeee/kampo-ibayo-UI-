@@ -2,53 +2,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../supabaseClient"; // adjust path if needed
-import {
-  FaLock,
-  FaEnvelope,
-  FaUser,
-  FaPhone,
-  FaUserPlus,
-} from "react-icons/fa";
-import {
-  Eye,
-  EyeOff,
-  Check,
-  X,
-  Shield,
-  Star,
-  Users,
-  Mountain,
-} from "lucide-react";
 import { useToastHelpers } from "../components/Toast";
-import {
-  cleanPhoneForDatabase,
-  formatPhoneForDisplay,
-  validatePhilippinePhone,
-} from "../utils/phoneUtils";
-import { withAuthTimeout, TimeoutError } from "../utils/apiTimeout";
 import Image from "next/image";
+import LoginForm from "../components/auth/LoginForm";
+import SignupForm from "../components/auth/SignupForm";
+import { ForgotPasswordModal, PasswordResetForm } from "../components/auth/ForgotPasswordForm";
+import AuthTestimonials from "../components/auth/AuthTestimonials";
 
 export default function AuthPage() {
   const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(searchParams.get('tab') !== 'signup');
   const [isLoading, setIsLoading] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [passwordValue, setPasswordValue] = useState("");
-  const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
-  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [termsError, setTermsError] = useState(false);
-  const [authLiveRating, setAuthLiveRating] = useState<number | null>(null);
-  const [authTestimonials, setAuthTestimonials] = useState<{ text: string; name: string }[]>([]);
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const [testimonialVisible, setTestimonialVisible] = useState(true);
   const [formKey, setFormKey] = useState(0); // Force form refresh
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [forcePasswordReset, setForcePasswordReset] = useState(() => {
     // Check localStorage on initial load for password reset state with validation
     if (typeof window !== "undefined") {
@@ -79,9 +47,6 @@ export default function AuthPage() {
     error: showError,
     warning,
     info,
-    loginSuccess,
-    registrationSuccess,
-    passwordResetSent,
     verificationSuccess,
   } = useToastHelpers();
 
@@ -100,54 +65,33 @@ export default function AuthPage() {
     setIsPasswordReset(false);
   };
 
-  // Fetch live average rating and top reviews for rotating testimonials
-  useEffect(() => {
-    const fetchRating = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("guest_reviews")
-          .select("rating, review_text, guest_name")
-          .eq("approved", true);
-        if (!error && data && data.length > 0) {
-          const avg = data.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / data.length;
-          setAuthLiveRating(Math.round(avg * 10) / 10);
-          // Collect top-rated reviews for rotation
-          const topReviews = data
-            .filter((r) => r.rating >= 4 && r.review_text && r.guest_name)
-            .map((r) => ({
-              text: r.review_text!.length > 120
-                ? r.review_text!.slice(0, 120).trimEnd() + "..."
-                : r.review_text!,
-              name: r.guest_name!,
-            }));
-          if (topReviews.length > 0) {
-            // Shuffle so it starts differently each visit
-            for (let i = topReviews.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [topReviews[i], topReviews[j]] = [topReviews[j], topReviews[i]];
-            }
-            setAuthTestimonials(topReviews);
-          }
-        }
-      } catch {
-        // Keep empty on error
-      }
+  // Password strength validation
+  const validatePasswordStrength = (
+    password: string
+  ): {
+    isValid: boolean;
+    requirements: {
+      length: boolean;
+      uppercase: boolean;
+      lowercase: boolean;
+      number: boolean;
+      special: boolean;
     };
-    fetchRating();
-  }, []);
+    score: number;
+  } => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    };
 
-  // Auto-rotate testimonials every 6 seconds: fade out → swap → fade in
-  useEffect(() => {
-    if (authTestimonials.length <= 1) return;
-    const interval = setInterval(() => {
-      setTestimonialVisible(false); // fade out
-      setTimeout(() => {
-        setTestimonialIndex((prev) => (prev + 1) % authTestimonials.length);
-        setTestimonialVisible(true); // fade in with new content
-      }, 200);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [authTestimonials.length]);
+    const score = Object.values(requirements).filter(Boolean).length;
+    const isValid = score === 5;
+
+    return { isValid, requirements, score };
+  };
 
   // Show verification success toast when redirected from email confirmation
   useEffect(() => {
@@ -520,330 +464,6 @@ export default function AuthPage() {
     };
   }, [router, info, forcePasswordReset, isPasswordReset, showError, warning]);
 
-  // 🔹 Handle login with Supabase Auth
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    try {
-      // Clear any existing corrupted session first
-      await supabase.auth.signOut();
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error("Login error:", error);
-
-        // Handle specific auth errors
-        if (error.message.includes("Invalid login credentials")) {
-          showError(
-            "Invalid Credentials",
-            "Please check your email and password and try again."
-          );
-        } else if (error.message.includes("Email not confirmed")) {
-          warning(
-            "Email Not Confirmed",
-            "Please check your email and confirm your account before logging in."
-          );
-        } else {
-          showError("Login Failed", error.message);
-        }
-        return;
-      }
-
-      if (data.user) {
-
-        // Check user role from database
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("role, full_name, email")
-          .eq("auth_id", data.user.id)
-          .single();
-
-
-        if (userError) {
-          // This happens when user exists in Supabase Auth but not in your users table
-
-          // If user doesn't exist in users table but auth exists, they might be deleted
-          if (userError.code === "PGRST116") {
-
-            // Account has been permanently deleted
-            showError(
-              "Account Deleted",
-              "Your account has been permanently removed from our system. You will need to create a new account to access our services."
-            );
-            await supabase.auth.signOut();
-            return;
-          }
-
-          // For other errors, redirect to homepage as fallback
-          loginSuccess("user");
-          setTimeout(() => router.push("/"), 1500);
-        } else {
-          const userRole = userData?.role || "user";
-
-          if (userRole === "admin" || userRole === "staff") {
-            loginSuccess(userRole);
-            setTimeout(() => router.push("/admin"), 1500);
-          } else {
-            loginSuccess("user");
-            setTimeout(() => router.push("/"), 1500);
-          }
-        }
-      }
-    } catch (error: unknown) {
-      console.error("Unexpected login error:", error);
-
-      // Handle refresh token errors specifically
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes("refresh") || errorMessage.includes("token")) {
-        await supabase.auth.signOut();
-        localStorage.removeItem("supabase.auth.token");
-        warning("Session Expired", "Please try logging in again.");
-      } else {
-        showError(
-          "Unexpected Error",
-          "An unexpected error occurred. Please try again."
-        );
-      }
-    }
-  };
-
-  // 🔹 Handle register with Supabase Auth
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-      showError("Password Mismatch", "Passwords do not match!");
-      return;
-    }
-
-    if (!validatePhilippinePhone(phone)) {
-      showError(
-        "Invalid Phone Number",
-        "Phone number must be exactly 11 digits long!"
-      );
-      return;
-    }
-
-    // Clean and format phone number for database storage (international format)
-    const cleanedPhone = cleanPhoneForDatabase(phone);
-
-    if (!termsAccepted) {
-      setTermsError(true);
-      showError(
-        "Terms Required",
-        "Please accept the Terms of Service and Privacy Policy to continue."
-      );
-      return;
-    }
-
-    // Clear any previous terms error
-    setTermsError(false);
-
-    // Validate password strength
-    const passwordValidation = validatePasswordStrength(password);
-    if (!passwordValidation.isValid) {
-      showError(
-        "Weak Password",
-        "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character!"
-      );
-      return;
-    }
-
-    try {
-      // Clear any existing session first
-      await supabase.auth.signOut();
-
-      // Check if email already exists in the database first
-      const { data: existingUser, error: checkError } = await supabase
-        .from("users")
-        .select("email")
-        .eq("email", email.toLowerCase())
-        .single();
-
-      // Only show error if user actually exists (ignore "not found" errors)
-      if (existingUser && !checkError) {
-        showError(
-          "Account Exists",
-          "An account with this email already exists. Please try logging in instead."
-        );
-        return;
-      }
-
-      // If there's a database error other than "not found", log it but continue
-      if (
-        checkError &&
-        !checkError.message.includes("not found") &&
-        checkError.code !== "PGRST116"
-      ) {
-        console.warn("Database check warning:", checkError);
-        // Continue anyway - we'll catch duplicates in Supabase Auth
-      }
-
-      // Set a flag so we can show welcome after verification even if the hash is empty
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("awaiting_email_verification", "true");
-        } catch {}
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name: `${firstName} ${lastName}` },
-          emailRedirectTo:
-            `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://kampo-ibayo-resort.vercel.app"}/auth`,
-        },
-      });
-
-      if (error) {
-        console.error("Registration error:", error);
-
-        // Handle specific registration errors - enhanced duplicate detection
-        if (
-          error.message.includes("User already registered") ||
-          error.message.includes("already been registered") ||
-          error.message.includes("already exists") ||
-          error.message.includes("duplicate") ||
-          error.code === "user_already_exists"
-        ) {
-          showError(
-            "Account Exists",
-            "An account with this email already exists. Please try logging in instead."
-          );
-        } else if (error.message.includes("Password")) {
-          showError(
-            "Password Issue",
-            "Password is too weak. Please choose a stronger password."
-          );
-        } else if (
-          error.message.includes("email") &&
-          error.message.includes("valid")
-        ) {
-          showError("Invalid Email", "Please enter a valid email address.");
-        } else {
-          showError("Registration Failed", error.message);
-        }
-        return;
-      }
-
-      if (data.user) {
-        try {
-          // Store extra user info in your "users" table
-          const { error: insertError } = await supabase.from("users").insert({
-            auth_id: data.user.id,
-            full_name: `${firstName} ${lastName}`,
-            email: email,
-            phone: cleanedPhone, // Store in international format (+63XXXXXXXXXX)
-            role: "user", // Regular users are always "user" role
-            created_at: new Date().toISOString(), // Convert to ISO string
-          });
-
-          if (insertError) {
-            console.error("Error creating user profile:", insertError);
-            // Continue anyway - auth account was created successfully
-          }
-        } catch (insertError) {
-          console.error("Failed to create user profile:", insertError);
-          // Continue anyway - auth account was created successfully
-        }
-
-        registrationSuccess();
-        // 🚀 Force logout so they must sign in manually
-        await supabase.auth.signOut();
-
-        // Clear all form data and force form refresh
-        setPasswordValue("");
-        setConfirmPasswordValue("");
-        setPasswordsMatch(null);
-        setTermsAccepted(false);
-        setTermsError(false);
-        setFormKey((prev) => prev + 1); // Force form refresh to clear browser autofill
-
-        // Switch UI to login form instead of redirecting home
-        setTimeout(() => setIsLogin(true), 2000);
-      }
-    } catch (error: unknown) {
-      console.error("Unexpected registration error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-
-      if (errorMessage.includes("refresh") || errorMessage.includes("token")) {
-        await supabase.auth.signOut();
-        localStorage.removeItem("supabase.auth.token");
-      }
-
-      showError(
-        "Registration Error",
-        "An unexpected error occurred during registration. Please try again."
-      );
-    }
-  };
-
-  // 🔹 Handle forgot password - OPTIMIZED with timeout protection
-  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("resetEmail") as string;
-
-    if (!email || !email.includes("@")) {
-      showError("Invalid Email", "Please enter a valid email address.");
-      return;
-    }
-
-    setIsSendingResetEmail(true);
-
-    try {
-      // Proceed with password reset (don't reveal whether email exists)
-      const { error } = await withAuthTimeout(
-        () =>
-          supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth`,
-          }),
-        8000, // 8 second timeout for email operations
-        1 // 1 retry attempt
-      );
-
-      if (error) {
-        console.error("Password reset error:", error);
-      }
-      // Always show success to prevent email enumeration
-      setResetEmailSent(true);
-      passwordResetSent();
-    } catch (error: unknown) {
-      console.error("Password reset error:", error);
-
-      if (error instanceof TimeoutError) {
-        showError(
-          "Request Timeout",
-          "The request took too long. Please try again."
-        );
-      } else {
-        showError(
-          "Reset Error",
-          "An unexpected error occurred. Please try again."
-        );
-      }
-    } finally {
-      setIsSendingResetEmail(false);
-    }
-  };
-
   // 🔹 Handle password update (for password reset) - SIMPLE & ROBUST VERSION
   const handlePasswordUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -943,182 +563,23 @@ export default function AuthPage() {
     }
   };
 
-  // Format phone number as user types
-  const formatPhoneNumber = (value: string): string => {
-    return formatPhoneForDisplay(value);
-  };
-
-  // Password strength validation
-  const validatePasswordStrength = (
-    password: string
-  ): {
-    isValid: boolean;
-    requirements: {
-      length: boolean;
-      uppercase: boolean;
-      lowercase: boolean;
-      number: boolean;
-      special: boolean;
-    };
-    score: number;
-  } => {
-    const requirements = {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /\d/.test(password),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-    };
-
-    const score = Object.values(requirements).filter(Boolean).length;
-    const isValid = score === 5;
-
-    return { isValid, requirements, score };
-  };
-
-  // Real-time password matching validation
-  const handlePasswordChange = (value: string) => {
-    setPasswordValue(value);
-    if (confirmPasswordValue) {
-      setPasswordsMatch(value === confirmPasswordValue);
-    }
-  };
-
-  const handleConfirmPasswordChange = (value: string) => {
-    setConfirmPasswordValue(value);
-    if (value && passwordValue) {
-      setPasswordsMatch(passwordValue === value);
-    } else {
-      setPasswordsMatch(null);
-    }
-  };
-
   // Show loading state while checking session
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-slate-950">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-foreground text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-slate-950 p-2 sm:p-4">
-      <div className="w-full max-w-6xl flex flex-col lg:flex-row rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden bg-white/5 backdrop-blur-lg">
+    <div className="min-h-screen flex items-center justify-center bg-background p-2 sm:p-4">
+      <div className="w-full max-w-6xl flex flex-col lg:flex-row rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden border border-border">
         {/* Left Side - Hidden on mobile, shown on desktop */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 xl:p-12 flex-col justify-between">
-          <div>
-            {/* Brand Header with Home Button */}
-            <div className="flex items-center justify-between mb-6 xl:mb-10">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 xl:w-16 xl:h-16 relative">
-                  <Image
-                    src="/logo.png"
-                    alt="Kampo Ibayo Logo"
-                    fill
-                    className="object-contain drop-shadow-lg rounded-lg"
-                    priority
-                  />
-                </div>
-                <h1 className="text-xl xl:text-3xl font-extrabold tracking-tight">
-                  <span className="text-blue-600">Kampo</span> Ibayo
-                </h1>
-              </div>
-
-              {/* Home/Back Button - Desktop */}
-              <button
-                onClick={() => router.push("/")}
-                className="flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 xl:p-3 rounded-lg hover:bg-white/10 border border-white/20 hover:border-white/30"
-                title="Back to Home"
-              >
-                <svg
-                  className="w-4 h-4 xl:w-5 xl:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-                <span className="text-sm xl:text-base font-medium">Home</span>
-              </button>
-            </div>
-
-            <p className="text-base xl:text-xl font-semibold mb-4 xl:mb-8 opacity-90">
-              Where adventure meets comfort
-            </p>
-
-            <h2 className="font-bold mb-3 xl:mb-6 text-sm xl:text-lg">
-              Your Wilderness Experience
-            </h2>
-
-            {/* Features List */}
-            <ul className="space-y-3 xl:space-y-5 text-xs xl:text-base">
-              <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Shield className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
-                </div>
-                <span>
-                  <strong>24/7 Security</strong> <br />
-                  Professional staff ensuring your safety
-                </span>
-              </li>
-              <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Mountain className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
-                </div>
-                <span>
-                  <strong>Breathtaking Views</strong> <br />
-                  Unmatched natural beauty of Cavite
-                </span>
-              </li>
-              <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Users className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
-                </div>
-                <span>
-                  <strong>Family-Friendly</strong> <br />
-                  Perfect for all ages and group sizes
-                </span>
-              </li>
-              <li className="flex items-start gap-2 xl:gap-3">
-                <div className="w-6 h-6 xl:w-8 xl:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Check className="w-3 h-3 xl:w-4 xl:h-4 text-blue-400" />
-                </div>
-                <span>
-                  <strong>Easy Booking</strong> <br />
-                  Reserve your spot in minutes
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Bottom testimonial — rotating with fade */}
-          <div className="mt-6 xl:mt-8">
-            <div className="flex items-center gap-1 mb-2 xl:mb-3">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className="w-3 h-3 xl:w-4 xl:h-4 text-yellow-500 fill-yellow-500"
-                />
-              ))}
-              <span className="text-gray-400 text-xs xl:text-sm ml-2">
-                {authLiveRating !== null ? `${authLiveRating}/5` : "5/5"}
-              </span>
-            </div>
-            <p className={`text-xs xl:text-sm italic transition-opacity duration-200 ${testimonialVisible && authTestimonials.length > 0 ? "opacity-80" : authTestimonials.length === 0 ? "opacity-80" : "opacity-0"}`}>
-              &quot;{authTestimonials.length > 0 ? authTestimonials[testimonialIndex].text : "Experience nature like never before"}&quot; <br />
-              <span className="text-gray-400">{authTestimonials.length > 0 ? authTestimonials[testimonialIndex].name : "Kampo Ibayo"}</span>
-            </p>
-          </div>
-        </div>
+        <AuthTestimonials />
 
         {/* Right Side - Main content on mobile, right side on desktop */}
-        <div className="w-full lg:w-1/2 bg-white p-4 sm:p-6 lg:p-8 xl:p-12 flex flex-col overflow-y-auto max-h-screen">
+        <div className="w-full lg:w-1/2 bg-card text-foreground p-4 sm:p-6 lg:p-8 xl:p-12 flex flex-col overflow-y-auto max-h-screen">
           <div className="flex-1 flex flex-col justify-center min-h-0">
             {/* Mobile Header - Only shown on mobile */}
             <div className="lg:hidden text-center mb-4 sm:mb-6">
@@ -1126,7 +587,7 @@ export default function AuthPage() {
                 {/* Home/Back Button - Mobile */}
                 <button
                   onClick={() => router.push("/")}
-                  className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-800 transition-colors p-1 sm:p-2 rounded-lg hover:bg-gray-50"
+                  className="flex items-center gap-1 sm:gap-2 text-muted-foreground hover:text-foreground transition-colors p-1 sm:p-2 rounded-lg hover:bg-muted"
                   title="Back to Home"
                 >
                   <svg
@@ -1157,37 +618,32 @@ export default function AuthPage() {
                     />
                   </div>
                   <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                    <span className="text-blue-600">Kampo</span>{" "}
-                    <span className="text-gray-700">Ibayo</span>
+                    <span className="text-primary">Kampo</span>{" "}
+                    <span className="text-foreground">Ibayo</span>
                   </h1>
                 </div>
 
                 {/* Spacer to center the logo */}
                 <div className="w-12 sm:w-16"></div>
               </div>
-              <p className="text-gray-600 text-xs sm:text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 Where adventure meets comfort
               </p>
             </div>
 
             {/* Tab buttons - hide during password reset */}
             {!isPasswordReset && (
-              <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-gray-200">
+              <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-border">
                 <button
                   onClick={() => {
                     setIsLogin(true);
                     // Clear form when switching to login
-                    setPasswordValue("");
-                    setConfirmPasswordValue("");
-                    setPasswordsMatch(null);
-                    setTermsAccepted(false);
-                    setTermsError(false);
                     setFormKey((prev) => prev + 1);
                   }}
                   className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
                     isLogin
-                      ? "bg-gray-200 text-gray-900"
-                      : "bg-gray-50 text-gray-500"
+                      ? "bg-muted text-foreground"
+                      : "bg-card text-muted-foreground"
                   }`}
                 >
                   Sign In
@@ -1196,15 +652,12 @@ export default function AuthPage() {
                   onClick={() => {
                     setIsLogin(false);
                     // Clear form when switching to register
-                    setPasswordValue("");
-                    setConfirmPasswordValue("");
-                    setPasswordsMatch(null);
                     setFormKey((prev) => prev + 1);
                   }}
                   className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
                     !isLogin
-                      ? "bg-gray-200 text-gray-900"
-                      : "bg-gray-50 text-gray-500"
+                      ? "bg-muted text-foreground"
+                      : "bg-card text-muted-foreground"
                   }`}
                 >
                   Create Account
@@ -1214,505 +667,32 @@ export default function AuthPage() {
 
             {/* Password Reset Form */}
             {isPasswordReset ? (
-              <form
+              <PasswordResetForm
+                isUpdatingPassword={isUpdatingPassword}
                 onSubmit={handlePasswordUpdate}
-                className="space-y-3 sm:space-y-4 lg:space-y-5"
-              >
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Reset Your Password
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Enter your new password below
-                  </p>
-                </div>
-
-                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                  <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="newPassword"
-                    placeholder="New Password"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                    ) : (
-                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                    )}
-                  </button>
-                </div>
-
-                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                  <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmNewPassword"
-                    placeholder="Confirm New Password"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                    ) : (
-                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                    )}
-                  </button>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isUpdatingPassword}
-                  className="w-full bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-blue-600 transition text-xs sm:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isUpdatingPassword
-                    ? "Updating Password..."
-                    : "Update Password"}
-                </button>
-
-                <div className="text-center mt-3 sm:mt-4">
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    🔒 For security, you must set a new password to continue
-                  </p>
-                </div>
-              </form>
+              />
             ) : /* Sign In Form */
             isLogin ? (
-              <form
-                key={`login-${formKey}`}
-                onSubmit={handleLogin}
-                className="space-y-3 sm:space-y-4 lg:space-y-5"
-                autoComplete="off"
-              >
-                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                  <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="your@email.com"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                    autoComplete="new-email"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                  <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="Password"
-                    className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                    ) : (
-                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                    )}
-                  </button>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-blue-600 transition text-xs sm:text-sm lg:text-base"
-                >
-                  Sign In
-                </button>
-
-                <div className="text-center mt-3 sm:mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-blue-500 hover:text-blue-600 text-xs sm:text-sm font-medium hover:underline transition-colors"
-                  >
-                    Forgot your password?
-                  </button>
-                </div>
-              </form>
+              <LoginForm
+                formKey={formKey}
+                onForgotPassword={() => setShowForgotPassword(true)}
+              />
             ) : (
               // Register Form
-              <form
-                key={`register-${formKey}`}
-                onSubmit={handleRegister}
-                className="space-y-3 sm:space-y-4 lg:space-y-5"
-                autoComplete="off"
-              >
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <div className="w-full sm:w-1/2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                      First Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                      <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                      <input
-                        type="text"
-                        name="firstName"
-                        placeholder="Enter your first name"
-                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                        autoComplete="new-firstname"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="w-full sm:w-1/2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                      Last Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                      <FaUser className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                      <input
-                        type="text"
-                        name="lastName"
-                        placeholder="Enter your last name"
-                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                        autoComplete="new-lastname"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                    <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="your@email.com"
-                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                      autoComplete="new-email"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                    <FaPhone className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder="09XX-XXX-XXXX (11 digits)"
-                      className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                      autoComplete="new-phone"
-                      onKeyDown={(e) => {
-                        if (e.key === "Backspace") {
-                          const val = e.currentTarget.value;
-                          if (val.endsWith("-")) {
-                            e.preventDefault();
-                            e.currentTarget.value = val.slice(0, -2);
-                          }
-                        }
-                      }}
-                      onChange={(e) => {
-                        const formatted = formatPhoneNumber(e.target.value);
-                        e.target.value = formatted;
-                      }}
-                      onBlur={(e) => {
-                        if (
-                          e.target.value &&
-                          !validatePhilippinePhone(e.target.value)
-                        ) {
-                          e.target.setCustomValidity(
-                            "Phone number must be exactly 11 digits (09XX-XXX-XXXX)"
-                          );
-                        } else {
-                          e.target.setCustomValidity("");
-                        }
-                      }}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field - Full Width */}
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="w-full">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                      Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                      <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        placeholder="Password"
-                        value={passwordValue}
-                        onChange={(e) => handlePasswordChange(e.target.value)}
-                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                        ) : (
-                          <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Password Requirements & Strength */}
-                    <div className="mt-1.5 sm:mt-2 flex items-center justify-between text-xs">
-                      <span className="text-gray-500 text-xs">
-                        Use 8+ characters with letters, numbers and symbols
-                      </span>
-                      {passwordValue && (
-                        <div className="flex items-center space-x-1">
-                          <span className="text-gray-400 text-xs">
-                            Strength:
-                          </span>
-                          <div className="flex space-x-0.5">
-                            {[1, 2, 3, 4].map((level) => (
-                              <div
-                                key={level}
-                                className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full transition-colors duration-200 ${
-                                  level <=
-                                  validatePasswordStrength(passwordValue).score
-                                    ? level <= 1
-                                      ? "bg-red-400"
-                                      : level <= 2
-                                      ? "bg-yellow-400"
-                                      : level <= 3
-                                      ? "bg-blue-400"
-                                      : "bg-green-500"
-                                    : "bg-gray-200"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Confirm Password Field - Full Width */}
-                  <div className="w-full">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                      Confirm Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                      <FaLock className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="Confirm Password"
-                        value={confirmPasswordValue}
-                        onChange={(e) =>
-                          handleConfirmPasswordChange(e.target.value)
-                        }
-                        className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm lg:text-base"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="ml-2 sm:ml-3 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                        ) : (
-                          <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Password Match Validation */}
-                    <div className="mt-1.5 sm:mt-2 flex items-center justify-between text-xs min-h-[14px] sm:min-h-[16px]">
-                      <span className="text-gray-500 text-xs">
-                        Password confirmation
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-gray-400 text-xs">Match:</span>
-                        {confirmPasswordValue ? (
-                          passwordsMatch ? (
-                            <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
-                          ) : (
-                            <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400" />
-                          )
-                        ) : (
-                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3"></div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Terms and Privacy Policy Consent */}
-                <div className="space-y-1.5 sm:space-y-2">
-                  <div className="flex items-start space-x-2 sm:space-x-3">
-                    <input
-                      type="checkbox"
-                      id="terms-consent"
-                      checked={termsAccepted}
-                      onChange={(e) => {
-                        setTermsAccepted(e.target.checked);
-                        if (e.target.checked) {
-                          setTermsError(false);
-                        }
-                      }}
-                      className="mt-0.5 sm:mt-1 w-3 h-3 sm:w-4 sm:h-4 text-blue-600 accent-blue-600 flex-shrink-0"
-                      required
-                    />
-                    <label
-                      htmlFor="terms-consent"
-                      className="text-xs leading-relaxed text-gray-600"
-                    >
-                      I agree to Kampo Ibayo&apos;s{" "}
-                      <a
-                        href="/legal/terms"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:text-blue-600 underline font-medium transition-colors"
-                      >
-                        Terms of Service
-                      </a>{" "}
-                      and{" "}
-                      <a
-                        href="/legal/terms"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:text-blue-600 underline font-medium transition-colors"
-                      >
-                        Privacy Policy
-                      </a>
-                    </label>
-                  </div>
-                  {termsError && (
-                    <div className="flex items-center space-x-1 text-xs text-red-500 ml-5 sm:ml-7">
-                      <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
-                      <span>
-                        You must accept the Terms of Service and Privacy Policy
-                        to create an account
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Create Account Button */}
-                <button
-                  type="submit"
-                  className="w-full bg-blue-500 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all duration-200 text-xs sm:text-sm lg:text-base flex items-center justify-center space-x-1.5 sm:space-x-2 mt-4 sm:mt-6"
-                >
-                  <FaUserPlus className="text-xs sm:text-sm lg:text-base" />
-                  <span>Create Account</span>
-                </button>
-              </form>
+              <SignupForm
+                formKey={formKey}
+                onSignupSuccess={() => {
+                  setFormKey((prev) => prev + 1);
+                  setIsLogin(true);
+                }}
+              />
             )}
 
             {/* Forgot Password Modal */}
-            {showForgotPassword && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl mx-2">
-                  <div className="text-center mb-4 sm:mb-6">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
-                      Reset Password
-                    </h3>
-                    <p className="text-gray-600 text-xs sm:text-sm mb-2">
-                      Enter your email address and we&apos;ll send you a link to
-                      reset your password.
-                    </p>
-                    <p className="text-gray-500 text-xs">
-                      📧 Email delivery may take 2-5 minutes. Check your spam
-                      folder if needed.
-                    </p>
-                  </div>{" "}
-                  {resetEmailSent ? (
-                    <div className="text-center">
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
-                        <div className="text-green-600 font-semibold mb-1 text-sm sm:text-base">
-                          Email Sent!
-                        </div>
-                        <div className="text-green-700 text-xs sm:text-sm">
-                          Check your inbox for password reset instructions.
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setShowForgotPassword(false);
-                          setResetEmailSent(false);
-                        }}
-                        className="w-full bg-gray-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-xs sm:text-sm"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  ) : (
-                    <form
-                      onSubmit={handleForgotPassword}
-                      className="space-y-3 sm:space-y-4"
-                    >
-                      <div className="flex items-center border border-gray-300 p-2.5 sm:p-3 rounded-lg">
-                        <FaEnvelope className="text-gray-400 mr-2 sm:mr-3 text-xs sm:text-sm flex-shrink-0" />
-                        <input
-                          type="email"
-                          name="resetEmail"
-                          placeholder="your@email.com"
-                          className="w-full outline-none bg-transparent text-gray-700 placeholder-gray-400 text-xs sm:text-sm"
-                          required
-                        />
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowForgotPassword(false);
-                            setResetEmailSent(false);
-                          }}
-                          className="w-full sm:w-1/2 bg-gray-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-xs sm:text-sm order-2 sm:order-1"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={isSendingResetEmail}
-                          className="w-full sm:w-1/2 bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-blue-600 transition text-xs sm:text-sm order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {isSendingResetEmail ? (
-                            <>
-                              <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                              Sending...
-                            </>
-                          ) : (
-                            "Send Reset Link"
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              </div>
-            )}
+            <ForgotPasswordModal
+              showForgotPassword={showForgotPassword}
+              onClose={() => setShowForgotPassword(false)}
+            />
 
             {/* Footer - Mobile optimized spacing */}
             <div className="mt-4 sm:mt-6 lg:mt-8 text-center"></div>

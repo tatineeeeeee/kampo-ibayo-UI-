@@ -182,7 +182,7 @@ export default function HouseRulesPage() {
 
   const getColorClasses = (color: string) => {
     const colorMap = {
-      blue: "bg-blue-900/20 border-blue-700/50",
+      blue: "bg-primary/10 border-primary/30",
       green: "bg-green-900/20 border-green-700/50",
       purple: "bg-purple-900/20 border-purple-700/50",
       orange: "bg-orange-900/20 border-orange-700/50",
@@ -203,27 +203,27 @@ export default function HouseRulesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Mobile-First Sticky Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-10">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors touch-manipulation"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div className="text-foreground">
                 <h1 className="text-lg sm:text-xl font-bold">House Rules</h1>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                   Guidelines for your stay
                 </p>
               </div>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400 text-right">
-              <span className="inline-block bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+            <div className="text-xs sm:text-sm text-muted-foreground text-right">
+              <span className="inline-block bg-primary text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                 Rules
               </span>
             </div>
@@ -240,7 +240,7 @@ export default function HouseRulesPage() {
               <h2 className="text-xl font-semibold mb-2 text-green-400">
                 Welcome to Kampo Ibayo Resort!
               </h2>
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 These house rules ensure everyone has a safe, enjoyable, and
                 memorable stay. By following these guidelines, you help us
                 maintain a peaceful environment for all guests while protecting
@@ -256,7 +256,7 @@ export default function HouseRulesPage() {
           {ruleCategories.map((category, categoryIndex) => (
             <div
               key={categoryIndex}
-              className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+              className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
             >
               <h2
                 className={`text-2xl font-bold mb-6 ${getIconColor(
@@ -275,10 +275,10 @@ export default function HouseRulesPage() {
                       category.color
                     )}`}
                   >
-                    <h3 className="font-semibold text-white mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       {ruleItem.rule}
                     </h3>
-                    <p className="text-gray-300 text-sm leading-relaxed">
+                    <p className="text-muted-foreground text-sm leading-relaxed">
                       {ruleItem.details}
                     </p>
                   </div>
@@ -289,7 +289,7 @@ export default function HouseRulesPage() {
         </div>
 
         {/* Pet Policy */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
           <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <Heart className="w-6 h-6" />
             Pet-Friendly Policy
@@ -300,13 +300,13 @@ export default function HouseRulesPage() {
               We Welcome Your Furry Friends!
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ul className="text-gray-300 space-y-2 text-sm">
+              <ul className="text-muted-foreground space-y-2 text-sm">
                 <li>• All pets must be well-behaved and house-trained</li>
                 <li>• Keep pets leashed in common areas</li>
                 <li>• Clean up after your pets immediately</li>
                 <li>• Pets not allowed in swimming pool</li>
               </ul>
-              <ul className="text-gray-300 space-y-2 text-sm">
+              <ul className="text-muted-foreground space-y-2 text-sm">
                 <li>• Prevent excessive barking or noise</li>
                 <li>• Supervise pets around other guests</li>
                 <li>• Additional cleaning fee may apply</li>
@@ -317,7 +317,7 @@ export default function HouseRulesPage() {
         </div>
 
         {/* Environmental Responsibility */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
           <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
             <Trash2 className="w-6 h-6" />
             Environmental Responsibility
@@ -328,7 +328,7 @@ export default function HouseRulesPage() {
               <h3 className="text-lg font-semibold mb-3 text-green-400">
                 Waste Management
               </h3>
-              <ul className="text-gray-300 space-y-2 text-sm">
+              <ul className="text-muted-foreground space-y-2 text-sm">
                 <li>• Separate recyclables from general waste</li>
                 <li>• Use designated trash bins throughout property</li>
                 <li>• No littering in natural areas</li>
@@ -336,11 +336,11 @@ export default function HouseRulesPage() {
               </ul>
             </div>
 
-            <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-3 text-blue-400">
                 Conservation
               </h3>
-              <ul className="text-gray-300 space-y-2 text-sm">
+              <ul className="text-muted-foreground space-y-2 text-sm">
                 <li>• Turn off lights and appliances when not in use</li>
                 <li>• Conserve water during showers and activities</li>
                 <li>• Respect local wildlife and plants</li>
@@ -351,13 +351,13 @@ export default function HouseRulesPage() {
         </div>
 
         {/* Enforcement & Violations */}
-        <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4 sm:p-6">
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 sm:p-6">
           <h3 className="text-xl font-semibold mb-3 text-blue-400">
             Rule Enforcement
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-semibold text-white mb-2">
+              <h4 className="font-semibold text-foreground mb-2">
                 Violation Consequences
               </h4>
               <ul className="text-blue-200 text-sm space-y-2">
@@ -378,7 +378,7 @@ export default function HouseRulesPage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-2">
+              <h4 className="font-semibold text-foreground mb-2">
                 Contact Management
               </h4>
               <ul className="text-blue-200 text-sm space-y-2">
@@ -400,11 +400,11 @@ export default function HouseRulesPage() {
         </div>
 
         {/* Agreement & Contact */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50 text-center">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50 text-center">
           <h3 className="text-xl font-semibold mb-3 text-blue-400">
             Agreement to House Rules
           </h3>
-          <p className="text-gray-300 mb-4">
+          <p className="text-muted-foreground mb-4">
             By staying at Kampo Ibayo Resort, you acknowledge that you have
             read, understood, and agree to follow these house rules. Violations
             may result in additional charges or termination of stay without

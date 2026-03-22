@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     console.error('❌ Test SMS API error:', error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Internal server error'
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     console.error('❌ SMS status check failed:', error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Configuration check failed',
+      error: 'Internal server error',
       status: 'error'
     }, { status: 500 });
   }

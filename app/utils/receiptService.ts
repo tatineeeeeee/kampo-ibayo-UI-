@@ -5,6 +5,7 @@
 
 import jsPDF from 'jspdf';
 import { Tables } from '../../database.types';
+import { RESORT_NAME, RESORT_ADDRESS, RESORT_EMAIL, RESORT_PHONE, CHECK_IN_TIME, CHECK_OUT_TIME } from "../lib/constants";
 
 type Booking = Tables<'bookings'>;
 type PaymentProof = Tables<'payment_proofs'>;
@@ -26,14 +27,14 @@ export interface ReceiptData {
 
 export class ReceiptService {
   private static readonly COMPANY_DETAILS = {
-    name: 'Kampo Ibayo Resort',
-    address: 'Brgy. Tapia, General Trias, Cavite',
-    phone: '+63 966 281 5123',
-    email: 'kampoibayo@gmail.com',
+    name: RESORT_NAME,
+    address: RESORT_ADDRESS,
+    phone: RESORT_PHONE,
+    email: RESORT_EMAIL,
     facebook: 'Kampo Ibayo (Facebook)',
     hours: '8:00 AM - 8:00 PM (Daily)',
-    checkIn: '3:00 PM',
-    checkOut: '1:00 PM'
+    checkIn: CHECK_IN_TIME,
+    checkOut: CHECK_OUT_TIME
   };
 
   /**

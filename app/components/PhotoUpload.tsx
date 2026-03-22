@@ -103,7 +103,7 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
             dragActive
-              ? 'border-blue-400 bg-blue-900/20'
+              ? 'border-primary/70 bg-primary/10'
               : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
           }`}
           onDragEnter={handleDrag}
@@ -122,18 +122,18 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
           />
           
           <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
               <Camera className="w-6 h-6 text-gray-400" />
             </div>
             <div>
               <p className="text-gray-300 font-medium">
                 Drop photos here or click to upload
               </p>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 {maxPhotos - photos.length} {maxPhotos - photos.length === 1 ? 'photo' : 'photos'} remaining
               </p>
             </div>
-            <div className="flex items-center gap-2 text-blue-400 text-sm">
+            <div className="flex items-center gap-2 text-primary text-sm">
               <Upload className="w-4 h-4" />
               Choose files
             </div>

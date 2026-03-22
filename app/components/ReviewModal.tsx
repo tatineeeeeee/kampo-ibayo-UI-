@@ -101,7 +101,7 @@ export default function ReviewModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white p-6 relative">
+        <div className="bg-gradient-to-r from-primary to-teal-600 text-foreground p-6 relative">
           <button
             onClick={handleClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"

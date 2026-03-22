@@ -23,29 +23,29 @@ export default function TermsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Mobile-First Sticky Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-10">
         <div className="px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 bg-card hover:bg-muted rounded-lg transition-colors touch-manipulation"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </Link>
-              <div className="text-white">
+              <div className="text-foreground">
                 <h1 className="text-lg sm:text-xl font-bold">
                   Terms & Privacy
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                   Legal terms and privacy policy
                 </p>
               </div>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400 text-right">
-              <span className="inline-block bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+            <div className="text-xs sm:text-sm text-muted-foreground text-right">
+              <span className="inline-block bg-purple-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                 Legal
               </span>
             </div>
@@ -55,8 +55,8 @@ export default function TermsPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
         {/* Quick Navigation */}
-        <div className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50">
-          <h2 className="text-xl font-semibold mb-4 text-white">
+        <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">
             Quick Navigation
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -64,8 +64,8 @@ export default function TermsPage() {
               onClick={() => scrollToSection("terms")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "terms"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-primary text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-gray-600"
               }`}
             >
               <FileText className="w-4 h-4 mb-1" />
@@ -75,8 +75,8 @@ export default function TermsPage() {
               onClick={() => scrollToSection("privacy")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "privacy"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-primary text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-gray-600"
               }`}
             >
               <Shield className="w-4 h-4 mb-1" />
@@ -86,8 +86,8 @@ export default function TermsPage() {
               onClick={() => scrollToSection("liability")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "liability"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-primary text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-gray-600"
               }`}
             >
               <AlertTriangle className="w-4 h-4 mb-1" />
@@ -97,8 +97,8 @@ export default function TermsPage() {
               onClick={() => scrollToSection("contact")}
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "contact"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-primary text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-gray-600"
               }`}
             >
               <Phone className="w-4 h-4 mb-1" />
@@ -108,8 +108,8 @@ export default function TermsPage() {
         </div>
 
         {/* Last Updated Notice */}
-        <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4">
-          <p className="text-blue-300 text-sm">
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+          <p className="text-primary/80 text-sm">
             <strong>Last Updated:</strong> October 1, 2025 | These terms are
             effective immediately and apply to all bookings.
           </p>
@@ -118,16 +118,16 @@ export default function TermsPage() {
         {/* Terms of Service */}
         <div
           id="terms"
-          className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+          className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
             <FileText className="w-6 h-6" />
             Terms of Service
           </h2>
 
-          <div className="space-y-6 text-gray-300">
+          <div className="space-y-6 text-muted-foreground">
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 1. Booking and Reservations
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -150,7 +150,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 2. Payment Terms
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -170,7 +170,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 3. Guest Responsibilities
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -189,7 +189,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 4. Prohibited Activities
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -206,7 +206,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 5. Force Majeure
               </h3>
               <p className="text-sm leading-relaxed">
@@ -224,16 +224,16 @@ export default function TermsPage() {
         {/* Privacy Policy */}
         <div
           id="privacy"
-          className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+          className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
             <Shield className="w-6 h-6" />
             Privacy Policy
           </h2>
 
-          <div className="space-y-6 text-gray-300">
+          <div className="space-y-6 text-muted-foreground">
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Information We Collect
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -257,7 +257,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 How We Use Your Information
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -277,7 +277,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Information Sharing
               </h3>
               <p className="text-sm leading-relaxed mb-3">
@@ -297,7 +297,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Data Security
               </h3>
               <p className="text-sm leading-relaxed">
@@ -310,7 +310,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Your Rights
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -331,16 +331,16 @@ export default function TermsPage() {
         {/* Liability and Disclaimers */}
         <div
           id="liability"
-          className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+          className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
             <AlertTriangle className="w-6 h-6" />
             Liability and Disclaimers
           </h2>
 
-          <div className="space-y-6 text-gray-300">
+          <div className="space-y-6 text-muted-foreground">
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Guest Safety and Responsibility
               </h3>
               <p className="text-sm leading-relaxed mb-3">
@@ -362,7 +362,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Property and Equipment
               </h3>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
@@ -386,7 +386,7 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-3 text-white">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">
                 Travel and Transportation
               </h3>
               <p className="text-sm leading-relaxed">
@@ -402,38 +402,38 @@ export default function TermsPage() {
         {/* Contact Information */}
         <div
           id="contact"
-          className="bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700/50"
+          className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50"
         >
-          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
             <Phone className="w-6 h-6" />
             Legal Contact Information
           </h2>
 
           <div className="space-y-4">
-            <p className="text-gray-300 text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               For questions about these terms, privacy concerns, or legal
               matters, please contact us:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h4 className="font-semibold text-white mb-2">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-semibold text-foreground mb-2">
                   General Inquiries
                 </h4>
-                <p className="text-gray-300 text-sm mb-1">
+                <p className="text-muted-foreground text-sm mb-1">
                   Email: kampoibayo@gmail.com
                 </p>
-                <p className="text-gray-300 text-sm">Phone: 0966-281-5123</p>
+                <p className="text-muted-foreground text-sm">Phone: 0966-281-5123</p>
               </div>
 
-              <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h4 className="font-semibold text-white mb-2">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-semibold text-foreground mb-2">
                   Legal & Privacy Officer
                 </h4>
-                <p className="text-gray-300 text-sm mb-1">
+                <p className="text-muted-foreground text-sm mb-1">
                   Email: legal@kampoibayo.com
                 </p>
-                <p className="text-gray-300 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Response time: 48-72 hours
                 </p>
               </div>
@@ -444,10 +444,10 @@ export default function TermsPage() {
         {/* Agreement Acknowledgment */}
         {/* Agreement Section */}
         <div className="bg-green-900/20 border border-green-700/50 rounded-xl p-4 sm:p-6 text-center">
-          <h3 className="text-xl font-semibold mb-3 text-blue-400">
+          <h3 className="text-xl font-semibold mb-3 text-primary">
             Agreement Acknowledgment
           </h3>
-          <p className="text-gray-300 mb-4">
+          <p className="text-muted-foreground mb-4">
             By making a reservation or using our services, you acknowledge that
             you have read, understood, and agree to be bound by these terms and
             privacy policy.

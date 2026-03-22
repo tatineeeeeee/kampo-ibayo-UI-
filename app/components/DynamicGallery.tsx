@@ -18,7 +18,7 @@ interface GalleryImageWithCategory extends Omit<GalleryImage, "id"> {
 
 // Loading Skeleton Component
 export const LoadingSkeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-600 rounded ${className}`}></div>
+  <div className={`animate-pulse bg-muted rounded ${className}`}></div>
 );
 
 // Dynamic Gallery Component that loads from Supabase
@@ -156,7 +156,12 @@ const DynamicGallery = () => {
         .order("created_at", { ascending: false });
 
       if (featuredError) {
-        console.error("Error fetching gallery images:", featuredError);
+        console.error(
+          "Error fetching gallery images — code:", featuredError.code,
+          "| message:", featuredError.message,
+          "| details:", featuredError.details,
+          "| hint:", featuredError.hint
+        );
         return;
       }
 
@@ -263,7 +268,7 @@ const DynamicGallery = () => {
     <>
       <section
         id="gallery"
-        className="bg-gray-800 text-white py-6 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8"
+        className="bg-card text-foreground py-6 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8"
       >
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-8 sm:mb-10 lg:mb-12">
           Photo Gallery
@@ -280,12 +285,12 @@ const DynamicGallery = () => {
         <div className="max-w-7xl mx-auto text-center">
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-full px-6 py-3 transition-all duration-300 group touch-manipulation min-h-[48px]"
+            className="inline-flex items-center gap-3 border border-border hover:border-primary/50 bg-muted hover:bg-muted/80 rounded-full px-6 py-3 transition-all duration-300 group touch-manipulation min-h-[48px]"
           >
-            <span className="text-white/80 text-sm group-hover:text-white">
+            <span className="text-muted-foreground text-sm group-hover:text-foreground">
               View Full Gallery
             </span>
-            <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </Link>
         </div>
       </section>

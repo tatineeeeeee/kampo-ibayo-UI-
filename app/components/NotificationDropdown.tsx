@@ -23,9 +23,9 @@ export function NotificationDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative group focus:outline-none"
       >
-        <Bell className="w-6 h-6 text-gray-500 group-hover:text-blue-600 transition" />
+        <Bell className="w-6 h-6 text-muted-foreground group-hover:text-primary transition" />
         {hasNotifications && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full ring-2 ring-white bg-blue-600 text-white text-xs flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full ring-2 ring-white bg-primary text-foreground text-xs flex items-center justify-center font-bold">
             {notifications.totalNotifications > 9 ? '9+' : notifications.totalNotifications}
           </span>
         )}
@@ -46,13 +46,13 @@ export function NotificationDropdown() {
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Last updated: {formatTime(notifications.lastChecked)}
                 </p>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -61,14 +61,14 @@ export function NotificationDropdown() {
             {/* Notification Content */}
             <div className="max-h-96 overflow-y-auto">
               {loading ? (
-                <div className="p-4 text-center text-gray-500">
+                <div className="p-4 text-center text-muted-foreground">
                   Loading notifications...
                 </div>
               ) : !hasNotifications ? (
                 <div className="p-6 text-center">
                   <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">All caught up!</p>
-                  <p className="text-sm text-gray-500">No new notifications</p>
+                  <p className="text-sm text-muted-foreground">No new notifications</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -83,7 +83,7 @@ export function NotificationDropdown() {
                           <p className="text-sm font-medium text-gray-800">
                             {notifications.pendingBookings} Pending Booking{notifications.pendingBookings > 1 ? 's' : ''}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {notifications.pendingBookings > 1 
                               ? `${notifications.pendingBookings} bookings need your review`
                               : '1 booking needs your review'
@@ -102,20 +102,20 @@ export function NotificationDropdown() {
                     <div className="p-4 hover:bg-gray-50 cursor-pointer">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
-                          <Users className="w-5 h-5 text-blue-500 mt-0.5" />
+                          <Users className="w-5 h-5 text-primary mt-0.5" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800">
                             {notifications.newUsers} New User{notifications.newUsers > 1 ? 's' : ''}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {notifications.newUsers > 1 
                               ? `${notifications.newUsers} users registered in the last 24 hours`
                               : '1 user registered in the last 24 hours'
                             }
                           </p>
                         </div>
-                        <span className="flex-shrink-0 px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full font-medium">
+                        <span className="flex-shrink-0 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium">
                           {notifications.newUsers}
                         </span>
                       </div>
@@ -133,7 +133,7 @@ export function NotificationDropdown() {
                           <p className="text-sm font-medium text-gray-800">
                             {notifications.recentCancellations} Recent Cancellation{notifications.recentCancellations > 1 ? 's' : ''}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {notifications.recentCancellations > 1 
                               ? `${notifications.recentCancellations} bookings cancelled this week`
                               : '1 booking cancelled this week'
@@ -158,7 +158,7 @@ export function NotificationDropdown() {
                     refreshNotifications();
                     setIsOpen(false);
                   }}
-                  className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="w-full text-center text-sm text-primary hover:text-primary font-medium"
                 >
                   Refresh Notifications
                 </button>

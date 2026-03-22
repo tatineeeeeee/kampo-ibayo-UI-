@@ -203,9 +203,9 @@ export default function GalleryPage() {
   }, [filteredImages.length]);
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Navbar — matches homepage */}
-      <nav className="bg-gray-900/90 backdrop-blur text-white shadow-md w-full fixed top-0 left-0 z-50">
+      <nav className="bg-background/90 backdrop-blur text-foreground shadow-md w-full fixed top-0 left-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-14 sm:h-16 items-center">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center space-x-2">
@@ -219,23 +219,23 @@ export default function GalleryPage() {
                 />
               </div>
               <div>
-                <span className="text-lg sm:text-xl font-bold text-blue-500">
+                <span className="text-lg sm:text-xl font-bold text-primary">
                   Kampo
                 </span>
-                <span className="text-lg sm:text-xl font-bold text-white">
+                <span className="text-lg sm:text-xl font-bold text-foreground">
                   Ibayo
                 </span>
               </div>
             </Link>
-            <span className="text-gray-600 text-sm hidden sm:inline">/</span>
-            <span className="text-gray-300 text-sm font-medium hidden sm:inline">
+            <span className="text-muted-foreground text-sm hidden sm:inline">/</span>
+            <span className="text-muted-foreground text-sm font-medium hidden sm:inline">
               Gallery
             </span>
           </div>
 
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back to Home</span>
@@ -247,24 +247,27 @@ export default function GalleryPage() {
       <div className="h-14 sm:h-16" />
 
       {/* Page Header */}
-      <div className="relative overflow-hidden border-b border-gray-700/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-gray-800 to-gray-900" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1 mb-3">
-                <Camera className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-blue-400 text-xs font-medium">Kampo Ibayo Resort</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white">
-                Photo Gallery
-                {!loading && (
-                  <span className="text-gray-500 text-lg sm:text-xl font-normal ml-2">{images.length} photos</span>
-                )}
-              </h1>
-            </div>
+      <div className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-5">
+            <Camera className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+            <span>Kampo Ibayo Resort</span>
+            <span className="text-border">/</span>
+            <span className="text-foreground font-medium">Gallery</span>
           </div>
+
+          {/* Heading */}
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-tight">
+            Photo Gallery
+          </h1>
+
+          {/* Subtitle */}
+          {!loading && (
+            <p className="mt-3 text-muted-foreground text-base sm:text-lg max-w-xl">
+              {images.length} photos — explore the beauty of Kampo Ibayo Resort
+            </p>
+          )}
         </div>
       </div>
 
@@ -288,8 +291,8 @@ export default function GalleryPage() {
                   }}
                   className={`flex-shrink-0 inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                      : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-gray-700"
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground border border-border"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -297,8 +300,8 @@ export default function GalleryPage() {
                   <span
                     className={`text-xs px-1.5 py-0.5 rounded ${
                       isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-700 text-gray-500"
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {count}
@@ -315,7 +318,7 @@ export default function GalleryPage() {
             {Array.from({ length: 9 }).map((_, i) => (
               <div
                 key={i}
-                className={`animate-pulse bg-gray-800 rounded-xl ${i % 5 === 0 ? "sm:col-span-2" : ""}`}
+                className={`animate-pulse bg-card rounded-xl ${i % 5 === 0 ? "sm:col-span-2" : ""}`}
               />
             ))}
           </div>
@@ -324,15 +327,15 @@ export default function GalleryPage() {
         {/* Empty State */}
         {!loading && filteredImages.length === 0 && (
           <div className="text-center py-20 sm:py-28">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-800 border border-gray-700 mb-5">
-              <ImageIcon className="w-7 h-7 text-gray-500" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card border border-border mb-5">
+              <ImageIcon className="w-7 h-7 text-muted-foreground" />
             </div>
-            <p className="text-white font-semibold text-lg mb-2">
+            <p className="text-foreground font-semibold text-lg mb-2">
               {selectedCategory === "all"
                 ? "No photos yet"
                 : `No ${categories.find((c) => c.value === selectedCategory)?.label || selectedCategory} photos`}
             </p>
-            <p className="text-gray-500 text-sm max-w-xs mx-auto">
+            <p className="text-muted-foreground text-sm max-w-xs mx-auto">
               {selectedCategory === "all"
                 ? "Photos will appear here once uploaded."
                 : "Try selecting a different category."}
@@ -341,7 +344,7 @@ export default function GalleryPage() {
               <button
                 type="button"
                 onClick={() => setSelectedCategory("all")}
-                className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors text-sm font-medium border border-gray-700"
+                className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm font-medium border border-border"
               >
                 <Camera className="w-4 h-4" />
                 View all photos
@@ -359,7 +362,7 @@ export default function GalleryPage() {
                 return (
                 <div
                   key={image.id}
-                  className={`gallery-item group relative overflow-hidden rounded-xl bg-gray-800 cursor-pointer ${wide ? "sm:col-span-2" : ""}`}
+                  className={`gallery-item group relative overflow-hidden rounded-xl bg-card cursor-pointer ${wide ? "sm:col-span-2" : ""}`}
                   onClick={() => setSelectedImage(index)}
                 >
                   <div className="relative w-full h-full">
@@ -384,7 +387,7 @@ export default function GalleryPage() {
 
                     {/* Category pill */}
                     <div className="absolute top-2.5 left-2.5">
-                      <span className="bg-black/50 backdrop-blur-sm text-white/90 text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md border border-white/10">
+                      <span className="bg-white/80 dark:bg-black/50 backdrop-blur-sm text-gray-800 dark:text-white/90 text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md border border-black/10 dark:border-white/10">
                         {categoryLabels[image.category || "general"] ||
                           image.category}
                       </span>
@@ -393,7 +396,7 @@ export default function GalleryPage() {
                     {/* Homepage badge */}
                     {image.is_featured && (
                       <div className="absolute top-2.5 right-2.5">
-                        <span className="inline-flex items-center gap-1 bg-blue-600/80 backdrop-blur-sm text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md border border-blue-400/20">
+                        <span className="inline-flex items-center gap-1 bg-primary backdrop-blur-sm text-primary-foreground text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md border border-primary/20">
                           <Sparkles className="w-3 h-3" />
                           Homepage
                         </span>
@@ -423,7 +426,7 @@ export default function GalleryPage() {
             {hasMore && (
               <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
                 {loadingMore && (
-                  <div className="inline-flex items-center gap-2 text-gray-400 text-sm">
+                  <div className="inline-flex items-center gap-2 text-muted-foreground text-sm">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Loading more photos...
                   </div>
@@ -433,7 +436,7 @@ export default function GalleryPage() {
 
             {/* Footer count */}
             <div className="mt-6 text-center pb-8">
-              <p className="text-gray-500 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {hasMore
                   ? `Showing ${visibleImages.length} of ${filteredImages.length} photos — scroll for more`
                   : `All ${filteredImages.length} photos loaded`}
@@ -441,7 +444,7 @@ export default function GalleryPage() {
                   <>
                     {" "}
                     in{" "}
-                    <span className="text-gray-400">
+                    <span className="text-muted-foreground">
                       {categories.find((c) => c.value === selectedCategory)
                         ?.label}
                     </span>
@@ -458,7 +461,7 @@ export default function GalleryPage() {
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 z-40 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg shadow-blue-600/30 transition-all duration-300 min-w-[48px] min-h-[48px] flex items-center justify-center"
+          className="fixed bottom-6 right-6 z-40 bg-primary hover:bg-primary/90 text-foreground p-3 rounded-full shadow-lg shadow-primary/30 transition-all duration-300 min-w-[48px] min-h-[48px] flex items-center justify-center"
           aria-label="Scroll to top"
         >
           <ArrowUp className="w-5 h-5" />

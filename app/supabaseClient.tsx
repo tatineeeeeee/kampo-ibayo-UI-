@@ -30,6 +30,8 @@
 
 import { Database } from "@/database.types";
 import { createClient } from "@supabase/supabase-js";
+import { REALTIME_TIMEOUT_MS } from "./lib/constants/timeouts";
+import { APP_HEADER_NAME } from "./lib/constants/business";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -49,11 +51,11 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      "x-application-name": "kampo-ibayo-resort",
+      "x-application-name": APP_HEADER_NAME,
     },
   },
   // Add timeout configuration for better performance
   realtime: {
-    timeout: 30000, // 30 seconds
+    timeout: REALTIME_TIMEOUT_MS, // 30 seconds
   },
 });
