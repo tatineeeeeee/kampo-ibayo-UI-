@@ -387,7 +387,7 @@ export default function GalleryPage() {
 
                     {/* Category pill */}
                     <div className="absolute top-2.5 left-2.5">
-                      <span className="bg-white/80 dark:bg-black/50 backdrop-blur-sm text-gray-800 dark:text-white/90 text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md border border-black/10 dark:border-white/10">
+                      <span className="bg-white/80 dark:bg-black/50 backdrop-blur-sm text-foreground dark:text-white/90 text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md border border-black/10 dark:border-white/10">
                         {categoryLabels[image.category || "general"] ||
                           image.category}
                       </span>

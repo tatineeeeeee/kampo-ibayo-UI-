@@ -318,7 +318,7 @@ export default function GalleryPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+      <div className="bg-card p-4 sm:p-6 rounded-xl shadow-md">
         <GalleryToolbar
           images={images}
           filteredImages={filteredImages}

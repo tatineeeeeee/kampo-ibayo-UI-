@@ -102,8 +102,8 @@ export default function DeleteAccountSection({
       </div>
 
       {/* What Happens Section */}
-      <div className="bg-gray-800/50 border border-gray-600/30 rounded-lg p-4 mb-6">
-        <h4 className="text-gray-300 font-semibold text-sm mb-3 flex items-center gap-2">
+      <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+        <h4 className="text-muted-foreground font-semibold text-sm mb-3 flex items-center gap-2">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -120,8 +120,8 @@ export default function DeleteAccountSection({
           What happens when you delete your account:
         </h4>
         <div className="grid md:grid-cols-2 gap-3 text-sm">
-          <div className="text-gray-400">
-            <div className="font-medium text-gray-300 mb-1">
+          <div className="text-muted-foreground">
+            <div className="font-medium text-muted-foreground mb-1">
               ✓ Removed:
             </div>
             <ul className="space-y-1 text-xs">
@@ -130,8 +130,8 @@ export default function DeleteAccountSection({
               <li>• Login access to your account</li>
             </ul>
           </div>
-          <div className="text-gray-400">
-            <div className="font-medium text-gray-300 mb-1">
+          <div className="text-muted-foreground">
+            <div className="font-medium text-muted-foreground mb-1">
               📋 Business Records:
             </div>
             <ul className="space-y-1 text-xs">
@@ -166,10 +166,10 @@ export default function DeleteAccountSection({
           </svg>
         </button>
 
-        <div className="text-gray-400 text-xs sm:ml-4 sm:max-w-xs">
+        <div className="text-muted-foreground text-xs sm:ml-4 sm:max-w-xs">
           <p>
             Need help?{" "}
-            <span className="text-blue-400 hover:text-blue-300 cursor-pointer underline">
+            <span className="text-primary hover:text-primary/80 cursor-pointer underline">
               Contact our support team
             </span>{" "}
             for assistance with account management.

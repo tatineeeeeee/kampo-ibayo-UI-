@@ -95,7 +95,7 @@ export default function ReviewModal({
       onClick={handleBackdropClick}
     >
       <div
-        className={`relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 ${
+        className={`relative w-full max-w-2xl max-h-[90vh] bg-card rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 ${
           isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
         }`}
         onClick={(e) => e.stopPropagation()}

@@ -47,12 +47,12 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
   return (
     <div className="space-y-4">
       {!canCancel && (
-        <div className="p-4 rounded-lg border bg-red-50 border-red-200">
-          <div className="flex items-center gap-2 text-red-800">
+        <div className="p-4 rounded-lg border bg-destructive/10 border-destructive/20">
+          <div className="flex items-center gap-2 text-destructive">
             <Info className="w-5 h-5" />
             <span className="font-semibold">Cancellation Not Allowed</span>
           </div>
-          <p className="text-red-800 text-sm mt-1">
+          <p className="text-destructive text-sm mt-1">
             Cancellation is not allowed within 3 days of check-in. Please contact the resort directly for assistance.
           </p>
         </div>
@@ -60,15 +60,15 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
 
       {/* Down Payment Info */}
       <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
-        <h3 className="font-semibold text-blue-900 mb-2">Payment Structure</h3>
+        <h3 className="font-semibold text-foreground mb-2">Payment Structure</h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="p-2 rounded bg-primary/10">
-            <p className="font-medium text-blue-900">Down Payment (Paid)</p>
-            <p className="text-lg font-bold text-blue-900">₱{downPayment.toLocaleString()}</p>
+            <p className="font-medium text-foreground">Down Payment (Paid)</p>
+            <p className="text-lg font-bold text-foreground">₱{downPayment.toLocaleString()}</p>
           </div>
-          <div className="p-2 rounded bg-gray-100">
-            <p className="font-medium text-gray-900">Pay on Arrival</p>
-            <p className="text-lg font-bold text-gray-900">₱{remainingBalance.toLocaleString()}</p>
+          <div className="p-2 rounded bg-muted">
+            <p className="font-medium text-foreground">Pay on Arrival</p>
+            <p className="text-lg font-bold text-foreground">₱{remainingBalance.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -76,9 +76,9 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
       {/* Refund Policy Summary */}
       {canCancel && (
         <div className={`p-4 rounded-lg border ${
-          percentage >= 75 ? 'bg-green-50 border-green-200' :
-          percentage >= 50 ? 'bg-yellow-50 border-yellow-200' :
-          'bg-red-50 border-red-200'
+          percentage >= 75 ? 'bg-success/10 border-success/20' :
+          percentage >= 50 ? 'bg-warning/10 border-warning/20' :
+          'bg-destructive/10 border-destructive/20'
         }`}>
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -90,16 +90,16 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
             </div>
             <div>
               <h3 className={`font-semibold ${
-                percentage >= 75 ? 'text-green-900' :
-                percentage >= 50 ? 'text-yellow-900' :
-                'text-red-900'
+                percentage >= 75 ? 'text-success' :
+                percentage >= 50 ? 'text-warning' :
+                'text-destructive'
               }`}>
                 Refund Amount: ₱{amount.toLocaleString()} ({percentage}% of down payment)
               </h3>
               <p className={`text-sm ${
-                percentage >= 75 ? 'text-green-800' :
-                percentage >= 50 ? 'text-yellow-800' :
-                'text-red-800'
+                percentage >= 75 ? 'text-success' :
+                percentage >= 50 ? 'text-warning' :
+                'text-destructive'
               }`}>
                 <Clock className="w-4 h-4 inline mr-1" />
                 Time until check-in: {timeRemaining}
@@ -109,35 +109,35 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className={`p-2 rounded ${
-              percentage >= 75 ? 'bg-green-100' :
-              percentage >= 50 ? 'bg-yellow-100' :
-              'bg-red-100'
+              percentage >= 75 ? 'bg-success/10' :
+              percentage >= 50 ? 'bg-warning/10' :
+              'bg-destructive/10'
             }`}>
               <p className={`font-medium ${
-                percentage >= 75 ? 'text-green-900' :
-                percentage >= 50 ? 'text-yellow-900' :
-                'text-red-900'
+                percentage >= 75 ? 'text-success' :
+                percentage >= 50 ? 'text-warning' :
+                'text-destructive'
               }`}>Down Payment</p>
               <p className={`text-lg ${
-                percentage >= 75 ? 'text-green-900' :
-                percentage >= 50 ? 'text-yellow-900' :
-                'text-red-900'
+                percentage >= 75 ? 'text-success' :
+                percentage >= 50 ? 'text-warning' :
+                'text-destructive'
               }`}>₱{downPayment.toLocaleString()}</p>
             </div>
             <div className={`p-2 rounded ${
-              percentage >= 75 ? 'bg-green-100' :
-              percentage >= 50 ? 'bg-yellow-100' :
-              'bg-red-100'
+              percentage >= 75 ? 'bg-success/10' :
+              percentage >= 50 ? 'bg-warning/10' :
+              'bg-destructive/10'
             }`}>
               <p className={`font-medium ${
-                percentage >= 75 ? 'text-green-900' :
-                percentage >= 50 ? 'text-yellow-900' :
-                'text-red-900'
+                percentage >= 75 ? 'text-success' :
+                percentage >= 50 ? 'text-warning' :
+                'text-destructive'
               }`}>Refund Amount</p>
               <p className={`text-lg font-bold ${
-                percentage >= 75 ? 'text-green-900' :
-                percentage >= 50 ? 'text-yellow-900' :
-                'text-red-900'
+                percentage >= 75 ? 'text-success' :
+                percentage >= 50 ? 'text-warning' :
+                'text-destructive'
               }`}>₱{amount.toLocaleString()}</p>
             </div>
           </div>
@@ -145,17 +145,17 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
       )}
 
       {/* Policy Details - Enhanced Professional UI */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <button
           onClick={() => setShowPolicy(!showPolicy)}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-muted transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
           type="button"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
               <Info className="w-4 h-4 text-primary" />
             </div>
-            <span className="text-sm font-semibold text-gray-900">Cancellation Policy Details</span>
+            <span className="text-sm font-semibold text-foreground">Cancellation Policy Details</span>
           </div>
           <div className={`transform transition-transform duration-200 ${showPolicy ? 'rotate-180' : 'rotate-0'}`}>
             <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,34 +166,34 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
         
         <div className={`transition-all duration-300 ease-in-out ${showPolicy ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
           <div className="px-4 pb-4">
-            <div className="pt-2 border-t border-gray-100">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Refund Policy Structure</h4>
+            <div className="pt-2 border-t border-border">
+              <h4 className="text-sm font-semibold text-foreground mb-3">Refund Policy Structure</h4>
               
               {/* Policy Table */}
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-muted rounded-lg p-3">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-green-200">
+                  <div className="flex items-center justify-between py-2 px-3 bg-card rounded-md border border-success/20">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">7+ days before check-in</span>
+                      <span className="text-sm text-foreground">7+ days before check-in</span>
                     </div>
-                    <span className="text-sm font-semibold text-green-700">100% refund</span>
+                    <span className="text-sm font-semibold text-success">100% refund</span>
                   </div>
 
-                  <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-yellow-200">
+                  <div className="flex items-center justify-between py-2 px-3 bg-card rounded-md border border-warning/20">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">3-7 days before</span>
+                      <span className="text-sm text-foreground">3-7 days before</span>
                     </div>
-                    <span className="text-sm font-semibold text-yellow-700">50% refund</span>
+                    <span className="text-sm font-semibold text-warning">50% refund</span>
                   </div>
 
-                  <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-red-200">
+                  <div className="flex items-center justify-between py-2 px-3 bg-card rounded-md border border-destructive/20">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">Less than 3 days</span>
+                      <span className="text-sm text-foreground">Less than 3 days</span>
                     </div>
-                    <span className="text-sm font-semibold text-red-700">No refund (blocked)</span>
+                    <span className="text-sm font-semibold text-destructive">No refund (blocked)</span>
                   </div>
                 </div>
               </div>
@@ -205,7 +205,7 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
                     <Info className="w-3 h-3 text-primary" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-blue-900">Important Information:</p>
+                    <p className="text-xs font-medium text-foreground">Important Information:</p>
                     <p className="text-xs text-primary">
                       • Only the down payment (50% of total booking) is refundable<br/>
                       • Remaining 50% is paid upon arrival at the resort<br/>
@@ -234,7 +234,7 @@ export function CancellationPolicy({ checkInDate, totalAmount, onConfirm }: Canc
       )}
 
       {!canCancel && (
-        <div className="p-3 bg-gray-100 rounded-lg text-center text-gray-900">
+        <div className="p-3 bg-muted rounded-lg text-center text-foreground">
           <p className="text-sm">For assistance with your booking, please call the resort directly.</p>
         </div>
       )}

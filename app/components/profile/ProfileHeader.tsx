@@ -63,7 +63,7 @@ export default function ProfileHeader({
     <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border">
       {/* Profile Header */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="bg-primary p-3 sm:p-4 rounded-full shadow-lg ring-4 ring-blue-600/20 flex-shrink-0">
+        <div className="bg-primary p-3 sm:p-4 rounded-full shadow-lg ring-4 ring-primary/20 flex-shrink-0">
           <FaUser className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
         </div>
         <div className="flex-1 min-w-0">
@@ -95,7 +95,7 @@ export default function ProfileHeader({
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="bg-secondary text-foreground px-3 py-1 rounded border border-gray-500 focus:border-primary focus:outline-none flex-1 text-sm sm:text-base"
+                  className="bg-secondary text-foreground px-3 py-1 rounded border border-border focus:border-primary focus:outline-none flex-1 text-sm sm:text-base"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleUpdateName();
@@ -105,7 +105,7 @@ export default function ProfileHeader({
                 <button
                   onClick={handleUpdateName}
                   disabled={updating || !newName.trim()}
-                  className="text-green-500 hover:text-green-400 disabled:text-muted-foreground disabled:cursor-not-allowed min-w-[28px] h-7 flex items-center justify-center"
+                  className="text-success hover:text-success/80 disabled:text-muted-foreground disabled:cursor-not-allowed min-w-[28px] h-7 flex items-center justify-center"
                 >
                   {updating ? (
                     <FaSpinner className="animate-spin w-3 h-3" />
@@ -115,7 +115,7 @@ export default function ProfileHeader({
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="text-red-500 hover:text-red-400 min-w-[28px] h-7 flex items-center justify-center"
+                  className="text-destructive hover:text-destructive/80 min-w-[28px] h-7 flex items-center justify-center"
                 >
                   ✕
                 </button>
@@ -132,7 +132,7 @@ export default function ProfileHeader({
                 <button
                   onClick={handleStartEdit}
                   disabled={loadingProfile}
-                  className="text-muted-foreground hover:text-blue-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <FaEdit className="w-4 h-4" />
                 </button>
@@ -158,7 +158,7 @@ export default function ProfileHeader({
                     setNewPhone(formatted);
                   }}
                   placeholder="09XX-XXX-XXXX (11 digits)"
-                  className="bg-secondary text-foreground px-3 py-1 rounded border border-gray-500 focus:border-primary focus:outline-none flex-1 text-sm sm:text-base"
+                  className="bg-secondary text-foreground px-3 py-1 rounded border border-border focus:border-primary focus:outline-none flex-1 text-sm sm:text-base"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleUpdatePhone();
@@ -168,7 +168,7 @@ export default function ProfileHeader({
                 <button
                   onClick={handleUpdatePhone}
                   disabled={updatingPhone || !newPhone.trim()}
-                  className="text-green-500 hover:text-green-400 disabled:text-muted-foreground disabled:cursor-not-allowed min-w-[28px] h-7 flex items-center justify-center"
+                  className="text-success hover:text-success/80 disabled:text-muted-foreground disabled:cursor-not-allowed min-w-[28px] h-7 flex items-center justify-center"
                 >
                   {updatingPhone ? (
                     <FaSpinner className="animate-spin w-3 h-3" />
@@ -178,7 +178,7 @@ export default function ProfileHeader({
                 </button>
                 <button
                   onClick={handleCancelPhoneEdit}
-                  className="text-red-500 hover:text-red-400 min-w-[28px] h-7 flex items-center justify-center"
+                  className="text-destructive hover:text-destructive/80 min-w-[28px] h-7 flex items-center justify-center"
                 >
                   ✕
                 </button>
@@ -193,7 +193,7 @@ export default function ProfileHeader({
                 <button
                   onClick={handleStartPhoneEdit}
                   disabled={loadingProfile}
-                  className="text-muted-foreground hover:text-blue-500 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <FaEdit className="w-4 h-4" />
                 </button>

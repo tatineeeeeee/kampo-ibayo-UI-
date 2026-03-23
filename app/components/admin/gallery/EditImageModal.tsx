@@ -70,12 +70,12 @@ export default function EditImageModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+      <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Edit Image</h3>
+          <h3 className="text-lg font-semibold text-foreground">Edit Image</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-muted-foreground hover:text-muted-foreground"
           >
             &times;
           </button>
@@ -95,7 +95,7 @@ export default function EditImageModal({
         <div className="space-y-4">
           {/* Title / Caption */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Title
             </label>
             <input
@@ -105,13 +105,13 @@ export default function EditImageModal({
                 setFormData((prev) => ({ ...prev, caption: e.target.value }))
               }
               placeholder="Image title..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Category
             </label>
             <select
@@ -119,7 +119,7 @@ export default function EditImageModal({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, category: e.target.value }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground bg-card"
             >
               {categoryOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -131,7 +131,7 @@ export default function EditImageModal({
 
           {/* Alt Text */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Alt Text
             </label>
             <input
@@ -141,7 +141,7 @@ export default function EditImageModal({
                 setFormData((prev) => ({ ...prev, alt_text: e.target.value }))
               }
               placeholder="Describe the image..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -161,7 +161,7 @@ export default function EditImageModal({
             />
             <label
               htmlFor="is_featured"
-              className="text-sm font-medium text-gray-900"
+              className="text-sm font-medium text-foreground"
             >
               Show on Homepage
             </label>
@@ -172,14 +172,14 @@ export default function EditImageModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex-1 px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-muted transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={saveChanges}
             disabled={saving}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

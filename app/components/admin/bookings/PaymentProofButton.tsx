@@ -105,7 +105,7 @@ export function PaymentProofButton({
       return (
         <button
           disabled
-          className="w-full px-3 py-2 bg-gray-300 text-gray-500 rounded-md text-xs cursor-not-allowed text-center"
+          className="w-full px-3 py-2 bg-muted text-muted-foreground rounded-md text-xs cursor-not-allowed text-center"
         >
           Loading...
         </button>
@@ -115,7 +115,7 @@ export function PaymentProofButton({
     return (
       <button
         disabled
-        className="h-7 w-full px-2 py-1 bg-gray-300 text-gray-500 rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
+        className="h-7 w-full px-2 py-1 bg-muted text-muted-foreground rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
       >
         Loading...
       </button>
@@ -129,8 +129,8 @@ export function PaymentProofButton({
         disabled
         className={
           variant === "modal"
-            ? "w-full px-3 py-2 bg-gray-400 text-white rounded-md text-xs cursor-not-allowed text-center"
-            : "h-7 w-full px-2 py-1 bg-gray-400 text-white rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
+            ? "w-full px-3 py-2 bg-muted-foreground text-white rounded-md text-xs cursor-not-allowed text-center"
+            : "h-7 w-full px-2 py-1 bg-muted-foreground text-white rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
         }
         title="Booking cancelled - no review needed"
       >
@@ -162,8 +162,8 @@ export function PaymentProofButton({
         }}
         className={
           variant === "modal"
-            ? "w-full px-3 py-2 bg-gray-400 text-white rounded-md text-xs hover:bg-gray-500 text-center"
-            : "h-7 w-full px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 text-center flex items-center justify-center"
+            ? "w-full px-3 py-2 bg-muted-foreground text-white rounded-md text-xs hover:bg-muted-foreground/90 text-center"
+            : "h-7 w-full px-2 py-1 bg-muted-foreground text-white rounded text-xs hover:bg-muted-foreground/90 text-center flex items-center justify-center"
         }
         title="Check for payment proof"
       >
@@ -175,15 +175,15 @@ export function PaymentProofButton({
   const getButtonStyle = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-amber-500 hover:bg-amber-600";
+        return "bg-warning hover:bg-warning/90";
       case "verified":
-        return "bg-emerald-500 hover:bg-emerald-600";
+        return "bg-success hover:bg-success/90";
       case "rejected":
-        return "bg-slate-500 hover:bg-slate-600";
+        return "bg-muted-foreground hover:bg-muted-foreground/90";
       case "cancelled":
-        return "bg-gray-400 hover:bg-gray-500";
+        return "bg-muted-foreground hover:bg-muted-foreground/90";
       default:
-        return "bg-violet-500 hover:bg-violet-600";
+        return "bg-chart-4 hover:bg-chart-4/90";
     }
   };
 

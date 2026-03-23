@@ -784,7 +784,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <Link href="/profile">
-            <button className="bg-muted text-foreground px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition">
+            <button className="bg-muted text-foreground px-6 py-3 rounded-lg font-semibold hover:bg-muted transition">
               Back to Profile
             </button>
           </Link>

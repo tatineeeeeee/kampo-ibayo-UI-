@@ -39,36 +39,36 @@ export default function DeleteConfirmModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+      <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div
               className={`p-2 rounded-lg ${
-                isBulkOrAll ? "bg-red-100" : "bg-orange-100"
+                isBulkOrAll ? "bg-destructive/10" : "bg-warning/10"
               }`}
             >
               <Trash2
                 className={`w-5 h-5 ${
-                  isBulkOrAll ? "text-red-600" : "text-orange-600"
+                  isBulkOrAll ? "text-destructive" : "text-warning"
                 }`}
               />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           </div>
           <button
             onClick={onClose}
             disabled={isDeleting}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            className="text-muted-foreground hover:text-muted-foreground disabled:opacity-50"
           >
             &times;
           </button>
         </div>
 
         <div className="mb-6">
-          <p className="text-gray-700 leading-relaxed">{message}</p>
+          <p className="text-foreground leading-relaxed">{message}</p>
           {isBulkOrAll && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700 font-medium">
+            <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive font-medium">
                 This action cannot be undone. Images will be permanently deleted
                 from both the database and storage.
               </p>
@@ -80,7 +80,7 @@ export default function DeleteConfirmModal({
           <button
             onClick={onClose}
             disabled={isDeleting}
-            className="flex-1 px-4 py-2 text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-muted disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
@@ -89,8 +89,8 @@ export default function DeleteConfirmModal({
             disabled={isDeleting}
             className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors flex items-center justify-center gap-2 ${
               isBulkOrAll
-                ? "bg-red-600 hover:bg-red-700 disabled:bg-red-400"
-                : "bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400"
+                ? "bg-destructive hover:bg-destructive/90 disabled:bg-destructive/60"
+                : "bg-warning hover:bg-warning/90 disabled:bg-warning/60"
             }`}
           >
             {isDeleting ? (

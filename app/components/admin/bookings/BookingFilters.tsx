@@ -51,11 +51,11 @@ export function BookingFilters({
               placeholder="Search by booking number (KB-0001), guest name, email, phone, or ID..."
               value={searchTerm}
               onChange={(e) => onSearchTermChange(e.target.value)}
-              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
+              className="w-full px-4 py-2 pr-10 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground"
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <svg
-                className="w-5 h-5 text-gray-400"
+                className="w-5 h-5 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -71,7 +71,7 @@ export function BookingFilters({
           </div>
           <Link
             href="/admin/bookings/walk-in"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap font-medium text-sm shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap font-medium text-sm shadow-sm"
           >
             <UserPlus className="w-4 h-4" />
             <span className="hidden sm:inline">Walk-in Booking</span>
@@ -79,7 +79,7 @@ export function BookingFilters({
           </Link>
         </div>
         {searchTerm && (
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Found {filteredBookings.length} booking
             {filteredBookings.length !== 1 ? "s" : ""} matching &quot;
             {searchTerm}&quot;
@@ -94,8 +94,8 @@ export function BookingFilters({
             onClick={() => onStatusFilterChange("all")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "all"
-                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-info/10 text-info border border-info/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">All</span>
@@ -106,8 +106,8 @@ export function BookingFilters({
             onClick={() => onStatusFilterChange("pending")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "pending"
-                ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-warning/10 text-warning border border-warning/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Pend</span>
@@ -125,8 +125,8 @@ export function BookingFilters({
             onClick={() => onStatusFilterChange("confirmed")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "confirmed"
-                ? "bg-green-100 text-green-700 border border-green-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-success/10 text-success border border-success/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Conf</span>
@@ -145,8 +145,8 @@ export function BookingFilters({
             onClick={() => onStatusFilterChange("completed")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "completed"
-                ? "bg-purple-100 text-purple-700 border border-purple-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-chart-4/10 text-chart-4 border border-chart-4/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Done</span>
@@ -165,8 +165,8 @@ export function BookingFilters({
             onClick={() => onStatusFilterChange("cancelled")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "cancelled"
-                ? "bg-red-100 text-red-700 border border-red-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Canc</span>
@@ -185,8 +185,8 @@ export function BookingFilters({
             onClick={() => onStatusFilterChange("walk-in")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
               statusFilter === "walk-in"
-                ? "bg-amber-100 text-amber-700 border border-amber-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-warning/10 text-warning border border-warning/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <Footprints className="w-3.5 h-3.5" />
@@ -204,7 +204,7 @@ export function BookingFilters({
           </button>
         </div>
         {(statusFilter !== "all" || searchTerm) && (
-          <p className="text-xs sm:text-sm text-gray-600 mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             Showing {filteredBookings.length} of {bookings.length} bookings
             {statusFilter === "walk-in" && " (walk-in bookings)"}
             {statusFilter !== "all" &&
@@ -216,20 +216,20 @@ export function BookingFilters({
       </div>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-700">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground">
           All Bookings ({filteredBookings.length})
           {!showDeletedUsers && bookings.length > filteredBookings.length && (
-            <span className="text-sm text-gray-500 ml-2">
+            <span className="text-sm text-muted-foreground ml-2">
               ({bookings.length - filteredBookings.length} hidden from deleted
               users)
             </span>
           )}
           {searchTerm && (
-            <span className="text-sm text-blue-600 ml-2">(filtered)</span>
+            <span className="text-sm text-primary ml-2">(filtered)</span>
           )}
         </h3>
         <div className="flex flex-wrap gap-2 items-center">
-          <label className="flex items-center text-xs sm:text-sm text-black">
+          <label className="flex items-center text-xs sm:text-sm text-foreground">
             <input
               type="checkbox"
               checked={showDeletedUsers}
@@ -263,8 +263,8 @@ export function BookingFilters({
             disabled={filteredBookings.length === 0}
             className={`px-3 py-1 text-white rounded-md text-sm transition flex items-center gap-2 ${
               filteredBookings.length === 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600"
+                ? "bg-muted-foreground cursor-not-allowed"
+                : "bg-success hover:bg-success/90"
             }`}
             title="Export current bookings to CSV"
           >
@@ -296,8 +296,8 @@ export function BookingFilters({
             disabled={filteredBookings.length === 0}
             className={`px-3 py-1 text-white rounded-md text-sm transition flex items-center gap-2 ${
               filteredBookings.length === 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-red-500 hover:bg-red-600"
+                ? "bg-muted-foreground cursor-not-allowed"
+                : "bg-destructive hover:bg-destructive/90"
             }`}
             title="Export current bookings to PDF"
           >
@@ -310,8 +310,8 @@ export function BookingFilters({
             disabled={refreshing}
             className={`px-3 py-1 text-white rounded-md text-sm transition ${
               refreshing
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
+                ? "bg-muted-foreground cursor-not-allowed"
+                : "bg-primary hover:bg-primary/90"
             }`}
           >
             {refreshing ? (

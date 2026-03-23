@@ -48,8 +48,8 @@ export default function GalleryGrid({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-800">Loading gallery...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-foreground">Loading gallery...</span>
       </div>
     );
   }
@@ -57,15 +57,15 @@ export default function GalleryGrid({
   if (filteredImages.length === 0) {
     return (
       <div className="text-center py-8 sm:py-12">
-        <ImageIcon className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-        <p className="text-gray-800 font-medium mb-2 text-sm sm:text-base">
+        <ImageIcon className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+        <p className="text-foreground font-medium mb-2 text-sm sm:text-base">
           {searchTerm
             ? `No images matching "${searchTerm}"`
             : selectedCategory === "all"
             ? "No images uploaded yet"
             : `No images in ${selectedCategory} category`}
         </p>
-        <p className="text-gray-600 text-sm">
+        <p className="text-muted-foreground text-sm">
           {searchTerm
             ? "Try a different search term"
             : "Upload your first images to get started"}
@@ -83,8 +83,8 @@ export default function GalleryGrid({
             key={image.id}
             className={`relative rounded-xl overflow-hidden border transition-all shadow-sm ${
               isSelected
-                ? "border-blue-500 ring-2 ring-blue-200"
-                : "border-gray-200 hover:shadow-md"
+                ? "border-primary ring-2 ring-primary/30"
+                : "border-border hover:shadow-md"
             }`}
           >
             {/* Checkbox */}
@@ -92,8 +92,8 @@ export default function GalleryGrid({
               onClick={() => onToggleSelect(image.id)}
               className={`absolute top-2 left-2 z-10 w-6 h-6 rounded flex items-center justify-center transition-all ${
                 isSelected
-                  ? "bg-blue-600 text-white"
-                  : "bg-white/80 text-gray-400 hover:bg-white hover:text-gray-600"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card/80 text-muted-foreground hover:bg-card hover:text-muted-foreground"
               }`}
             >
               {isSelected ? (
@@ -123,18 +123,18 @@ export default function GalleryGrid({
 
             {/* Badges */}
             {image.is_featured && (
-              <div className="absolute top-2 right-2 bg-yellow-500 text-white px-1.5 py-0.5 rounded text-[10px] font-semibold z-10">
+              <div className="absolute top-2 right-2 bg-warning text-white px-1.5 py-0.5 rounded text-[10px] font-semibold z-10">
                 Homepage
               </div>
             )}
 
             {/* Info + Actions */}
-            <div className="bg-gray-50 p-2.5 sm:p-3">
-              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+            <div className="bg-muted p-2.5 sm:p-3">
+              <p className="text-xs sm:text-sm font-medium text-foreground truncate">
                 {cleanDisplayName(image)}
               </p>
-              <div className="flex items-center gap-2 mt-1 text-[10px] sm:text-xs text-gray-500">
-                <span className="inline-flex items-center gap-0.5 bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded font-medium">
+              <div className="flex items-center gap-2 mt-1 text-[10px] sm:text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5 bg-muted text-foreground px-1.5 py-0.5 rounded font-medium">
                   {categoryLabelMap[image.category || "general"] ||
                     image.category}
                 </span>
@@ -153,10 +153,10 @@ export default function GalleryGrid({
               </div>
 
               {/* Action buttons */}
-              <div className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-200">
+              <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border">
                 <button
                   onClick={() => onEdit(image)}
-                  className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
                   title="Edit"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
@@ -165,8 +165,8 @@ export default function GalleryGrid({
                   onClick={() => onToggleFeatured(image)}
                   className={`p-1.5 rounded transition-colors ${
                     image.is_featured
-                      ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
-                      : "text-gray-500 hover:text-yellow-500 hover:bg-yellow-50"
+                      ? "text-warning hover:text-warning hover:bg-warning/10"
+                      : "text-muted-foreground hover:text-warning hover:bg-warning/10"
                   }`}
                   title={
                     image.is_featured
@@ -178,7 +178,7 @@ export default function GalleryGrid({
                 </button>
                 <button
                   onClick={() => onDeleteSingle(image)}
-                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors ml-auto"
+                  className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors ml-auto"
                   title="Delete"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

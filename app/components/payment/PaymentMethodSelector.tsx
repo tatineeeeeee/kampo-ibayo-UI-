@@ -53,7 +53,7 @@ export default function PaymentMethodSelector({
         <select
           value={paymentMethod}
           onChange={(e) => setPaymentMethod(e.target.value)}
-          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
+          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
           required
         >
           <option value="" className="bg-muted">
@@ -88,7 +88,7 @@ export default function PaymentMethodSelector({
               ? "Enter Maya reference number"
               : "Enter transaction reference (if available)"
           }
-          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
+          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
           required={paymentMethod === "gcash" || paymentMethod === "maya"}
         />
       </div>
@@ -119,7 +119,7 @@ export default function PaymentMethodSelector({
               ? "border-red-500 focus:ring-red-500"
               : paymentValidation.level === "warning"
               ? "border-yellow-500 focus:ring-yellow-500"
-              : "border-border focus:ring-blue-500 focus:border-primary"
+              : "border-border focus:ring-ring focus:border-primary"
           }`}
           required
         />
@@ -230,7 +230,7 @@ export default function PaymentMethodSelector({
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                         confirmUnusualAmount
                           ? "bg-amber-500 border-amber-500"
-                          : "border-gray-500 group-hover:border-amber-400"
+                          : "border-border group-hover:border-amber-400"
                       }`}
                     >
                       {confirmUnusualAmount && (

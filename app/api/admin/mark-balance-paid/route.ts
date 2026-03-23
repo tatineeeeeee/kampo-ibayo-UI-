@@ -39,10 +39,13 @@ export async function POST(request: NextRequest) {
     const numTotalAmount = parseFloat(String(totalAmount));
     
     
-    // Validate numbers
-    if (isNaN(numBookingId) || isNaN(numBalanceAmount) || isNaN(numTotalAmount)) {
+    // Validate numbers — bounds check to prevent overflow/abuse
+    if (isNaN(numBookingId) || isNaN(numBalanceAmount) || isNaN(numTotalAmount) ||
+        !isFinite(numBalanceAmount) || !isFinite(numTotalAmount) ||
+        numBookingId <= 0 || numBalanceAmount < 0 || numTotalAmount <= 0 ||
+        numBalanceAmount > 1_000_000 || numTotalAmount > 1_000_000) {
       return NextResponse.json(
-        { error: 'Invalid numeric values', received: { bookingId, balanceAmount, totalAmount } },
+        { error: 'Invalid numeric values' },
         { status: 400 }
       );
     }

@@ -37,13 +37,13 @@ export default function BookingStatusReport({
 }: BookingStatusReportProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-white p-6 rounded-xl shadow-md">
-        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-          <PhilippinePeso className="w-5 h-5 text-green-600" />
+      <div className="bg-card p-6 rounded-xl shadow-md">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <PhilippinePeso className="w-5 h-5 text-success" />
           Payment Status Overview
         </h3>
         {isLoading ? (
-          <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+          <div className="h-64 bg-muted animate-pulse rounded-lg"></div>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -91,9 +91,9 @@ export default function BookingStatusReport({
                 fill="#8884d8"
                 dataKey="value"
               >
-                <Cell fill="#10b981" />
-                <Cell fill="#f59e0b" />
-                <Cell fill="#6b7280" />
+                <Cell fill="hsl(var(--chart-1))" />
+                <Cell fill="hsl(var(--chart-2))" />
+                <Cell fill="hsl(var(--muted-foreground))" />
               </Pie>
               <Tooltip
                 formatter={(value) => [
@@ -106,13 +106,13 @@ export default function BookingStatusReport({
           </ResponsiveContainer>
         )}
       </div>
-      <div className="bg-white p-6 rounded-xl shadow-md">
-        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-blue-600" />
+      <div className="bg-card p-6 rounded-xl shadow-md">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-info" />
           Payment Methods
         </h3>
         {isLoading ? (
-          <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+          <div className="h-64 bg-muted animate-pulse rounded-lg"></div>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <BarChart
@@ -185,18 +185,18 @@ export default function BookingStatusReport({
                   "Revenue",
                 ]}
               />
-              <Bar dataKey="revenue" fill="#3b82f6" name="Revenue (₱)" />
+              <Bar dataKey="revenue" fill="hsl(var(--chart-3))" name="Revenue (₱)" />
             </BarChart>
           </ResponsiveContainer>
         )}
       </div>
-      <div className="bg-white p-6 rounded-xl shadow-md lg:col-span-2">
-        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-          <Footprints className="w-5 h-5 text-amber-600" />
+      <div className="bg-card p-6 rounded-xl shadow-md lg:col-span-2">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Footprints className="w-5 h-5 text-warning" />
           Walk-in vs Online Bookings
         </h3>
         {isLoading ? (
-          <div className="h-32 bg-gray-100 animate-pulse rounded-lg"></div>
+          <div className="h-32 bg-muted animate-pulse rounded-lg"></div>
         ) : (
           (() => {
             // When "All Status", exclude cancelled; otherwise respect the filter
@@ -211,29 +211,29 @@ export default function BookingStatusReport({
             );
             return (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-amber-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-amber-600">
+                <div className="bg-warning/10 rounded-lg p-4 text-center">
+                  <p className="text-2xl font-bold text-warning">
                     {walkIns.length}
                   </p>
-                  <p className="text-sm text-amber-700">Walk-in Bookings</p>
+                  <p className="text-sm text-warning">Walk-in Bookings</p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600">
+                <div className="bg-primary/10 rounded-lg p-4 text-center">
+                  <p className="text-2xl font-bold text-info">
                     {online.length}
                   </p>
-                  <p className="text-sm text-blue-700">Online Bookings</p>
+                  <p className="text-sm text-primary">Online Bookings</p>
                 </div>
-                <div className="bg-amber-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-amber-600">
+                <div className="bg-warning/10 rounded-lg p-4 text-center">
+                  <p className="text-2xl font-bold text-warning">
                     {formatCurrency(walkIns.reduce((sum, b) => sum + (b.total_amount || 0), 0))}
                   </p>
-                  <p className="text-sm text-amber-700">Walk-in Revenue</p>
+                  <p className="text-sm text-warning">Walk-in Revenue</p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600">
+                <div className="bg-primary/10 rounded-lg p-4 text-center">
+                  <p className="text-2xl font-bold text-info">
                     {formatCurrency(online.reduce((sum, b) => sum + (b.total_amount || 0), 0))}
                   </p>
-                  <p className="text-sm text-blue-700">Online Revenue</p>
+                  <p className="text-sm text-primary">Online Revenue</p>
                 </div>
               </div>
             );

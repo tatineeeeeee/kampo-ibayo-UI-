@@ -66,7 +66,7 @@ export default function BookingHistory({
                       ? "bg-primary/20 text-primary"
                       : status === "confirmed" && isUpcoming
                       ? "bg-purple-500/20 text-purple-400"
-                      : "bg-gray-500/20 text-muted-foreground"
+                      : "bg-muted-foreground/20 text-muted-foreground"
                   }`}
                 >
                   {status === "cancelled"

@@ -24,6 +24,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { useAuth } from "../contexts/AuthContext";
 import AdminNotificationBell from "../components/AdminNotificationBell";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 // FIXED MODE: Use proper authentication but with navigation optimizations
 const USE_SIMPLE_MODE = false;
@@ -37,11 +38,11 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
-      <aside className="w-64 bg-white shadow-md flex flex-col">
+    <div className="min-h-screen flex bg-background">
+      <aside className="w-64 bg-card shadow-md flex flex-col">
         <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-blue-600">Admin Panel (TEST)</h1>
-          <p className="text-xs text-gray-500">
+          <h1 className="text-xl font-bold text-primary">Admin Panel (TEST)</h1>
+          <p className="text-xs text-muted-foreground">
             Simple Mode - No Auth Blocking
           </p>
         </div>
@@ -50,8 +51,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <Home className="w-5 h-5" /> Dashboard
@@ -60,8 +61,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/bookings"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/bookings")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <Calendar className="w-5 h-5" /> Bookings
@@ -70,8 +71,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/users"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/users")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <Users className="w-5 h-5" /> Users
@@ -80,8 +81,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/reviews"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/reviews")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <Star className="w-5 h-5" /> Reviews
@@ -90,8 +91,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/payments"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/payments")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <CreditCard className="w-5 h-5" /> Payments
@@ -100,8 +101,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/reports"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/reports")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <BarChart3 className="w-5 h-5" /> Reports
@@ -110,8 +111,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/gallery"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/gallery")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <Camera className="w-5 h-5" /> Gallery
@@ -120,8 +121,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
             href="/admin/settings"
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
               isActive("/admin/settings")
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-blue-50"
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-primary/10"
             }`}
           >
             <Settings className="w-5 h-5" /> Settings
@@ -129,10 +130,10 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Logout Button at Bottom */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-border">
           <button
             onClick={() => (window.location.href = "/")}
-            className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-muted rounded-md transition-colors duration-200"
             title="Logout"
           >
             <LogOut className="w-5 h-5" />
@@ -141,8 +142,8 @@ function SimpleAdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow-sm p-4">
-          <h2 className="text-xl font-semibold text-gray-700">
+        <header className="bg-card shadow-sm p-4">
+          <h2 className="text-xl font-semibold text-foreground">
             TEST MODE: {pathname}
           </h2>
         </header>
@@ -289,8 +290,8 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-gray-600">Loading admin panel...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-muted-foreground">Loading admin panel...</div>
       </div>
     );
   }
@@ -298,7 +299,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-background">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -311,7 +312,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-white shadow-md flex flex-col
+          w-64 bg-card shadow-md flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -331,18 +332,18 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
                 />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-lg sm:text-xl font-bold text-blue-600 leading-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-primary leading-tight">
                   Kampo Ibayo
                 </h1>
-                <p className="text-xs text-gray-500">Admin Panel</p>
+                <p className="text-xs text-muted-foreground">Admin Panel</p>
               </div>
             </div>
             {/* Close button for mobile */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+              className="lg:hidden p-2 rounded-md hover:bg-muted"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -353,8 +354,8 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 sm:py-2 rounded-md transition-colors ${
                 isActive(item.href)
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-foreground hover:bg-primary/10 hover:text-primary"
               }`}
             >
               <item.icon className="w-5 h-5" /> {item.label}
@@ -363,10 +364,10 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Customer View & Logout at Bottom */}
-        <div className="p-3 sm:p-4 border-t border-gray-200 space-y-1">
+        <div className="p-3 sm:p-4 border-t border-border space-y-1">
           <Link
             href="/"
-            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-md transition-colors duration-200"
             title="Switch to Customer View"
           >
             <Globe className="w-5 h-5" />
@@ -374,7 +375,7 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-2 text-muted-foreground hover:bg-muted rounded-md transition-colors duration-200"
             title="Logout"
           >
             <LogOut className="w-5 h-5" />
@@ -385,20 +386,22 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header with hamburger menu */}
-        <header className="bg-white shadow-sm p-3 sm:p-4 flex justify-between items-center sticky top-0 z-30">
+        <header className="bg-card shadow-sm p-3 sm:p-4 flex justify-between items-center sticky top-0 z-30">
           <div className="flex items-center gap-3">
             {/* Hamburger menu for mobile */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+              className="lg:hidden p-2 rounded-md hover:bg-muted"
             >
-              <Menu className="w-6 h-6 text-gray-600" />
+              <Menu className="w-6 h-6 text-muted-foreground" />
             </button>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-700 truncate">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">
               Dashboard
             </h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Theme Toggle */}
+            <ThemeToggle />
             {/* Notification Bell */}
             <AdminNotificationBell />
 
@@ -406,14 +409,14 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
               <div
                 className={`hidden sm:flex items-center gap-2 font-semibold px-3 py-1 rounded-full text-sm ${
                   isSuperAdmin
-                    ? "bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800 border border-amber-300"
-                    : "bg-blue-50 text-gray-700"
+                    ? "bg-gradient-to-r from-warning/20 to-warning/10 text-warning border border-warning/30"
+                    : "bg-primary/10 text-foreground"
                 }`}
               >
                 {isSuperAdmin ? (
-                  <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                  <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
                 ) : (
-                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-info" />
                 )}
                 <span className="hidden md:inline">
                   {adminName || user?.email || "Admin User"}
@@ -426,12 +429,12 @@ function FullAdminLayout({ children }: { children: React.ReactNode }) {
                 <div
                   className={`text-xs px-2 sm:px-3 py-1 rounded-full text-center font-medium ${
                     isSuperAdmin
-                      ? "bg-gradient-to-r from-yellow-200 to-amber-200 text-amber-900 border border-amber-400"
+                      ? "bg-gradient-to-r from-warning/20 to-warning/15 text-warning border border-warning/30"
                       : userRole === "admin"
-                        ? "bg-blue-100 text-blue-700"
+                        ? "bg-info/10 text-info"
                         : userRole === "staff"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-blue-100 text-blue-700"
+                          ? "bg-success/10 text-success"
+                          : "bg-info/10 text-info"
                   }`}
                 >
                   {isSuperAdmin ? (

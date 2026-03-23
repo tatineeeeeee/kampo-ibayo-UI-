@@ -81,7 +81,7 @@ export function PaymentStatusCell({
   if (loading) {
     return (
       <div className="flex items-center justify-center">
-        <span className="text-xs text-gray-400">...</span>
+        <span className="text-xs text-muted-foreground">...</span>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export function PaymentStatusCell({
     if (booking.status === "cancelled") {
       return {
         text: "Cancelled",
-        badge: "bg-gray-500 text-white",
+        badge: "bg-muted-foreground text-white",
       };
     }
 
@@ -102,27 +102,27 @@ export function PaymentStatusCell({
         case "pending":
           return {
             text: "Under Review",
-            badge: "bg-orange-500 text-white",
+            badge: "bg-warning text-white",
           };
         case "verified":
           return {
             text: "Verified",
-            badge: "bg-green-500 text-white",
+            badge: "bg-success text-white",
           };
         case "rejected":
           return {
             text: "Rejected",
-            badge: "bg-red-500 text-white",
+            badge: "bg-destructive text-white",
           };
         case "cancelled":
           return {
             text: "Cancelled",
-            badge: "bg-gray-500 text-white",
+            badge: "bg-muted-foreground text-white",
           };
         default:
           return {
             text: "Unknown Status",
-            badge: "bg-gray-400 text-white",
+            badge: "bg-muted-foreground text-white",
           };
       }
     }
@@ -131,22 +131,22 @@ export function PaymentStatusCell({
     if (booking.payment_status === "payment_review") {
       return {
         text: "Under Review",
-        badge: "bg-orange-500 text-white",
+        badge: "bg-warning text-white",
       };
     } else if (booking.payment_status === "rejected") {
       return {
         text: "Rejected",
-        badge: "bg-red-500 text-white",
+        badge: "bg-destructive text-white",
       };
     } else if (booking.payment_status === "paid") {
       return {
         text: "Verified",
-        badge: "bg-green-500 text-white",
+        badge: "bg-success text-white",
       };
     } else {
       return {
         text: "Awaiting Payment",
-        badge: "bg-gray-400 text-white",
+        badge: "bg-muted-foreground text-white",
       };
     }
   };

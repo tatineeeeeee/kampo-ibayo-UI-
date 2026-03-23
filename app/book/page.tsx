@@ -723,27 +723,36 @@ function BookingPage() {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert([bookingData])
-        .select()
-        .single();
+      // Server-side booking creation with price validation
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setIsSubmitting(false);
+        showError("Session Expired", "Please log in again to create a booking.");
+        return;
+      }
 
-      if (error) {
-        console.error("Supabase error details:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
+      const response = await fetch("/api/bookings/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        console.error("Booking creation failed:", result.error);
         setIsSubmitting(false);
         showError(
           "Booking Failed",
           `Error creating booking: ${
-            error.message || "Unknown error"
+            result.error || "Unknown error"
           }. Please try again.`,
         );
       } else {
+        const data = result.booking;
         // Booking created successfully - redirect to manual payment upload
 
         // Show success message

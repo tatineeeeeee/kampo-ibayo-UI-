@@ -396,7 +396,7 @@ const ReviewSystem = ({
                 <div className="h-4 bg-muted-foreground/30 rounded w-3/4"></div>
                 <div className="h-4 bg-muted-foreground/30 rounded w-1/2"></div>
               </div>
-              <div className="border-t border-gray-600 pt-3 sm:pt-4">
+              <div className="border-t border-border pt-3 sm:pt-4">
                 <div className="h-4 bg-muted-foreground/30 rounded w-1/3 mb-2"></div>
                 <div className="h-3 bg-muted-foreground/30 rounded w-1/4"></div>
               </div>
@@ -660,7 +660,7 @@ const ReviewSystem = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-700">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-2">
                 {renderStars(selectedReview.rating)}
                 {selectedReview.approved && (
@@ -704,7 +704,7 @@ const ReviewSystem = ({
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-gray-700">
+            <div className="px-5 py-4 border-t border-border">
               <p className="font-bold text-primary text-sm">- {selectedReview.guest_name}</p>
               {selectedReview.guest_location && (
                 <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
@@ -860,7 +860,7 @@ const ReviewSystem = ({
                         )}
 
                       {/* Guest Info */}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-700">
+                      <div className="flex items-center justify-between pt-3 border-t border-border">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-primary">
                             {review.guest_name}

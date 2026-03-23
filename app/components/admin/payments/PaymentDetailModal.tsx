@@ -65,21 +65,21 @@ export function BalancePaymentModal({
 }: BalancePaymentModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full border border-gray-200 max-h-[95vh] overflow-y-auto">
+      <div className="bg-card rounded-lg shadow-xl max-w-md w-full border border-border max-h-[95vh] overflow-y-auto">
         {/* Modal Header */}
-        <div className="bg-gray-50 p-4 sm:p-6 rounded-t-lg border-b border-gray-200">
+        <div className="bg-muted p-4 sm:p-6 rounded-t-lg border-b border-border">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">
                 Mark Balance as Paid
               </h2>
-              <p className="text-gray-600 text-xs sm:text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 Confirm on-arrival payment
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white hover:shadow-md transition"
+              className="text-muted-foreground hover:text-foreground text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-card hover:shadow-md transition"
             >
               ×
             </button>
@@ -89,38 +89,38 @@ export function BalancePaymentModal({
         {/* Modal Content */}
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Payment Details */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-semibold text-blue-800 mb-3">
+          <div className="bg-primary/10 p-4 rounded-lg border border-info/20">
+            <h3 className="text-sm font-semibold text-primary mb-3">
               Payment Details
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Guest:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-muted-foreground">Guest:</span>
+                <span className="font-medium text-foreground">
                   {payment.user}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Booking:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-muted-foreground">Booking:</span>
+                <span className="font-medium text-foreground">
                   {formatBookingNumber(payment.booking_id)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Total Amount:</span>
-                <span className="font-bold text-gray-900">
+                <span className="text-muted-foreground">Total Amount:</span>
+                <span className="font-bold text-foreground">
                   ₱{payment.total_amount?.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Already Paid (50%):</span>
-                <span className="font-medium text-green-600">
+                <span className="text-muted-foreground">Already Paid (50%):</span>
+                <span className="font-medium text-success">
                   ₱{payment.amount.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-blue-200 pt-2 mt-2">
-                <span className="text-gray-600">Balance Due:</span>
-                <span className="font-bold text-orange-600">
+              <div className="flex justify-between border-t border-info/20 pt-2 mt-2">
+                <span className="text-muted-foreground">Balance Due:</span>
+                <span className="font-bold text-warning">
                   ₱
                   {payment.total_amount
                     ? (
@@ -134,16 +134,16 @@ export function BalancePaymentModal({
           </div>
 
           {/* Confirmation Message */}
-          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+          <div className="bg-warning/10 p-4 rounded-lg border border-warning/20">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+              <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center text-white text-sm font-bold">
                 !
               </div>
-              <h4 className="font-semibold text-amber-800">
+              <h4 className="font-semibold text-warning">
                 Confirm On-Arrival Payment
               </h4>
             </div>
-            <p className="text-amber-700 text-sm leading-relaxed">
+            <p className="text-warning text-sm leading-relaxed">
               This will mark the remaining 50% balance as{" "}
               <strong>&quot;Paid on Arrival&quot;</strong>. Only confirm
               this action if the guest has physically paid the balance
@@ -153,15 +153,15 @@ export function BalancePaymentModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-gray-50 p-6 rounded-b-lg border-t border-gray-200">
+        <div className="bg-muted p-6 rounded-b-lg border-t border-border">
           <div className="flex gap-3">
             <button
               onClick={() => onConfirm(payment)}
               disabled={processingBalance}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition shadow-sm ${
                 processingBalance
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-emerald-600 hover:bg-emerald-700"
+                  ? "bg-muted-foreground cursor-not-allowed"
+                  : "bg-success hover:bg-success/90"
               } text-white`}
             >
               {processingBalance ? (
@@ -183,7 +183,7 @@ export function BalancePaymentModal({
             <button
               onClick={onClose}
               disabled={processingBalance}
-              className="py-2 px-4 bg-gray-500 text-white rounded-md text-sm font-medium hover:bg-gray-600 transition disabled:opacity-50"
+              className="py-2 px-4 bg-muted-foreground text-white rounded-md text-sm font-medium hover:bg-muted-foreground/90 transition disabled:opacity-50"
             >
               Cancel
             </button>
@@ -211,22 +211,22 @@ export function PaymentHistoryModal({
 }: PaymentHistoryModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full border border-gray-200 max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-lg shadow-xl max-w-4xl w-full border border-border max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
-        <div className="bg-gray-50 p-6 rounded-t-lg border-b border-gray-200">
+        <div className="bg-muted p-6 rounded-t-lg border-b border-border">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="text-xl font-bold text-foreground">
                 Payment History
               </h2>
-              <p className="text-gray-600 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {payment.user} -{" "}
                 {formatBookingNumber(payment.booking_id)}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:shadow-md transition"
+              className="text-muted-foreground hover:text-foreground text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-card hover:shadow-md transition"
             >
               ×
             </button>
@@ -236,34 +236,34 @@ export function PaymentHistoryModal({
         {/* Modal Content */}
         <div className="p-6">
           {/* Summary Info */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-            <h3 className="text-sm font-semibold text-blue-800 mb-3">
+          <div className="bg-primary/10 p-4 rounded-lg border border-info/20 mb-6">
+            <h3 className="text-sm font-semibold text-primary mb-3">
               Booking Summary
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Total Amount:</span>
-                <span className="font-bold text-gray-900 ml-2">
+                <span className="text-muted-foreground">Total Amount:</span>
+                <span className="font-bold text-foreground ml-2">
                   ₱{payment.total_amount?.toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Total Paid:</span>
-                <span className="font-bold text-green-600 ml-2">
+                <span className="text-muted-foreground">Total Paid:</span>
+                <span className="font-bold text-success ml-2">
                   ₱{payment.amount.toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Payment Type:</span>
-                <span className="font-medium text-gray-900 ml-2">
+                <span className="text-muted-foreground">Payment Type:</span>
+                <span className="font-medium text-foreground ml-2">
                   {payment.payment_type === "half"
                     ? "50% Down Payment"
                     : "Full Payment"}
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Total Submissions:</span>
-                <span className="font-medium text-gray-900 ml-2">
+                <span className="text-muted-foreground">Total Submissions:</span>
+                <span className="font-medium text-foreground ml-2">
                   {payment.total_proofs}
                 </span>
               </div>
@@ -272,7 +272,7 @@ export function PaymentHistoryModal({
 
           {/* Payment Proofs Table */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800">
+            <h3 className="text-lg font-semibold text-foreground">
               All Payment Proofs
             </h3>
 
@@ -281,43 +281,43 @@ export function PaymentHistoryModal({
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <tr className="bg-muted border-b border-border">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Sequence
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Amount
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Reference
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Method
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Date
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                         Notes
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-card divide-y divide-border">
                     {payment.all_payment_proofs.map(
                       (proof) => (
                         <tr
                           key={`proof-${proof.id}`}
-                          className="hover:bg-gray-50"
+                          className="hover:bg-muted"
                         >
                           <td className="px-4 py-3 text-sm">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-foreground">
                               #{proof.sequence}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                          <td className="px-4 py-3 text-sm font-medium text-foreground">
                             ₱{proof.amount.toLocaleString()}
                           </td>
                           <td className="px-4 py-3 text-sm">
@@ -327,19 +327,19 @@ export function PaymentHistoryModal({
                                   proof.reference_number.startsWith(
                                     "ARRIVAL-",
                                   )
-                                    ? "text-amber-700 bg-amber-50"
-                                    : "text-blue-700 bg-blue-50"
+                                    ? "text-warning bg-warning/10"
+                                    : "text-primary bg-primary/10"
                                 }`}
                               >
                                 {proof.reference_number}
                               </div>
                             ) : (
-                              <span className="text-gray-400 italic">
+                              <span className="text-muted-foreground italic">
                                 No reference
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 capitalize">
+                          <td className="px-4 py-3 text-sm text-foreground capitalize">
                             {proof.payment_method?.replace("_", " ")}
                           </td>
                           <td className="px-4 py-3 text-sm">
@@ -351,7 +351,7 @@ export function PaymentHistoryModal({
                               {proof.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
                             {new Date(proof.uploaded_at).toLocaleDateString(
                               "en-US",
                               {
@@ -363,7 +363,7 @@ export function PaymentHistoryModal({
                               },
                             )}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
                             {proof.admin_notes && (
                               <div
                                 className="max-w-xs truncate"
@@ -380,7 +380,7 @@ export function PaymentHistoryModal({
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <div className="text-4xl mb-2">📝</div>
                 <p>No payment proofs uploaded yet</p>
               </div>
@@ -389,11 +389,11 @@ export function PaymentHistoryModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-gray-50 p-4 rounded-b-lg border-t border-gray-200">
+        <div className="bg-muted p-4 rounded-b-lg border-t border-border">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md text-sm font-medium hover:bg-gray-600 transition"
+              className="px-4 py-2 bg-muted-foreground text-white rounded-md text-sm font-medium hover:bg-muted-foreground/90 transition"
             >
               Close
             </button>

@@ -26,21 +26,21 @@ export default function BookingDetailsSummary({
   remainingAmount,
 }: BookingDetailsSummaryProps) {
   return (
-    <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+    <div className="bg-muted/50 border border-border rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setShowBookingDetails(!showBookingDetails)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-700/30 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="bg-gray-600/30 p-1.5 rounded-full">
-            <CreditCard className="w-4 h-4 text-gray-400" />
+          <div className="bg-muted-foreground/30 p-1.5 rounded-full">
+            <CreditCard className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="text-left">
-            <p className="text-white font-medium text-sm">
+            <p className="text-foreground font-medium text-sm">
               Booking #{booking.id}
             </p>
-            <p className="text-gray-400 text-xs flex items-center gap-2">
+            <p className="text-muted-foreground text-xs flex items-center gap-2">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 {new Date(booking.check_in_date).toLocaleDateString(
@@ -62,28 +62,28 @@ export default function BookingDetailsSummary({
           </div>
         </div>
         <ChevronDown
-          className={`w-5 h-5 text-gray-400 transition-transform ${
+          className={`w-5 h-5 text-muted-foreground transition-transform ${
             showBookingDetails ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {showBookingDetails && (
-        <div className="px-4 pb-4 border-t border-gray-700/50">
+        <div className="px-4 pb-4 border-t border-border">
           <div className="pt-3 space-y-3">
             {/* Guest & Stay Details */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <div>
-                <span className="text-gray-500 text-xs block">Guest</span>
-                <span className="text-white font-medium">
+                <span className="text-muted-foreground text-xs block">Guest</span>
+                <span className="text-foreground font-medium">
                   {booking.guest_name}
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 text-xs block">
+                <span className="text-muted-foreground text-xs block">
                   Duration
                 </span>
-                <span className="text-white">
+                <span className="text-foreground">
                   {(() => {
                     const checkIn = new Date(booking.check_in_date);
                     const checkOut = new Date(booking.check_out_date);
@@ -98,7 +98,7 @@ export default function BookingDetailsSummary({
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 text-xs block">
+                <span className="text-muted-foreground text-xs block">
                   Status
                 </span>
                 <span
@@ -107,7 +107,7 @@ export default function BookingDetailsSummary({
                       ? "bg-green-900/30 text-green-400"
                       : booking.status === "pending"
                       ? "bg-yellow-900/30 text-yellow-400"
-                      : "bg-gray-700 text-gray-300"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {booking.status
@@ -117,10 +117,10 @@ export default function BookingDetailsSummary({
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 text-xs block">
+                <span className="text-muted-foreground text-xs block">
                   Total Amount
                 </span>
-                <span className="text-white font-medium">
+                <span className="text-foreground font-medium">
                   ₱{booking.total_amount.toLocaleString()}
                 </span>
               </div>
@@ -128,7 +128,7 @@ export default function BookingDetailsSummary({
 
             {/* Payment Status */}
             {paymentSummary.totalPaid > 0 && (
-              <div className="flex items-center gap-4 text-sm pt-2 border-t border-gray-700/30">
+              <div className="flex items-center gap-4 text-sm pt-2 border-t border-border">
                 <span className="text-green-400 flex items-center gap-1">
                   <Check className="w-3 h-3" /> ₱
                   {paymentSummary.totalPaid.toLocaleString()} paid

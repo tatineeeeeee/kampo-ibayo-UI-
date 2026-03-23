@@ -20,9 +20,9 @@ interface AboutSectionProps {
 
 const featureCards = [
   {
-    icon: <Leaf className="w-4 h-4 xs:w-5 xs:h-5 text-green-400" />,
-    bg: "bg-green-500/20",
-    border: "hover:border-green-500/50",
+    icon: <Leaf className="w-4 h-4 xs:w-5 xs:h-5 text-success" />,
+    bg: "bg-success/20",
+    border: "hover:border-success/50",
     title: "Eco-Friendly",
     sub: "Sustainable practices",
   },
@@ -34,16 +34,16 @@ const featureCards = [
     sub: "Nature's panorama",
   },
   {
-    icon: <Users className="w-4 h-4 xs:w-5 xs:h-5 text-orange-400" />,
-    bg: "bg-orange-500/20",
-    border: "hover:border-orange-500/50",
+    icon: <Users className="w-4 h-4 xs:w-5 xs:h-5 text-warning" />,
+    bg: "bg-warning/20",
+    border: "hover:border-warning/50",
     title: "Family-Friendly",
     sub: "Perfect for all ages",
   },
   {
-    icon: <Award className="w-4 h-4 xs:w-5 xs:h-5 text-yellow-400" />,
-    bg: "bg-yellow-500/20",
-    border: "hover:border-yellow-500/50",
+    icon: <Award className="w-4 h-4 xs:w-5 xs:h-5 text-warning" />,
+    bg: "bg-warning/20",
+    border: "hover:border-warning/50",
     title: "Premium Quality",
     sub: "Exceptional service",
   },
@@ -96,19 +96,19 @@ const AboutSection = ({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
-              <div className="absolute top-4 left-4 bg-green-500/90 backdrop-blur text-white px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2">
+              <div className="absolute top-4 left-4 bg-success/90 backdrop-blur text-white px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 Safe &amp; Secure
               </div>
 
               {ratingLoading ? (
-                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-gray-800 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="w-16 h-4 bg-gray-300 rounded animate-pulse inline-block"></span>
+                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-foreground px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1">
+                  <Star className="w-4 h-4 text-warning fill-warning" />
+                  <span className="w-16 h-4 bg-muted rounded animate-pulse inline-block"></span>
                 </div>
               ) : liveRating !== null && ratingCount > 0 ? (
-                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-gray-800 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-foreground px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1">
+                  <Star className="w-4 h-4 text-warning fill-warning" />
                   <span>{liveRating} Guest Rating</span>
                 </div>
               ) : null}

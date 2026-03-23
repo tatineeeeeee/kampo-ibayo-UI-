@@ -293,10 +293,7 @@ const ReviewSubmissionForm = ({
       }
 
     } catch (err: unknown) {
-      console.error('❌ Error submitting review:', err);
-      console.error('❌ Error as JSON:', JSON.stringify(err, null, 2));
-      console.error('📋 Form data at error:', formData);
-      console.error('👤 User at error:', user);
+      console.error('❌ Error submitting review:', err instanceof Error ? err.message : 'Unknown error');
       
       // Extract error message safely
       let errorMessage = 'Failed to submit review. Please try again.';
@@ -342,13 +339,13 @@ const ReviewSubmissionForm = ({
   if (submitted && !onSuccess) {
     return (
       <div className={`${className} ${isModal ? 'max-w-full' : 'max-w-md'} mx-auto`}>
-        <div className={`${isModal ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-900/20 border-green-500/30 text-foreground'} border rounded-xl p-6 text-center`}>
-          <CheckCircle className={`w-16 h-16 ${isModal ? 'text-green-500' : 'text-green-400'} mx-auto mb-4`} />
-          <h3 className={`text-xl font-bold ${isModal ? 'text-green-800' : 'text-foreground'} mb-2`}>Thank You!</h3>
-          <p className={`${isModal ? 'text-green-700' : 'text-green-100'} mb-4`}>
+        <div className={`${isModal ? 'bg-success/10 border-success/20 text-success' : 'bg-green-900/20 border-green-500/30 text-foreground'} border rounded-xl p-6 text-center`}>
+          <CheckCircle className={`w-16 h-16 ${isModal ? 'text-success' : 'text-green-400'} mx-auto mb-4`} />
+          <h3 className={`text-xl font-bold ${isModal ? 'text-success' : 'text-foreground'} mb-2`}>Thank You!</h3>
+          <p className={`${isModal ? 'text-success' : 'text-green-100'} mb-4`}>
             Your review has been published successfully and is now visible to other guests!
           </p>
-          <p className={`${isModal ? 'text-green-600' : 'text-green-200'} text-sm`}>
+          <p className={`${isModal ? 'text-success' : 'text-green-200'} text-sm`}>
             Thank you for sharing your honest experience. We appreciate your feedback!
           </p>
         </div>
@@ -491,7 +488,7 @@ const ReviewSubmissionForm = ({
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "Great stay! The rooms were clean, staff was friendly, and the facilities were excellent. The pool area was particularly enjoyable. Would definitely recommend to families and couples alike!")}
-                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
+                    className="p-3 bg-muted hover:bg-muted rounded-lg text-left transition-colors border border-border"
                   >
                     <div className="text-green-400 text-sm font-medium mb-1">👍 Positive Experience</div>
                     <div className="text-muted-foreground text-xs">Clean, friendly, excellent facilities</div>
@@ -499,7 +496,7 @@ const ReviewSubmissionForm = ({
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "Perfect for our family vacation! The kids loved the pool, and we appreciated the clean facilities and helpful staff. Great location and value for money. Will be back!")}
-                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
+                    className="p-3 bg-muted hover:bg-muted rounded-lg text-left transition-colors border border-border"
                   >
                     <div className="text-primary text-sm font-medium mb-1">👨‍👩‍👧‍👦 Family-Friendly</div>
                     <div className="text-muted-foreground text-xs">Kids enjoyed, good value</div>
@@ -507,7 +504,7 @@ const ReviewSubmissionForm = ({
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "Wonderful romantic getaway! Beautiful, peaceful setting with excellent amenities. The staff was attentive and the rooms were spotless. Highly recommend for couples!")}
-                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
+                    className="p-3 bg-muted hover:bg-muted rounded-lg text-left transition-colors border border-border"
                   >
                     <div className="text-pink-400 text-sm font-medium mb-1">💕 Romantic Getaway</div>
                     <div className="text-muted-foreground text-xs">Peaceful, spotless, for couples</div>
@@ -515,7 +512,7 @@ const ReviewSubmissionForm = ({
                   <button
                     type="button"
                     onClick={() => handleInputChange('reviewText', "")}
-                    className="p-3 bg-muted hover:bg-gray-600 rounded-lg text-left transition-colors border border-border"
+                    className="p-3 bg-muted hover:bg-muted rounded-lg text-left transition-colors border border-border"
                   >
                     <div className="text-muted-foreground text-sm font-medium mb-1">✍️ Start Fresh</div>
                     <div className="text-muted-foreground text-xs">Clear and write your own</div>
@@ -531,7 +528,7 @@ const ReviewSubmissionForm = ({
                 onChange={(e) => handleInputChange('reviewText', e.target.value)}
                 placeholder="Tell us about your experience at Kampo Ibayo..."
                 rows={5}
-                className={`w-full pl-12 pr-4 py-3 bg-muted rounded-lg text-foreground placeholder-gray-400 focus:ring-1 resize-none transition-colors duration-200 ${
+                className={`w-full pl-12 pr-4 py-3 bg-muted rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-1 resize-none transition-colors duration-200 ${
                   formData.reviewText.length > 0 && formData.reviewText.length < 10
                     ? 'border-2 border-red-500 focus:border-red-400 focus:ring-red-500'
                     : formData.reviewText.length >= 10
@@ -594,7 +591,7 @@ const ReviewSubmissionForm = ({
                   value={formData.guestName}
                   onChange={(e) => handleInputChange('guestName', e.target.value)}
                   placeholder="How should we display your name?"
-                  className="w-full pl-12 pr-4 py-3 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="w-full pl-12 pr-4 py-3 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                   maxLength={100}
                 />
               </div>
@@ -616,7 +613,7 @@ const ReviewSubmissionForm = ({
                 value={formData.guestLocation}
                 onChange={(e) => handleInputChange('guestLocation', e.target.value)}
                 placeholder="e.g., Manila, Philippines"
-                className="w-full pl-12 pr-4 py-3 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary"
+                className="w-full pl-12 pr-4 py-3 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                 maxLength={100}
               />
             </div>
@@ -639,7 +636,7 @@ const ReviewSubmissionForm = ({
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-500 text-foreground rounded-lg transition-colors"
+                className="flex-1 px-6 py-3 bg-muted-foreground hover:bg-muted text-foreground rounded-lg transition-colors"
               >
                 Cancel
               </button>

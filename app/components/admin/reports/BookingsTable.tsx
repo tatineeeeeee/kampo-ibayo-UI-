@@ -34,12 +34,12 @@ export default function BookingsTable({
   formatCurrency,
 }: BookingsTableProps) {
   return (
-    <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
+    <div className="bg-card rounded-xl shadow-md p-3 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-700">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground">
           Booking Results
         </h3>
-        <span className="text-xs sm:text-sm text-gray-700">
+        <span className="text-xs sm:text-sm text-foreground">
           {bookings.length} {bookings.length === 1 ? "booking" : "bookings"}{" "}
           found
           {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
@@ -48,8 +48,8 @@ export default function BookingsTable({
 
       {isLoading ? (
         <div className="flex items-center justify-center h-32">
-          <RefreshCw className="w-6 h-6 animate-spin text-gray-500" />
-          <span className="ml-2 text-gray-700">Loading bookings...</span>
+          <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-foreground">Loading bookings...</span>
         </div>
       ) : bookings.length > 0 ? (
         <>
@@ -58,24 +58,24 @@ export default function BookingsTable({
             {currentBookings.map((booking) => (
               <div
                 key={`mobile-${booking.id}`}
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3"
+                className="bg-muted border border-border rounded-lg p-3"
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h4 className="font-medium text-gray-900 text-sm">
+                    <h4 className="font-medium text-foreground text-sm">
                       {booking.guest_name}
                     </h4>
-                    <p className="text-xs text-gray-600 truncate max-w-[180px]">
+                    <p className="text-xs text-muted-foreground truncate max-w-[180px]">
                       {booking.guest_email || "No email"}
                     </p>
                   </div>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                       booking.status === "confirmed"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-success/10 text-success"
                         : booking.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
+                          ? "bg-warning/10 text-warning"
+                          : "bg-destructive/10 text-destructive"
                     }`}
                   >
                     {booking.status || "Unknown"}
@@ -83,26 +83,26 @@ export default function BookingsTable({
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <p className="text-gray-500">Check-in</p>
-                    <p className="text-gray-900">
+                    <p className="text-muted-foreground">Check-in</p>
+                    <p className="text-foreground">
                       {new Date(booking.check_in_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Check-out</p>
-                    <p className="text-gray-900">
+                    <p className="text-muted-foreground">Check-out</p>
+                    <p className="text-foreground">
                       {new Date(booking.check_out_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Amount</p>
-                    <p className="text-gray-900 font-medium">
+                    <p className="text-muted-foreground">Amount</p>
+                    <p className="text-foreground font-medium">
                       {formatCurrency(booking.total_amount)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Booked</p>
-                    <p className="text-gray-900">
+                    <p className="text-muted-foreground">Booked</p>
+                    <p className="text-foreground">
                       {booking.created_at
                         ? new Date(booking.created_at).toLocaleDateString()
                         : "Unknown"}
@@ -110,15 +110,15 @@ export default function BookingsTable({
                   </div>
                 </div>
                 {booking.status === "cancelled" && booking.cancelled_by && (
-                  <div className="mt-2 pt-2 border-t border-gray-200">
-                    <span className="text-xs text-gray-500">
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <span className="text-xs text-muted-foreground">
                       Cancelled by:{" "}
                     </span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                         booking.cancelled_by === "user"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-purple-100 text-purple-800"
+                          ? "bg-warning/10 text-warning"
+                          : "bg-chart-4/10 text-chart-4"
                       }`}
                     >
                       {booking.cancelled_by === "user" ? "Guest" : "Admin"}
@@ -132,75 +132,75 @@ export default function BookingsTable({
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Guest
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Check In
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Check Out
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Amount
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Cancelled By
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
                     Booked
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {currentBookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
+                  <tr key={booking.id} className="hover:bg-muted">
+                    <td className="px-4 py-3 font-medium text-foreground">
                       {booking.guest_name}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-foreground">
                       {booking.guest_email || "No email"}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-foreground">
                       {new Date(booking.check_in_date).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-foreground">
                       {new Date(booking.check_out_date).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">
+                    <td className="px-4 py-3 font-medium text-foreground">
                       {formatCurrency(booking.total_amount)}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           booking.status === "confirmed"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-success/10 text-success"
                             : booking.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-warning/10 text-warning"
+                              : "bg-destructive/10 text-destructive"
                         }`}
                       >
                         {booking.status || "Unknown"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-foreground">
                       {booking.status === "cancelled" &&
                       booking.cancelled_by ? (
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
                             booking.cancelled_by === "user"
-                              ? "bg-orange-100 text-orange-800"
+                              ? "bg-warning/10 text-warning"
                               : booking.cancelled_by === "admin"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-gray-100 text-gray-800"
+                                ? "bg-chart-4/10 text-chart-4"
+                                : "bg-muted text-foreground"
                           }`}
                         >
                           {booking.cancelled_by === "user"
@@ -210,10 +210,10 @@ export default function BookingsTable({
                               : booking.cancelled_by}
                         </span>
                       ) : (
-                        <span className="text-gray-400 text-xs">-</span>
+                        <span className="text-muted-foreground text-xs">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-foreground">
                       {booking.created_at
                         ? new Date(booking.created_at).toLocaleDateString()
                         : "Unknown"}
@@ -225,8 +225,8 @@ export default function BookingsTable({
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-gray-200 gap-3">
-                <div className="text-xs sm:text-sm text-gray-900 font-medium">
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-border gap-3">
+                <div className="text-xs sm:text-sm text-foreground font-medium">
                   Showing {startIndex + 1} to{" "}
                   {Math.min(endIndex, bookings.length)} of {bookings.length}{" "}
                   bookings
@@ -239,11 +239,11 @@ export default function BookingsTable({
                       setCurrentPage((prev: number) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="px-3 py-2 text-xs text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    className="px-3 py-2 text-xs text-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50"
                   >
                     Previous
                   </button>
-                  <span className="text-xs text-gray-700">
+                  <span className="text-xs text-foreground">
                     Page {currentPage}/{totalPages}
                   </span>
                   <button
@@ -251,7 +251,7 @@ export default function BookingsTable({
                       setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 text-xs text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    className="px-3 py-2 text-xs text-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -264,7 +264,7 @@ export default function BookingsTable({
                       setCurrentPage((prev: number) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Previous
@@ -278,8 +278,8 @@ export default function BookingsTable({
                           onClick={() => setCurrentPage(page)}
                           className={`px-3 py-2 text-sm rounded-lg font-medium ${
                             currentPage === page
-                              ? "bg-green-600 text-white"
-                              : "border border-gray-300 text-gray-900 hover:bg-gray-50"
+                              ? "bg-primary text-primary-foreground"
+                              : "border border-border text-foreground hover:bg-muted"
                           }`}
                         >
                           {page}
@@ -293,7 +293,7 @@ export default function BookingsTable({
                       setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />
@@ -304,7 +304,7 @@ export default function BookingsTable({
           </div>
         </>
       ) : (
-        <div className="text-center py-12 text-gray-700">
+        <div className="text-center py-12 text-foreground">
           <FileText className="w-12 h-12 mx-auto mb-4 opacity-60" />
           <p>No bookings found for the selected filters</p>
           <p className="text-sm mt-1">

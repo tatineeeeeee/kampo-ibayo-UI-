@@ -15,6 +15,7 @@ import {
   formatPhoneForDisplay,
   validatePhilippinePhone,
 } from "../../utils/phoneUtils";
+import { cn } from "@/lib/utils";
 
 interface SignupFormProps {
   formKey: number;
@@ -267,16 +268,16 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
     <form
       key={`register-${formKey}`}
       onSubmit={handleRegister}
-      className="space-y-3 sm:space-y-4 lg:space-y-5"
+      className="space-y-3 sm:space-y-3.5"
       autoComplete="off"
     >
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <div className="w-full sm:w-1/2">
-          <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
-            First Name <span className="text-red-500">*</span>
+          <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-1.5">
+            First Name <span className="text-destructive">*</span>
           </label>
-          <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg">
-            <FaUser className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+          <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+            <FaUser className="text-primary/60 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0 transition-opacity duration-200" />
             <input
               type="text"
               name="firstName"
@@ -288,11 +289,11 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
           </div>
         </div>
         <div className="w-full sm:w-1/2">
-          <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
-            Last Name <span className="text-red-500">*</span>
+          <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-1.5">
+            Last Name <span className="text-destructive">*</span>
           </label>
-          <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg">
-            <FaUser className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+          <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+            <FaUser className="text-primary/60 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0 transition-opacity duration-200" />
             <input
               type="text"
               name="lastName"
@@ -306,11 +307,11 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
       </div>
 
       <div>
-        <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
-          Email Address <span className="text-red-500">*</span>
+        <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-1.5">
+          Email Address <span className="text-destructive">*</span>
         </label>
-        <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg">
-          <FaEnvelope className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+        <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+          <FaEnvelope className="text-primary/60 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0 transition-opacity duration-200" />
           <input
             type="email"
             name="email"
@@ -323,11 +324,11 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
       </div>
 
       <div>
-        <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
-          Phone Number <span className="text-red-500">*</span>
+        <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-1.5">
+          Phone Number <span className="text-destructive">*</span>
         </label>
-        <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg">
-          <FaPhone className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+        <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+          <FaPhone className="text-primary/60 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0 transition-opacity duration-200" />
           <input
             type="tel"
             name="phone"
@@ -367,11 +368,11 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
       {/* Password Field - Full Width */}
       <div className="space-y-2 sm:space-y-3">
         <div className="w-full">
-          <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
-            Password <span className="text-red-500">*</span>
+          <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-1.5">
+            Password <span className="text-destructive">*</span>
           </label>
-          <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg">
-            <FaLock className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+          <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+            <FaLock className="text-primary/60 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0 transition-opacity duration-200" />
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -384,7 +385,7 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="ml-2 sm:ml-3 text-muted-foreground hover:text-muted-foreground transition-colors p-1"
+              className="ml-3 text-muted-foreground hover:text-foreground transition-all duration-200 p-1 rounded-lg hover:bg-primary/10"
             >
               {showPassword ? (
                 <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
@@ -395,34 +396,42 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
           </div>
 
           {/* Password Requirements & Strength */}
-          <div className="mt-1.5 sm:mt-2 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground text-xs">
-              Use 8+ characters with letters, numbers and symbols
-            </span>
-            {passwordValue && (
-              <div className="flex items-center space-x-1">
+          <div className="mt-1.5 sm:mt-2 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground text-xs">
+                Use 8+ characters with letters, numbers and symbols
+              </span>
+              {passwordValue && (
                 <span className="text-muted-foreground text-xs">
-                  Strength:
+                  {validatePasswordStrength(passwordValue).score <= 1
+                    ? "Weak"
+                    : validatePasswordStrength(passwordValue).score <= 2
+                    ? "Fair"
+                    : validatePasswordStrength(passwordValue).score <= 3
+                    ? "Good"
+                    : "Strong"}
                 </span>
-                <div className="flex space-x-0.5">
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full transition-colors duration-200 ${
-                        level <=
-                        validatePasswordStrength(passwordValue).score
-                          ? level <= 1
-                            ? "bg-red-400"
-                            : level <= 2
-                            ? "bg-yellow-400"
-                            : level <= 3
-                            ? "bg-primary/60"
-                            : "bg-green-500"
-                          : "bg-gray-200"
-                      }`}
-                    />
-                  ))}
-                </div>
+              )}
+            </div>
+            {passwordValue && (
+              <div className="flex gap-1">
+                {[1, 2, 3, 4].map((level) => (
+                  <div
+                    key={level}
+                    className={cn(
+                      "h-1.5 rounded-full flex-1 transition-all duration-300",
+                      level <= validatePasswordStrength(passwordValue).score
+                        ? level <= 1
+                          ? "bg-destructive"
+                          : level <= 2
+                          ? "bg-accent"
+                          : level <= 3
+                          ? "bg-primary/60"
+                          : "bg-success"
+                        : "bg-muted"
+                    )}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -430,11 +439,11 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
 
         {/* Confirm Password Field - Full Width */}
         <div className="w-full">
-          <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
-            Confirm Password <span className="text-red-500">*</span>
+          <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-1.5">
+            Confirm Password <span className="text-destructive">*</span>
           </label>
-          <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg">
-            <FaLock className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
+          <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+            <FaLock className="text-primary/60 mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0 transition-opacity duration-200" />
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
@@ -451,7 +460,7 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
               onClick={() =>
                 setShowConfirmPassword(!showConfirmPassword)
               }
-              className="ml-2 sm:ml-3 text-muted-foreground hover:text-muted-foreground transition-colors p-1"
+              className="ml-3 text-muted-foreground hover:text-foreground transition-all duration-200 p-1 rounded-lg hover:bg-primary/10"
             >
               {showConfirmPassword ? (
                 <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
@@ -466,16 +475,21 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
             <span className="text-muted-foreground text-xs">
               Password confirmation
             </span>
-            <div className="flex items-center space-x-1">
-              <span className="text-muted-foreground text-xs">Match:</span>
+            <div className="flex items-center gap-1.5">
               {confirmPasswordValue ? (
                 passwordsMatch ? (
-                  <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
+                  <>
+                    <Check className="w-3 h-3 sm:w-4 sm:h-4 text-success" />
+                    <span className="text-success text-xs font-medium">Match</span>
+                  </>
                 ) : (
-                  <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400" />
+                  <>
+                    <X className="w-3 h-3 sm:w-4 sm:h-4 text-destructive" />
+                    <span className="text-destructive text-xs font-medium">No match</span>
+                  </>
                 )
               ) : (
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3"></div>
+                <div className="w-3 h-3 sm:w-4 sm:h-4"></div>
               )}
             </div>
           </div>
@@ -495,7 +509,7 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
                 setTermsError(false);
               }
             }}
-            className="mt-0.5 sm:mt-1 w-3 h-3 sm:w-4 sm:h-4 text-primary accent-blue-600 flex-shrink-0"
+            className="mt-0.5 sm:mt-1 w-3 h-3 sm:w-4 sm:h-4 text-primary accent-primary rounded flex-shrink-0"
             required
           />
           <label
@@ -523,7 +537,7 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
           </label>
         </div>
         {termsError && (
-          <div className="flex items-center space-x-1 text-xs text-red-500 ml-5 sm:ml-7">
+          <div className="flex items-center space-x-1 text-xs text-destructive ml-5 sm:ml-7">
             <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
             <span>
               You must accept the Terms of Service and Privacy Policy
@@ -536,7 +550,7 @@ export default function SignupForm({ formKey, onSignupSuccess }: SignupFormProps
       {/* Create Account Button */}
       <button
         type="submit"
-        className="w-full bg-primary text-foreground py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold shadow-lg hover:bg-primary hover:shadow-xl transition-all duration-200 text-xs sm:text-sm lg:text-base flex items-center justify-center space-x-1.5 sm:space-x-2 mt-4 sm:mt-6"
+        className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 px-4 rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:brightness-110 transition-all duration-300 text-sm lg:text-base flex items-center justify-center gap-2"
       >
         <FaUserPlus className="text-xs sm:text-sm lg:text-base" />
         <span>Create Account</span>

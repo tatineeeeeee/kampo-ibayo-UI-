@@ -71,7 +71,7 @@ export default function ProfileSection({
             type="email"
             value={profileData.email}
             disabled
-            className="w-full bg-gray-600 border border-border text-muted-foreground rounded-lg px-4 py-3 cursor-not-allowed"
+            className="w-full bg-muted-foreground border border-border text-muted-foreground rounded-lg px-4 py-3 cursor-not-allowed"
           />
           <p className="text-xs text-muted-foreground mt-1">
             Email cannot be changed

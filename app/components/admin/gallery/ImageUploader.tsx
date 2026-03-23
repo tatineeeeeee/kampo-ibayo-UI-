@@ -130,12 +130,12 @@ export default function ImageUploadModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+      <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Upload Images</h3>
+          <h3 className="text-lg font-semibold text-foreground">Upload Images</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-muted-foreground hover:text-muted-foreground"
           >
             <span className="sr-only">Close</span>&times;
           </button>
@@ -144,7 +144,7 @@ export default function ImageUploadModal({
         <div className="space-y-4">
           {/* File Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Select Images
             </label>
             <input
@@ -152,10 +152,10 @@ export default function ImageUploadModal({
               multiple
               accept="image/*"
               onChange={handleFileSelect}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-info/10"
             />
             {selectedFiles && selectedFiles.length > 0 && (
-              <p className="text-sm text-gray-800 mt-1">
+              <p className="text-sm text-foreground mt-1">
                 {selectedFiles.length} file(s) selected
               </p>
             )}
@@ -163,7 +163,7 @@ export default function ImageUploadModal({
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Title (Optional)
             </label>
             <input
@@ -171,22 +171,22 @@ export default function ImageUploadModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Swimming Pool at Night"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Leave blank to auto-generate from category
             </p>
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground bg-card"
             >
               {categoryOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -207,7 +207,7 @@ export default function ImageUploadModal({
             />
             <label
               htmlFor="show_on_homepage_upload"
-              className="text-sm font-medium text-gray-900"
+              className="text-sm font-medium text-foreground"
             >
               Show on Homepage
             </label>
@@ -218,14 +218,14 @@ export default function ImageUploadModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex-1 px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-muted transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={uploadImages}
             disabled={uploading || !selectedFiles}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {uploading ? (
               <>

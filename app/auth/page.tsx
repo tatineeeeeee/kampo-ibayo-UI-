@@ -8,6 +8,7 @@ import LoginForm from "../components/auth/LoginForm";
 import SignupForm from "../components/auth/SignupForm";
 import { ForgotPasswordModal, PasswordResetForm } from "../components/auth/ForgotPasswordForm";
 import AuthTestimonials from "../components/auth/AuthTestimonials";
+import { cn } from "@/lib/utils";
 
 export default function AuthPage() {
   const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ export default function AuthPage() {
     // Check localStorage on initial load for password reset state with validation
     if (typeof window !== "undefined") {
       const hasPasswordResetFlag =
-        localStorage.getItem("in_password_reset") === "true";
+        sessionStorage.getItem("in_password_reset") === "true";
 
       // Only trust the flag if we also have indicators of a real password reset flow
       if (hasPasswordResetFlag) {
@@ -33,7 +34,7 @@ export default function AuthPage() {
 
         if (!hasRecoveryTokens) {
           // Clear potentially stale flag immediately
-          localStorage.removeItem("in_password_reset");
+          sessionStorage.removeItem("in_password_reset");
           return false;
         }
       }
@@ -57,7 +58,7 @@ export default function AuthPage() {
 
   // Utility function to completely clear all password reset related storage
   const clearPasswordResetState = () => {
-    localStorage.removeItem("in_password_reset");
+    sessionStorage.removeItem("in_password_reset");
     sessionStorage.removeItem("recovery_access_token");
     sessionStorage.removeItem("recovery_refresh_token");
     sessionStorage.removeItem("recovery-info-shown");
@@ -140,7 +141,7 @@ export default function AuthPage() {
             // Set recovery state immediately
             setForcePasswordReset(true);
             setIsPasswordReset(true);
-            localStorage.setItem("in_password_reset", "true");
+            sessionStorage.setItem("in_password_reset", "true");
 
             // Clear the URL hash immediately to prevent reprocessing
             window.history.replaceState(
@@ -208,7 +209,7 @@ export default function AuthPage() {
       try {
         // FIRST PRIORITY: Check if we're in password reset mode from localStorage or state
         const inPasswordReset =
-          localStorage.getItem("in_password_reset") === "true";
+          sessionStorage.getItem("in_password_reset") === "true";
 
         // SAFETY CHECK: If password reset flag exists but no session, it might be stale
         if (
@@ -292,7 +293,7 @@ export default function AuthPage() {
           if (inRecoveryMode) {
             setIsPasswordReset(true);
             setForcePasswordReset(true);
-            localStorage.setItem("in_password_reset", "true");
+            sessionStorage.setItem("in_password_reset", "true");
             setIsLoading(false);
             return;
           }
@@ -344,7 +345,7 @@ export default function AuthPage() {
               hashParams.get("refresh_token");
 
             const inPasswordResetStorage =
-              localStorage.getItem("in_password_reset") === "true";
+              sessionStorage.getItem("in_password_reset") === "true";
 
             if (
               (hasRecoveryTokens || inPasswordResetStorage) &&
@@ -354,7 +355,7 @@ export default function AuthPage() {
               // Set state and persist to localStorage to prevent any auto-login
               setForcePasswordReset(true);
               setIsPasswordReset(true);
-              localStorage.setItem("in_password_reset", "true");
+              sessionStorage.setItem("in_password_reset", "true");
 
               // Clean URL after setting state (only if we have recovery tokens in URL)
               if (hasRecoveryTokens) {
@@ -394,7 +395,7 @@ export default function AuthPage() {
 
             // Check all possible password reset indicators
             const inPasswordReset =
-              localStorage.getItem("in_password_reset") === "true";
+              sessionStorage.getItem("in_password_reset") === "true";
             const shouldBlockLogin =
               isRecoveryMode ||
               forcePasswordReset ||
@@ -406,7 +407,7 @@ export default function AuthPage() {
               // Ensure password reset state is set
               setForcePasswordReset(true);
               setIsPasswordReset(true);
-              localStorage.setItem("in_password_reset", "true");
+              sessionStorage.setItem("in_password_reset", "true");
 
               // Clean the URL if we have recovery tokens
               if (isRecoveryMode && (hash || search.includes("recovery"))) {
@@ -573,13 +574,16 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-2 sm:p-4">
-      <div className="w-full max-w-6xl flex flex-col lg:flex-row rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden border border-border">
+    <div className="min-h-screen flex items-center justify-center bg-background p-2 sm:p-4 relative overflow-hidden">
+      {/* Page-level ambient glow — teal top, blue bottom */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-info/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative w-full max-w-6xl flex flex-col lg:flex-row rounded-2xl sm:rounded-2xl lg:rounded-3xl shadow-2xl shadow-primary/15 overflow-hidden border border-primary/20 backdrop-blur-xl">
         {/* Left Side - Hidden on mobile, shown on desktop */}
         <AuthTestimonials />
 
         {/* Right Side - Main content on mobile, right side on desktop */}
-        <div className="w-full lg:w-1/2 bg-card text-foreground p-4 sm:p-6 lg:p-8 xl:p-12 flex flex-col overflow-y-auto max-h-screen">
+        <div className="w-full lg:w-1/2 bg-card/90 backdrop-blur-xl text-foreground p-4 sm:p-6 lg:p-8 xl:p-10 flex flex-col overflow-y-auto max-h-screen">
           <div className="flex-1 flex flex-col justify-center min-h-0">
             {/* Mobile Header - Only shown on mobile */}
             <div className="lg:hidden text-center mb-4 sm:mb-6">
@@ -617,7 +621,7 @@ export default function AuthPage() {
                       priority
                     />
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                  <h1 className="text-xl sm:text-2xl font-display font-extrabold tracking-tight">
                     <span className="text-primary">Kampo</span>{" "}
                     <span className="text-foreground">Ibayo</span>
                   </h1>
@@ -631,62 +635,87 @@ export default function AuthPage() {
               </p>
             </div>
 
-            {/* Tab buttons - hide during password reset */}
+            {/* Welcome heading — changes based on active tab */}
             {!isPasswordReset && (
-              <div className="flex mb-4 sm:mb-6 lg:mb-8 rounded-lg overflow-hidden border border-border">
+              <div className="mb-3 sm:mb-4 lg:mb-6">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-display font-bold tracking-tight text-foreground">
+                  {isLogin ? "Welcome back" : "Create your account"}
+                </h2>
+                <p className="text-muted-foreground text-xs sm:text-sm mt-1 sm:mt-1.5">
+                  {isLogin
+                    ? "Sign in to manage your bookings and reservations"
+                    : "Join us and start your tropical adventure today"}
+                </p>
+              </div>
+            )}
+
+            {/* Pill-style tab switcher */}
+            {!isPasswordReset && (
+              <div className="relative flex mb-3 sm:mb-4 lg:mb-6 rounded-full bg-muted/50 p-1 border border-border/50">
+                {/* Sliding pill background */}
+                <div
+                  className={cn(
+                    "absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-300 ease-in-out shadow-lg shadow-primary/25",
+                    isLogin ? "left-1" : "left-[calc(50%+2px)]"
+                  )}
+                />
                 <button
+                  type="button"
                   onClick={() => {
                     setIsLogin(true);
                     // Clear form when switching to login
                     setFormKey((prev) => prev + 1);
                   }}
-                  className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
+                  className={cn(
+                    "relative z-10 w-1/2 py-2.5 sm:py-3 font-semibold rounded-full transition-all duration-300 text-xs sm:text-sm lg:text-base",
                     isLogin
-                      ? "bg-muted text-foreground"
-                      : "bg-card text-muted-foreground"
-                  }`}
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
                   Sign In
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setIsLogin(false);
                     // Clear form when switching to register
                     setFormKey((prev) => prev + 1);
                   }}
-                  className={`w-1/2 py-2.5 sm:py-3 font-semibold transition-colors duration-200 text-xs sm:text-sm lg:text-base ${
+                  className={cn(
+                    "relative z-10 w-1/2 py-2.5 sm:py-3 font-semibold rounded-full transition-all duration-300 text-xs sm:text-sm lg:text-base",
                     !isLogin
-                      ? "bg-muted text-foreground"
-                      : "bg-card text-muted-foreground"
-                  }`}
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
                   Create Account
                 </button>
               </div>
             )}
 
-            {/* Password Reset Form */}
-            {isPasswordReset ? (
-              <PasswordResetForm
-                isUpdatingPassword={isUpdatingPassword}
-                onSubmit={handlePasswordUpdate}
-              />
-            ) : /* Sign In Form */
-            isLogin ? (
-              <LoginForm
-                formKey={formKey}
-                onForgotPassword={() => setShowForgotPassword(true)}
-              />
-            ) : (
-              // Register Form
-              <SignupForm
-                formKey={formKey}
-                onSignupSuccess={() => {
-                  setFormKey((prev) => prev + 1);
-                  setIsLogin(true);
-                }}
-              />
-            )}
+            {/* Form container */}
+            <div className="flex flex-col justify-start">
+              {isPasswordReset ? (
+                <PasswordResetForm
+                  isUpdatingPassword={isUpdatingPassword}
+                  onSubmit={handlePasswordUpdate}
+                />
+              ) : isLogin ? (
+                <LoginForm
+                  formKey={formKey}
+                  onForgotPassword={() => setShowForgotPassword(true)}
+                />
+              ) : (
+                <SignupForm
+                  formKey={formKey}
+                  onSignupSuccess={() => {
+                    setFormKey((prev) => prev + 1);
+                    setIsLogin(true);
+                  }}
+                />
+              )}
+            </div>
 
             {/* Forgot Password Modal */}
             <ForgotPasswordModal

@@ -178,7 +178,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   if (loading) {
     return (
       <div className="bg-muted text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
-        <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
+        <div className="animate-spin rounded-full h-3 w-3 border-b border-border"></div>
         Loading
       </div>
     );
@@ -204,7 +204,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   // For cancelled proofs, show cancelled status
   if (proofStatus === "cancelled") {
     return (
-      <div className="bg-gray-500 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-muted-foreground text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <Ban className="w-3 h-3" />
         Cancelled
       </div>
@@ -214,7 +214,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
   // Show status for pending or verified proofs
   if (proofStatus === "pending") {
     return (
-      <div className="bg-yellow-600 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-warning text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <HourglassIcon className="w-3 h-3" />
         Pending
       </div>
@@ -234,7 +234,7 @@ function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { booking
       );
     }
     return (
-      <div className="bg-green-600 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-success text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <CheckCircle2 className="w-3 h-3" />
         Verified
       </div>
@@ -274,7 +274,7 @@ function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus, payment
   // Still loading or fully paid — show total
   if (paidAmount === null || paidAmount >= totalAmount) {
     return (
-      <p className="font-semibold text-green-400 text-xs">
+      <p className="font-semibold text-success text-xs">
         ₱{(totalAmount / 1000).toFixed(1)}k
       </p>
     );
@@ -283,7 +283,7 @@ function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus, payment
   // No payment yet
   if (paidAmount === 0) {
     return (
-      <p className="font-semibold text-yellow-400 text-xs">
+      <p className="font-semibold text-warning text-xs">
         ₱{(totalAmount / 1000).toFixed(1)}k
       </p>
     );
@@ -293,11 +293,11 @@ function PaymentBreakdownAmount({ bookingId, totalAmount, paymentStatus, payment
   const remaining = totalAmount - paidAmount;
   return (
     <div>
-      <p className="font-bold text-amber-400 text-sm">
+      <p className="font-bold text-warning text-sm">
         ₱{(totalAmount / 1000).toFixed(1)}k
       </p>
       <p className="text-xs text-muted-foreground">
-        <span className="text-green-400">₱{(paidAmount / 1000).toFixed(1)}k</span> paid · <span className="text-amber-400">₱{(remaining / 1000).toFixed(1)}k</span> {paymentType === "half" ? "due at check-in" : "due"}
+        <span className="text-success">₱{(paidAmount / 1000).toFixed(1)}k</span> paid · <span className="text-warning">₱{(remaining / 1000).toFixed(1)}k</span> {paymentType === "half" ? "due at check-in" : "due"}
       </p>
     </div>
   );
@@ -332,16 +332,16 @@ function PaymentBreakdownDetail({ bookingId, totalAmount }: { bookingId: number;
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground dark:text-muted-foreground">Paid</span>
-        <span className="text-sm font-semibold text-green-600 dark:text-green-400">₱{paidAmount.toLocaleString()}</span>
+        <span className="text-sm font-semibold text-success">₱{paidAmount.toLocaleString()}</span>
       </div>
       {remaining > 0 && (
         <div className="flex justify-between items-center">
           <span className="text-xs text-muted-foreground dark:text-muted-foreground">Remaining</span>
-          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">₱{remaining.toLocaleString()}</span>
+          <span className="text-sm font-semibold text-warning">₱{remaining.toLocaleString()}</span>
         </div>
       )}
       {remaining === 0 && paidAmount > 0 && (
-        <p className="text-xs text-green-600 dark:text-green-400 font-medium">Fully Paid</p>
+        <p className="text-xs text-success font-medium">Fully Paid</p>
       )}
     </div>
   );
@@ -380,7 +380,7 @@ function PaymentAmountInfo({ bookingId }: { bookingId: number }) {
 
   if (loading) {
     return (
-      <p className="text-xs text-orange-200 mb-3">
+      <p className="text-xs text-warning mb-3">
         Loading payment information...
       </p>
     );
@@ -388,7 +388,7 @@ function PaymentAmountInfo({ bookingId }: { bookingId: number }) {
 
   if (!paymentInfo) {
     return (
-      <p className="text-xs text-orange-200 mb-3">
+      <p className="text-xs text-warning mb-3">
         Upload your payment proof to confirm this booking.
       </p>
     );
@@ -400,14 +400,14 @@ function PaymentAmountInfo({ bookingId }: { bookingId: number }) {
   const paymentPercentage = isFullPayment ? "100%" : "50%";
 
   return (
-    <div className="text-xs text-orange-200 mb-3 space-y-1">
+    <div className="text-xs text-warning mb-3 space-y-1">
       <p>Upload your payment proof to confirm this booking.</p>
       <p>
         <span className="font-medium">Required payment:</span>{" "}
         {paymentPercentage} ({isFullPayment ? "Full" : "Down"} Payment) ={" "}
         {paymentAmount.toLocaleString()}
       </p>
-      <p className="text-orange-300">
+      <p className="text-warning">
         Take a screenshot/photo of your payment receipt and upload it below.
       </p>
     </div>
@@ -510,10 +510,10 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
 
   if (!paymentProof) {
     return (
-      <div className="bg-orange-900/30 border border-orange-600/50 rounded-lg p-3 mb-3">
+      <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 mb-3">
         <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="w-4 h-4 text-orange-500" />
-          <span className="text-sm font-medium text-orange-300">
+          <AlertTriangle className="w-4 h-4 text-warning" />
+          <span className="text-sm font-medium text-warning">
             Payment Proof Required
           </span>
         </div>
@@ -528,39 +528,39 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
       case "pending":
         return {
           color:
-            "bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200",
+            "bg-warning/10 border border-warning/20 text-warning",
           icon: (
-            <HourglassIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <HourglassIcon className="w-5 h-5 text-warning" />
           ),
           title: "Payment Under Review",
           message: "We are reviewing your payment proof",
-          messageColor: "text-amber-600 dark:text-amber-300",
+          messageColor: "text-warning",
         };
       case "approved":
       case "verified":
         return {
           color:
-            "bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-200",
+            "bg-success/10 border border-success/20 text-success",
           icon: (
-            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="w-5 h-5 text-success" />
           ),
           title: "Payment Verified",
           message: "Your payment has been approved successfully",
-          messageColor: "text-green-600 dark:text-green-300",
+          messageColor: "text-success",
         };
       case "rejected":
         return {
           color:
-            "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/40 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-100",
-          icon: <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />,
+            "bg-destructive/10 border border-destructive/20 text-destructive",
+          icon: <XCircle className="w-5 h-5 text-destructive" />,
           title: "Payment Rejected",
           message: "Your payment proof needs correction",
-          messageColor: "text-red-600 dark:text-red-300",
+          messageColor: "text-destructive",
         };
       case "cancelled":
         return {
           color:
-            "bg-gray-100 dark:bg-card border border-gray-300 dark:border-border text-gray-700 dark:text-muted-foreground",
+            "bg-muted border border-border text-muted-foreground",
           icon: <Ban className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />,
           title: "Payment Cancelled",
           message: "This payment proof has been cancelled",
@@ -569,7 +569,7 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
       default:
         return {
           color:
-            "bg-gray-100 dark:bg-card border border-gray-300 dark:border-border text-gray-700 dark:text-muted-foreground",
+            "bg-muted border border-border text-muted-foreground",
           icon: (
             <AlertTriangle className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
           ),
@@ -604,7 +604,7 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
         </div>
 
         {paymentProof.admin_notes && paymentProof.status === "rejected" && (
-          <div className="text-xs text-red-200 space-y-1">
+          <div className="text-xs text-destructive space-y-1">
             {(() => {
               const notes = paymentProof.admin_notes;
               let rejectionReason = null;
@@ -621,21 +621,21 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
               return (
                 <div className="space-y-3 mt-3">
                   {/* Rejection Reason Card */}
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/30 border border-red-200/60 dark:border-red-800/30 rounded-2xl p-5 shadow-sm">
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 shadow-sm">
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/60 rounded-xl flex items-center justify-center shadow-sm">
-                        <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      <div className="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-xl flex items-center justify-center shadow-sm">
+                        <AlertTriangle className="w-5 h-5 text-destructive" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h4 className="text-sm font-bold text-red-900 dark:text-red-100">
+                          <h4 className="text-sm font-bold text-destructive">
                             Rejection Reason
                           </h4>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
                             Action Required
                           </span>
                         </div>
-                        <p className="text-sm text-red-800 dark:text-red-200 leading-relaxed font-medium">
+                        <p className="text-sm text-destructive leading-relaxed font-medium">
                           {rejectionReason}
                         </p>
                       </div>
@@ -644,21 +644,21 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
 
                   {/* Admin Notes Card */}
                   {adminNotes && (
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/30 border border-primary/20/60 dark:border-blue-800/30 rounded-2xl p-5 shadow-sm">
+                    <div className="bg-info/10 border border-info/20 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-start gap-4">
                         <div className="flex-shrink-0 w-10 h-10 bg-primary/10 dark:bg-primary/15 rounded-xl flex items-center justify-center shadow-sm">
-                          <MessageSquare className="w-5 h-5 text-primary dark:text-primary" />
+                          <MessageSquare className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                            <h4 className="text-sm font-bold text-primary">
                               Additional Notes
                             </h4>
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary/80">
                               From Admin
                             </span>
                           </div>
-                          <p className="text-sm text-primary dark:text-blue-200 leading-relaxed">
+                          <p className="text-sm text-primary leading-relaxed">
                             {adminNotes}
                           </p>
                         </div>
@@ -675,13 +675,13 @@ function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
           <div className="mt-3 bg-primary/5 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-8 h-8 bg-primary/10 dark:bg-primary/10 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-primary dark:text-primary" />
+                <MessageSquare className="w-4 h-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-primary dark:text-blue-200 mb-1">
+                <h4 className="text-sm font-semibold text-primary mb-1">
                   Admin Notes
                 </h4>
-                <p className="text-sm text-primary dark:text-primary/80 leading-relaxed">
+                <p className="text-sm text-primary/80 leading-relaxed">
                   {paymentProof.admin_notes}
                 </p>
               </div>
@@ -1674,15 +1674,15 @@ function BookingsPageContent() {
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case "confirmed":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-success" />;
       case "pending":
-        return <HourglassIcon className="w-5 h-5 text-yellow-500" />;
+        return <HourglassIcon className="w-5 h-5 text-warning" />;
       case "cancelling":
         return (
-          <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+          <div className="w-5 h-5 border-2 border-warning/30 border-t-warning rounded-full animate-spin"></div>
         );
       case "cancelled":
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-destructive" />;
       default:
         return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
@@ -1691,17 +1691,17 @@ function BookingsPageContent() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "confirmed":
-        return "bg-green-600";
+        return "bg-success";
       case "pending":
-        return "bg-yellow-600";
+        return "bg-warning";
       case "cancelling":
-        return "bg-orange-600";
+        return "bg-warning";
       case "cancelled":
-        return "bg-red-600";
+        return "bg-destructive";
       case "completed":
         return "bg-primary";
       default:
-        return "bg-gray-600";
+        return "bg-muted-foreground";
     }
   };
 
@@ -1769,7 +1769,7 @@ function BookingsPageContent() {
                 title="Refresh Bookings"
               >
                 {isRefreshing ? (
-                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-gray-300"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-border"></div>
                 ) : (
                   <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 )}
@@ -1777,7 +1777,7 @@ function BookingsPageContent() {
             </div>
             {maintenanceActive ? (
               <div className="flex-shrink-0">
-                <div className="flex items-center gap-1 sm:gap-2 bg-gray-500 text-muted-foreground px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed">
+                <div className="flex items-center gap-1 sm:gap-2 bg-muted-foreground text-muted-foreground px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">New </span>Book
                   <span className="text-xs">(Disabled)</span>
@@ -1804,34 +1804,34 @@ function BookingsPageContent() {
                 Booking Summary
               </h2>
               <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
-                <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-lg p-2 sm:p-3">
+                <div className="bg-warning/20 border border-warning/20 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                    <HourglassIcon className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />
-                    <span className="text-yellow-400 font-medium text-xs sm:text-sm">
+                    <HourglassIcon className="w-3 h-3 sm:w-4 sm:h-4 text-warning flex-shrink-0" />
+                    <span className="text-warning font-medium text-xs sm:text-sm">
                       Pending
                     </span>
                   </div>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.pendingCount}/3
                   </p>
-                  <p className="text-xs text-yellow-300 truncate">
+                  <p className="text-xs text-warning truncate">
                     {bookingStats.canCreatePending
                       ? `${3 - bookingStats.pendingCount} slots left`
                       : "Limit reached"}
                   </p>
                 </div>
 
-                <div className="bg-green-600/20 border border-green-600/50 rounded-lg p-2 sm:p-3">
+                <div className="bg-success/20 border border-success/20 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-green-400 font-medium text-xs sm:text-sm">
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success flex-shrink-0" />
+                    <span className="text-success font-medium text-xs sm:text-sm">
                       Confirmed
                     </span>
                   </div>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.confirmedCount}
                   </p>
-                  <p className="text-xs text-green-300">Active bookings</p>
+                  <p className="text-xs text-success">Active bookings</p>
                 </div>
 
                 <div className="bg-primary/20 border border-primary/50 rounded-lg p-2 sm:p-3">
@@ -1851,25 +1851,25 @@ function BookingsPageContent() {
                   </p>
                 </div>
 
-                <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-2 sm:p-3">
+                <div className="bg-destructive/20 border border-destructive/20 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                    <XCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
-                    <span className="text-red-400 font-medium text-xs sm:text-sm">
+                    <XCircle className="w-3 h-3 sm:w-4 sm:h-4 text-destructive flex-shrink-0" />
+                    <span className="text-destructive font-medium text-xs sm:text-sm">
                       Cancelled
                     </span>
                   </div>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                     {bookingStats.cancelledCount}
                   </p>
-                  <p className="text-xs text-red-300">Total cancelled</p>
+                  <p className="text-xs text-destructive">Total cancelled</p>
                 </div>
               </div>
 
               {!bookingStats.canCreatePending && (
-                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-yellow-900/30 border border-yellow-600/50 rounded-lg">
+                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-warning/10 border border-warning/20 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />
-                    <p className="text-yellow-400 text-xs sm:text-sm font-medium">
+                    <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-warning flex-shrink-0" />
+                    <p className="text-warning text-xs sm:text-sm font-medium">
                       {bookingStats.message}
                     </p>
                   </div>
@@ -1895,7 +1895,7 @@ function BookingsPageContent() {
             </p>
             <div className="space-y-2 sm:space-y-3 lg:space-y-4">
               {maintenanceActive ? (
-                <div className="bg-gray-500 text-muted-foreground px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed w-full sm:w-auto text-center">
+                <div className="bg-muted-foreground text-muted-foreground px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed w-full sm:w-auto text-center">
                   Booking Temporarily Disabled
                 </div>
               ) : (
@@ -1910,7 +1910,7 @@ function BookingsPageContent() {
                   Resort is temporarily closed for maintenance. Call{" "}
                   <a
                     href="tel:+639662815123"
-                    className="text-orange-400 hover:text-orange-300"
+                    className="text-warning hover:text-warning"
                   >
                     +63 966 281 5123
                   </a>{" "}
@@ -1937,27 +1937,27 @@ function BookingsPageContent() {
                   <Lightbulb className="w-4 h-4 text-primary/80" />
                   Complete Your Booking
                 </h3>
-                <p className="text-blue-200 text-xs sm:text-sm mb-2">
+                <p className="text-primary text-xs sm:text-sm mb-2">
                   Your bookings are <strong>pending</strong> until you upload
                   payment proof. Here&apos;s how:
                 </p>
-                <div className="space-y-1 text-blue-100 text-xs">
+                <div className="space-y-1 text-primary text-xs">
                   <div className="flex items-center gap-2">
-                    <CreditCard className="w-3 h-3 text-blue-200 flex-shrink-0" />
+                    <CreditCard className="w-3 h-3 text-primary flex-shrink-0" />
                     <p>Pay 50% down payment via GCash or Maya</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Smartphone className="w-3 h-3 text-blue-200 flex-shrink-0" />
+                    <Smartphone className="w-3 h-3 text-primary flex-shrink-0" />
                     <p>Take a screenshot/photo of your payment receipt</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Upload className="w-3 h-3 text-blue-200 flex-shrink-0" />
+                    <Upload className="w-3 h-3 text-primary flex-shrink-0" />
                     <p>
                       Click &quot;Upload Payment Proof&quot; on your booking
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-blue-200 flex-shrink-0" />
+                    <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
                     <p>
                       Admin will review and confirm your booking within 24 hours
                     </p>
@@ -1987,7 +1987,7 @@ function BookingsPageContent() {
                 {paginatedBookings.map((booking) => (
                   <div
                     key={booking.id}
-                    className="bg-muted rounded-lg p-3 sm:p-4 lg:p-6 hover:bg-gray-650 transition border border-border/50"
+                    className="bg-muted rounded-lg p-3 sm:p-4 lg:p-6 hover:bg-muted transition border border-border/50"
                   >
                     {/* Header Section - Mobile Stack */}
                     <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -2026,14 +2026,14 @@ function BookingsPageContent() {
                       booking.created_at,
                       booking.status || "pending"
                     ) && (
-                      <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-orange-900/30 border border-orange-600/50 rounded-lg">
+                      <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-warning/10 border border-warning/20 rounded-lg">
                         <div className="flex items-start gap-2">
-                          <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                          <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-warning flex-shrink-0 mt-0.5" />
                           <div className="min-w-0 flex-1">
-                            <p className="text-orange-400 text-xs sm:text-sm font-medium">
+                            <p className="text-warning text-xs sm:text-sm font-medium">
                               {getExpirationWarningMessage(booking.created_at)}
                             </p>
-                            <p className="text-orange-300 text-xs mt-1">
+                            <p className="text-warning text-xs mt-1">
                               Pending for {getDaysPending(booking.created_at)}{" "}
                               day(s). Contact admin or complete payment to
                               confirm.
@@ -2045,7 +2045,7 @@ function BookingsPageContent() {
 
                     {/* Details Grid - 2x2 on Mobile */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-muted/30 rounded">
                         <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -2063,7 +2063,7 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-muted/30 rounded">
                         <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -2081,7 +2081,7 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-muted/30 rounded">
                         <Users className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -2092,7 +2092,7 @@ function BookingsPageContent() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-gray-600/30 rounded">
+                      <div className="flex items-center gap-2 text-muted-foreground p-2 bg-muted/30 rounded">
                         <PhilippinePeso className="w-3 h-3 text-primary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -2111,7 +2111,7 @@ function BookingsPageContent() {
 
                     {/* Contact Info - Mobile Optimized */}
                     {booking.guest_phone && (
-                      <div className="mb-3 sm:mb-4 p-2 bg-gray-600/30 rounded">
+                      <div className="mb-3 sm:mb-4 p-2 bg-muted/30 rounded">
                         <p className="text-muted-foreground text-xs sm:text-sm flex items-center gap-1">
                           <Phone className="w-3 h-3 text-muted-foreground" />
                           Contact:{" "}
@@ -2133,7 +2133,7 @@ function BookingsPageContent() {
                         .replace(/\[WALK-IN\]/g, '')
                         .trim();
                       return cleanedRequest ? (
-                        <div className="bg-gray-600/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
+                        <div className="bg-muted/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
                           <p className="text-xs text-muted-foreground mb-1">
                             💬 Special Request:
                           </p>
@@ -2165,7 +2165,7 @@ function BookingsPageContent() {
                       <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
                         <button
                           onClick={() => openModal(booking)}
-                          className="bg-gray-600 hover:bg-gray-500 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
+                          className="bg-muted-foreground hover:bg-muted text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                         >
                           Details
                         </button>
@@ -2200,16 +2200,16 @@ function BookingsPageContent() {
                         {canRescheduleBooking(booking) ? (
                           <button
                             onClick={() => handleOpenReschedule(booking)}
-                            className="bg-amber-600 hover:bg-amber-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
+                            className="bg-warning hover:bg-warning/90 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                           >
                             <Calendar className="w-3 h-3" />
-                            Resched {(booking.reschedule_count || 0) > 0 && <span className="text-amber-200 text-[10px]">({booking.reschedule_count}/2)</span>}
+                            Resched {(booking.reschedule_count || 0) > 0 && <span className="text-warning text-[10px]">({booking.reschedule_count}/2)</span>}
                           </button>
                         ) : (
                           canCancelBooking(booking) && (
                             <button
                               disabled
-                              className="bg-gray-500 text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
+                              className="bg-muted-foreground text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
                             >
                               <Calendar className="w-3 h-3" />
                               {bookingsWithPendingProofs.has(booking.id)
@@ -2227,7 +2227,7 @@ function BookingsPageContent() {
                               setSelectedBooking(booking);
                               setShowCancelModal(true);
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
+                            className="bg-destructive hover:bg-destructive/90 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1 min-h-[44px] touch-manipulation"
                             title={getCancellationMessage(booking)}
                           >
                             Cancel
@@ -2236,7 +2236,7 @@ function BookingsPageContent() {
                           booking.status?.toLowerCase() !== "cancelled" && (
                             <button
                               disabled
-                              className="bg-gray-500 text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
+                              className="bg-muted-foreground text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-1 min-h-[44px]"
                               title={getCancellationMessage(booking)}
                             >
                               <Ban className="w-3 h-3" />
@@ -2259,7 +2259,7 @@ function BookingsPageContent() {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-gray-600 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
+                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
                       title="Previous page"
                     >
                       <ChevronLeft className="w-3 h-3" />
@@ -2290,7 +2290,7 @@ function BookingsPageContent() {
                               className={`px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg transition min-w-[28px] sm:min-w-[32px] ${
                                 currentPage === pageNumber
                                   ? "bg-primary text-foreground"
-                                  : "bg-muted text-muted-foreground hover:bg-gray-600 hover:text-foreground"
+                                  : "bg-muted text-muted-foreground hover:bg-muted hover:text-foreground"
                               }`}
                             >
                               {pageNumber}
@@ -2304,7 +2304,7 @@ function BookingsPageContent() {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-gray-600 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
+                      className="flex items-center gap-1 px-2 sm:px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition text-xs sm:text-sm flex-shrink-0"
                       title="Next page"
                     >
                       <span className="hidden sm:inline">Next</span>
@@ -2321,14 +2321,14 @@ function BookingsPageContent() {
         {/* Enhanced Cancellation Modal - Familiar Design + Policy Info */}
         {showCancelModal && selectedBooking && (
           <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-start justify-center pt-20 z-[60] p-4">
-            <div className="bg-white/95 dark:bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/50 dark:border-border/50 transform animate-in slide-in-from-top-4 fade-in duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md border border-border/50 transform animate-in slide-in-from-top-4 fade-in duration-300 max-h-[90vh] overflow-y-auto">
               {/* Header with Icon */}
               <div className="flex items-center gap-3 p-5 pb-4">
-                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                  <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <div className="w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-destructive" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Cancel Booking
                   </h3>
                   <p className="text-sm text-muted-foreground dark:text-muted-foreground">
@@ -2339,20 +2339,20 @@ function BookingsPageContent() {
 
               {/* Booking Summary Card */}
               <div className="mx-5 mb-4">
-                <div className="bg-gray-50 dark:bg-card/50 rounded-xl p-4 border border-gray-200/50 dark:border-border/50">
+                <div className="bg-muted rounded-xl p-4 border border-border/50">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Guest
                     </span>
-                    <span className="text-sm text-gray-900 dark:text-foreground font-medium">
+                    <span className="text-sm text-foreground font-medium">
                       {selectedBooking.guest_name}
                     </span>
                   </div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Check-in
                     </span>
-                    <span className="text-sm text-gray-900 dark:text-foreground">
+                    <span className="text-sm text-foreground">
                       {selectedBooking.check_in_date
                         ? new Date(
                             selectedBooking.check_in_date
@@ -2365,10 +2365,10 @@ function BookingsPageContent() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Amount
                     </span>
-                    <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    <span className="text-lg font-bold text-success">
                       {selectedBooking.total_amount.toLocaleString()}
                     </span>
                   </div>
@@ -2378,7 +2378,7 @@ function BookingsPageContent() {
               {/* Refund Information - Compact Policy Integration */}
               <div className="mx-5 mb-4">
                 <div className="bg-primary/5 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 rounded-xl p-4">
-                  <h4 className="text-sm font-semibold text-primary dark:text-primary/80 mb-2">
+                  <h4 className="text-sm font-semibold text-primary/80 mb-2">
                     Your Refund
                   </h4>
                   {(() => {
@@ -2409,10 +2409,10 @@ function BookingsPageContent() {
                     if (!canCancel) {
                       return (
                         <div className="text-center">
-                          <p className="text-red-600 dark:text-red-400 font-medium text-sm">
+                          <p className="text-destructive font-medium text-sm">
                             Cancellation not allowed within 3 days
                           </p>
-                          <p className="text-red-500 dark:text-red-400 text-xs mt-1">
+                          <p className="text-destructive dark:text-destructive text-xs mt-1">
                             Please contact resort directly for assistance
                           </p>
                         </div>
@@ -2422,22 +2422,22 @@ function BookingsPageContent() {
                     return (
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-primary dark:text-primary">
+                          <span className="text-xs text-primary">
                             Down Payment
                           </span>
-                          <span className="font-medium text-primary dark:text-primary/80">
+                          <span className="font-medium text-primary/80">
                             {downPayment.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-primary dark:text-primary">
+                          <span className="text-xs text-primary">
                             Refund Amount ({percentage}%)
                           </span>
-                          <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                          <span className="text-lg font-bold text-success">
                             {refundAmount.toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-xs text-primary dark:text-primary">
+                        <p className="text-xs text-primary">
                           Time until check-in: {Math.floor(daysUntilCheckIn)}{" "}
                           days
                         </p>
@@ -2456,7 +2456,7 @@ function BookingsPageContent() {
                   value={cancellationReason}
                   onChange={(e) => setCancellationReason(e.target.value)}
                   placeholder="Please tell us why you're cancelling (required)"
-                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-card/50 text-gray-900 dark:text-foreground placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200 dark:border-border/50 focus:border-red-500 dark:focus:border-red-400 focus:outline-none resize-none text-sm backdrop-blur-sm"
+                  className="w-full p-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground border border-border/50 focus:border-destructive focus:outline-none resize-none text-sm backdrop-blur-sm"
                   rows={3}
                   maxLength={200}
                 />
@@ -2465,7 +2465,7 @@ function BookingsPageContent() {
                     {cancellationReason.length}/200 characters
                   </p>
                   {!cancellationReason.trim() && (
-                    <p className="text-xs text-red-500">Required</p>
+                    <p className="text-xs text-destructive">Required</p>
                   )}
                 </div>
               </div>
@@ -2477,7 +2477,7 @@ function BookingsPageContent() {
                     setShowCancelModal(false);
                     setCancellationReason("");
                   }}
-                  className="flex-1 bg-gray-100 dark:bg-card hover:bg-gray-200 dark:hover:bg-muted text-gray-700 dark:text-muted-foreground px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-gray-200 dark:border-border"
+                  className="flex-1 bg-muted hover:bg-muted text-muted-foreground px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-border"
                 >
                   Keep Booking
                 </button>
@@ -2492,7 +2492,7 @@ function BookingsPageContent() {
                     return (
                       <button
                         disabled
-                        className="flex-1 bg-gray-300 dark:bg-gray-600 text-muted-foreground dark:text-muted-foreground px-4 py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex-1 bg-muted text-muted-foreground dark:text-muted-foreground px-4 py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         <XCircle className="w-4 h-4" />
                         Cannot Cancel
@@ -2506,8 +2506,8 @@ function BookingsPageContent() {
                       disabled={!cancellationReason.trim()}
                       className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${
                         cancellationReason.trim()
-                          ? "bg-red-600 hover:bg-red-700 active:bg-red-800 text-foreground shadow-red-600/25"
-                          : "bg-gray-300 dark:bg-gray-600 text-muted-foreground dark:text-muted-foreground cursor-not-allowed"
+                          ? "bg-destructive hover:bg-destructive/90 active:bg-destructive/80 text-foreground shadow-destructive/25"
+                          : "bg-muted text-muted-foreground dark:text-muted-foreground cursor-not-allowed"
                       }`}
                     >
                       <XCircle className="w-4 h-4" />
@@ -2523,11 +2523,11 @@ function BookingsPageContent() {
         {/* Enhanced Reschedule Modal - Premium UI/UX */}
         {showRescheduleModal && selectedBooking && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="bg-white dark:bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-border animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-300">
+            <div className="bg-card rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden border-0 sm:border border-border animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-300">
               {/* Header - Sticky */}
-              <div className="sticky top-0 bg-white dark:bg-background z-10 px-5 pt-4 pb-3 border-b border-border dark:border-border">
+              <div className="sticky top-0 bg-card z-10 px-5 pt-4 pb-3 border-b border-border dark:border-border">
                 {/* Mobile drag indicator */}
-                <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4 sm:hidden"></div>
+                <div className="w-10 h-1 bg-muted rounded-full mx-auto mb-4 sm:hidden"></div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -2535,7 +2535,7 @@ function BookingsPageContent() {
                       <Calendar className="w-5 h-5 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-foreground">
+                      <h3 className="text-lg font-bold text-foreground">
                         Reschedule
                       </h3>
                       <p className="text-xs text-muted-foreground dark:text-muted-foreground">
@@ -2545,7 +2545,7 @@ function BookingsPageContent() {
                   </div>
                   <button
                     onClick={closeModal}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-card hover:bg-gray-200 dark:hover:bg-muted transition-colors"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-muted hover:bg-muted transition-colors"
                   >
                     <XCircle className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
                   </button>
@@ -2556,7 +2556,7 @@ function BookingsPageContent() {
               <div className="overflow-y-auto max-h-[calc(95vh-180px)] sm:max-h-[calc(90vh-200px)]">
                 {/* Current Booking Summary */}
                 <div className="px-5 pt-4">
-                  <div className="bg-gray-50 dark:bg-card/50 rounded-2xl p-4">
+                  <div className="bg-muted rounded-2xl p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
@@ -2564,11 +2564,11 @@ function BookingsPageContent() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-white dark:bg-background rounded-xl p-3 border border-gray-200 dark:border-border">
+                      <div className="flex-1 bg-card rounded-xl p-3 border border-border">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
                           Check-in
                         </p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-foreground">
+                        <p className="text-sm font-semibold text-foreground">
                           {new Date(
                             selectedBooking.check_in_date
                           ).toLocaleDateString("en-US", {
@@ -2578,12 +2578,12 @@ function BookingsPageContent() {
                           })}
                         </p>
                       </div>
-                      <div className="text-muted-foreground dark:text-gray-600">→</div>
-                      <div className="flex-1 bg-white dark:bg-background rounded-xl p-3 border border-gray-200 dark:border-border">
+                      <div className="text-muted-foreground">→</div>
+                      <div className="flex-1 bg-card rounded-xl p-3 border border-border">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
                           Check-out
                         </p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-foreground">
+                        <p className="text-sm font-semibold text-foreground">
                           {new Date(
                             selectedBooking.check_out_date
                           ).toLocaleDateString("en-US", {
@@ -2599,13 +2599,13 @@ function BookingsPageContent() {
 
                 {/* View Toggle */}
                 <div className="px-5 pt-4">
-                  <div className="flex bg-gray-100 dark:bg-card rounded-xl p-1">
+                  <div className="flex bg-muted rounded-xl p-1">
                     <button
                       onClick={() => setShowCalendar(true)}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         showCalendar
-                          ? "bg-white dark:bg-muted text-gray-900 dark:text-foreground shadow-sm"
-                          : "text-muted-foreground dark:text-muted-foreground hover:text-gray-700 dark:hover:text-muted-foreground"
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground dark:text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <Calendar className="w-4 h-4" />
@@ -2615,8 +2615,8 @@ function BookingsPageContent() {
                       onClick={() => setShowCalendar(false)}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         !showCalendar
-                          ? "bg-white dark:bg-muted text-gray-900 dark:text-foreground shadow-sm"
-                          : "text-muted-foreground dark:text-muted-foreground hover:text-gray-700 dark:hover:text-muted-foreground"
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground dark:text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <Edit3 className="w-4 h-4" />
@@ -2628,14 +2628,14 @@ function BookingsPageContent() {
                 {/* Date Selection */}
                 <div className="px-5 pt-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Calendar className="w-4 h-4 text-amber-500" />
+                    <Calendar className="w-4 h-4 text-warning" />
                     <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                       Select New Dates
                     </span>
                   </div>
 
                   {showCalendar ? (
-                    <div className="border border-gray-200 dark:border-border rounded-2xl overflow-hidden bg-white dark:bg-card">
+                    <div className="border border-border rounded-2xl overflow-hidden bg-card">
                       <AvailabilityCalendar
                         selectedCheckIn={
                           selectedBooking.check_in_date.split("T")[0]
@@ -2651,9 +2651,9 @@ function BookingsPageContent() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="bg-white dark:bg-card rounded-xl border border-gray-200 dark:border-border p-4">
+                      <div className="bg-card rounded-xl border border-border p-4">
                         <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide mb-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <div className="w-2 h-2 bg-success rounded-full"></div>
                           New Check-in
                         </label>
                         <input
@@ -2661,10 +2661,10 @@ function BookingsPageContent() {
                           value={newCheckInDate}
                           onChange={(e) => setNewCheckInDate(e.target.value)}
                           min={new Date().toISOString().split("T")[0]}
-                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-background border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-foreground text-base font-medium"
+                          className="w-full p-3 rounded-xl bg-muted border-0 focus:ring-2 focus:ring-ring text-foreground text-base font-medium"
                         />
                       </div>
-                      <div className="bg-white dark:bg-card rounded-xl border border-gray-200 dark:border-border p-4">
+                      <div className="bg-card rounded-xl border border-border p-4">
                         <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide mb-2">
                           <div className="w-2 h-2 bg-primary rounded-full"></div>
                           New Check-out
@@ -2677,7 +2677,7 @@ function BookingsPageContent() {
                             newCheckInDate ||
                             new Date().toISOString().split("T")[0]
                           }
-                          className="w-full p-3 rounded-xl bg-gray-50 dark:bg-background border-0 focus:ring-2 focus:ring-amber-500 text-gray-900 dark:text-foreground text-base font-medium"
+                          className="w-full p-3 rounded-xl bg-muted border-0 focus:ring-2 focus:ring-ring text-foreground text-base font-medium"
                         />
                       </div>
                     </div>
@@ -2687,19 +2687,19 @@ function BookingsPageContent() {
                 {/* Selected Dates Preview */}
                 {newCheckInDate && newCheckOutDate && (
                   <div className="px-5 pt-4">
-                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4">
+                    <div className="bg-warning/10 border border-warning/20 rounded-2xl p-4">
                       <div className="flex items-center gap-2 mb-3">
-                        <CheckCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-xs font-medium text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+                        <CheckCircle className="w-4 h-4 text-warning" />
+                        <span className="text-xs font-medium text-warning uppercase tracking-wide">
                           New Dates Selected
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
-                          <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wide mb-0.5">
+                          <p className="text-[10px] text-warning/70 uppercase tracking-wide mb-0.5">
                             Check-in
                           </p>
-                          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                          <p className="text-sm font-bold text-warning">
                             {new Date(newCheckInDate).toLocaleDateString(
                               "en-US",
                               {
@@ -2710,12 +2710,12 @@ function BookingsPageContent() {
                             )}
                           </p>
                         </div>
-                        <div className="text-amber-400">→</div>
+                        <div className="text-warning">→</div>
                         <div className="flex-1 text-right">
-                          <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wide mb-0.5">
+                          <p className="text-[10px] text-warning/70 uppercase tracking-wide mb-0.5">
                             Check-out
                           </p>
-                          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                          <p className="text-sm font-bold text-warning">
                             {new Date(newCheckOutDate).toLocaleDateString(
                               "en-US",
                               {
@@ -2728,8 +2728,8 @@ function BookingsPageContent() {
                         </div>
                       </div>
                       {/* Nights calculation */}
-                      <div className="mt-3 pt-3 border-t border-amber-200/50 dark:border-amber-700/50">
-                        <p className="text-xs text-center text-amber-700 dark:text-amber-300">
+                      <div className="mt-3 pt-3 border-t border-warning/20">
+                        <p className="text-xs text-center text-warning">
                           {Math.ceil(
                             (new Date(newCheckOutDate).getTime() -
                               new Date(newCheckInDate).getTime()) /
@@ -2779,37 +2779,37 @@ function BookingsPageContent() {
 
                   return (
                     <div className="px-5 pt-4">
-                      <div className={`rounded-xl p-4 border ${difference > 0 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50" : difference < 0 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50" : "bg-gray-50 dark:bg-card/50 border-gray-200 dark:border-border"}`}>
-                        <p className="text-xs font-semibold text-gray-700 dark:text-muted-foreground mb-2">Pricing Preview</p>
+                      <div className={`rounded-xl p-4 border ${difference > 0 ? "bg-warning/10 border-warning/20" : difference < 0 ? "bg-success/10 border-success/20" : "bg-muted border-border"}`}>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Pricing Preview</p>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between text-gray-600 dark:text-muted-foreground">
+                          <div className="flex justify-between text-muted-foreground">
                             <span>Current booking</span>
                             <span>₱{currentAmount.toLocaleString()}</span>
                           </div>
-                          <div className="flex justify-between text-gray-600 dark:text-muted-foreground">
+                          <div className="flex justify-between text-muted-foreground">
                             <span>New dates ({nights.length} night{nights.length !== 1 ? "s" : ""})</span>
                             <span>₱{newTotal.toLocaleString()}</span>
                           </div>
-                          <div className="border-t border-gray-200 dark:border-border pt-1.5">
+                          <div className="border-t border-border pt-1.5">
                             {difference > 0 ? (
-                              <div className="flex justify-between font-semibold text-amber-700 dark:text-amber-400">
+                              <div className="flex justify-between font-semibold text-warning">
                                 <span>Additional balance due</span>
                                 <span>₱{difference.toLocaleString()}</span>
                               </div>
                             ) : difference < 0 ? (
-                              <div className="flex justify-between font-semibold text-green-700 dark:text-green-400">
+                              <div className="flex justify-between font-semibold text-success">
                                 <span>No additional payment</span>
                                 <span>-₱{Math.abs(difference).toLocaleString()}</span>
                               </div>
                             ) : (
-                              <div className="flex justify-between font-semibold text-gray-700 dark:text-muted-foreground">
+                              <div className="flex justify-between font-semibold text-muted-foreground">
                                 <span>Same price</span>
                                 <span>No change</span>
                               </div>
                             )}
                           </div>
                           {difference > 0 && (
-                            <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
+                            <p className="text-[10px] text-warning mt-1">
                               You will need to upload payment proof for the additional balance after confirming.
                             </p>
                           )}
@@ -2823,7 +2823,7 @@ function BookingsPageContent() {
                 <div className="px-5 pt-4 pb-4">
                   <div className="flex items-start gap-3 bg-primary/5 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 rounded-xl p-3">
                     <Lightbulb className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <div className="text-xs text-primary dark:text-primary/80 space-y-1">
+                    <div className="text-xs text-primary/80 space-y-1">
                       <p className="font-medium">Reschedule policy</p>
                       <p className="text-primary/80 dark:text-primary/80">
                         Maximum 2 reschedules per booking. Must be at least 3 days before check-in. Original
@@ -2835,11 +2835,11 @@ function BookingsPageContent() {
               </div>
 
               {/* Fixed Footer Actions */}
-              <div className="sticky bottom-0 bg-white dark:bg-background border-t border-border dark:border-border p-4 pb-6 sm:pb-4">
+              <div className="sticky bottom-0 bg-card border-t border-border dark:border-border p-4 pb-6 sm:pb-4">
                 <div className="flex gap-3">
                   <button
                     onClick={closeModal}
-                    className="flex-1 bg-gray-100 dark:bg-card text-gray-700 dark:text-muted-foreground py-3.5 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-muted transition-colors active:scale-[0.98]"
+                    className="flex-1 bg-muted text-muted-foreground py-3.5 rounded-xl font-semibold hover:bg-muted transition-colors active:scale-[0.98]"
                   >
                     Cancel
                   </button>
@@ -2871,9 +2871,9 @@ function BookingsPageContent() {
         {/* Booking Details Modal - Keep for "View Details" button */}
         {showModal && selectedBooking && !showCancelModal && (
           <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white/95 dark:bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-border/50">
+            <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-border/50">
               {/* Modal Header */}
-              <div className="bg-primary/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-gray-200/20 dark:border-border/20">
+              <div className="bg-primary/90 backdrop-blur-sm p-4 sm:p-6 rounded-t-2xl border-b border-border/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     <div className="bg-white/20 p-1.5 sm:p-2 rounded-full flex-shrink-0">
@@ -2898,19 +2898,19 @@ function BookingsPageContent() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-4 sm:p-6 bg-white/90 dark:bg-card/90 backdrop-blur-sm">
+              <div className="p-4 sm:p-6 bg-card/90 backdrop-blur-sm">
                 {/* Booking Info Section */}
-                <div className="bg-gray-50/80 dark:bg-muted/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-200/50 dark:border-border/50">
+                <div className="bg-muted/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-border/50">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <div className="bg-primary/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-foreground" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-foreground truncate">
+                        <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                           {formatBookingNumber(selectedBooking.id)}
                         </h3>
-                        <p className="text-gray-600 dark:text-muted-foreground text-xs sm:text-sm truncate">
+                        <p className="text-muted-foreground text-xs sm:text-sm truncate">
                           {selectedBooking.guest_name} •{" "}
                           {selectedBooking.guest_email || "No email"}
                         </p>
@@ -2982,7 +2982,7 @@ function BookingsPageContent() {
                               ? "Payment Required"
                               : "Down Payment (50%)"}
                           </p>
-                          <p className="font-semibold text-green-400 text-sm sm:text-base">
+                          <p className="font-semibold text-success text-sm sm:text-base">
                             ₱
                             {(
                               selectedBooking.payment_amount ||
@@ -3014,23 +3014,23 @@ function BookingsPageContent() {
                 </div>
 
                 {/* Payment Information Section */}
-                <div className="bg-gradient-to-br from-green-50/90 to-emerald-50/90 dark:from-gray-700/90 dark:to-gray-600/90 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-green-200/50 dark:border-border/50">
+                <div className="bg-gradient-to-br from-success/10 to-success/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-success/20">
                   <div className="flex items-center gap-2 sm:gap-3 mb-4">
-                    <div className="bg-green-600/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                    <div className="bg-success/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-full flex-shrink-0">
                       <PhilippinePeso className="w-3 h-3 sm:w-4 sm:h-4 text-foreground" />
                     </div>
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-foreground">
+                    <h3 className="text-base sm:text-lg font-semibold text-foreground">
                       Payment Information
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* Total Amount */}
-                    <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
+                    <div className="bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-success/20">
                       <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                         Total Amount
                       </p>
-                      <p className="font-bold text-lg text-green-600 dark:text-green-400">
+                      <p className="font-bold text-lg text-success">
                         ₱{selectedBooking.total_amount.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-0.5">
@@ -3039,7 +3039,7 @@ function BookingsPageContent() {
                     </div>
 
                     {/* Payment Breakdown */}
-                    <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-green-200/30 dark:border-gray-500/30">
+                    <div className="bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-success/20">
                       <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                         Payment Breakdown
                       </p>
@@ -3047,36 +3047,36 @@ function BookingsPageContent() {
                     </div>
 
                     {/* Payment Status */}
-                    <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-primary/20/30 dark:border-gray-500/30">
+                    <div className="bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-primary/20/30 dark:border-border/30">
                       <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                         Payment Status
                       </p>
                       <div className="flex items-center gap-2">
                         {selectedBooking.payment_status === "paid" || selectedBooking.payment_status === "verified" ? (
                           <>
-                            <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
-                            <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                            <CheckCircle2 className="w-3 h-3 text-success flex-shrink-0" />
+                            <span className="text-sm font-medium text-success">
                               Payment Verified
                             </span>
                           </>
                         ) : selectedBooking.payment_status === "payment_review" ? (
                           <>
-                            <HourglassIcon className="w-3 h-3 text-yellow-500 flex-shrink-0" />
-                            <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                            <HourglassIcon className="w-3 h-3 text-warning flex-shrink-0" />
+                            <span className="text-sm font-medium text-warning">
                               Under Review
                             </span>
                           </>
                         ) : selectedBooking.payment_status === "rejected" ? (
                           <>
-                            <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
-                            <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                            <AlertTriangle className="w-3 h-3 text-destructive flex-shrink-0" />
+                            <span className="text-sm font-medium text-destructive">
                               Payment Rejected
                             </span>
                           </>
                         ) : (
                           <>
-                            <HourglassIcon className="w-3 h-3 text-yellow-500 flex-shrink-0" />
-                            <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                            <HourglassIcon className="w-3 h-3 text-warning flex-shrink-0" />
+                            <span className="text-sm font-medium text-warning">
                               Awaiting Payment
                             </span>
                           </>
@@ -3088,13 +3088,13 @@ function BookingsPageContent() {
                   {/* Additional Row for Half Payment - Remaining Balance */}
                   {selectedBooking.payment_type === "half" && (
                     <div className="mt-3 sm:mt-4">
-                      <div className="bg-white/60 dark:bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-orange-200/30 dark:border-gray-500/30">
+                      <div className="bg-card/60 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-warning/20">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div>
                             <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">
                               Remaining Balance
                             </p>
-                            <p className="font-semibold text-sm sm:text-base text-orange-600 dark:text-orange-400">
+                            <p className="font-semibold text-sm sm:text-base text-warning">
                               {(
                                 selectedBooking.total_amount * 0.5
                               ).toLocaleString()}
@@ -3112,8 +3112,8 @@ function BookingsPageContent() {
 
                   {/* Payment Timeline or Notes */}
                   {selectedBooking.payment_type === "half" && (
-                    <div className="mt-4 p-3 bg-primary/5/70 dark:bg-card/70 backdrop-blur-sm rounded-lg border border-primary/20/30 dark:border-gray-500/30">
-                      <p className="text-xs sm:text-sm text-primary dark:text-primary/80">
+                    <div className="mt-4 p-3 bg-card/70 backdrop-blur-sm rounded-lg border border-primary/20/30 dark:border-border/30">
+                      <p className="text-xs sm:text-sm text-primary/80">
                         <strong>Payment Schedule:</strong> 50% paid as
                         downpayment, remaining 50% due upon check-in at the
                         resort.
@@ -3133,11 +3133,11 @@ function BookingsPageContent() {
                       .trim();
                     return cleanedRequest ? (
                       <div className="bg-primary/5/80 dark:bg-muted/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-primary/20/50 dark:border-border/50">
-                        <h4 className="text-gray-900 dark:text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                          <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-primary dark:text-primary" />
+                        <h4 className="text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                          <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                           Special Requests
                         </h4>
-                        <p className="text-gray-700 dark:text-muted-foreground text-xs sm:text-sm bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
+                        <p className="text-muted-foreground text-xs sm:text-sm bg-muted/50 backdrop-blur-sm p-2 sm:p-3 rounded-lg break-words">
                           {cleanedRequest}
                         </p>
                       </div>
@@ -3146,14 +3146,14 @@ function BookingsPageContent() {
 
                   {/* Pet Information */}
                   {selectedBooking.brings_pet !== null && (
-                    <div className="bg-green-50/80 dark:bg-muted/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-green-200/50 dark:border-border/50">
-                      <h4 className="text-gray-900 dark:text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
-                        <PawPrint className="w-4 h-4 text-amber-500" />
+                    <div className="bg-success/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-success/20">
+                      <h4 className="text-foreground font-medium mb-2 text-sm sm:text-base flex items-center gap-2">
+                        <PawPrint className="w-4 h-4 text-warning" />
                         Pet Policy
                       </h4>
-                      <p className="text-gray-700 dark:text-muted-foreground text-xs sm:text-sm">
+                      <p className="text-muted-foreground text-xs sm:text-sm">
                         {selectedBooking.brings_pet ? (
-                          <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <span className="text-success flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" /> Pet-friendly
                             booking
                           </span>
@@ -3185,7 +3185,7 @@ function BookingsPageContent() {
                       {selectedBooking.status?.toLowerCase() === "cancelled" &&
                         selectedBooking.cancelled_by && (
                           <div className="border-t border-border pt-2 mt-2">
-                            <p className="text-red-400 text-xs sm:text-sm font-medium flex items-center gap-1">
+                            <p className="text-destructive text-xs sm:text-sm font-medium flex items-center gap-1">
                               <XCircle className="w-3 h-3" /> Cancelled by{" "}
                               {selectedBooking.cancelled_by === "user"
                                 ? "Guest"
@@ -3216,12 +3216,12 @@ function BookingsPageContent() {
                             {/* Refund Information */}
                             {selectedBooking.refund_amount &&
                               selectedBooking.refund_amount > 0 && (
-                                <div className="mt-2 p-2 bg-green-900/30 border border-green-700/50 rounded-lg">
-                                  <p className="text-green-400 text-xs font-medium flex items-center gap-1">
+                                <div className="mt-2 p-2 bg-success/10 border border-success/20 rounded-lg">
+                                  <p className="text-success text-xs font-medium flex items-center gap-1">
                                     💰 Refund: ₱
                                     {selectedBooking.refund_amount.toLocaleString()}
                                   </p>
-                                  <p className="text-green-300/70 text-xs mt-1">
+                                  <p className="text-success/70 text-xs mt-1">
                                     Status:{" "}
                                     {selectedBooking.refund_status ===
                                     "completed"
@@ -3233,7 +3233,7 @@ function BookingsPageContent() {
                                         "Pending"}
                                   </p>
                                   {selectedBooking.refund_processed_at && (
-                                    <p className="text-green-300/60 text-xs">
+                                    <p className="text-success/60 text-xs">
                                       Processed:{" "}
                                       {new Date(
                                         selectedBooking.refund_processed_at
@@ -3250,19 +3250,19 @@ function BookingsPageContent() {
               </div>
 
               {/* Modal Footer - Modern Design */}
-              <div className="bg-white/80 dark:bg-muted/80 backdrop-blur-sm p-4 sm:p-6 rounded-b-2xl border-t border-gray-200/50 dark:border-border/50">
+              <div className="bg-muted/80 backdrop-blur-sm p-4 sm:p-6 rounded-b-2xl border-t border-border/50">
                 {canCancelBooking(selectedBooking) && !showCancelModal ? (
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                     <button
                       onClick={() => setShowCancelModal(true)}
-                      className="bg-red-600 text-foreground px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition order-2 sm:order-1"
+                      className="bg-destructive text-foreground px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-destructive/90 transition order-2 sm:order-1"
                       title={getCancellationMessage(selectedBooking)}
                     >
                       Cancel Booking
                     </button>
                     <button
                       onClick={closeModal}
-                      className="bg-gray-600 text-foreground px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
+                      className="bg-muted-foreground text-foreground px-4 py-2 sm:py-2 rounded-lg text-sm font-semibold hover:bg-muted transition order-1 sm:order-2"
                     >
                       Close
                     </button>
@@ -3277,7 +3277,7 @@ function BookingsPageContent() {
                         value={cancellationReason}
                         onChange={(e) => setCancellationReason(e.target.value)}
                         placeholder="Please provide a reason for cancellation (required)"
-                        className="w-full p-3 rounded-lg bg-gray-600 text-foreground placeholder-gray-400 border border-gray-500 focus:border-red-500 focus:outline-none resize-none text-sm"
+                        className="w-full p-3 rounded-lg bg-muted-foreground text-foreground placeholder:text-muted-foreground border border-border focus:border-destructive focus:outline-none resize-none text-sm"
                         rows={3}
                         maxLength={200}
                       />
@@ -3291,8 +3291,8 @@ function BookingsPageContent() {
                         disabled={!cancellationReason.trim()}
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition order-2 sm:order-1 ${
                           cancellationReason.trim()
-                            ? "bg-red-600 text-foreground hover:bg-red-700"
-                            : "bg-gray-500 text-muted-foreground cursor-not-allowed"
+                            ? "bg-destructive text-foreground hover:bg-destructive/90"
+                            : "bg-muted-foreground text-muted-foreground cursor-not-allowed"
                         }`}
                       >
                         Confirm Cancellation
@@ -3302,7 +3302,7 @@ function BookingsPageContent() {
                           setShowCancelModal(false);
                           setCancellationReason("");
                         }}
-                        className="bg-gray-600 text-foreground py-2 px-4 rounded-lg text-sm font-semibold hover:bg-gray-500 transition order-1 sm:order-2"
+                        className="bg-muted-foreground text-foreground py-2 px-4 rounded-lg text-sm font-semibold hover:bg-muted transition order-1 sm:order-2"
                       >
                         Back
                       </button>
@@ -3314,7 +3314,7 @@ function BookingsPageContent() {
                       selectedBooking.status?.toLowerCase() !== "cancelled" && (
                         <button
                           disabled
-                          className="bg-gray-500 text-muted-foreground px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed"
+                          className="bg-muted-foreground text-muted-foreground px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed"
                           title={getCancellationMessage(selectedBooking)}
                         >
                           Cannot Cancel
@@ -3322,7 +3322,7 @@ function BookingsPageContent() {
                       )}
                     <button
                       onClick={closeModal}
-                      className="bg-gray-600 text-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-500 transition flex-1"
+                      className="bg-muted-foreground text-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-muted transition flex-1"
                     >
                       Close
                     </button>

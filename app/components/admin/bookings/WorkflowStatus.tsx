@@ -20,7 +20,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "user_cancelled",
         priority: 0,
-        badge: "bg-gray-100 text-gray-800",
+        badge: "bg-muted text-foreground",
         text: "Cancelled",
         description: "Booking cancelled by user",
         actionNeeded: "None - booking cancelled by user",
@@ -31,7 +31,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "admin_cancelled",
         priority: 0,
-        badge: "bg-red-100 text-red-800",
+        badge: "bg-destructive/10 text-destructive",
         text: "Admin Cancelled",
         description: "Booking cancelled by administrator",
         actionNeeded: "None - booking cancelled by admin",
@@ -42,7 +42,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "cancelled",
         priority: 0,
-        badge: "bg-gray-100 text-gray-800",
+        badge: "bg-muted text-foreground",
         text: "Cancelled",
         description: "Booking has been cancelled",
         actionNeeded: "None - booking cancelled",
@@ -62,7 +62,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "payment_review",
         priority: 5,
-        badge: "bg-amber-100 text-amber-800",
+        badge: "bg-warning/10 text-warning",
         text: "Under Review",
         description: "Payment proof uploaded, admin review needed",
         actionNeeded: "Review payment proof immediately",
@@ -73,7 +73,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "payment_rejected",
         priority: 6,
-        badge: "bg-red-100 text-red-800",
+        badge: "bg-destructive/10 text-destructive",
         text: "Rejected",
         description: "Payment proof was rejected by admin",
         actionNeeded:
@@ -83,7 +83,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "ready_to_confirm",
         priority: 3,
-        badge: "bg-blue-100 text-blue-800",
+        badge: "bg-info/10 text-info",
         text: "Ready to Confirm",
         description: "Payment verified, booking can now be confirmed",
         actionNeeded: "Click Confirm button to finalize booking",
@@ -92,7 +92,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "awaiting_payment",
         priority: 4,
-        badge: "bg-orange-100 text-orange-800",
+        badge: "bg-warning/10 text-warning",
         text: "Awaiting Payment",
         description: "User needs to upload payment proof",
         actionNeeded: "Remind user to upload payment",
@@ -103,7 +103,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "completed",
         priority: 1,
-        badge: "bg-green-100 text-green-800",
+        badge: "bg-success/10 text-success",
         text: "Confirmed",
         description: "Payment verified and booking confirmed",
         actionNeeded: "Send check-in reminders",
@@ -112,7 +112,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "confirmed_pending_payment",
         priority: 6,
-        badge: "bg-yellow-100 text-yellow-800",
+        badge: "bg-warning/10 text-warning",
         text: "Pending Payment",
         description: "Booking confirmed but payment still under review",
         actionNeeded: "Verify payment proof to complete workflow",
@@ -122,7 +122,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "confirmed",
         priority: 1,
-        badge: "bg-green-100 text-green-800",
+        badge: "bg-success/10 text-success",
         text: "Confirmed",
         description:
           paymentStatus === "paid"
@@ -142,7 +142,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "completed",
         priority: 0,
-        badge: "bg-purple-100 text-purple-800",
+        badge: "bg-chart-4/10 text-chart-4",
         text: "Completed",
         description: "User stay completed successfully",
         actionNeeded: "Request user review",
@@ -151,7 +151,7 @@ export function getSmartWorkflowStatus(
       return {
         step: "unknown",
         priority: 2,
-        badge: "bg-gray-100 text-gray-800",
+        badge: "bg-muted text-foreground",
         text: "Unknown",
         description: "Booking status needs clarification",
         actionNeeded: "Review and update status",
@@ -246,7 +246,7 @@ export function SmartWorkflowStatusCell({
   }, [booking.id, booking.status, refreshKey]);
 
   if (loading) {
-    return <span className="text-xs text-gray-400">Loading...</span>;
+    return <span className="text-xs text-muted-foreground">Loading...</span>;
   }
 
   const workflowStatus = getSmartWorkflowStatus(booking, paymentProof);

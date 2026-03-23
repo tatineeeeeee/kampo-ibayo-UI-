@@ -261,10 +261,17 @@ export default function AdminNotificationBell() {
       // Sort by timestamp (newest first) and limit to top 15
       notifs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-      // Load read status from localStorage
-      const readNotifs = JSON.parse(
-        localStorage.getItem("adminReadNotifications") || "[]"
-      );
+      // Load read status from localStorage (with safe parsing)
+      let readNotifs: string[] = [];
+      try {
+        readNotifs = JSON.parse(
+          localStorage.getItem("adminReadNotifications") || "[]"
+        );
+        if (!Array.isArray(readNotifs)) readNotifs = [];
+      } catch {
+        readNotifs = [];
+        localStorage.removeItem("adminReadNotifications");
+      }
       notifs.forEach((n) => {
         if (readNotifs.includes(n.id)) {
           n.read = true;
@@ -321,21 +328,21 @@ export default function AdminNotificationBell() {
   const getIcon = (type: Notification["type"]) => {
     switch (type) {
       case "cancellation":
-        return <AlertTriangle className="w-4 h-4 text-red-500" />;
+        return <AlertTriangle className="w-4 h-4 text-destructive" />;
       case "flagged_review":
-        return <Star className="w-4 h-4 text-yellow-500" />;
+        return <Star className="w-4 h-4 text-warning" />;
       case "pending_booking":
-        return <Calendar className="w-4 h-4 text-blue-500" />;
+        return <Calendar className="w-4 h-4 text-info" />;
       case "payment_proof":
-        return <CreditCard className="w-4 h-4 text-green-500" />;
+        return <CreditCard className="w-4 h-4 text-success" />;
       case "payment_failed":
-        return <XCircle className="w-4 h-4 text-red-600" />;
+        return <XCircle className="w-4 h-4 text-destructive" />;
       case "approved_review":
-        return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+        return <CheckCircle className="w-4 h-4 text-success" />;
       case "balance_remaining":
-        return <CreditCard className="w-4 h-4 text-orange-500" />;
+        return <CreditCard className="w-4 h-4 text-warning" />;
       default:
-        return <Bell className="w-4 h-4 text-gray-500" />;
+        return <Bell className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -458,23 +465,23 @@ export default function AdminNotificationBell() {
           {notifications.length > 0 && (
             <div className="px-3 sm:px-4 py-3 bg-muted/50 border-t border-border">
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xs">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <div className="font-bold text-red-700">
+                <div className="p-2 bg-destructive/10 rounded-lg">
+                  <div className="font-bold text-destructive">
                     {
                       notifications.filter((n) => n.type === "cancellation")
                         .length
                     }
                   </div>
-                  <div className="text-red-600 text-xs">Cancelled</div>
+                  <div className="text-destructive text-xs">Cancelled</div>
                 </div>
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <div className="font-bold text-yellow-700">
+                <div className="p-2 bg-warning/10 rounded-lg">
+                  <div className="font-bold text-warning">
                     {
                       notifications.filter((n) => n.type === "flagged_review")
                         .length
                     }
                   </div>
-                  <div className="text-yellow-600 text-xs">Flagged</div>
+                  <div className="text-warning text-xs">Flagged</div>
                 </div>
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <div className="font-bold text-primary">
@@ -485,42 +492,42 @@ export default function AdminNotificationBell() {
                   </div>
                   <div className="text-primary text-xs">Pending</div>
                 </div>
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <div className="font-bold text-green-700">
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <div className="font-bold text-success">
                     {
                       notifications.filter((n) => n.type === "payment_proof")
                         .length
                     }
                   </div>
-                  <div className="text-green-600 text-xs">Payment</div>
+                  <div className="text-success text-xs">Payment</div>
                 </div>
-                <div className="p-2 bg-red-200 rounded-lg">
-                  <div className="font-bold text-red-800">
+                <div className="p-2 bg-destructive/20 rounded-lg">
+                  <div className="font-bold text-destructive">
                     {
                       notifications.filter((n) => n.type === "payment_failed")
                         .length
                     }
                   </div>
-                  <div className="text-red-700 text-xs">Failed</div>
+                  <div className="text-destructive text-xs">Failed</div>
                 </div>
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <div className="font-bold text-emerald-700">
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <div className="font-bold text-success">
                     {
                       notifications.filter((n) => n.type === "approved_review")
                         .length
                     }
                   </div>
-                  <div className="text-emerald-600 text-xs">Approved</div>
+                  <div className="text-success text-xs">Approved</div>
                 </div>
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <div className="font-bold text-orange-700">
+                <div className="p-2 bg-warning/10 rounded-lg">
+                  <div className="font-bold text-warning">
                     {
                       notifications.filter(
                         (n) => n.type === "balance_remaining"
                       ).length
                     }
                   </div>
-                  <div className="text-orange-600 text-xs">Balance</div>
+                  <div className="text-warning text-xs">Balance</div>
                 </div>
               </div>
               {/* Last Updated Timestamp */}

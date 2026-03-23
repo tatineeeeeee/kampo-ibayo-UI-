@@ -33,23 +33,23 @@ export function BookingPagination({
   if (totalItems <= itemsPerPage) return null;
 
   return (
-    <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 pt-4">
+    <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border pt-4">
       {/* Mobile: Simple prev/next */}
       <div className="flex sm:hidden w-full justify-between items-center">
         <button
           onClick={onGoToPreviousPage}
           disabled={currentPage === 1}
-          className="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="px-4 py-2 rounded-md border border-border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           Previous
         </button>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-muted-foreground">
           Page {currentPage} of {totalPages}
         </span>
         <button
           onClick={onGoToNextPage}
           disabled={currentPage === totalPages}
-          className="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="px-4 py-2 rounded-md border border-border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           Next
         </button>
@@ -60,7 +60,7 @@ export function BookingPagination({
         <button
           onClick={onGoToFirstPage}
           disabled={currentPage === 1}
-          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-md border border-border bg-card text-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
           title="First page"
         >
           <ChevronsLeft className="w-4 h-4" />
@@ -68,7 +68,7 @@ export function BookingPagination({
         <button
           onClick={onGoToPreviousPage}
           disabled={currentPage === 1}
-          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-md border border-border bg-card text-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
           title="Previous page"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -95,8 +95,8 @@ export function BookingPagination({
               onClick={() => onGoToPage(pageNumber)}
               className={`px-3 py-2 text-sm font-medium rounded-md border ${
                 currentPage === pageNumber
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card border-border text-foreground hover:bg-muted"
               }`}
             >
               {pageNumber}
@@ -109,7 +109,7 @@ export function BookingPagination({
         <button
           onClick={onGoToNextPage}
           disabled={currentPage === totalPages}
-          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-md border border-border bg-card text-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
           title="Next page"
         >
           <ChevronRight className="w-4 h-4" />
@@ -117,7 +117,7 @@ export function BookingPagination({
         <button
           onClick={onGoToLastPage}
           disabled={currentPage === totalPages}
-          className="p-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-md border border-border bg-card text-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
           title="Last page"
         >
           <ChevronsRight className="w-4 h-4" />

@@ -45,7 +45,7 @@ export default function TermsPage() {
               </div>
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground text-right">
-              <span className="inline-block bg-purple-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+              <span className="inline-block bg-chart-4 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                 Legal
               </span>
             </div>
@@ -65,7 +65,7 @@ export default function TermsPage() {
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "terms"
                   ? "bg-primary text-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-gray-600"
+                  : "bg-muted text-muted-foreground hover:bg-muted"
               }`}
             >
               <FileText className="w-4 h-4 mb-1" />
@@ -76,7 +76,7 @@ export default function TermsPage() {
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "privacy"
                   ? "bg-primary text-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-gray-600"
+                  : "bg-muted text-muted-foreground hover:bg-muted"
               }`}
             >
               <Shield className="w-4 h-4 mb-1" />
@@ -87,7 +87,7 @@ export default function TermsPage() {
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "liability"
                   ? "bg-primary text-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-gray-600"
+                  : "bg-muted text-muted-foreground hover:bg-muted"
               }`}
             >
               <AlertTriangle className="w-4 h-4 mb-1" />
@@ -98,7 +98,7 @@ export default function TermsPage() {
               className={`p-3 rounded-lg transition-colors text-left min-h-[72px] touch-manipulation ${
                 activeSection === "contact"
                   ? "bg-primary text-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-gray-600"
+                  : "bg-muted text-muted-foreground hover:bg-muted"
               }`}
             >
               <Phone className="w-4 h-4 mb-1" />
@@ -443,7 +443,7 @@ export default function TermsPage() {
 
         {/* Agreement Acknowledgment */}
         {/* Agreement Section */}
-        <div className="bg-green-900/20 border border-green-700/50 rounded-xl p-4 sm:p-6 text-center">
+        <div className="bg-success/10 border border-success/20 rounded-xl p-4 sm:p-6 text-center">
           <h3 className="text-xl font-semibold mb-3 text-primary">
             Agreement Acknowledgment
           </h3>

@@ -41,18 +41,18 @@ export function NotificationDropdown() {
           />
           
           {/* Dropdown Content */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+          <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg shadow-xl border border-border z-50">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
+                <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
                 <p className="text-sm text-muted-foreground">
                   Last updated: {formatTime(notifications.lastChecked)}
                 </p>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-muted-foreground hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -66,21 +66,21 @@ export function NotificationDropdown() {
                 </div>
               ) : !hasNotifications ? (
                 <div className="p-6 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">All caught up!</p>
+                  <CheckCircle className="w-12 h-12 text-success mx-auto mb-3" />
+                  <p className="text-muted-foreground font-medium">All caught up!</p>
                   <p className="text-sm text-muted-foreground">No new notifications</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-border">
                   {/* Pending Bookings */}
                   {notifications.pendingBookings > 0 && (
-                    <div className="p-4 hover:bg-gray-50 cursor-pointer">
+                    <div className="p-4 hover:bg-muted cursor-pointer">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
-                          <Calendar className="w-5 h-5 text-yellow-500 mt-0.5" />
+                          <Calendar className="w-5 h-5 text-warning mt-0.5" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-800">
+                          <p className="text-sm font-medium text-foreground">
                             {notifications.pendingBookings} Pending Booking{notifications.pendingBookings > 1 ? 's' : ''}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
@@ -90,7 +90,7 @@ export function NotificationDropdown() {
                             }
                           </p>
                         </div>
-                        <span className="flex-shrink-0 px-2 py-1 bg-yellow-100 text-yellow-600 text-xs rounded-full font-medium">
+                        <span className="flex-shrink-0 px-2 py-1 bg-warning/10 text-warning text-xs rounded-full font-medium">
                           {notifications.pendingBookings}
                         </span>
                       </div>
@@ -99,13 +99,13 @@ export function NotificationDropdown() {
 
                   {/* New Users */}
                   {notifications.newUsers > 0 && (
-                    <div className="p-4 hover:bg-gray-50 cursor-pointer">
+                    <div className="p-4 hover:bg-muted cursor-pointer">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
                           <Users className="w-5 h-5 text-primary mt-0.5" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-800">
+                          <p className="text-sm font-medium text-foreground">
                             {notifications.newUsers} New User{notifications.newUsers > 1 ? 's' : ''}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
@@ -124,13 +124,13 @@ export function NotificationDropdown() {
 
                   {/* Recent Cancellations */}
                   {notifications.recentCancellations > 0 && (
-                    <div className="p-4 hover:bg-gray-50 cursor-pointer">
+                    <div className="p-4 hover:bg-muted cursor-pointer">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
-                          <X className="w-5 h-5 text-red-500 mt-0.5" />
+                          <X className="w-5 h-5 text-destructive mt-0.5" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-800">
+                          <p className="text-sm font-medium text-foreground">
                             {notifications.recentCancellations} Recent Cancellation{notifications.recentCancellations > 1 ? 's' : ''}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
@@ -140,7 +140,7 @@ export function NotificationDropdown() {
                             }
                           </p>
                         </div>
-                        <span className="flex-shrink-0 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                        <span className="flex-shrink-0 px-2 py-1 bg-destructive/10 text-destructive text-xs rounded-full font-medium">
                           {notifications.recentCancellations}
                         </span>
                       </div>
@@ -152,7 +152,7 @@ export function NotificationDropdown() {
 
             {/* Footer */}
             {hasNotifications && (
-              <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="p-4 border-t border-border bg-muted">
                 <button
                   onClick={() => {
                     refreshNotifications();

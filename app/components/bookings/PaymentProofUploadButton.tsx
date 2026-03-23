@@ -112,7 +112,7 @@ export function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { 
   if (loading) {
     return (
       <div className="bg-muted text-muted-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
-        <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
+        <div className="animate-spin rounded-full h-3 w-3 border-b border-muted-foreground"></div>
         Loading
       </div>
     );
@@ -138,7 +138,7 @@ export function PaymentProofUploadButton({ bookingId, bookingPaymentStatus }: { 
   // For cancelled proofs, show cancelled status
   if (proofStatus === "cancelled") {
     return (
-      <div className="bg-gray-500 text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
+      <div className="bg-muted-foreground text-foreground px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 min-h-[44px]">
         <Ban className="w-3 h-3" />
         Cancelled
       </div>

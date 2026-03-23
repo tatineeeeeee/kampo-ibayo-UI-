@@ -35,7 +35,7 @@ export default function DataExportSection({
         <button
           onClick={() => setShowExportDropdown(!showExportDropdown)}
           disabled={exporting}
-          className="flex items-center justify-between w-full bg-gray-600 text-foreground px-4 py-3 rounded-lg font-semibold hover:bg-gray-500 transition disabled:opacity-50"
+          className="flex items-center justify-between w-full bg-muted-foreground text-foreground px-4 py-3 rounded-lg font-semibold hover:bg-muted transition disabled:opacity-50"
         >
           <div className="flex items-center gap-2">
             <FaDownload className="w-4 h-4" />
@@ -49,13 +49,13 @@ export default function DataExportSection({
         </button>
 
         {showExportDropdown && !exporting && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-600 rounded-lg shadow-xl border border-gray-500 z-10">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-muted-foreground rounded-lg shadow-xl border border-border z-10">
             <button
               onClick={() => {
                 handleExportData("json");
                 setShowExportDropdown(false);
               }}
-              className="flex items-center gap-3 w-full px-4 py-3 text-left text-foreground hover:bg-gray-500 transition rounded-t-lg"
+              className="flex items-center gap-3 w-full px-4 py-3 text-left text-foreground hover:bg-muted transition rounded-t-lg"
             >
               <FaFileCode className="w-4 h-4 text-primary" />
               <div>
@@ -66,14 +66,14 @@ export default function DataExportSection({
               </div>
             </button>
 
-            <div className="border-t border-gray-500"></div>
+            <div className="border-t border-border"></div>
 
             <button
               onClick={() => {
                 handleExportData("csv");
                 setShowExportDropdown(false);
               }}
-              className="flex items-center gap-3 w-full px-4 py-3 text-left text-foreground hover:bg-gray-500 transition"
+              className="flex items-center gap-3 w-full px-4 py-3 text-left text-foreground hover:bg-muted transition"
             >
               <FaTable className="w-4 h-4 text-green-400" />
               <div>
@@ -84,14 +84,14 @@ export default function DataExportSection({
               </div>
             </button>
 
-            <div className="border-t border-gray-500"></div>
+            <div className="border-t border-border"></div>
 
             <button
               onClick={() => {
                 handleExportData("pdf");
                 setShowExportDropdown(false);
               }}
-              className="flex items-center gap-3 w-full px-4 py-3 text-left text-foreground hover:bg-gray-500 transition rounded-b-lg"
+              className="flex items-center gap-3 w-full px-4 py-3 text-left text-foreground hover:bg-muted transition rounded-b-lg"
             >
               <FaFilePdf className="w-4 h-4 text-primary" />
               <div>

@@ -119,56 +119,69 @@ export default function LoginForm({ formKey, onForgotPassword }: LoginFormProps)
     <form
       key={`login-${formKey}`}
       onSubmit={handleLogin}
-      className="space-y-3 sm:space-y-4 lg:space-y-5"
+      className="space-y-3 sm:space-y-4"
       autoComplete="off"
     >
-      <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg bg-background">
-        <FaEnvelope className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-        <input
-          type="email"
-          name="email"
-          placeholder="your@email.com"
-          className="w-full outline-none bg-transparent text-foreground placeholder:text-muted-foreground text-xs sm:text-sm lg:text-base"
-          autoComplete="new-email"
-          required
-        />
+      {/* Email field */}
+      <div>
+        <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-2">
+          Email Address
+        </label>
+        <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+          <FaEnvelope className="text-primary/50 mr-3 text-sm lg:text-base flex-shrink-0" />
+          <input
+            type="email"
+            name="email"
+            placeholder="your@email.com"
+            className="w-full outline-none bg-transparent text-foreground placeholder:text-muted-foreground/70 text-sm lg:text-base"
+            autoComplete="new-email"
+            required
+          />
+        </div>
       </div>
 
-      <div className="flex items-center border border-border p-2.5 sm:p-3 rounded-lg bg-background">
-        <FaLock className="text-muted-foreground mr-2 sm:mr-3 text-xs sm:text-sm lg:text-base flex-shrink-0" />
-        <input
-          type={showPassword ? "text" : "password"}
-          name="password"
-          placeholder="Password"
-          className="w-full outline-none bg-transparent text-foreground placeholder:text-muted-foreground text-xs sm:text-sm lg:text-base"
-          autoComplete="new-password"
-          required
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="ml-2 sm:ml-3 text-muted-foreground hover:text-foreground transition-colors p-1"
-        >
-          {showPassword ? (
-            <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-          ) : (
-            <Eye className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-          )}
-        </button>
+      {/* Password field */}
+      <div>
+        <label className="block text-xs sm:text-sm font-medium text-foreground/90 mb-2">
+          Password
+        </label>
+        <div className="flex items-center border border-border/50 p-2.5 sm:p-3 rounded-xl bg-background/50 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/30 focus-within:bg-background/70">
+          <FaLock className="text-primary/50 mr-3 text-sm lg:text-base flex-shrink-0" />
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Enter your password"
+            className="w-full outline-none bg-transparent text-foreground placeholder:text-muted-foreground/70 text-sm lg:text-base"
+            autoComplete="new-password"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="ml-3 text-muted-foreground hover:text-foreground transition-all duration-200 p-1 rounded-lg hover:bg-primary/10"
+          >
+            {showPassword ? (
+              <EyeOff className="w-4 h-4 lg:w-5 lg:h-5" />
+            ) : (
+              <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+            )}
+          </button>
+        </div>
       </div>
 
+      {/* Sign in button */}
       <button
         type="submit"
-        className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 rounded-lg font-semibold shadow hover:bg-primary/90 transition text-xs sm:text-sm lg:text-base"
+        className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:brightness-110 transition-all duration-300 text-sm lg:text-base"
       >
         Sign In
       </button>
 
-      <div className="text-center mt-3 sm:mt-4">
+      <div className="text-center">
         <button
           type="button"
           onClick={onForgotPassword}
-          className="text-primary hover:text-primary/80 text-xs sm:text-sm font-medium hover:underline transition-colors"
+          className="text-primary hover:text-primary/80 text-xs sm:text-sm font-medium underline-offset-4 hover:underline transition-all duration-200"
         >
           Forgot your password?
         </button>

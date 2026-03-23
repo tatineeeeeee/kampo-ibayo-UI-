@@ -68,9 +68,9 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
 
   return (
     <div className={className}>
-      <label className="block text-white font-semibold mb-3">
+      <label className="block text-foreground font-semibold mb-3">
         Add Photos (Optional)
-        <span className="text-gray-400 font-normal text-sm ml-2">
+        <span className="text-muted-foreground font-normal text-sm ml-2">
           Up to {maxPhotos} photos
         </span>
       </label>
@@ -84,7 +84,7 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
               <img
                 src={blobUrls[index]}
                 alt={`Preview ${index + 1}`}
-                className="w-full h-20 object-cover rounded-lg border border-gray-600"
+                className="w-full h-20 object-cover rounded-lg border border-border"
               />
               <button
                 type="button"
@@ -104,7 +104,7 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
             dragActive
               ? 'border-primary/70 bg-primary/10'
-              : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+              : 'border-border hover:border-border hover:bg-muted/50'
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -123,10 +123,10 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
           
           <div className="flex flex-col items-center gap-3">
             <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-              <Camera className="w-6 h-6 text-gray-400" />
+              <Camera className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-gray-300 font-medium">
+              <p className="text-muted-foreground font-medium">
                 Drop photos here or click to upload
               </p>
               <p className="text-muted-foreground text-sm mt-1">
@@ -142,7 +142,7 @@ const PhotoUpload = ({ onPhotosChange, maxPhotos = 3, className = "" }: PhotoUpl
       )}
 
       {photos.length >= maxPhotos && (
-        <p className="text-center text-gray-400 text-sm mt-2">
+        <p className="text-center text-muted-foreground text-sm mt-2">
           Maximum {maxPhotos} photos reached
         </p>
       )}

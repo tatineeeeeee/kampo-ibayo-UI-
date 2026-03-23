@@ -249,7 +249,7 @@ export const EnhancedGallery = () => {
               {/* Elegant Controls */}
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute -top-4 -right-4 bg-white text-gray-900 hover:bg-gray-100 rounded-full p-3 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                className="absolute -top-4 -right-4 bg-card text-foreground hover:bg-muted rounded-full p-3 transition-all duration-300 shadow-lg hover:shadow-xl group"
               >
                 <X className="w-5 h-5" />
               </button>

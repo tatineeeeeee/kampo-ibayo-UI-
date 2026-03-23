@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/app/utils/emailService";
 import { sendSMS, createBookingRescheduleSMS } from "@/app/utils/smsService";
 import { validateInternalOrAdmin, authErrorResponse, AuthFailure } from "@/app/utils/serverAuth";
+import { escapeHtml } from "@/app/utils/escapeHtml";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,14 +39,14 @@ export async function POST(request: NextRequest) {
         
         <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h2 style="color: #1e40af; margin-top: 0;">Booking Rescheduled Successfully</h2>
-          <p>Dear ${guestName},</p>
+          <p>Dear ${escapeHtml(guestName)},</p>
           <p>Your booking has been successfully rescheduled. Here are the updated details:</p>
         </div>
 
         <div style="background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
           <h3 style="color: #1e40af; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Booking Information</h3>
           <p><strong>Booking ID:</strong> ${bookingId}</p>
-          <p><strong>Guest Name:</strong> ${guestName}</p>
+          <p><strong>Guest Name:</strong> ${escapeHtml(guestName)}</p>
           <p><strong>Number of Guests:</strong> ${guests}</p>
           <p><strong>Total Amount:</strong> ₱${Number(totalAmount).toLocaleString()}</p>
         </div>
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
         <div style="background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
           <h3 style="color: #1e40af; margin-top: 0;">Booking Details</h3>
           <p><strong>Booking ID:</strong> ${bookingId}</p>
-          <p><strong>Guest Name:</strong> ${guestName}</p>
+          <p><strong>Guest Name:</strong> ${escapeHtml(guestName)}</p>
           <p><strong>Guest Email:</strong> ${guestEmail}</p>
           <p><strong>Number of Guests:</strong> ${guests}</p>
           <p><strong>Total Amount:</strong> ₱${Number(totalAmount).toLocaleString()}</p>

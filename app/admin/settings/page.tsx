@@ -51,18 +51,18 @@ export default function SettingsPage() {
   // Show access denied page for staff while redirecting
   if (isStaff) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center bg-gray-50 rounded-lg p-8">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-8 h-8 text-red-600" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center bg-muted rounded-lg p-8">
+        <div className="bg-card p-8 rounded-xl shadow-lg text-center max-w-md">
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-8 h-8 text-destructive" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
+          <h2 className="text-xl font-bold text-foreground mb-2">
             Access Denied
           </h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             Staff members do not have permission to access the Settings page.
           </p>
-          <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+          <p className="text-sm text-muted-foreground">Redirecting to dashboard...</p>
         </div>
       </div>
     );
@@ -186,7 +186,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-gray-600">Loading settings...</div>
+        <div className="text-muted-foreground">Loading settings...</div>
       </div>
     );
   }
@@ -197,7 +197,7 @@ export default function SettingsPage() {
         {/* Page Header */}
         <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white shadow-2xl">
           <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-4">
-            <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
+            <div className="p-2 sm:p-3 bg-card/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
               <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div>
@@ -213,16 +213,16 @@ export default function SettingsPage() {
 
         <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           {/* Admin Profile */}
-          <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg border border-gray-100">
+          <div className="bg-card p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg border border-border">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
               <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl text-white shadow-lg">
                 <UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">
                   Admin Profile
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-700">
+                <p className="text-xs sm:text-sm text-foreground">
                   Your administrator information
                 </p>
               </div>
@@ -233,8 +233,8 @@ export default function SettingsPage() {
               className="space-y-4 sm:space-y-6"
             >
               <div>
-                <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3">
-                  <UserIcon className="w-4 h-4 text-blue-600" />
+                <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3">
+                  <UserIcon className="w-4 h-4 text-primary" />
                   Full Name
                 </label>
                 <input
@@ -243,15 +243,15 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setAdminData({ ...adminData, name: e.target.value })
                   }
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white text-gray-900 placeholder-gray-400 text-sm sm:text-base"
+                  className="w-full border-2 border-border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all bg-card text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
                   placeholder="Enter your full name"
                   required
                 />
               </div>
 
               <div>
-                <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3">
-                  <Mail className="w-4 h-4 text-blue-600" />
+                <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3">
+                  <Mail className="w-4 h-4 text-primary" />
                   Email Address
                 </label>
                 <input
@@ -260,13 +260,13 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setAdminData({ ...adminData, email: e.target.value })
                   }
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white text-gray-900 placeholder-gray-400 text-sm sm:text-base"
+                  className="w-full border-2 border-border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all bg-card text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
                   placeholder="admin@example.com"
                   required
                 />
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   This is your login email.
-                  <span className="text-blue-600 font-medium">
+                  <span className="text-primary font-medium">
                     {" "}
                     Password changes are handled through Supabase Auth
                   </span>{" "}
@@ -275,10 +275,10 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3">
-                  <Phone className="w-4 h-4 text-blue-600" />
+                <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3">
+                  <Phone className="w-4 h-4 text-primary" />
                   Phone Number
-                  <span className="text-xs text-gray-500 font-normal">
+                  <span className="text-xs text-muted-foreground font-normal">
                     (Optional)
                   </span>
                 </label>
@@ -288,10 +288,10 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setAdminData({ ...adminData, phone: e.target.value })
                   }
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white text-gray-900 placeholder-gray-400 text-sm sm:text-base"
+                  className="w-full border-2 border-border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all bg-card text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
                   placeholder="+63 xxx xxx xxxx"
                 />
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Contact number for resort operations (optional)
                 </p>
               </div>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg sm:rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-primary text-primary-foreground rounded-lg sm:rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 {saving ? (
                   <>
@@ -317,29 +317,29 @@ export default function SettingsPage() {
           </div>
 
           {/* Resort Operations */}
-          <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg border border-gray-100">
+          <div className="bg-card p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg border border-border">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
               <div className="p-2 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl text-white shadow-lg">
                 <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">
                   Resort Operations
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-700">
+                <p className="text-xs sm:text-sm text-foreground">
                   Temporarily close resort for maintenance or repairs
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 sm:space-y-6">
-              <div className="p-3 sm:p-4 bg-orange-50 rounded-lg sm:rounded-xl border border-orange-200">
+              <div className="p-3 sm:p-4 bg-warning/10 rounded-lg sm:rounded-xl border border-warning/20">
                 <div className="flex items-start sm:items-center justify-between gap-3 mb-3">
                   <div className="flex-1">
-                    <span className="text-xs sm:text-sm font-semibold text-gray-900">
+                    <span className="text-xs sm:text-sm font-semibold text-foreground">
                       Close Resort Temporarily
                     </span>
-                    <p className="text-xs text-gray-700 mt-1">
+                    <p className="text-xs text-foreground mt-1">
                       Stops new bookings and shows maintenance notice to
                       visitors
                     </p>
@@ -356,16 +356,16 @@ export default function SettingsPage() {
                         })
                       }
                     />
-                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-orange-100 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                    <div className="w-11 h-6 bg-muted rounded-full peer peer-focus:ring-4 peer-focus:ring-warning/20 peer-checked:after:translate-x-full peer-checked:after:border-card after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-warning"></div>
                   </label>
                 </div>
 
                 {resortSettings.maintenance_mode && (
-                  <div className="mt-3 p-3 bg-white rounded-lg border border-orange-200">
-                    <p className="text-xs text-orange-700 font-medium mb-2">
+                  <div className="mt-3 p-3 bg-card rounded-lg border border-warning/20">
+                    <p className="text-xs text-warning font-medium mb-2">
                       ⚠️ Resort is temporarily closed
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       New bookings are disabled. Existing reservations remain
                       active. Visitors will see a notice with your contact
                       number.
@@ -375,7 +375,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3 block">
+                <label className="text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3 block">
                   Emergency Contact Number
                 </label>
                 <input
@@ -387,10 +387,10 @@ export default function SettingsPage() {
                       emergency_contact: e.target.value,
                     })
                   }
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all bg-white text-gray-900 placeholder-gray-400 text-sm sm:text-base"
+                  className="w-full border-2 border-border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all bg-card text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
                   placeholder="+63 xxx xxx xxxx"
                 />
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   This number will be shown to visitors during maintenance
                 </p>
               </div>
@@ -398,7 +398,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleSaveResortSettings}
                 disabled={saving}
-                className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white rounded-lg sm:rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-warning text-white rounded-lg sm:rounded-xl font-semibold hover:bg-warning/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 <Save className="w-4 h-4" />
                 {resortSettings.maintenance_mode

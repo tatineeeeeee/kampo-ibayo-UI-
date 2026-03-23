@@ -3,7 +3,8 @@ import { supabaseAdmin } from '../../../utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
 
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV === 'production' && !process.env.ENABLE_DEBUG_ENDPOINTS) {
+  // Strictly block in production — no env var override allowed
+  if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

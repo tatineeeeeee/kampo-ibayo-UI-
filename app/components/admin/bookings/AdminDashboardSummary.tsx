@@ -56,60 +56,60 @@ export function AdminDashboardSummary() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+      <div className="bg-card rounded-xl shadow-md p-4 mb-4">
         Loading dashboard...
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 mb-4">
-      <h2 className="text-base sm:text-lg font-semibold text-gray-700 mb-3 sm:mb-4">
+    <div className="bg-card rounded-xl shadow-md p-3 sm:p-4 mb-4">
+      <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">
         Admin Dashboard
       </h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <div
           className={`text-center p-2 sm:p-3 rounded-lg border ${
             stats.pendingPayments > 0
-              ? "bg-orange-50 border-orange-200 animate-pulse"
-              : "bg-gray-50 border-gray-200"
+              ? "bg-warning/10 border-warning/20 animate-pulse"
+              : "bg-muted border-border"
           }`}
         >
           <p
             className={`text-xl sm:text-2xl font-bold ${
-              stats.pendingPayments > 0 ? "text-orange-600" : "text-gray-600"
+              stats.pendingPayments > 0 ? "text-warning" : "text-muted-foreground"
             }`}
           >
             {stats.pendingPayments}
           </p>
-          <p className="text-[10px] sm:text-xs text-gray-600">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Payment Reviews Needed
           </p>
           {stats.pendingPayments > 0 && (
-            <p className="text-xs text-orange-600 font-medium">⚠ Urgent</p>
+            <p className="text-xs text-warning font-medium">⚠ Urgent</p>
           )}
         </div>
-        <div className="text-center p-2 sm:p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-xl sm:text-2xl font-bold text-yellow-600">
+        <div className="text-center p-2 sm:p-3 bg-warning/10 border border-warning/20 rounded-lg">
+          <p className="text-xl sm:text-2xl font-bold text-warning">
             {stats.pendingBookings}
           </p>
-          <p className="text-[10px] sm:text-xs text-gray-600">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Pending Bookings
           </p>
         </div>
-        <div className="text-center p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xl sm:text-2xl font-bold text-blue-600">
+        <div className="text-center p-2 sm:p-3 bg-primary/10 border border-info/20 rounded-lg">
+          <p className="text-xl sm:text-2xl font-bold text-primary">
             {stats.todayCheckIns}
           </p>
-          <p className="text-[10px] sm:text-xs text-gray-600">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Today&apos;s Check-ins
           </p>
         </div>
-        <div className="text-center p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-lg sm:text-2xl font-bold text-green-600">
+        <div className="text-center p-2 sm:p-3 bg-success/10 border border-success/20 rounded-lg">
+          <p className="text-lg sm:text-2xl font-bold text-success">
             ₱{stats.totalRevenue.toLocaleString()}
           </p>
-          <p className="text-[10px] sm:text-xs text-gray-600">Total Revenue</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">Total Revenue</p>
         </div>
       </div>
     </div>

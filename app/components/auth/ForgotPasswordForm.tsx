@@ -72,9 +72,9 @@ export function ForgotPasswordModal({ showForgotPassword, onClose }: ForgotPassw
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl mx-2">
+      <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl mx-2">
         <div className="text-center mb-4 sm:mb-6">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
+          <h3 className="text-lg sm:text-xl font-bold text-foreground mb-1 sm:mb-2">
             Reset Password
           </h3>
           <p className="text-muted-foreground text-xs sm:text-sm mb-2">
@@ -88,11 +88,11 @@ export function ForgotPasswordModal({ showForgotPassword, onClose }: ForgotPassw
         </div>{" "}
         {resetEmailSent ? (
           <div className="text-center">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
-              <div className="text-green-600 font-semibold mb-1 text-sm sm:text-base">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+              <div className="text-success font-semibold mb-1 text-sm sm:text-base">
                 Email Sent!
               </div>
-              <div className="text-green-700 text-xs sm:text-sm">
+              <div className="text-success text-xs sm:text-sm">
                 Check your inbox for password reset instructions.
               </div>
             </div>
@@ -101,7 +101,7 @@ export function ForgotPasswordModal({ showForgotPassword, onClose }: ForgotPassw
                 onClose();
                 setResetEmailSent(false);
               }}
-              className="w-full bg-gray-500 text-foreground py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-xs sm:text-sm"
+              className="w-full bg-muted-foreground text-foreground py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-muted transition text-xs sm:text-sm"
             >
               Close
             </button>
@@ -129,7 +129,7 @@ export function ForgotPasswordModal({ showForgotPassword, onClose }: ForgotPassw
                   onClose();
                   setResetEmailSent(false);
                 }}
-                className="w-full sm:w-1/2 bg-gray-500 text-foreground py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-xs sm:text-sm order-2 sm:order-1"
+                className="w-full sm:w-1/2 bg-muted-foreground text-foreground py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-muted transition text-xs sm:text-sm order-2 sm:order-1"
               >
                 Cancel
               </button>

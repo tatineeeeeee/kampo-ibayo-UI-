@@ -32,10 +32,10 @@ export function AdminPaymentBreakdown({ bookingId, totalAmount, paymentStatus, p
   const remaining = totalAmount - paidAmount;
   return (
     <div className="text-[11px] mt-0.5">
-      <span className="text-green-600 font-medium">₱{paidAmount.toLocaleString()}</span>
-      <span className="text-gray-400"> paid · </span>
-      <span className="text-amber-600 font-medium">₱{remaining.toLocaleString()}</span>
-      <span className="text-gray-400"> due</span>
+      <span className="text-success font-medium">₱{paidAmount.toLocaleString()}</span>
+      <span className="text-muted-foreground"> paid · </span>
+      <span className="text-warning font-medium">₱{remaining.toLocaleString()}</span>
+      <span className="text-muted-foreground"> due</span>
     </div>
   );
 }

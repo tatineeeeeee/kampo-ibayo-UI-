@@ -186,8 +186,7 @@ function ProfilePageContent({ user }: { user: User }) {
       showError("An unexpected error occurred during sign out.");
 
       if (typeof window !== "undefined") {
-        localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem('sb-pwgunyrvtpntsypqcwiq-auth-token');
+        localStorage.clear();
         sessionStorage.clear();
       }
       setTimeout(() => {
@@ -354,7 +353,7 @@ function ProfilePageContent({ user }: { user: User }) {
               </button>
             </Link>
             <Link href="/">
-              <button className="w-full bg-muted text-foreground py-3 rounded-lg font-semibold hover:bg-gray-600 transition">
+              <button className="w-full bg-muted text-foreground py-3 rounded-lg font-semibold hover:bg-muted transition">
                 Back to Home
               </button>
             </Link>
@@ -386,15 +385,15 @@ function ProfilePageContent({ user }: { user: User }) {
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground text-right">
               {loading ? (
-                <span className="inline-block bg-gray-600 text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                <span className="inline-block bg-muted-foreground text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                   ● Loading...
                 </span>
               ) : user ? (
-                <span className="inline-block bg-green-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-block bg-success text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                   ● Signed In
                 </span>
               ) : (
-                <span className="inline-block bg-orange-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-block bg-warning text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                   ● Guest
                 </span>
               )}
@@ -440,7 +439,7 @@ function ProfilePageContent({ user }: { user: User }) {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {maintenanceActive ? (
-              <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-600/20 rounded-lg border border-border/30 opacity-50 cursor-not-allowed">
+              <div className="flex items-center gap-3 p-3 sm:p-4 bg-muted-foreground/20 rounded-lg border border-border/30 opacity-50 cursor-not-allowed">
                 <FaCalendarPlus className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-muted-foreground font-semibold text-sm sm:text-base">
@@ -483,9 +482,9 @@ function ProfilePageContent({ user }: { user: User }) {
             </Link>
             <Link
               href="/settings"
-              className="flex items-center gap-3 p-3 sm:p-4 bg-purple-600/20 hover:bg-purple-600/30 rounded-lg transition-all duration-200 border border-purple-600/30 group"
+              className="flex items-center gap-3 p-3 sm:p-4 bg-chart-4/10 hover:bg-chart-4/20 rounded-lg transition-all duration-200 border border-chart-4/30 group"
             >
-              <FaCog className="w-5 h-5 text-purple-400 group-hover:text-purple-300 flex-shrink-0" />
+              <FaCog className="w-5 h-5 text-chart-4 group-hover:text-chart-4 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-foreground font-semibold text-sm sm:text-base">
                   Account Settings
@@ -498,7 +497,7 @@ function ProfilePageContent({ user }: { user: User }) {
             <button
               onClick={handleSignOut}
               disabled={signingOut}
-              className="flex items-center gap-3 p-3 sm:p-4 bg-gray-600/20 hover:bg-gray-600/30 rounded-lg transition-all duration-200 border border-border/30 group disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 p-3 sm:p-4 bg-muted-foreground/20 hover:bg-muted-foreground/30 rounded-lg transition-all duration-200 border border-border/30 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {signingOut ? (
                 <FaSpinner className="w-5 h-5 text-muted-foreground animate-spin flex-shrink-0" />
@@ -530,9 +529,9 @@ function ProfilePageContent({ user }: { user: User }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <a
               href="tel:+639662815123"
-              className="group flex items-center gap-3 p-3 bg-green-600/20 hover:bg-green-600/30 rounded-lg border border-green-600/30 transition-all duration-200"
+              className="group flex items-center gap-3 p-3 bg-success/20 hover:bg-success/30 rounded-lg border border-success/30 transition-all duration-200"
             >
-              <div className="bg-green-600 p-2 rounded-lg">
+              <div className="bg-success p-2 rounded-lg">
                 <svg
                   className="w-4 h-4 text-foreground"
                   fill="currentColor"
@@ -542,10 +541,10 @@ function ProfilePageContent({ user }: { user: User }) {
                 </svg>
               </div>
               <div className="min-w-0">
-                <p className="text-green-400 font-semibold text-sm">
+                <p className="text-success font-semibold text-sm">
                   Call Resort
                 </p>
-                <p className="text-green-300 text-xs">0966 281 5123</p>
+                <p className="text-success text-xs">0966 281 5123</p>
               </div>
             </a>
 

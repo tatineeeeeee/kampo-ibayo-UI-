@@ -1,11 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { validateAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth'
+import { checkRateLimit, getClientIp } from '@/app/utils/rateLimit'
 
 export async function DELETE(request: NextRequest) {
   try {
     const auth = await validateAuth(request);
     if (!auth.success) return authErrorResponse(auth as AuthFailure);
+
+    const ip = getClientIp(request);
+    if (!checkRateLimit(`delete-account:${ip}`, 3, 3_600_000)) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
 
     // Validate environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {

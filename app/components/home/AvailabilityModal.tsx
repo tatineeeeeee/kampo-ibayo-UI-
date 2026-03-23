@@ -9,7 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
-import { INCLUDED_GUESTS } from "../../lib/constants/pricing";
+import { INCLUDED_GUESTS, BASE_RATE_WEEKDAY, BASE_RATE_WEEKEND } from "../../lib/constants/pricing";
 import { cn } from "../../lib/utils";
 
 interface AvailabilityModalProps {
@@ -401,11 +401,11 @@ const AvailabilityModal = ({
                       <div className="space-y-1.5 text-[11px] sm:text-xs">
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Weekdays (Mon-Thu)</span>
-                          <span className="text-green-400 font-semibold">&#8369;9,000</span>
+                          <span className="text-success font-semibold">&#8369;{BASE_RATE_WEEKDAY.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Weekends (Fri-Sun)</span>
-                          <span className="text-yellow-400 font-semibold">&#8369;12,000</span>
+                          <span className="text-warning font-semibold">&#8369;{BASE_RATE_WEEKEND.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>

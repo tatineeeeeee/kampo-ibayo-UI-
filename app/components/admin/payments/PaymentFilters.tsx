@@ -43,11 +43,11 @@ export default function PaymentFilters({
             placeholder="Search by guest name, email, reference number, or booking ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400"
+            className="w-full px-4 py-2 pr-10 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground"
           />
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg
-              className="w-5 h-5 text-gray-400"
+              className="w-5 h-5 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -62,7 +62,7 @@ export default function PaymentFilters({
           </div>
         </div>
         {searchTerm && (
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Found {filteredPayments.length} payment
             {filteredPayments.length !== 1 ? "s" : ""} matching &quot;
             {searchTerm}&quot;
@@ -76,8 +76,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("all")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "all"
-                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-info/10 text-primary border border-info/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">All</span>
@@ -88,8 +88,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("paid")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "paid"
-                ? "bg-green-100 text-green-700 border border-green-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-success/10 text-success border border-success/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Paid</span>
@@ -111,8 +111,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("pending")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "pending"
-                ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-warning/10 text-warning border border-warning/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Pend</span>
@@ -134,8 +134,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("cancelled")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "cancelled"
-                ? "bg-red-100 text-red-700 border border-red-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Canc</span>
@@ -157,8 +157,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("half")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "half"
-                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-info/10 text-primary border border-info/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">50%</span>
@@ -171,8 +171,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("full")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "full"
-                ? "bg-green-100 text-green-700 border border-green-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-success/10 text-success border border-success/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Full</span>
@@ -185,8 +185,8 @@ export default function PaymentFilters({
             onClick={() => setStatusFilter("walk_in")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-colors ${
               statusFilter === "walk_in"
-                ? "bg-amber-100 text-amber-700 border border-amber-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-warning/10 text-warning border border-warning/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             <span className="sm:hidden">Walk-in</span>
@@ -197,7 +197,7 @@ export default function PaymentFilters({
           </button>
         </div>
         {(statusFilter !== "all" || searchTerm) && (
-          <p className="text-xs sm:text-sm text-gray-600 mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             Showing {filteredPayments.length} of {payments.length} payments
             {statusFilter !== "all" && ` with status "${statusFilter}"`}
             {searchTerm && ` matching "${searchTerm}"`}
@@ -205,16 +205,16 @@ export default function PaymentFilters({
         )}
       </div>{" "}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-4">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <PhilippinePeso className="w-6 h-6 text-green-600" />
+            <div className="p-2 bg-success/10 rounded-lg">
+              <PhilippinePeso className="w-6 h-6 text-success" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
+              <p className="text-sm font-medium text-muted-foreground">
                 Total Revenue{searchTerm && " (filtered)"}
               </p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-foreground">
                 {filteredPayments
                   .filter(
                     (p) =>
@@ -228,22 +228,22 @@ export default function PaymentFilters({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-3 sm:p-4">
           <div className="flex items-center">
-            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
-              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            <div className="p-1.5 sm:p-2 bg-info/10 rounded-lg">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-info" />
             </div>
             <div className="ml-2 sm:ml-3">
-              <p className="text-xs sm:text-sm font-medium text-gray-600">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                 Down Payments{searchTerm && " (filtered)"}
               </p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {
                   filteredPayments.filter((p) => p.payment_type === "half")
                     .length
                 }
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-500">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 ₱
                 {filteredPayments
                   .filter(
@@ -260,22 +260,22 @@ export default function PaymentFilters({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-3 sm:p-4">
           <div className="flex items-center">
-            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
-              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            <div className="p-1.5 sm:p-2 bg-chart-4/10 rounded-lg">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-chart-4" />
             </div>
             <div className="ml-2 sm:ml-3">
-              <p className="text-xs sm:text-sm font-medium text-gray-600">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                 Full Payments{searchTerm && " (filtered)"}
               </p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {
                   filteredPayments.filter((p) => p.payment_type === "full")
                     .length
                 }
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-500">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 ₱
                 {filteredPayments
                   .filter(
@@ -292,16 +292,16 @@ export default function PaymentFilters({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-3 sm:p-4">
           <div className="flex items-center">
-            <div className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg">
-              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
+            <div className="p-1.5 sm:p-2 bg-warning/10 rounded-lg">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
             </div>
             <div className="ml-2 sm:ml-3">
-              <p className="text-xs sm:text-sm font-medium text-gray-600">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                 Pending{searchTerm && " (filtered)"}
               </p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {
                   filteredPayments.filter(
                     (p) =>

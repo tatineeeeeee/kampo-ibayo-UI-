@@ -195,7 +195,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
     } else if (daysSinceStay <= 90) {
       return { label: 'Past Stay', color: 'text-primary', bgColor: 'bg-primary/10 border-primary/30' };
     } else {
-      return { label: 'Older Stay', color: 'text-muted-foreground', bgColor: 'bg-background/20 border-gray-500/30' };
+      return { label: 'Older Stay', color: 'text-muted-foreground', bgColor: 'bg-background/20 border-border/30' };
     }
   };
 
@@ -240,7 +240,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
           icon: XCircle,
           text: 'Review Limit Reached',
           color: 'text-muted-foreground',
-          bgColor: 'bg-background/20 border-gray-500/30',
+          bgColor: 'bg-background/20 border-border/30',
           clickable: false // No more submissions allowed
         };
       default:
@@ -450,7 +450,7 @@ const BookingSelector = ({ onBookingSelect, className = "", refreshTrigger }: Bo
                           🚫 <strong>Review limit reached</strong> - No more submissions allowed for this booking
                         </div>
                         {booking.rejectionReason && (
-                          <div className="mt-2 p-2 bg-card/30 rounded border-l-2 border-gray-500">
+                          <div className="mt-2 p-2 bg-card/30 rounded border-l-2 border-border">
                             <div className="text-xs text-muted-foreground font-medium mb-1">Last Rejection Reason:</div>
                             <div className="text-xs text-foreground">{booking.rejectionReason}</div>
                           </div>

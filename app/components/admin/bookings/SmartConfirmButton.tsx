@@ -66,7 +66,7 @@ export function SmartConfirmButton({
       return (
         <button
           disabled
-          className="w-full px-3 py-2 bg-gray-300 text-gray-500 rounded-md text-xs cursor-not-allowed text-center"
+          className="w-full px-3 py-2 bg-muted text-muted-foreground rounded-md text-xs cursor-not-allowed text-center"
           title="Loading payment status..."
         >
           Loading...
@@ -77,7 +77,7 @@ export function SmartConfirmButton({
     return (
       <button
         disabled
-        className="h-7 w-full px-2 py-1 bg-gray-300 text-gray-500 rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
+        className="h-7 w-full px-2 py-1 bg-muted text-muted-foreground rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
         title="Loading payment status..."
       >
         Loading...
@@ -110,7 +110,7 @@ export function SmartConfirmButton({
       return (
         <button
           disabled
-          className="w-full px-3 py-2 bg-gray-300 text-gray-500 rounded-md text-xs cursor-not-allowed text-center"
+          className="w-full px-3 py-2 bg-muted text-muted-foreground rounded-md text-xs cursor-not-allowed text-center"
           title={reason}
         >
           {buttonText}
@@ -121,7 +121,7 @@ export function SmartConfirmButton({
     return (
       <button
         disabled
-        className="h-7 w-full px-2 py-1 bg-gray-300 text-gray-500 rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
+        className="h-7 w-full px-2 py-1 bg-muted text-muted-foreground rounded text-xs cursor-not-allowed text-center flex items-center justify-center"
         title={reason}
       >
         {buttonText}
@@ -133,7 +133,7 @@ export function SmartConfirmButton({
     return (
       <button
         onClick={() => onConfirm(booking.id)}
-        className="w-full px-3 py-2 bg-teal-500 text-white rounded-md text-xs hover:bg-teal-600 font-semibold text-center"
+        className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-md text-xs hover:bg-primary/90 font-semibold text-center"
         title="Step 3: Confirm booking (payment verified)"
       >
         Confirm
@@ -144,7 +144,7 @@ export function SmartConfirmButton({
   return (
     <button
       onClick={() => onConfirm(booking.id)}
-      className="h-6 w-full px-2 py-1 bg-teal-500 text-white rounded text-xs hover:bg-teal-600 text-center flex items-center justify-center"
+      className="h-6 w-full px-2 py-1 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90 text-center flex items-center justify-center"
       title="Step 3: Confirm booking (payment verified)"
     >
       Confirm

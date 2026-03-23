@@ -115,7 +115,7 @@ export default function ReviewPage() {
   // Success Component
   const SuccessPage = () => (
     <div className="text-center py-6 sm:py-8 px-3 sm:px-0">
-      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-success rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
         <Check className="w-8 h-8 sm:w-10 sm:h-10 text-foreground" />
       </div>
       <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">Thank you for your review!</h2>
@@ -123,12 +123,12 @@ export default function ReviewPage() {
         Your review has been published successfully and is now visible to other guests!
       </p>
       
-      <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-4 sm:p-6 max-w-lg mx-auto mb-4 sm:mb-6">
+      <div className="bg-success/10 border border-success/20 rounded-lg p-4 sm:p-6 max-w-lg mx-auto mb-4 sm:mb-6">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
-          <h3 className="text-green-200 font-semibold text-sm sm:text-base">Your review is live!</h3>
+          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
+          <h3 className="text-success font-semibold text-sm sm:text-base">Your review is live!</h3>
         </div>
-        <p className="text-green-100 text-xs sm:text-sm leading-relaxed">
+        <p className="text-success text-xs sm:text-sm leading-relaxed">
           Your honest feedback helps future guests make informed decisions. 
           Thank you for sharing your experience at <strong>Kampo Ibayo Resort</strong>!
         </p>
@@ -197,15 +197,15 @@ export default function ReviewPage() {
               </Link>
               <div className="text-xs sm:text-sm text-muted-foreground text-right">
                 {loading ? (
-                  <span className="inline-block bg-gray-600 text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                  <span className="inline-block bg-muted-foreground text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                     ● Loading...
                   </span>
                 ) : user ? (
-                  <span className="inline-block bg-green-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-success text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                     ● Signed In
                   </span>
                 ) : (
-                  <span className="inline-block bg-orange-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-warning text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                     ● Guest
                   </span>
                 )}
@@ -246,14 +246,14 @@ export default function ReviewPage() {
                     step === currentStep
                       ? 'bg-primary text-foreground'
                       : step < currentStep 
-                        ? 'bg-green-600 text-foreground' 
-                        : 'bg-gray-600 text-muted-foreground'
+                        ? 'bg-success text-foreground' 
+                        : 'bg-muted-foreground text-muted-foreground'
                   }`}>
                     {step < currentStep ? '✓' : step}
                   </div>
                   {step < 3 && (
                     <div className={`w-4 sm:w-6 md:w-8 h-0.5 ${
-                      step < currentStep ? 'bg-green-600' : 'bg-gray-600'
+                      step < currentStep ? 'bg-success' : 'bg-muted-foreground'
                     }`} />
                   )}
                 </div>
@@ -300,7 +300,7 @@ export default function ReviewPage() {
                     </div>
                     <button
                       onClick={handleBack}
-                      className="flex items-center justify-center gap-2 px-3 py-2 bg-muted hover:bg-gray-600 text-muted-foreground rounded-lg transition-colors text-sm w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-muted hover:bg-muted-foreground text-muted-foreground rounded-lg transition-colors text-sm w-full sm:w-auto"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Change Booking
@@ -329,7 +329,7 @@ export default function ReviewPage() {
                     </div>
                     <button
                       onClick={handleBack}
-                      className="flex items-center justify-center gap-2 px-3 py-2 bg-muted hover:bg-gray-600 text-muted-foreground rounded-lg transition-colors text-sm w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-muted hover:bg-muted-foreground text-muted-foreground rounded-lg transition-colors text-sm w-full sm:w-auto"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Back to Ratings
@@ -361,7 +361,7 @@ export default function ReviewPage() {
             <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border">
               <button
                 onClick={handleBack}
-                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-gray-600 hover:bg-gray-500 text-foreground rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-2 sm:order-1"
+                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-muted-foreground hover:bg-muted text-foreground rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-2 sm:order-1"
               >
                 <ChevronLeft className="w-4 h-4 sm:w-4 sm:h-4" />
                 Back to Selection
@@ -369,7 +369,7 @@ export default function ReviewPage() {
               <button
                 onClick={handleNext}
                 disabled={!canProceedToStep3}
-                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-primary hover:bg-primary/90 disabled:bg-gray-600 disabled:cursor-not-allowed text-foreground rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-1 sm:order-2"
+                className="flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-primary hover:bg-primary/90 disabled:bg-muted-foreground disabled:cursor-not-allowed text-foreground rounded-lg transition-colors text-sm sm:text-sm font-medium min-h-[44px] sm:min-h-[48px] order-1 sm:order-2"
               >
                 Continue to Review
                 <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4" />

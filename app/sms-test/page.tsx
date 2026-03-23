@@ -7,6 +7,12 @@ import { useRouter } from "next/navigation";
 export default function SMSTestPage() {
   const { user, userRole, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Block access in production — dev/testing tool only
+  if (process.env.NODE_ENV === "production") {
+    router.push("/admin");
+    return null;
+  }
   const [phoneNumber, setPhoneNumber] = useState("");
   const [testType, setTestType] = useState("basic");
   const [result, setResult] = useState<{

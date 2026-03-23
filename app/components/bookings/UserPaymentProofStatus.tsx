@@ -128,54 +128,54 @@ export function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
       case "pending":
         return {
           color:
-            "bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200",
+            "bg-warning/10 border border-warning/20 text-warning",
           icon: (
-            <HourglassIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <HourglassIcon className="w-5 h-5 text-warning" />
           ),
           title: "Payment Under Review",
           message: "We are reviewing your payment proof",
-          messageColor: "text-amber-600 dark:text-amber-300",
+          messageColor: "text-warning",
         };
       case "approved":
       case "verified":
         return {
           color:
-            "bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-200",
+            "bg-success/10 border border-success/20 text-success",
           icon: (
-            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="w-5 h-5 text-success" />
           ),
           title: "Payment Verified",
           message: "Your payment has been approved successfully",
-          messageColor: "text-green-600 dark:text-green-300",
+          messageColor: "text-success",
         };
       case "rejected":
         return {
           color:
-            "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/40 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-100",
-          icon: <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />,
+            "bg-destructive/10 border border-destructive/20 text-destructive",
+          icon: <XCircle className="w-5 h-5 text-destructive" />,
           title: "Payment Rejected",
           message: "Your payment proof needs correction",
-          messageColor: "text-red-600 dark:text-red-300",
+          messageColor: "text-destructive",
         };
       case "cancelled":
         return {
           color:
-            "bg-gray-100 dark:bg-card border border-gray-300 dark:border-border text-gray-700 dark:text-muted-foreground",
-          icon: <Ban className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />,
+            "bg-muted border border-border text-muted-foreground",
+          icon: <Ban className="w-5 h-5 text-muted-foreground" />,
           title: "Payment Cancelled",
           message: "This payment proof has been cancelled",
-          messageColor: "text-muted-foreground dark:text-muted-foreground",
+          messageColor: "text-muted-foreground",
         };
       default:
         return {
           color:
-            "bg-gray-100 dark:bg-card border border-gray-300 dark:border-border text-gray-700 dark:text-muted-foreground",
+            "bg-muted border border-border text-muted-foreground",
           icon: (
-            <AlertTriangle className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+            <AlertTriangle className="w-5 h-5 text-muted-foreground" />
           ),
           title: "Unknown Status",
           message: "Please contact support for assistance",
-          messageColor: "text-muted-foreground dark:text-muted-foreground",
+          messageColor: "text-muted-foreground",
         };
     }
   };
@@ -221,21 +221,21 @@ export function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
               return (
                 <div className="space-y-3 mt-3">
                   {/* Rejection Reason Card */}
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/30 border border-red-200/60 dark:border-red-800/30 rounded-2xl p-5 shadow-sm">
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 shadow-sm">
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/60 rounded-xl flex items-center justify-center shadow-sm">
-                        <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      <div className="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-xl flex items-center justify-center shadow-sm">
+                        <AlertTriangle className="w-5 h-5 text-destructive" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h4 className="text-sm font-bold text-red-900 dark:text-red-100">
+                          <h4 className="text-sm font-bold text-destructive">
                             Rejection Reason
                           </h4>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
                             Action Required
                           </span>
                         </div>
-                        <p className="text-sm text-red-800 dark:text-red-200 leading-relaxed font-medium">
+                        <p className="text-sm text-destructive leading-relaxed font-medium">
                           {rejectionReason}
                         </p>
                       </div>
@@ -244,21 +244,21 @@ export function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
 
                   {/* Admin Notes Card */}
                   {adminNotes && (
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-primary/5 dark:to-primary/10 border border-primary/20/60 dark:border-blue-800/30 rounded-2xl p-5 shadow-sm">
+                    <div className="bg-info/10 border border-info/20 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 dark:bg-blue-900/60 rounded-xl flex items-center justify-center shadow-sm">
-                          <MessageSquare className="w-5 h-5 text-primary dark:text-primary" />
+                        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shadow-sm">
+                          <MessageSquare className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                            <h4 className="text-sm font-bold text-primary">
                               Additional Notes
                             </h4>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-blue-900/40 dark:text-primary/80">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                               From Admin
                             </span>
                           </div>
-                          <p className="text-sm text-primary dark:text-blue-200 leading-relaxed">
+                          <p className="text-sm text-primary leading-relaxed">
                             {adminNotes}
                           </p>
                         </div>
@@ -272,16 +272,16 @@ export function UserPaymentProofStatus({ bookingId }: { bookingId: number }) {
         )}
 
         {paymentProof.admin_notes && paymentProof.status !== "rejected" && (
-          <div className="mt-3 bg-primary/5/90 dark:bg-blue-950/30 border border-primary/20 dark:border-blue-800/50 rounded-xl p-4">
+          <div className="mt-3 bg-primary/5 border border-primary/20 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary/10 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-primary dark:text-primary" />
+              <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-primary dark:text-blue-200 mb-1">
+                <h4 className="text-sm font-semibold text-primary mb-1">
                   Admin Notes
                 </h4>
-                <p className="text-sm text-primary dark:text-primary/80 leading-relaxed">
+                <p className="text-sm text-primary leading-relaxed">
                   {paymentProof.admin_notes}
                 </p>
               </div>

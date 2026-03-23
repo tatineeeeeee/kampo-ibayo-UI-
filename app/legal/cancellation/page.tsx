@@ -38,9 +38,9 @@ export default function CancellationPage() {
 
   const getColorClasses = (color: string) => {
     const colorMap = {
-      green: "bg-green-900/20 border-green-700/50 text-green-400",
+      green: "bg-success/10 border-success/20 text-success",
       blue: "bg-primary/10 border-primary/30 text-primary",
-      yellow: "bg-yellow-900/20 border-yellow-700/50 text-yellow-400",
+      yellow: "bg-warning/10 border-warning/20 text-warning",
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.blue;
   };
@@ -68,7 +68,7 @@ export default function CancellationPage() {
               </div>
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground text-right">
-              <span className="inline-block bg-orange-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+              <span className="inline-block bg-warning text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                 Policy
               </span>
             </div>
@@ -96,20 +96,20 @@ export default function CancellationPage() {
             </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="p-2 rounded bg-primary/10/10">
-                <p className="font-medium text-blue-200">
+                <p className="font-medium text-primary">
                   Down Payment (At Booking)
                 </p>
                 <p className="text-lg font-bold text-primary/80">50% of Total</p>
               </div>
-              <div className="p-2 rounded bg-gray-100/10">
+              <div className="p-2 rounded bg-muted/10">
                 <p className="font-medium text-foreground">Pay on Arrival</p>
                 <p className="text-lg font-bold text-muted-foreground">50% of Total</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-orange-900/20 border border-orange-700/50 rounded-lg p-4">
-            <p className="text-orange-300 text-sm">
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+            <p className="text-warning text-sm">
               <strong>Important:</strong> Only the down payment (50% of total
               booking cost) is refundable. Refunds are processed by the admin
               after cancellation. The remaining 50% is paid upon arrival at the resort.
@@ -188,8 +188,8 @@ export default function CancellationPage() {
               <h3 className="text-lg font-semibold mb-3 text-foreground">
                 Weather-Related Cancellations
               </h3>
-              <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
-                <ul className="text-yellow-200 text-sm space-y-2">
+              <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                <ul className="text-warning text-sm space-y-2">
                   <li>
                     • <strong>Typhoon/Storm Warnings:</strong> Full refund if
                     Signal No. 2 or higher is declared for our area
@@ -211,7 +211,7 @@ export default function CancellationPage() {
                 Medical Emergencies
               </h3>
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                <ul className="text-blue-200 text-sm space-y-2">
+                <ul className="text-primary text-sm space-y-2">
                   <li>
                     • <strong>Guest Medical Emergency:</strong> Full refund with
                     medical certificate
@@ -232,8 +232,8 @@ export default function CancellationPage() {
               <h3 className="text-lg font-semibold mb-3 text-foreground">
                 Resort-Initiated Cancellations
               </h3>
-              <div className="bg-green-900/20 border border-green-700/50 rounded-lg p-4">
-                <ul className="text-green-200 text-sm space-y-2">
+              <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+                <ul className="text-success text-sm space-y-2">
                   <li>
                     • <strong>Facility Issues:</strong> Full refund plus
                     compensation
@@ -263,41 +263,41 @@ export default function CancellationPage() {
               <h3 className="text-lg font-semibold mb-3 text-foreground">
                 Online Cancellation (Recommended)
               </h3>
-              <div className="bg-green-900/20 border border-green-700/50 rounded-lg p-4 mb-4">
+              <div className="bg-success/10 border border-success/20 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-foreground text-xs font-bold">
+                  <div className="w-6 h-6 bg-success rounded-full flex items-center justify-center text-foreground text-xs font-bold">
                     1
                   </div>
-                  <span className="text-green-300 font-medium">
+                  <span className="text-success font-medium">
                     Visit your bookings page
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-foreground text-xs font-bold">
+                  <div className="w-6 h-6 bg-success rounded-full flex items-center justify-center text-foreground text-xs font-bold">
                     2
                   </div>
-                  <span className="text-green-300 font-medium">
+                  <span className="text-success font-medium">
                     Click &quot;Cancel&quot; on your booking
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-foreground text-xs font-bold">
+                  <div className="w-6 h-6 bg-success rounded-full flex items-center justify-center text-foreground text-xs font-bold">
                     3
                   </div>
-                  <span className="text-green-300 font-medium">
+                  <span className="text-success font-medium">
                     Review refund amount and policy
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-foreground text-xs font-bold">
+                  <div className="w-6 h-6 bg-success rounded-full flex items-center justify-center text-foreground text-xs font-bold">
                     4
                   </div>
-                  <span className="text-green-300 font-medium">
+                  <span className="text-success font-medium">
                     Confirm cancellation
                   </span>
                 </div>
               </div>
-              <p className="text-green-200 text-sm">
+              <p className="text-success text-sm">
                 ✅ <strong>Easy process</strong> - Cancel from your bookings page,
                 admin will process the refund
               </p>
@@ -313,7 +313,7 @@ export default function CancellationPage() {
               <div className="space-y-3">
                 <a
                   href="mailto:kampoibayo@gmail.com"
-                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-gray-600/50 rounded-lg min-h-[56px] touch-manipulation transition-colors"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted/80 rounded-lg min-h-[56px] touch-manipulation transition-colors"
                 >
                   <Mail className="w-5 h-5 text-primary flex-shrink-0" />
                   <div>
@@ -326,9 +326,9 @@ export default function CancellationPage() {
 
                 <a
                   href="tel:+639662815123"
-                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-gray-600/50 rounded-lg min-h-[56px] touch-manipulation transition-colors"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted/80 rounded-lg min-h-[56px] touch-manipulation transition-colors"
                 >
-                  <Phone className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <Phone className="w-5 h-5 text-success flex-shrink-0" />
                   <div>
                     <div className="font-medium text-foreground">Phone</div>
                     <div className="text-muted-foreground text-sm">
@@ -347,7 +347,7 @@ export default function CancellationPage() {
             <h4 className="font-semibold text-primary mb-2">
               Automatic Processing Benefits
             </h4>
-            <ul className="text-blue-200 text-sm space-y-1">
+            <ul className="text-primary text-sm space-y-1">
               <li>
                 • <strong>24/7 availability:</strong> Cancel anytime through
                 your account
@@ -379,7 +379,7 @@ export default function CancellationPage() {
               <h3 className="text-lg font-semibold mb-3 text-primary">
                 Date Modifications (Reschedule)
               </h3>
-              <ul className="text-blue-200 text-sm space-y-2">
+              <ul className="text-primary text-sm space-y-2">
                 <li>
                   • <strong>Limit:</strong> Maximum 2 reschedules per booking
                 </li>
@@ -397,11 +397,11 @@ export default function CancellationPage() {
               </ul>
             </div>
 
-            <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold mb-3 text-purple-400">
+            <div className="bg-chart-4/10 border border-chart-4/20 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-3 text-chart-4">
                 Guest Count Changes
               </h3>
-              <ul className="text-purple-200 text-sm space-y-2">
+              <ul className="text-chart-4 text-sm space-y-2">
                 <li>
                   • <strong>Reduction:</strong> Partial refund of difference
                 </li>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/utils/supabaseAdmin';
 import { validateAdminAuth, authErrorResponse, AuthFailure } from '@/app/utils/serverAuth';
+import { escapeHtml } from '@/app/utils/escapeHtml';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     // Prepare admin notes with rejection reason if applicable
     let finalAdminNotes = adminNotes || null;
     if (action === 'reject' && rejectionReason) {
-      const rejectionNote = `REJECTION REASON: ${rejectionReason}`;
+      const rejectionNote = `REJECTION REASON: ${escapeHtml(rejectionReason)}`;
       finalAdminNotes = adminNotes ? `${rejectionNote}\n\nADMIN NOTES: ${adminNotes}` : rejectionNote;
     }
 
@@ -220,7 +221,7 @@ export async function POST(request: NextRequest) {
                   
                   <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
                     <h3 style="color: #dc2626; margin: 0 0 10px 0;">Reason for Correction</h3>
-                    <p style="margin: 0; color: #374151; font-weight: 500;">${rejectionReason || 'Please check the details and resubmit'}</p>
+                    <p style="margin: 0; color: #374151; font-weight: 500;">${escapeHtml(rejectionReason) || 'Please check the details and resubmit'}</p>
                   </div>
                   
                   <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">

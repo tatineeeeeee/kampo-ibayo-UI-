@@ -50,11 +50,11 @@ export default function UserFilters({
             placeholder="Search by name, email, or user ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 sm:px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400 text-sm sm:text-base"
+            className="w-full px-3 sm:px-4 py-2 pr-10 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
           />
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg
-              className="w-5 h-5 text-gray-400"
+              className="w-5 h-5 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -69,7 +69,7 @@ export default function UserFilters({
           </div>
         </div>
         {searchTerm && (
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Found {filteredUsers.length} user
             {filteredUsers.length !== 1 ? "s" : ""} matching &quot;
             {searchTerm}&quot;
@@ -84,8 +84,8 @@ export default function UserFilters({
             onClick={() => setRoleFilter("all")}
             className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               roleFilter === "all"
-                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-info/10 text-primary border border-info/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             All ({users.length})
@@ -94,8 +94,8 @@ export default function UserFilters({
             onClick={() => setRoleFilter("admin")}
             className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               roleFilter === "admin"
-                ? "bg-purple-100 text-purple-700 border border-purple-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-chart-4/10 text-chart-4 border border-chart-4/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             Admin ({users.filter((u) => u.role === "admin").length})
@@ -104,8 +104,8 @@ export default function UserFilters({
             onClick={() => setRoleFilter("staff")}
             className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               roleFilter === "staff"
-                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-info/10 text-primary border border-info/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             Staff ({users.filter((u) => u.role === "staff").length})
@@ -114,15 +114,15 @@ export default function UserFilters({
             onClick={() => setRoleFilter("user")}
             className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               roleFilter === "user"
-                ? "bg-green-100 text-green-700 border border-green-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                ? "bg-success/10 text-success border border-success/20"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             Users ({users.filter((u) => u.role === "user").length})
           </button>
         </div>
         {(roleFilter !== "all" || searchTerm) && (
-          <p className="text-xs sm:text-sm text-gray-600 mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             Showing {filteredUsers.length} of {users.length} users
             {roleFilter !== "all" && ` with role "${roleFilter}"`}
             {searchTerm && ` matching "${searchTerm}"`}
@@ -132,10 +132,10 @@ export default function UserFilters({
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
             User Management
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {loading
               ? "Loading users..."
               : `Manage user accounts and roles (${filteredUsers.length}${
@@ -149,7 +149,7 @@ export default function UserFilters({
           {canCreateUser && (
             <button
               onClick={onAddUser}
-              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 transition-colors flex items-center justify-center gap-2 text-sm"
               title="Add a new staff or admin user"
             >
               <UserPlus className="w-4 h-4" />
@@ -183,8 +183,8 @@ export default function UserFilters({
             disabled={filteredUsers.length === 0}
             className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm ${
               filteredUsers.length === 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+                ? "bg-muted-foreground cursor-not-allowed"
+                : "bg-success hover:bg-success/90"
             }`}
             title="Export filtered users to CSV"
           >
@@ -218,8 +218,8 @@ export default function UserFilters({
             disabled={filteredUsers.length === 0}
             className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm ${
               filteredUsers.length === 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+                ? "bg-muted-foreground cursor-not-allowed"
+                : "bg-primary hover:bg-primary/90"
             }`}
             title="Export filtered users to PDF"
           >
@@ -229,7 +229,7 @@ export default function UserFilters({
 
           <button
             onClick={onRefresh}
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
           >
             <span className="hidden sm:inline">Refresh Users</span>
             <span className="sm:hidden">Refresh</span>

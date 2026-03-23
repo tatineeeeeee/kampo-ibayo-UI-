@@ -162,17 +162,17 @@ export default function HelpPage() {
   const getColorClasses = (color: string) => {
     const colorMap = {
       blue: "bg-primary/10 border-primary/30",
-      green: "bg-green-900/20 border-green-700/50",
-      purple: "bg-purple-900/20 border-purple-700/50",
+      green: "bg-success/10 border-success/20",
+      purple: "bg-chart-4/10 border-chart-4/20",
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.blue;
   };
 
   const getIconColor = (color: string) => {
     const colorMap = {
-      blue: "text-blue-400",
-      green: "text-green-400",
-      purple: "text-purple-400",
+      blue: "text-primary",
+      green: "text-success",
+      purple: "text-chart-4",
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.blue;
   };
@@ -199,15 +199,15 @@ export default function HelpPage() {
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground text-right">
               {loading ? (
-                <span className="inline-block bg-gray-600 text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                <span className="inline-block bg-muted-foreground text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                   ● Loading...
                 </span>
               ) : user ? (
-                <span className="inline-block bg-green-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-block bg-success text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                   ● Signed In
                 </span>
               ) : (
-                <span className="inline-block bg-orange-600 text-foreground px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-block bg-warning text-foreground px-2 py-1 rounded-full text-xs font-semibold">
                   ● Guest
                 </span>
               )}
@@ -220,9 +220,9 @@ export default function HelpPage() {
         {/* Emergency Contact Banner */}
         <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 sm:p-6">
           <div className="flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 text-blue-400 mt-1 flex-shrink-0" />
+            <AlertTriangle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
             <div>
-              <h2 className="text-xl font-semibold mb-2 text-blue-400">
+              <h2 className="text-xl font-semibold mb-2 text-primary">
                 Emergency Contact
               </h2>
               <p className="text-muted-foreground mb-3">
@@ -242,7 +242,7 @@ export default function HelpPage() {
 
         {/* Contact Methods */}
         <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
-          <h2 className="text-2xl font-bold mb-6 text-blue-400">
+          <h2 className="text-2xl font-bold mb-6 text-primary">
             How to Reach Us
           </h2>
 
@@ -270,13 +270,13 @@ export default function HelpPage() {
 
         {/* Business Hours */}
         <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
-          <h2 className="text-2xl font-bold mb-6 text-blue-400">
+          <h2 className="text-2xl font-bold mb-6 text-primary">
             Support Hours
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-green-900/20 border border-green-700/50 rounded-lg p-4">
-              <h3 className="font-semibold text-green-400 mb-2">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+              <h3 className="font-semibold text-success mb-2">
                 On-site Support
               </h3>
               <p className="text-muted-foreground text-sm">Daily: 8:00 AM - 6:00 PM</p>
@@ -286,7 +286,7 @@ export default function HelpPage() {
             </div>
 
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-400 mb-2">
+              <h3 className="font-semibold text-primary mb-2">
                 Phone Support
               </h3>
               <p className="text-muted-foreground text-sm">
@@ -298,7 +298,7 @@ export default function HelpPage() {
             </div>
 
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-400 mb-2">
+              <h3 className="font-semibold text-primary mb-2">
                 Emergency Line
               </h3>
               <p className="text-muted-foreground text-sm">24/7 Available</p>
@@ -344,7 +344,7 @@ export default function HelpPage() {
 
         {/* Local Information */}
         <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
-          <h2 className="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
             <MapPin className="w-6 h-6" />
             Local Information
           </h2>
@@ -406,8 +406,8 @@ export default function HelpPage() {
         </div>
 
         {/* Feedback Section */}
-        <div className="bg-green-900/20 border border-green-700/50 rounded-xl p-4 sm:p-6 text-center">
-          <h3 className="text-xl font-semibold mb-3 text-green-400">
+        <div className="bg-success/10 border border-success/20 rounded-xl p-4 sm:p-6 text-center">
+          <h3 className="text-xl font-semibold mb-3 text-success">
             We Value Your Feedback
           </h3>
           <p className="text-muted-foreground mb-4">

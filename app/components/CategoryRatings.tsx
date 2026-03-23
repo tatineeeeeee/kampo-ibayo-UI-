@@ -133,10 +133,10 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
   return (
     <div className={className}>
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           Rate Your Experience
         </h2>
-        <p className="text-gray-400">
+        <p className="text-muted-foreground">
           Help future guests by rating different aspects of your stay
         </p>
       </div>
@@ -159,22 +159,22 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
           return (
             <div
               key={category.key}
-              className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all"
+              className="bg-muted/50 rounded-lg p-6 border border-border/50 hover:border-border transition-all"
             >
               <div className="flex items-start gap-4 mb-4">
                 <div className={`${category.color} bg-muted/50 rounded-lg p-3`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-1">
+                  <h3 className="text-foreground font-semibold text-lg mb-1">
                     {category.label}
                   </h3>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {category.description}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-white font-semibold">
+                  <div className="text-foreground font-semibold">
                     {currentRating > 0 ? `${currentRating}/5` : '—'}
                   </div>
                   <div className={`text-sm ${
@@ -202,7 +202,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
                         className={`w-9 h-9 sm:w-8 sm:h-8 transition-colors ${
                           isActive
                             ? `${category.color} fill-current`
-                            : 'text-muted-foreground hover:text-gray-400'
+                            : 'text-muted-foreground hover:text-muted-foreground'
                         } ${
                           isHovered && starIndex <= hoveredRating
                             ? 'scale-110'
@@ -218,7 +218,7 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
                 <div className="mt-3 text-center">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full">
                     <Star className={`w-3 h-3 ${category.color} fill-current`} />
-                    <span className="text-white text-sm font-medium">
+                    <span className="text-foreground text-sm font-medium">
                       {currentRating} star{currentRating !== 1 ? 's' : ''} - {getRatingText(currentRating)}
                     </span>
                   </div>
@@ -232,28 +232,28 @@ const CategoryRatings = ({ ratings, onRatingChange, className = "" }: CategoryRa
       <div className="mt-8 p-4 bg-primary/10 border border-primary/30 rounded-lg">
         <div className="flex items-center gap-3 mb-2">
           <Star className="w-5 h-5 text-primary" />
-          <h4 className="text-white font-semibold">Rating Guidelines</h4>
+          <h4 className="text-foreground font-semibold">Rating Guidelines</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-sm">
           <div className="text-center">
             <div className="text-red-400 font-medium">1 Star - Poor</div>
-            <div className="text-gray-400">Below expectations</div>
+            <div className="text-muted-foreground">Below expectations</div>
           </div>
           <div className="text-center">
             <div className="text-orange-400 font-medium">2 Stars - Fair</div>
-            <div className="text-gray-400">Some issues</div>
+            <div className="text-muted-foreground">Some issues</div>
           </div>
           <div className="text-center">
             <div className="text-yellow-400 font-medium">3 Stars - Good</div>
-            <div className="text-gray-400">Met expectations</div>
+            <div className="text-muted-foreground">Met expectations</div>
           </div>
           <div className="text-center">
             <div className="text-green-400 font-medium">4 Stars - Great</div>
-            <div className="text-gray-400">Above expectations</div>
+            <div className="text-muted-foreground">Above expectations</div>
           </div>
           <div className="text-center">
             <div className="text-primary font-medium">5 Stars - Excellent</div>
-            <div className="text-gray-400">Exceptional</div>
+            <div className="text-muted-foreground">Exceptional</div>
           </div>
         </div>
       </div>

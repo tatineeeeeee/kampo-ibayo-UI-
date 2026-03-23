@@ -55,6 +55,13 @@ function BookingConfirmationContent() {
       return;
     }
 
+    // Validate bookingId is numeric to prevent NaN from parseInt
+    if (!/^\d+$/.test(bookingId)) {
+      setError('Invalid booking ID');
+      setLoading(false);
+      return;
+    }
+
     const fetchBookingDetails = async () => {
       try {
         const { data, error } = await supabase
@@ -205,9 +212,9 @@ function BookingConfirmationContent() {
   const getStatusIcon = () => {
     switch (paymentStatus) {
       case 'success':
-        return <CheckCircle className="w-20 h-20 text-green-400 drop-shadow-lg" />;
+        return <CheckCircle className="w-20 h-20 text-success drop-shadow-lg" />;
       case 'failed':
-        return <XCircle className="w-20 h-20 text-red-400 drop-shadow-lg" />;
+        return <XCircle className="w-20 h-20 text-destructive drop-shadow-lg" />;
       case 'checking':
       case 'pending':
         return <Loader2 className="w-20 h-20 text-foreground animate-spin drop-shadow-lg" />;
@@ -283,7 +290,7 @@ function BookingConfirmationContent() {
         <div className="absolute inset-0 bg-black/70" />
         
         <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md text-center border border-white/20">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+          <XCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-foreground mb-4">Booking Not Found</h1>
           <p className="text-muted-foreground mb-8">{error || 'The booking could not be located'}</p>
           <button
@@ -350,8 +357,8 @@ function BookingConfirmationContent() {
           {/* Status Card */}
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 mb-6 sm:mb-8">
             <div className={`p-4 sm:p-8 text-center rounded-t-2xl ${
-              paymentStatus === 'success' ? 'bg-gradient-to-r from-green-600/30 to-green-700/30 border-green-400/40' :
-              paymentStatus === 'failed' ? 'bg-gradient-to-r from-red-600/30 to-red-700/30 border-red-400/40' :
+              paymentStatus === 'success' ? 'bg-gradient-to-r from-success/30 to-success/20 border-success/40' :
+              paymentStatus === 'failed' ? 'bg-gradient-to-r from-destructive/30 to-destructive/20 border-destructive/40' :
               'bg-gradient-to-r from-primary/30 to-primary/90/30 border-primary/80/40'
             } border-b`}>
               <div className="flex justify-center mb-4 sm:mb-6">
@@ -400,8 +407,8 @@ function BookingConfirmationContent() {
                   </h3>
                   <div className="space-y-2 sm:space-y-3">
                     <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-black/20 rounded-lg border border-white/10">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
                       </div>
                       <div>
                         <p className="text-muted-foreground text-xs sm:text-sm">Check-in</p>
@@ -453,9 +460,9 @@ function BookingConfirmationContent() {
                     <div className="flex items-center justify-between p-3 bg-card/30 rounded-lg">
                       <span className="text-muted-foreground text-sm">Status:</span>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        booking.status === 'confirmed' ? 'bg-green-600/20 text-green-400 border border-green-500/30' :
-                        booking.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400 border border-yellow-500/30' :
-                        'bg-gray-600/20 text-muted-foreground border border-gray-500/30'
+                        booking.status === 'confirmed' ? 'bg-success/20 text-success border border-success/30' :
+                        booking.status === 'pending' ? 'bg-warning/20 text-warning border border-warning/30' :
+                        'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/30'
                       }`}>
                         {booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Pending'}
                       </span>
@@ -472,21 +479,21 @@ function BookingConfirmationContent() {
                 {paymentStatus === 'success' && (
                   <div className={`border rounded-xl p-4 ${
                     booking?.status === 'confirmed' 
-                      ? 'bg-green-600/10 border-green-500/30' 
-                      : 'bg-yellow-600/10 border-yellow-500/30'
+                      ? 'bg-success/10 border-success/30' 
+                      : 'bg-warning/10 border-warning/30'
                   }`}>
                     <div className="flex items-center mb-2">
                       <CreditCard className={`w-5 h-5 mr-2 ${
-                        booking?.status === 'confirmed' ? 'text-green-400' : 'text-yellow-400'
+                        booking?.status === 'confirmed' ? 'text-success' : 'text-warning'
                       }`} />
                       <span className={`font-semibold ${
-                        booking?.status === 'confirmed' ? 'text-green-400' : 'text-yellow-400'
+                        booking?.status === 'confirmed' ? 'text-success' : 'text-warning'
                       }`}>
                         {booking?.status === 'confirmed' ? 'Booking Confirmed' : 'Payment Confirmed - Awaiting Approval'}
                       </span>
                     </div>
                     <p className={`text-sm ${
-                      booking?.status === 'confirmed' ? 'text-green-300' : 'text-yellow-300'
+                      booking?.status === 'confirmed' ? 'text-success' : 'text-warning'
                     }`}>
                       {booking?.status === 'confirmed' 
                         ? 'Your booking has been approved and payment processed. You will receive a confirmation email shortly.'
@@ -508,14 +515,14 @@ function BookingConfirmationContent() {
                       </div>
                       Cancellation Policy
                     </h3>
-                    <div className="bg-white rounded-xl p-4 sm:p-6">
+                    <div className="bg-card rounded-xl p-4 sm:p-6">
                       <CancellationPolicy
                         checkInDate={booking.check_in_date}
                         totalAmount={booking.total_amount}
                       />
                     </div>
                     <div className="mt-4 p-3 sm:p-4 bg-primary/10 rounded-lg border border-primary/80/30">
-                      <p className="text-blue-200 text-xs sm:text-sm leading-relaxed">
+                      <p className="text-primary text-xs sm:text-sm leading-relaxed">
                         <strong>Good to know:</strong> You can cancel your booking anytime from your bookings page. 
                         Refunds are automatically processed based on the timing shown above, and you&apos;ll receive 
                         confirmation via email once processed.
@@ -548,7 +555,7 @@ function BookingConfirmationContent() {
                   {paymentStatus === 'failed' && (
                     <button
                       onClick={() => router.push('/book')}
-                      className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-foreground rounded-lg font-semibold hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg text-sm sm:text-base"
+                      className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-muted-foreground to-muted-foreground/90 text-foreground rounded-lg font-semibold hover:from-muted-foreground/90 hover:to-muted-foreground/80 transition-all duration-200 shadow-lg text-sm sm:text-base"
                     >
                       Try Again
                     </button>

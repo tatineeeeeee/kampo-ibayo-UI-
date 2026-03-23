@@ -57,8 +57,8 @@ export const KampoIbayoLogo: React.FC<KampoIbayoLogoProps> = ({
           />
         </div>
         <div className={`${textSizeClasses[size]} font-bold text-center`}>
-          <div className="text-blue-600">Kampo</div>
-          <div className="text-gray-700">Ibayo</div>
+          <div className="text-primary">Kampo</div>
+          <div className="text-foreground">Ibayo</div>
         </div>
       </div>
     );
@@ -76,8 +76,8 @@ export const KampoIbayoLogo: React.FC<KampoIbayoLogoProps> = ({
         />
       </div>
       <div className={`${textSizeClasses[size]} font-bold`}>
-        <span className="text-blue-600">Kampo</span>{' '}
-        <span className="text-gray-700">Ibayo</span>
+        <span className="text-primary">Kampo</span>{' '}
+        <span className="text-foreground">Ibayo</span>
       </div>
     </div>
   );

@@ -151,7 +151,7 @@ export default function PasswordSection({
                             : level <= 4
                             ? "bg-green-400"
                             : "bg-green-500"
-                          : "bg-gray-500"
+                          : "bg-muted-foreground"
                       }`}
                     />
                   ))}
