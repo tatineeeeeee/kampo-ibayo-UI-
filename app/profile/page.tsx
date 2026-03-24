@@ -1,12 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "../supabaseClient";
-import { useBookingStats } from "../hooks/useBookingStats";
-import { useAuth } from "../contexts/AuthContext";
-import { isMaintenanceMode } from "../utils/maintenanceMode";
-import type { User } from "@supabase/supabase-js";
+import { useProfile } from "../hooks/useProfile";
 import {
   FaHome,
   FaCalendarPlus,
@@ -15,352 +9,50 @@ import {
   FaSpinner,
   FaSignOutAlt,
 } from "react-icons/fa";
-import { useToastHelpers } from "../components/Toast";
-import {
-  formatPhoneForDisplay,
-  validatePhilippinePhone,
-  cleanPhoneForDatabase,
-} from "../utils/phoneUtils";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import StatsCards from "../components/profile/StatsCards";
 import BookingHistory from "../components/profile/BookingHistory";
+export default function ProfilePage() {
+  const {
+    user,
+    loading,
+    userProfile,
+    loadingProfile,
+    maintenanceActive,
+    editingName,
+    newName,
+    updating,
+    editingPhone,
+    newPhone,
+    updatingPhone,
+    signingOut,
+    bookingStats,
+    statsLoading,
+    setNewName,
+    setNewPhone,
+    formatPhoneNumber,
+    handleSignOut,
+    handleUpdateName,
+    handleCancelEdit,
+    handleStartEdit,
+    handleUpdatePhone,
+    handleCancelPhoneEdit,
+    handleStartPhoneEdit,
+  } = useProfile();
 
-// Robust session validation helper
-const validateAndRefreshSession = async (maxRetries = 3) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error(`Session validation attempt ${attempt} failed:`, error);
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          continue;
-        }
-        throw error;
-      }
-
-      if (session && session.access_token) {
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser();
-
-        if (userError) {
-          console.error(
-            `User validation attempt ${attempt} failed:`,
-            userError
-          );
-          if (attempt < maxRetries) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            continue;
-          }
-          throw userError;
-        }
-
-        if (userData.user) {
-          return { session, user: userData.user };
-        }
-      }
-
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    } catch (err) {
-      console.error(`Session validation attempt ${attempt} error:`, err);
-      if (attempt === maxRetries) {
-        throw err;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-  }
-
-  throw new Error("No valid session found after multiple attempts");
-};
-
-function ProfilePageContent({ user }: { user: User }) {
-  const { loading } = useAuth();
-  const [editingName, setEditingName] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [editingPhone, setEditingPhone] = useState(false);
-  const [newPhone, setNewPhone] = useState("");
-  const [updating, setUpdating] = useState(false);
-  const [updatingPhone, setUpdatingPhone] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
-  const [maintenanceActive, setMaintenanceActive] = useState(false);
-  const [userProfile, setUserProfile] = useState<{
-    name: string;
-    email: string;
-    phone: string;
-    role: string;
-  } | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
-  const { success, error: showError, warning, info } = useToastHelpers();
-
-  const { stats: bookingStats, loading: statsLoading } = useBookingStats(user);
-
-  const validatePhoneNumber = (phone: string): boolean => {
-    return validatePhilippinePhone(phone);
-  };
-
-  const formatPhoneNumber = (value: string): string => {
-    return formatPhoneForDisplay(value);
-  };
-
-  // Fetch user profile from database
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("full_name, email, phone, role")
-          .eq("auth_id", user.id)
-          .single();
-
-        if (!error && data) {
-          setUserProfile({
-            name: data.full_name || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            role: data.role || "user",
-          });
-        } else {
-          console.error("Error fetching user profile:", error);
-          setUserProfile({
-            name: user.user_metadata?.name || "",
-            email: user.email || "",
-            phone: user.user_metadata?.phone || "",
-            role: user.user_metadata?.role || "user",
-          });
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching profile:", err);
-        setUserProfile({
-          name: user.user_metadata?.name || "",
-          email: user.email || "",
-          phone: user.user_metadata?.phone || "",
-          role: user.user_metadata?.role || "user",
-        });
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [user]);
-
-  // Maintenance mode checking
-  useEffect(() => {
-    const checkMaintenanceMode = async () => {
-      try {
-        const isActive = await isMaintenanceMode();
-        setMaintenanceActive(isActive);
-      } catch (error) {
-        console.error("Error checking maintenance mode:", error);
-      }
-    };
-
-    checkMaintenanceMode();
-    const interval = setInterval(checkMaintenanceMode, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    warning("Signing out...");
-
-    try {
-      const { safeLogout } = await import("../utils/apiTimeout");
-      await safeLogout(supabase, 3000);
-
-      success("Successfully signed out!");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-    } catch (err) {
-      console.error("Unexpected error during sign out:", err);
-      showError("An unexpected error occurred during sign out.");
-
-      if (typeof window !== "undefined") {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1500);
-    }
-  };
-
-  const handleUpdateName = async () => {
-    if (!user || !newName.trim()) {
-      warning("Please enter a valid name.");
-      return;
-    }
-
-    setUpdating(true);
-    info("Updating your name...");
-
-    try {
-      await validateAndRefreshSession();
-
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { name: newName.trim() },
-      });
-
-      if (authError) {
-        console.error("Error updating auth name:", authError);
-        showError("Failed to update name. Please try again.");
-        return;
-      }
-
-      const { error: dbError } = await supabase
-        .from("users")
-        .update({ full_name: newName.trim() })
-        .eq("auth_id", user.id);
-
-      if (dbError) {
-        console.error("Error updating database name:", dbError);
-        warning("Name updated in profile but may not appear in admin panel.");
-      } else {
-        success("Name updated successfully!");
-      }
-
-      setEditingName(false);
-      setNewName("");
-
-      if (userProfile) {
-        setUserProfile({
-          ...userProfile,
-          name: newName.trim(),
-        });
-      }
-
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        // User data updated
-      }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-      showError("An unexpected error occurred. Please try again.");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingName(false);
-    setNewName("");
-    warning("Name edit cancelled.");
-  };
-
-  const handleStartEdit = () => {
-    setNewName(userProfile?.name || user?.user_metadata?.name || "");
-    setEditingName(true);
-  };
-
-  const handleUpdatePhone = async () => {
-    if (!user || !newPhone.trim()) {
-      warning("Please enter a valid phone number.");
-      return;
-    }
-
-    if (!validatePhoneNumber(newPhone)) {
-      showError("Phone number must be exactly 11 digits long!");
-      return;
-    }
-
-    setUpdatingPhone(true);
-    info("Updating your phone number...");
-
-    try {
-      await validateAndRefreshSession();
-
-      const cleanedPhone = cleanPhoneForDatabase(newPhone.trim());
-
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { phone: cleanedPhone },
-      });
-
-      if (authError) {
-        console.error("Error updating auth phone:", authError);
-        showError("Failed to update phone number. Please try again.");
-        return;
-      }
-
-      const { error: dbError } = await supabase
-        .from("users")
-        .update({ phone: cleanedPhone })
-        .eq("auth_id", user.id);
-
-      if (dbError) {
-        console.error("Error updating database phone:", dbError);
-        warning("Phone updated in profile but may not appear in admin panel.");
-      } else {
-        success("Phone number updated successfully!");
-      }
-
-      setEditingPhone(false);
-      setNewPhone("");
-
-      if (userProfile) {
-        setUserProfile({
-          ...userProfile,
-          phone: cleanedPhone,
-        });
-      }
-
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        // User data updated
-      }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-      showError("An unexpected error occurred. Please try again.");
-    } finally {
-      setUpdatingPhone(false);
-    }
-  };
-
-  const handleCancelPhoneEdit = () => {
-    setEditingPhone(false);
-    setNewPhone("");
-    warning("Phone edit cancelled.");
-  };
-
-  const handleStartPhoneEdit = () => {
-    const currentPhone = userProfile?.phone || user?.user_metadata?.phone || "";
-    const formatted = formatPhoneNumber(currentPhone);
-    setNewPhone(formatted);
-    setEditingPhone(true);
-  };
-
-  if (!user) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="bg-card p-8 rounded-xl shadow-2xl text-center max-w-md mx-auto">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-6">
-            Please log in to view your profile.
-          </p>
-          <div className="space-y-3">
-            <Link href="/auth">
-              <button className="w-full bg-primary text-foreground py-3 rounded-lg font-semibold hover:bg-primary/90 transition">
-                Login
-              </button>
-            </Link>
-            <Link href="/">
-              <button className="w-full bg-muted text-foreground py-3 rounded-lg font-semibold hover:bg-muted transition">
-                Back to Home
-              </button>
-            </Link>
-          </div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="text-lg text-muted-foreground">Loading...</div>
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
@@ -426,10 +118,7 @@ function ProfilePageContent({ user }: { user: User }) {
           bookingStats={bookingStats}
         />
 
-        <StatsCards
-          bookingStats={bookingStats}
-          statsLoading={statsLoading}
-        />
+        <StatsCards bookingStats={bookingStats} statsLoading={statsLoading} />
 
         {/* Quick Actions */}
         <div className="bg-card backdrop-blur-sm rounded-xl shadow-xl p-4 sm:p-6 border border-border/50">
@@ -576,33 +265,4 @@ function ProfilePageContent({ user }: { user: User }) {
       </div>
     </div>
   );
-}
-
-// Use global auth context to avoid conflicts
-export default function ProfilePage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <div className="text-lg text-muted-foreground">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect
-  }
-
-  return <ProfilePageContent user={user} />;
 }

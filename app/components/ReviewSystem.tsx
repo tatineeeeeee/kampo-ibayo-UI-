@@ -2,33 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
-import { Tables } from "../../database.types";
 import {
   Star,
   ChevronLeft,
   ChevronRight,
-  MapPin,
-  Calendar,
-  CheckCircle,
   AlertCircle,
-  X,
   Eye,
-  Filter,
 } from "lucide-react";
-import Image from "next/image";
-
-type GuestReview = Tables<"guest_reviews">;
-
-interface ReviewPhotoSimple {
-  id: string; // Supabase returns UUID strings for ids
-  photo_url: string;
-  caption: string | null;
-  display_order: number | null;
-}
-
-interface ReviewWithPhotos extends GuestReview {
-  review_photos?: ReviewPhotoSimple[];
-}
+import ReviewCard, { renderStars, type ReviewWithPhotos } from "./ReviewCard";
+import ReviewDetailModal from "./ReviewDetailModal";
+import AllReviewsModal from "./AllReviewsModal";
 
 interface ReviewSystemProps {
   limit?: number;
@@ -281,12 +264,6 @@ const ReviewSystem = ({
     }
   };
 
-  // Get filtered reviews for modal
-  const getFilteredModalReviews = () => {
-    if (modalFilter === "all") return allReviewsData;
-    return allReviewsData.filter((review) => review.rating === modalFilter);
-  };
-
   useEffect(() => {
     fetchReviews(currentPage);
   }, [currentPage, fetchReviews]);
@@ -339,39 +316,6 @@ const ReviewSystem = ({
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
-  };
-
-  // Render star rating
-  const renderStars = (rating: number, size: "sm" | "md" | "lg" = "md") => {
-    const sizeClasses = {
-      sm: "w-3 h-3",
-      md: "w-4 h-4",
-      lg: "w-5 h-5",
-    };
-
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`${sizeClasses[size]} ${
-              star <= rating
-                ? "text-yellow-400 fill-yellow-400"
-                : "text-muted-foreground"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
   };
 
   // Loading state
@@ -490,101 +434,12 @@ const ReviewSystem = ({
                 className="flex-shrink-0 px-2"
                 style={{ width: `${100 / cardsPerView}%` }}
               >
-                <div className="group bg-card border border-border/60 hover:border-primary/40 p-4 xs:p-5 sm:p-6 lg:p-8 rounded-xl shadow-lg hover:bg-muted/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
-                  {/* Rating and Verification */}
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    {renderStars(review.rating)}
-                    <div className="flex items-center gap-2">
-                      {review.approved && (
-                        <div className="flex items-center gap-1 text-green-400 text-xs">
-                          <CheckCircle className="w-3 h-3" />
-                          <span>Approved</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Review Text */}
-                  <div className="mb-4 sm:mb-6">
-                    <p
-                      ref={(el) => checkTruncation(el, review.id)}
-                      className="text-foreground/80 italic text-xs xs:text-sm sm:text-base leading-relaxed line-clamp-4"
-                    >
-                      &ldquo;{review.review_text}&rdquo;
-                    </p>
-                    {truncatedReviews.has(review.id) && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedReview(review)}
-                        className="text-primary hover:text-primary/80 text-xs mt-1.5 transition-colors"
-                      >
-                        See more
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Spacer — pushes photos + guest info to bottom on short reviews */}
-                  <div className="flex-1" />
-
-                  {/* Review Photos */}
-                  {review.review_photos &&
-                    review.review_photos.length > 0 && (
-                      <div className="mb-4 sm:mb-6">
-                        <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
-                          {review.review_photos
-                            .sort(
-                              (a, b) =>
-                                (a.display_order || 0) -
-                                (b.display_order || 0)
-                            )
-                            .slice(0, 3)
-                            .map((photo) => (
-                              <div
-                                key={photo.id}
-                                className="relative aspect-square overflow-hidden rounded-lg"
-                              >
-                                <Image
-                                  src={photo.photo_url}
-                                  alt={photo.caption || "Review photo"}
-                                  fill
-                                  className="object-cover hover:scale-105 transition-transform duration-300"
-                                  sizes="(max-width: 768px) 100px, (max-width: 1200px) 120px, 150px"
-                                />
-                              </div>
-                            ))}
-                        </div>
-                        {review.review_photos.length > 3 && (
-                          <p className="text-muted-foreground text-xs mt-2">
-                            +{review.review_photos.length - 3} more photo
-                            {review.review_photos.length - 3 > 1 ? "s" : ""}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                  {/* Guest Info */}
-                  <div className="border-t border-border pt-3 sm:pt-4 mt-auto">
-                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0">
-                      <div>
-                        <p className="font-bold text-primary text-sm xs:text-base">
-                          - {review.guest_name}
-                        </p>
-                        {review.guest_location && (
-                          <div className="flex items-center gap-1 text-muted-foreground text-xs xs:text-sm mt-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{review.guest_location}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="xs:text-right">
-                        <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                          <Calendar className="w-3 h-3" />
-                          <span>{formatDate(review.created_at)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ReviewCard
+                  review={review}
+                  isTruncated={truncatedReviews.has(review.id)}
+                  onViewMore={setSelectedReview}
+                  onCheckTruncation={checkTruncation}
+                />
               </div>
             ))}
           </div>
@@ -651,250 +506,25 @@ const ReviewSystem = ({
 
       {/* Single Review Modal */}
       {selectedReview && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedReview(null)}
-        >
-          <div
-            className="bg-card border border-border rounded-2xl max-w-lg w-full shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <div className="flex items-center gap-2">
-                {renderStars(selectedReview.rating)}
-                {selectedReview.approved && (
-                  <span className="flex items-center gap-1 text-green-400 text-xs">
-                    <CheckCircle className="w-3 h-3" /> Approved
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                aria-label="Close review"
-                onClick={() => setSelectedReview(null)}
-                className="p-1.5 hover:bg-muted rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-5 max-h-[60vh] overflow-y-auto">
-              <p className="text-foreground/80 italic text-sm leading-relaxed">
-                &ldquo;{selectedReview.review_text}&rdquo;
-              </p>
-
-              {/* Photos */}
-              {selectedReview.review_photos && selectedReview.review_photos.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  {selectedReview.review_photos.slice(0, 3).map((photo) => (
-                    <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg">
-                      <Image
-                        src={photo.photo_url}
-                        alt={photo.caption || "Review photo"}
-                        fill
-                        className="object-cover"
-                        sizes="150px"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="px-5 py-4 border-t border-border">
-              <p className="font-bold text-primary text-sm">- {selectedReview.guest_name}</p>
-              {selectedReview.guest_location && (
-                <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
-                  <MapPin className="w-3 h-3" />
-                  <span>{selectedReview.guest_location}</span>
-                </div>
-              )}
-              {selectedReview.created_at && (
-                <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
-                  <Calendar className="w-3 h-3" />
-                  <span>{new Date(selectedReview.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <ReviewDetailModal
+          review={selectedReview}
+          onClose={() => setSelectedReview(null)}
+        />
       )}
 
       {/* All Reviews Modal */}
-      {showAllReviewsModal && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setShowAllReviewsModal(false)}
-        >
-          <div
-            className="bg-card rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                    All Guest Reviews
-                  </h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    {renderStars(averageRating, "sm")}
-                    <span className="text-muted-foreground text-sm">
-                      {averageRating} average · {totalReviews} reviews
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Close reviews"
-                  onClick={() => setShowAllReviewsModal(false)}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
-                >
-                  <X className="w-6 h-6 text-muted-foreground hover:text-foreground" />
-                </button>
-              </div>
-
-              {/* Rating Filter */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground text-sm mr-2">Filter:</span>
-                <button
-                  type="button"
-                  onClick={() => setModalFilter("all")}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    modalFilter === "all"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  All ({totalReviews})
-                </button>
-                {[5, 4, 3, 2, 1].map((rating) => (
-                  <button
-                    key={rating}
-                    type="button"
-                    onClick={() => setModalFilter(rating)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
-                      modalFilter === rating
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-secondary"
-                    } ${ratingCounts[rating] === 0 ? "opacity-50" : ""}`}
-                    disabled={ratingCounts[rating] === 0}
-                  >
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    {rating} ({ratingCounts[rating]})
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Modal Content - Scrollable */}
-            <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-4 sm:p-6">
-              {modalLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : getFilteredModalReviews().length === 0 ? (
-                <div className="text-center py-12">
-                  <Star className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    No reviews found for this rating
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {getFilteredModalReviews().map((review) => (
-                    <div
-                      key={review.id}
-                      className="bg-muted/50 p-4 sm:p-6 rounded-xl hover:bg-muted transition-colors"
-                    >
-                      {/* Rating and Date */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          {renderStars(review.rating)}
-                          <span className="text-yellow-400 font-semibold">
-                            {review.rating}/5
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground text-xs sm:text-sm">
-                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span>{formatDate(review.created_at)}</span>
-                        </div>
-                      </div>
-
-                      {/* Review Text */}
-                      <p className="text-foreground/80 text-sm sm:text-base leading-relaxed mb-4">
-                        &ldquo;{review.review_text}&rdquo;
-                      </p>
-
-                      {/* Review Photos */}
-                      {review.review_photos &&
-                        review.review_photos.length > 0 && (
-                          <div className="mb-4">
-                            <div className="flex gap-2 overflow-x-auto pb-2">
-                              {review.review_photos
-                                .sort(
-                                  (a, b) =>
-                                    (a.display_order || 0) -
-                                    (b.display_order || 0)
-                                )
-                                .map((photo) => (
-                                  <div
-                                    key={photo.id}
-                                    className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 overflow-hidden rounded-lg"
-                                  >
-                                    <Image
-                                      src={photo.photo_url}
-                                      alt={photo.caption || "Review photo"}
-                                      fill
-                                      className="object-cover"
-                                      sizes="96px"
-                                    />
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-
-                      {/* Guest Info */}
-                      <div className="flex items-center justify-between pt-3 border-t border-border">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-primary">
-                            {review.guest_name}
-                          </span>
-                          {review.approved && (
-                            <div className="flex items-center gap-1 text-green-400 text-xs">
-                              <CheckCircle className="w-3 h-3" />
-                              <span>Verified</span>
-                            </div>
-                          )}
-                        </div>
-                        {review.guest_location && (
-                          <div className="flex items-center gap-1 text-muted-foreground text-xs sm:text-sm">
-                            <MapPin className="w-3 h-3" />
-                            <span>{review.guest_location}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-card border-t border-border p-4 text-center">
-              <p className="text-muted-foreground text-sm">
-                Showing {getFilteredModalReviews().length}{" "}
-                {modalFilter === "all" ? "" : `${modalFilter}-star `}reviews
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <AllReviewsModal
+        isOpen={showAllReviewsModal}
+        onClose={() => setShowAllReviewsModal(false)}
+        reviews={allReviewsData}
+        averageRating={averageRating}
+        totalReviews={totalReviews}
+        ratingCounts={ratingCounts}
+        modalFilter={modalFilter}
+        onFilterChange={setModalFilter}
+        isLoading={modalLoading}
+        onViewReview={setSelectedReview}
+      />
     </div>
   );
 };

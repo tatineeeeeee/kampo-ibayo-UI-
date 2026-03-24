@@ -3,18 +3,11 @@ import React, { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  CircleCheck,
-  LogIn,
-  LogOut,
-  Users,
-  Ban,
-  Lock,
-  Info,
-  Moon,
-  CalendarDays,
   MousePointerClick,
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import CalendarGrid from "./CalendarGrid";
+import CalendarLegend from "./CalendarLegend";
 
 interface AvailabilityCalendarProps {
   selectedCheckIn: string; // Current booking check-in date (to block)
@@ -226,31 +219,6 @@ export default function AvailabilityCalendar({
     return date > maxBookingDate;
   };
 
-  // Check if date is selectable (SAME LOGIC AS HOMEPAGE AND BOOKING PAGE)
-  const isDateSelectable = (date: Date): boolean => {
-    const bookingStatus = getDateBookingStatus(date);
-    const isPast = isDateInPast(date);
-    const isBeforeMin = isDateBeforeMin(date);
-    const isTooFar = isDateTooFar(date);
-    const isBlocked = isDateBlocked(date);
-
-    // Past dates, dates before minimum, dates too far in future, and blocked dates are never selectable
-    if (isPast || isBeforeMin || isTooFar || isBlocked) return false;
-
-    // Check-in and check-out dates are selectable (guests can arrive after previous guest leaves)
-    // This is KEY - same-day turnovers are allowed in the main booking system
-    if (bookingStatus === "checkin" || bookingStatus === "checkout")
-      return true;
-
-    // Available dates are selectable
-    if (bookingStatus === "available") return true;
-
-    // Busy (occupied) and full dates are NOT selectable
-    if (bookingStatus === "busy" || bookingStatus === "full") return false;
-
-    return false;
-  };
-
   // Check if a date should be blocked (current booking dates that can't be selected for reschedule)
   const isDateBlocked = (date: Date): boolean => {
     // If we're in rescheduling mode, don't block current booking dates - allow flexible selection
@@ -271,6 +239,31 @@ export default function AvailabilityCalendar({
       targetDateStr >= selectedCheckIn && targetDateStr < selectedCheckOut;
 
     return isBlocked;
+  };
+
+  // Check if date is selectable (SAME LOGIC AS HOMEPAGE AND BOOKING PAGE)
+  const isDateSelectable = (date: Date): boolean => {
+    const bookingStatus = getDateBookingStatus(date);
+    const isPast = isDateInPast(date);
+    const isBeforeMin = isDateBeforeMin(date);
+    const isTooFar = isDateTooFar(date);
+    const blocked = isDateBlocked(date);
+
+    // Past dates, dates before minimum, dates too far in future, and blocked dates are never selectable
+    if (isPast || isBeforeMin || isTooFar || blocked) return false;
+
+    // Check-in and check-out dates are selectable (guests can arrive after previous guest leaves)
+    // This is KEY - same-day turnovers are allowed in the main booking system
+    if (bookingStatus === "checkin" || bookingStatus === "checkout")
+      return true;
+
+    // Available dates are selectable
+    if (bookingStatus === "available") return true;
+
+    // Busy (occupied) and full dates are NOT selectable
+    if (bookingStatus === "busy" || bookingStatus === "full") return false;
+
+    return false;
   };
 
   // Check if date is in selected range (for visual range highlighting)
@@ -393,10 +386,10 @@ export default function AvailabilityCalendar({
     const dateStr = `${year}-${month}-${day}`;
     const isSelected = newCheckIn === dateStr || newCheckOut === dateStr;
     const isInRange = isDateInSelectedRange(date);
-    const isSelectable = isDateSelectable(date);
+    const selectable = isDateSelectable(date);
     const bookingStatus = getDateBookingStatus(date);
     const isPast = isDateInPast(date);
-    const isBlocked = isDateBlocked(date);
+    const blocked = isDateBlocked(date);
 
     // Base classes for responsive calendar styling - premium clean design
     let classes =
@@ -406,10 +399,10 @@ export default function AvailabilityCalendar({
       classes += isLight
         ? "text-slate-300 bg-slate-50 border-slate-100 opacity-30 "
         : "text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-card border-border dark:border-border opacity-40 ";
-    } else if (isBlocked) {
+    } else if (blocked) {
       classes +=
         "bg-gradient-to-br from-muted-foreground to-muted-foreground text-white cursor-not-allowed border-muted-foreground opacity-75 pointer-events-none ";
-    } else if (!isSelectable) {
+    } else if (!selectable) {
       classes += "cursor-not-allowed ";
 
       switch (bookingStatus) {
@@ -475,7 +468,7 @@ export default function AvailabilityCalendar({
     const dateStr = `${year}-${month}-${day}`;
     const isSelected = newCheckIn === dateStr || newCheckOut === dateStr;
     const isInRange = isDateInSelectedRange(date);
-    const isBlocked = isDateBlocked(date);
+    const blocked = isDateBlocked(date);
 
     // Priority order: Selected dates first, then booking status
     // Show full labels for clarity
@@ -483,7 +476,7 @@ export default function AvailabilityCalendar({
     if (isSelected && newCheckOut === dateStr) return "CHECK-OUT";
 
     // Don't show labels for past, blocked, or range dates - colors are enough
-    if (isBlocked || isPast || isInRange) return null;
+    if (blocked || isPast || isInRange) return null;
 
     // Booking status indicators - full words
     switch (bookingStatus) {
@@ -582,182 +575,27 @@ export default function AvailabilityCalendar({
         </div>
       </div>
 
-      {/* Calendar Grid - Premium Layout */}
-      <div className="p-3 sm:p-4 lg:p-5">
-        {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 lg:gap-2 mb-2">
-          {dayNames.map((day) => (
-            <div
-              key={day}
-              className={`text-center text-[10px] sm:text-xs font-semibold py-1 uppercase tracking-wide ${isLight ? "text-slate-500" : "text-muted-foreground"}`}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
+      {/* Calendar Grid */}
+      <CalendarGrid
+        calendarDays={getCalendarDays()}
+        currentDate={currentDate}
+        getDateClasses={getDateClasses}
+        getDateStatusIndicator={getDateStatusIndicator}
+        handleDateClick={handleDateClick}
+        isDateSelectable={isDateSelectable}
+        isDateBooked={isDateBooked}
+        isDateInPast={isDateInPast}
+        dayNames={dayNames}
+        isLight={isLight}
+      />
 
-        {/* Calendar days - Premium Responsive Grid */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 lg:gap-2">
-          {getCalendarDays().map((date, index) => {
-            const statusIndicator = getDateStatusIndicator(date);
-            return (
-              <button
-                type="button"
-                key={index}
-                onClick={() => handleDateClick(date)}
-                className={getDateClasses(date)}
-                disabled={!isDateSelectable(date)}
-                title={
-                  isDateBooked(date)
-                    ? "Not available - Resort is booked"
-                    : isDateInPast(date)
-                      ? "Past date - Cannot select"
-                      : "Available for booking"
-                }
-              >
-                <span className="relative z-10">{date.getDate()}</span>
-                {statusIndicator && (
-                  <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 px-0.5 text-[4px] sm:text-[6px] lg:text-[7px] font-black rounded shadow-sm whitespace-nowrap leading-tight ${isLight ? "bg-card/80 text-white" : "bg-black/90 text-white"}`}>
-                    {statusIndicator}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Legend - Clean & Minimal */}
-      <div className={`border-t p-3 sm:p-4 ${isLight ? "border-border bg-gradient-to-b from-muted to-primary/5" : "border-border bg-card/90"}`}>
-        {/* Status Legend - Compact Grid */}
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 sm:gap-x-6">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-sm"></div>
-            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-muted-foreground"}`}>
-              Available
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-primary to-primary/90 shadow-sm"></div>
-            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-muted-foreground"}`}>
-              Check-in
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-rose-400 to-rose-500 shadow-sm"></div>
-            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-muted-foreground"}`}>
-              Check-out
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-amber-400 to-amber-500 shadow-sm"></div>
-            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-muted-foreground"}`}>
-              Occupied
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-gradient-to-br from-orange-500 to-orange-600 shadow-sm ring-1 ring-orange-400"></div>
-            <span className={`text-[11px] sm:text-xs font-medium ${isLight ? "text-slate-600" : "text-muted-foreground"}`}>
-              Selected
-            </span>
-          </div>
-        </div>
-
-        {/* Selection Status - Only show when dates selected */}
-        {(newCheckIn || newCheckOut) && (
-          <div className={`mt-3 pt-3 border-t ${isLight ? "border-border" : "border-border/50"}`}>
-            <div className={`rounded-xl p-3 border ${isLight ? "bg-card border-border shadow-sm" : "bg-background/50 border-border/50"}`}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <p className={`text-[10px] uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-muted-foreground"}`}>
-                    Check-in
-                  </p>
-                  <div className={`rounded-lg px-3 py-2 ${isLight ? "bg-primary/5 border border-border" : "bg-primary/10 border border-primary/30"}`}>
-                    <p className={`text-sm font-semibold ${isLight ? "text-primary" : "text-blue-300"}`}>
-                      {formatDateSafe(newCheckIn)}
-                    </p>
-                  </div>
-                </div>
-                <div className={`text-lg ${isLight ? "text-slate-300" : "text-muted-foreground"}`}>→</div>
-                <div className="flex-1">
-                  <p className={`text-[10px] uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-muted-foreground"}`}>
-                    Check-out
-                  </p>
-                  <div className={`rounded-lg px-3 py-2 ${isLight ? "bg-primary/5 border border-border" : "bg-primary/10 border border-primary/30"}`}>
-                    <p className={`text-sm font-semibold ${isLight ? "text-primary" : "text-blue-300"}`}>
-                      {formatDateSafe(newCheckOut)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {newCheckIn && newCheckOut && (
-                <div className={`mt-2 flex items-center justify-center gap-1.5 ${isLight ? "text-slate-500" : "text-muted-foreground"}`}>
-                  <Moon className="w-3 h-3" />
-                  <span className="text-xs">
-                    {(() => {
-                      const checkInDate = new Date(newCheckIn + "T00:00:00");
-                      const checkOutDate = new Date(newCheckOut + "T00:00:00");
-                      const nights = Math.ceil(
-                        (checkOutDate.getTime() - checkInDate.getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      );
-                      return `${nights} night${nights !== 1 ? "s" : ""}`;
-                    })()}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Quick Guide - Collapsible on Mobile */}
-        <details className="mt-3 group">
-          <summary className={`flex items-center gap-2 cursor-pointer transition-colors ${isLight ? "text-slate-500 hover:text-slate-700" : "text-muted-foreground hover:text-muted-foreground"}`}>
-            <Info className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium">
-              How to read the calendar
-            </span>
-            <ChevronRight className="w-3 h-3 ml-auto group-open:rotate-90 transition-transform" />
-          </summary>
-          <div className={`mt-2 rounded-lg p-3 text-xs space-y-1.5 ${isLight ? "bg-card border border-border text-slate-500" : "bg-background/40 text-muted-foreground"}`}>
-            <div className="flex items-start gap-2">
-              <LogIn className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
-              <span>
-                <strong className={isLight ? "text-primary" : "text-blue-300"}>Check-in</strong> — Guest
-                arrives (3:00 PM)
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <LogOut className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
-              <span>
-                <strong className={isLight ? "text-primary" : "text-blue-300"}>Check-out</strong> — Guest
-                leaves (1:00 PM)
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Users className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <span>
-                <strong className={isLight ? "text-amber-600" : "text-amber-300"}>Occupied</strong> — Resort is
-                in use
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Ban className="w-3.5 h-3.5 text-purple-500 flex-shrink-0 mt-0.5" />
-              <span>
-                <strong className={isLight ? "text-purple-600" : "text-purple-300"}>Full</strong> — Same-day
-                check-in &amp; out
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Lock className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${isLight ? "text-slate-400" : "text-muted-foreground"}`} />
-              <span>
-                <strong className={isLight ? "text-slate-600" : "text-muted-foreground"}>Blocked</strong> — Your
-                current booking
-              </span>
-            </div>
-          </div>
-        </details>
-      </div>
+      {/* Legend & Selection Status */}
+      <CalendarLegend
+        isLight={isLight}
+        newCheckIn={newCheckIn}
+        newCheckOut={newCheckOut}
+        formatDateSafe={formatDateSafe}
+      />
     </div>
   );
 }
